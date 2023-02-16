@@ -1,5 +1,4 @@
 import Head from "next/head";
-import RichTextField from "@/components/RichTextField";
 
 export default function Home() {
   return (
@@ -11,7 +10,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main>
-        <RichTextField />
+        <></>
       </main>
     </>
   );
