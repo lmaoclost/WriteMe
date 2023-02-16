@@ -12,16 +12,6 @@ export const authOptions = {
   ],
   secret: process.env.NEXTAUTH_SECRET,
   adapter: PrismaAdapter(prisma),
-  callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-        username: user.username,
-      },
-    }),
-  },
 };
 
 export default NextAuth(authOptions);
