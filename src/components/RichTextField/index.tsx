@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { Value } from "react-quill";
-import { convertDeltaToHtml } from "../utils/convertDeltaToHtml";
+import { Value as QuillProps } from "react-quill";
+import { convertDeltaToHtml } from "../../utils/convertDeltaToHtml";
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.snow.css";
 
-function RichTextField() {
-  const [value, setValue] = useState<Value>();
+export default function RichTextField() {
+  const [value, setValue] = useState<QuillProps>();
 
   useEffect(() => {
     const textValue = localStorage.getItem("text") || "{}";
@@ -34,5 +34,3 @@ function RichTextField() {
     </>
   );
 }
-
-export default RichTextField;
