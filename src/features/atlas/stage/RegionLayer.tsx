@@ -10,6 +10,7 @@ export interface RegionLayerProps {
   selectedRegionId: Id | null;
   onSelectRegion(regionId: Id): void;
   interactive: boolean;
+  carveParentId?: Id | null;
 }
 
 const roundOpacity = (v: number) => Math.round(v * 1000) / 1000;
@@ -20,6 +21,7 @@ export function RegionLayer({
   selectedRegionId,
   onSelectRegion,
   interactive,
+  carveParentId,
 }: RegionLayerProps) {
   const [hoveredId, setHoveredId] = useState<Id | null>(null);
   const { imgW, imgH } = transformApi;
@@ -38,7 +40,11 @@ export function RegionLayer({
             ? roundOpacity(Math.min(0.62, base + 0.02))
             : roundOpacity(base);
         const centroid = regionCentroid(region.points);
-        const className = "region-poly" + (selected ? " selected" : "") + (hovered ? " hovered" : "");
+        const className =
+          "region-poly" +
+          (selected ? " selected" : "") +
+          (hovered ? " hovered" : "") +
+          (region.id === carveParentId ? " carve-parent" : "");
         return (
           <g key={region.id}>
             <polygon

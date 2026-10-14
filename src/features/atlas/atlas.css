@@ -19,7 +19,7 @@
 }
 
 /* Editor shell */
-.atlas-editor { display: flex; flex-direction: column; height: 100%; }
+.atlas-editor { display: flex; flex-direction: column; height: 100%; position: relative; }
 .atlas-editor[data-tool="region"] .stage { cursor: crosshair; }
 .editor-toolbar {
   display: flex;
@@ -53,6 +53,42 @@
   stroke-dasharray: 6 4;
 }
 .draw-first-marker { fill: none; stroke: var(--gold); stroke-width: 2; }
+
+/* Carve / neighbor / fit modes */
+.carve-preview {
+  fill: var(--gold);
+  fill-opacity: 0.2;
+  stroke: var(--gold);
+  stroke-width: 2.5;
+}
+.carve-snap-marker { fill: none; stroke: var(--gold); stroke-width: 2; }
+.region-poly.carve-parent {
+  stroke: var(--gold-dim);
+  stroke-opacity: 0.9;
+  stroke-width: 3;
+}
+.mode-actions {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 20;
+  padding: 6px 8px;
+  background: var(--night-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.mode-actions button {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--parchment);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+.mode-actions button:hover { border-color: var(--gold-dim); }
 
 /* Region chooser */
 .chooser-backdrop { position: fixed; inset: 0; z-index: 29; background: transparent; }
