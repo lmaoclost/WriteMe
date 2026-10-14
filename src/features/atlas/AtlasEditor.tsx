@@ -118,14 +118,16 @@ export function AtlasEditor({ atlasId }: AtlasEditorProps) {
     return () => document.removeEventListener("keydown", onKey);
   }, [drawing, cancelDraw, attemptFinishRegion, confirmPreview, draw.carvePreview]);
 
-  // Selection may outlive its pin (undo/delete) — drop it when the pin is gone.
+  // Selections may outlive their pin or region (undo/delete) — drop them when
+  // the selected id vanishes.
   useEffect(() => {
-    if (!selectedPinId) return;
-    const alive = useScriptorium.getState().atlases.some(
-      (a) => a.id === atlasId && a.pins.some((p) => p.id === selectedPinId),
-    );
-    if (!alive) setSelectedPinId(null);
-  }, [atlasId, atlas, selectedPinId]);
+    if (!selectedPinId && !selectedRegionId) return;
+    const s = useScriptorium.getState();
+    const current = s.atlases.find((a) => a.id === atlasId);
+    if (!current) return;
+    if (selectedPinId && !current.pins.some((p) => p.id === selectedPinId)) setSelectedPinId(null);
+    if (selectedRegionId && !current.regions.some((r) => r.id === selectedRegionId)) setSelectedRegionId(null);
+  }, [atlasId, atlas, selectedPinId, selectedRegionId]);
 
   // Delete key on the selected pin: direct delete (store pushes history).
   useEffect(() => {

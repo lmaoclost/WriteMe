@@ -17,11 +17,13 @@ export function RegionPanel({ atlasId, region, entries, onDelete }: RegionPanelP
   const [label, setLabel] = useState(region.label);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  // Key on the id only: resetting on every label change would close the link
+  // picker and disarm the delete confirm while typing.
   useEffect(() => {
     setLabel(region.label);
     setPickerOpen(false);
     setConfirming(false);
-  }, [region.id, region.label]);
+  }, [region.id]);
 
   const patch = (p: Partial<Omit<Region, "id">>) => {
     useScriptorium.getState().updateRegion(region.id, p);

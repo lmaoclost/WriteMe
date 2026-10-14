@@ -15,10 +15,12 @@ export interface PinPanelProps {
 export function PinPanel({ pin, entries, onDelete }: PinPanelProps) {
   const [label, setLabel] = useState(pin.label);
   const [pickerOpen, setPickerOpen] = useState(false);
+  // Key on the id only: resetting on every label change would close the link
+  // picker while typing.
   useEffect(() => {
     setLabel(pin.label);
     setPickerOpen(false);
-  }, [pin.id, pin.label]);
+  }, [pin.id]);
 
   const patch = (p: Partial<Omit<Pin, "id">>) => {
     useScriptorium.getState().updatePin(pin.id, p);

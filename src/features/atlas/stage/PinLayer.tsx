@@ -55,6 +55,8 @@ export function PinLayer({
 }: PinLayerProps) {
   const apiRef = useRef(transformApi);
   apiRef.current = transformApi;
+  const atlasIdRef = useRef(atlasId);
+  atlasIdRef.current = atlasId;
   const onHoverLeaveRef = useRef(onHoverLeave);
   onHoverLeaveRef.current = onHoverLeave;
 
@@ -84,6 +86,9 @@ export function PinLayer({
     if (!drag.moved) {
       if (Math.hypot(dx, dy) <= MOVE_THRESHOLD) return;
       drag.moved = true;
+      // History snapshots the pre-drag pin on the first real move, so a
+      // click-select (no drag) never pushes a no-op undo step.
+      useScriptorium.getState().pushHistory(atlasIdRef.current);
     }
     const nextX = clamp01(drag.origin.x + dx / (api.imgW * api.scale));
     const nextY = clamp01(drag.origin.y + dy / (api.imgH * api.scale));
@@ -115,7 +120,6 @@ export function PinLayer({
     e.stopPropagation();
     onSelectPin(pin.id);
     onHoverLeaveRef.current();
-    useScriptorium.getState().pushHistory(atlasId);
     if (typeof e.currentTarget.setPointerCapture === "function") {
       try {
         e.currentTarget.setPointerCapture(e.pointerId);

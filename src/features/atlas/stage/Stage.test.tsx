@@ -58,6 +58,7 @@ interface StageOptions {
   rect?: Rect;
   client?: { w: number; h: number };
   layer?: ReactNode;
+  overlayChildren?: (api: TransformApi) => ReactNode;
   onStageClick?(pt: Pt, clientX: number, clientY: number): void;
   onStageMove?(pt: Pt, clientX: number, clientY: number): void;
   onStageDblClick?(pt: Pt, clientX: number, clientY: number): void;
@@ -78,6 +79,7 @@ function mountStage(opts: StageOptions = {}): Mount {
       onStageClick={opts.onStageClick}
       onStageMove={opts.onStageMove}
       onStageDblClick={opts.onStageDblClick}
+      overlayChildren={opts.overlayChildren}
     >
       {(api) => {
         captured = api;
@@ -136,6 +138,95 @@ function firePointer(el: HTMLElement, type: string, init: PointerInit) {
     el.dispatchEvent(e);
   });
 }
+
+// jsdom applies no real CSS transforms, so composited placement can't be read
+// off the DOM. Emulate CSS function-list composition instead: the matrices
+// post-multiply in string order (rightmost function acts on the point first), so
+// a function list [a, b] is the product M_a · M_b. With those matrices the
+// counter-transform can be asserted as the exact identity against
+// .stage-content's wrapper transform.
+type Matrix = [number, number, number, number, number, number]; // matrix(a, b, c, d, e, f)
+
+function mulMatrix(m: Matrix, n: Matrix): Matrix {
+  return [
+    m[0] * n[0] + m[2] * n[1],
+    m[1] * n[0] + m[3] * n[1],
+    m[0] * n[2] + m[2] * n[3],
+    m[1] * n[2] + m[3] * n[3],
+    m[0] * n[4] + m[2] * n[5] + m[4],
+    m[1] * n[4] + m[3] * n[5] + m[5],
+  ];
+}
+
+function parseTransformList(t: string): Matrix {
+  let m: Matrix = [1, 0, 0, 1, 0, 0];
+  const re = /(translate|scale)\(([^)]*)\)/g;
+  for (let hit = re.exec(t); hit; hit = re.exec(t)) {
+    const args = hit[2].split(",").map((v) => parseFloat(v));
+    m = mulMatrix(
+      m,
+      hit[1] === "translate" ? ([1, 0, 0, 1, args[0], args[1]] as Matrix) : ([args[0], 0, 0, args[0], 0, 0] as Matrix),
+    );
+  }
+  return m;
+}
+
+/** The counter must undo the content wrapper exactly: composite matrix ≈ I
+ *  (scale product ≈ 1, pan terms sum to ≈ 0 — the order bug drifted by (1−s)·pan). */
+function expectCompositeIdentity(content: string, counter: string) {
+  const [a, b, c, d, e, f] = mulMatrix(parseTransformList(content), parseTransformList(counter));
+  expect(a).toBeCloseTo(1, 12);
+  expect(d).toBeCloseTo(1, 12);
+  expect(b).toBeCloseTo(0, 12);
+  expect(c).toBeCloseTo(0, 12);
+  expect(e).toBeCloseTo(0, 12);
+  expect(f).toBeCloseTo(0, 12);
+}
+
+describe("overlay-dom counter transform", () => {
+  function counterEl(container: HTMLElement): HTMLElement {
+    const dom = container.querySelector(".stage-overlay-dom") as HTMLElement;
+    expect(dom, "overlay-dom layer should render").toBeTruthy();
+    return dom;
+  }
+
+  it("counter is the exact string inverse after a zoom-driven 2× at (400, 0) → pan (−400, 0)", () => {
+    const m = mountStage({ overlayChildren: () => <div data-testid="overlay-dom" /> });
+    loadMapImage(m.container);
+    // The zoom function the wheel handler drives (zoomAtPoint at the cursor):
+    // 2× anchored at (400, 0) → scale 2, pan (−400, 0).
+    act(() => m.api().zoomAtPoint(400, 0, 2));
+    expect(m.api().scale).toBe(2);
+    expect(m.api().panX).toBe(-400);
+    expect(m.api().panY).toBe(0);
+    const content = m.container.querySelector(".stage-content") as HTMLElement;
+    expect(content.style.transform).toBe("translate(-400px, 0px) scale(2)");
+    expect(counterEl(m.container).style.transform).toBe("scale(0.5) translate(400px, 0px)");
+    expectCompositeIdentity(content.style.transform, counterEl(m.container).style.transform);
+  });
+
+  it("counter composes to identity against .stage-content after a real wheel zoom (drift repro)", () => {
+    const m = mountStage({ overlayChildren: () => <div data-testid="overlay-dom" /> });
+    loadMapImage(m.container);
+    act(() => {
+      fireEvent.wheel(m.stageEl, { clientX: 400, clientY: 300, deltaY: -100 });
+    });
+    expect(m.api().scale).toBeCloseTo(1.1, 12);
+    const content = m.container.querySelector(".stage-content") as HTMLElement;
+    expectCompositeIdentity(content.style.transform, counterEl(m.container).style.transform);
+  });
+
+  it("counter stays composed-identity at idle (s=1, pan=0) and after a drag pan", () => {
+    const m = mountStage({ overlayChildren: () => <div data-testid="overlay-dom" /> });
+    loadMapImage(m.container);
+    let content = m.container.querySelector(".stage-content") as HTMLElement;
+    expectCompositeIdentity(content.style.transform, counterEl(m.container).style.transform);
+    firePointer(m.stageEl, "pointerdown", { pointerId: 7, clientX: 100, clientY: 100, button: 0, pointerType: "mouse" });
+    firePointer(m.stageEl, "pointermove", { pointerId: 7, clientX: 160, clientY: 130, pointerType: "mouse" });
+    content = m.container.querySelector(".stage-content") as HTMLElement;
+    expectCompositeIdentity(content.style.transform, counterEl(m.container).style.transform);
+  });
+});
 
 describe("Stage render", () => {
   it("renders img + overlay svg with viewBox from natural size after load", () => {

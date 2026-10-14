@@ -169,6 +169,21 @@ describe("pin layer", () => {
     expect(store().atlases[0].pins[0].y).toBeCloseTo(0.25, 9);
   });
 
+  it("pushes history on the first real drag move, not on click-select or wiggle", () => {
+    const atlas = makeAtlas({ pins: [{ x: 0.25, y: 0.25, label: "Cidade" }] });
+    const { container } = mountEditor(atlas);
+    const undoCount = () => store().histories[atlas.id]?.undo.length ?? 0;
+    const after = undoCount(); // snapshot whatever setup pushed
+    selectPinByClick(container);
+    expect(undoCount()).toBe(after); // select-only pointerdown: no history entry
+    const btn = pinDot(container);
+    firePointer(btn, "pointerdown", { pointerId: 31, clientX: 200, clientY: 150 });
+    firePointer(btn, "pointermove", { pointerId: 31, clientX: 203, clientY: 151 }); // ≤5px wiggle
+    expect(undoCount()).toBe(after);
+    firePointer(btn, "pointermove", { pointerId: 31, clientX: 240, clientY: 150 }); // first real move
+    expect(undoCount()).toBe(after + 1);
+  });
+
   it("a ≤5px pointer wiggle selects but never moves the pin", () => {
     const atlas = makeAtlas({ pins: [{ x: 0.25, y: 0.25, label: "Cidade" }] });
     const { container } = mountEditor(atlas);
@@ -292,6 +307,19 @@ describe("PinPanel", () => {
       fireEvent.change(input, { target: { value: "Nova Capital" } });
     });
     expect(store().atlases[0].pins[0].label).toBe("Nova Capital");
+  });
+
+  it("label typing keeps the link picker open (reset effect keys on pin id only)", () => {
+    const atlas = makeAtlas({ pins: [{ x: 0.25, y: 0.25, label: "Cidade" }] });
+    const { container } = mountEditor(atlas);
+    selectPinByClick(container);
+    pickButton("Vincular entrada");
+    expect(screen.getByLabelText("Buscar entrada")).toBeTruthy();
+    act(() => {
+      const input = screen.getByLabelText("Rótulo do pino") as HTMLInputElement;
+      fireEvent.change(input, { target: { value: "Nova Capital" } });
+    });
+    expect(screen.getByLabelText("Buscar entrada")).toBeTruthy(); // closed on typing before the rekey
   });
 
   it("type segmented control switches the pin type", () => {

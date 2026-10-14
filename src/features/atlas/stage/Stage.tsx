@@ -98,7 +98,10 @@ export function Stage({
           <div
             className="stage-overlay-dom"
             style={{
-              transform: `translate(${-transform.panX}px, ${-transform.panY}px) scale(${transform.scale ? 1 / transform.scale : 1})`,
+              // Exact inverse of the wrapper matrix T(pan)·S(s): function lists
+              // compose right-to-left on the point, so scale(1/s) must sit
+              // FIRST in the string or the layer drifts by (1−s)·pan.
+              transform: `scale(${transform.scale ? 1 / transform.scale : 1}) translate(${-transform.panX}px, ${-transform.panY}px)`,
             }}
           >
             {overlayChildren(transform)}
