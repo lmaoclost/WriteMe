@@ -8,6 +8,8 @@ import { BloodlineIndexPage } from "../features/bloodline/BloodlineIndexPage";
 import { BloodlineCanvasPage } from "../features/bloodline/BloodlineCanvas";
 import { FactionWebServicePage } from "../features/factions/FactionPageIndex";
 import { FactionWebPage } from "../features/factions/FactionWebPage";
+import { CalendarIndexPage } from "../features/calendar/CalendarIndexPage";
+import { CalendarPage } from "../features/calendar/CalendarPage";
 import { ManuscriptPage } from "../features/manuscript/ManuscriptPage";
 import { OverviewPage } from "../features/workspace/OverviewPage";
 import { WorkspaceLayout } from "../features/workspace/WorkspaceLayout";
@@ -52,6 +54,16 @@ function FactionWebRoute() {
   return <FactionWebPage webId={webId ?? ""} />;
 }
 
+function CalendarIndexRoute() {
+  const { projectId } = useParams();
+  return <CalendarIndexPage projectId={projectId ?? ""} />;
+}
+
+function CalendarRoute() {
+  const { calendarId } = useParams();
+  return <CalendarPage calendarId={calendarId ?? ""} />;
+}
+
 export function AppRouter() {
   return (
     <Routes>
@@ -66,6 +78,8 @@ export function AppRouter() {
         <Route path="bloodline/:bloodlineId" element={<BloodlineCanvasRoute />} />
         <Route path="factions" element={<FactionsIndexRoute />} />
         <Route path="factions/:webId" element={<FactionWebRoute />} />
+        <Route path="calendar" element={<CalendarIndexRoute />} />
+        <Route path="calendar/:calendarId" element={<CalendarRoute />} />
         <Route path="manuscript" element={<ManuscriptRoute />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

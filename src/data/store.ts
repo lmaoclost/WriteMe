@@ -196,6 +196,7 @@ interface ScriptoriumState extends ProjectData {
 
   addCalendar(projectId: string, name?: string): CustomCalendar;
   renameCalendar(id: string, name: string): void;
+  deleteCalendar(id: string): void;
   setEra(id: string, era: string | undefined): void;
   setStartingWeekday(id: string, weekday: number): void;
   setMonth(id: string, index: number, patch: { name?: string; days?: number }): void;
@@ -319,8 +320,17 @@ export const useScriptorium = create<ScriptoriumState>()(
       },
 
       exportData() {
-        const { projects, entries, atlases, manuscripts, images, bloodlines } = get();
-        return serialize({ projects, entries, atlases, manuscripts, images, bloodlines });
+        const s = get();
+        return serialize({
+          projects: s.projects,
+          entries: s.entries,
+          atlases: s.atlases,
+          manuscripts: s.manuscripts,
+          images: s.images,
+          bloodlines: s.bloodlines,
+          factionWebs: s.factionWebs,
+          calendars: s.calendars,
+        });
       },
 
       importData(text) {
@@ -1263,6 +1273,19 @@ export const useScriptorium = create<ScriptoriumState>()(
                 ? { ...w, factions: snap.factions.map((f) => ({ ...f })), connections: snap.connections.map((c) => ({ ...c })) }
                 : w),
           };
+        });
+      },
+
+      deleteCalendar(id) {
+        const s = get();
+        const cal = (s.calendars ?? []).find((c) => c.id === id);
+        if (!cal) return;
+        const histories = { ...s.histories };
+        delete histories[clKey(id)];
+        set({
+          calendars: (s.calendars ?? []).filter((c) => c.id !== id),
+          histories,
+          projects: touchProject(s.projects, cal.projectId),
         });
       },
 
