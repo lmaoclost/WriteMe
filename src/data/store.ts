@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import type {
   ProjectData, Project, Atlas, Region, Pin, PinType, WorldEntry, EntryCategory, Manuscript, Chapter,
   Bloodline, BloodlinePerson, BloodlineHouse,
+  FactionWeb, Faction, FactionConnection, ConnectionType,
 } from "../domain/types";
 import { newId } from "../domain/id";
 import type { Pt } from "../domain/geometry";
@@ -47,7 +48,9 @@ export interface BloodlineHistory {
   redo: BloodlineSnapshot[];
 }
 
-export type AnyHistory = AtlasHistory | BloodlineHistory;
+export interface FactionWebSnapshot { factions: Faction[]; connections: FactionConnection[] }
+export interface FactionWebHistory { undo: FactionWebSnapshot[]; redo: FactionWebSnapshot[] }
+export type AnyHistory = AtlasHistory | BloodlineHistory | FactionWebHistory;
 
 const clonePoints = (points: Pt[]): Pt[] => points.map((p) => ({ ...p }));
 const touchProject = (projects: readonly Project[], id: string): Project[] =>
@@ -66,11 +69,17 @@ const cloneSnapshot = (a: Atlas): AtlasSnapshot => ({
 
 /** `bl_<id>` keys keep bloodline history buckets in the same ephemeral `histories` record. */
 const blKey = (bloodlineId: string): string => `bl_${bloodlineId}`;
+const fwKey = (webId: string): string => `fw_${webId}`;
 
 const clonePerson = (p: BloodlinePerson): BloodlinePerson => ({
   ...p,
   additionalTitles: p.additionalTitles.map((t) => ({ ...t })),
   tenures: p.tenures.map((t) => ({ ...t })),
+});
+
+const cloneFWSnapshot = (w: FactionWeb): FactionWebSnapshot => ({
+  factions: w.factions.map((f) => ({ ...f })),
+  connections: w.connections.map((c) => ({ ...c })),
 });
 
 const cloneBLSnapshot = (b: Bloodline): BloodlineSnapshot => ({
@@ -156,6 +165,21 @@ interface ScriptoriumState extends ProjectData {
   pushBLHistory(bloodlineId: string): void;
   undoBL(bloodlineId: string): void;
   redoBL(bloodlineId: string): void;
+
+  addFactionWeb(projectId: string, name?: string): FactionWeb;
+  renameFactionWeb(id: string, name: string): void;
+  deleteFactionWeb(id: string): void;
+  addFaction(webId: string, init?: { x?: number; y?: number; name?: string; color?: string }): Faction | null;
+  updateFaction(id: string, patch: Partial<Omit<Faction, "id">>): void;
+  moveFaction(id: string, x: number, y: number): void;
+  deleteFaction(id: string): void;
+  addConnection(webId: string, fromId: string, toId: string): FactionConnection | null;
+  setConnectionType(id: string, type: ConnectionType): void;
+  removeConnection(id: string): void;
+  setWebNotes(webId: string, notes: string): void;
+  pushFWHistory(webId: string): void;
+  undoFW(webId: string): void;
+  redoFW(webId: string): void;
 }
 
 export const useScriptorium = create<ScriptoriumState>()(
@@ -997,6 +1021,225 @@ export const useScriptorium = create<ScriptoriumState>()(
         }));
       },
 
+      addFactionWeb(projectId, name = "Frações sem título") {
+        const web: FactionWeb = {
+          id: newId("fw"),
+          projectId,
+          name,
+          factions: [],
+          connections: [],
+          notes: "",
+        };
+        set((s) => ({
+          factionWebs: [...(s.factionWebs ?? []), web],
+          projects: touchProject(s.projects, projectId),
+        }));
+        return web;
+      },
+
+      renameFactionWeb(id, name) {
+        const web = (get().factionWebs ?? []).find((w) => w.id === id);
+        if (!web) return;
+        set((st) => ({
+          factionWebs: (st.factionWebs ?? []).map((w) => (w.id === id ? { ...w, name } : w)),
+          projects: touchProject(st.projects, web.projectId),
+        }));
+      },
+
+      deleteFactionWeb(id) {
+        const s = get();
+        const web = (s.factionWebs ?? []).find((w) => w.id === id);
+        if (!web) return;
+        const kept = (s.factionWebs ?? []).filter((w) => w.id !== id);
+        if (kept.length === (s.factionWebs ?? []).length) return;
+        const histories = { ...s.histories };
+        delete histories[fwKey(id)];
+        set({
+          factionWebs: kept,
+          histories,
+          projects: touchProject(s.projects, web.projectId),
+        });
+      },
+
+      addFaction(webId, init) {
+        const web = (get().factionWebs ?? []).find((w) => w.id === webId);
+        if (!web) return null;
+        get().pushFWHistory(webId);
+        const faction: Faction = {
+          id: newId("fac"),
+          x: init?.x ?? 4000,
+          y: init?.y ?? 4000,
+          name: init?.name ?? "Fração sem nome",
+          color: init?.color ?? "#7a7a99",
+        };
+        set((s) => ({
+          factionWebs: (s.factionWebs ?? []).map((w) =>
+            w.id === webId ? { ...w, factions: [...w.factions, faction] } : w),
+          projects: touchProject(s.projects, web.projectId),
+        }));
+        return faction;
+      },
+
+      updateFaction(id, patch) {
+        const s = get();
+        const web = (s.factionWebs ?? []).find((w) => w.factions.some((f) => f.id === id));
+        if (!web) return;
+        get().pushFWHistory(web.id);
+        set((st) => ({
+          factionWebs: (st.factionWebs ?? []).map((w) => w.id !== web.id ? w : {
+            ...w,
+            factions: w.factions.map((f) => (f.id === id ? { ...f, ...patch, id: f.id } : f)),
+          }),
+          projects: touchProject(st.projects, web.projectId),
+        }));
+      },
+
+      /** No history push — the UI pushes once per drag (PinLayer pattern). */
+      moveFaction(id, x, y) {
+        const s = get();
+        const web = (s.factionWebs ?? []).find((w) => w.factions.some((f) => f.id === id));
+        if (!web) return;
+        set((st) => ({
+          factionWebs: (st.factionWebs ?? []).map((w) => w.id !== web.id ? w : {
+            ...w,
+            factions: w.factions.map((f) => (f.id === id ? { ...f, x, y } : f)),
+          }),
+          projects: touchProject(st.projects, web.projectId),
+        }));
+      },
+
+      deleteFaction(id) {
+        const s = get();
+        const web = (s.factionWebs ?? []).find((w) => w.factions.some((f) => f.id === id));
+        if (!web) return;
+        get().pushFWHistory(web.id);
+        const keptFactions = web.factions.filter((f) => f.id !== id);
+        const keptConnections = web.connections.filter((c) => c.fromId !== id && c.toId !== id);
+        if (keptConnections.length !== web.connections.length) {
+          // incident connection removal is part of this undo step
+        }
+        set((st) => ({
+          factionWebs: (st.factionWebs ?? []).map((w) => w.id !== web.id ? w : {
+            ...w,
+            factions: keptFactions,
+            connections: keptConnections,
+          }),
+          projects: touchProject(st.projects, web.projectId),
+        }));
+      },
+
+      addConnection(webId, fromId, toId) {
+        const web = (get().factionWebs ?? []).find((w) => w.id === webId);
+        if (!web) return null;
+        if (fromId === toId) return null;
+        if (web.factions.some((f) => f.id === fromId) === false) return null;
+        if (web.factions.some((f) => f.id === toId) === false) return null;
+        const dup = web.connections.some(
+          (c) => (c.fromId === fromId && c.toId === toId) || (c.fromId === toId && c.toId === fromId),
+        );
+        if (dup) return null;
+        get().pushFWHistory(webId);
+        const conn: FactionConnection = { id: newId("conn"), fromId, toId, type: "neutral" };
+        set((s) => ({
+          factionWebs: (s.factionWebs ?? []).map((w) =>
+            w.id === webId ? { ...w, connections: [...w.connections, conn] } : w),
+          projects: touchProject(s.projects, web.projectId),
+        }));
+        return conn;
+      },
+
+      setConnectionType(id, type) {
+        const s = get();
+        const web = (s.factionWebs ?? []).find((w) => w.connections.some((c) => c.id === id));
+        if (!web) return;
+        get().pushFWHistory(web.id);
+        set((st) => ({
+          factionWebs: (st.factionWebs ?? []).map((w) => w.id !== web.id ? w : {
+            ...w,
+            connections: w.connections.map((c) => (c.id === id ? { ...c, type } : c)),
+          }),
+          projects: touchProject(st.projects, web.projectId),
+        }));
+      },
+
+      removeConnection(id) {
+        const s = get();
+        const web = (s.factionWebs ?? []).find((w) => w.connections.some((c) => c.id === id));
+        if (!web) return;
+        get().pushFWHistory(web.id);
+        set((st) => ({
+          factionWebs: (st.factionWebs ?? []).map((w) => w.id !== web.id ? w : {
+            ...w,
+            connections: w.connections.filter((c) => c.id !== id),
+          }),
+          projects: touchProject(st.projects, web.projectId),
+        }));
+      },
+
+      setWebNotes(webId, notes) {
+        const web = (get().factionWebs ?? []).find((w) => w.id === webId);
+        if (!web) return;
+        set((st) => ({
+          factionWebs: (st.factionWebs ?? []).map((w) => (w.id === webId ? { ...w, notes } : w)),
+          projects: touchProject(st.projects, web.projectId),
+        }));
+      },
+
+      pushFWHistory(webId) {
+        set((st) => {
+          const web = (st.factionWebs ?? []).find((w) => w.id === webId);
+          if (!web) return {};
+          const key = fwKey(webId);
+          const h = (st.histories[key] as FactionWebHistory | undefined) ?? { undo: [], redo: [] };
+          const undo = [...h.undo, cloneFWSnapshot(web)];
+          if (undo.length > HISTORY_CAP) undo.shift();
+          const entry: FactionWebHistory = { undo, redo: [] };
+          return { histories: { ...st.histories, [key]: entry } };
+        });
+      },
+
+      undoFW(webId) {
+        set((st) => {
+          const key = fwKey(webId);
+          const h = st.histories[key] as FactionWebHistory | undefined;
+          const web = (st.factionWebs ?? []).find((w) => w.id === webId);
+          if (!h || h.undo.length === 0 || !web) return {};
+          const snap = h.undo[h.undo.length - 1];
+          const entry: FactionWebHistory = {
+            undo: h.undo.slice(0, -1),
+            redo: [...h.redo, cloneFWSnapshot(web)],
+          };
+          return {
+            histories: { ...st.histories, [key]: entry },
+            factionWebs: (st.factionWebs ?? []).map((w) =>
+              w.id === webId
+                ? { ...w, factions: snap.factions.map((f) => ({ ...f })), connections: snap.connections.map((c) => ({ ...c })) }
+                : w),
+          };
+        });
+      },
+
+      redoFW(webId) {
+        set((st) => {
+          const key = fwKey(webId);
+          const h = st.histories[key] as FactionWebHistory | undefined;
+          const web = (st.factionWebs ?? []).find((w) => w.id === webId);
+          if (!h || h.redo.length === 0 || !web) return {};
+          const snap = h.redo[h.redo.length - 1];
+          const entry: FactionWebHistory = {
+            undo: [...h.undo, cloneFWSnapshot(web)],
+            redo: h.redo.slice(0, -1),
+          };
+          return {
+            histories: { ...st.histories, [key]: entry },
+            factionWebs: (st.factionWebs ?? []).map((w) =>
+              w.id === webId
+                ? { ...w, factions: snap.factions.map((f) => ({ ...f })), connections: snap.connections.map((c) => ({ ...c })) }
+                : w),
+          };
+        });
+      },
+
       pushBLHistory(bloodlineId) {
         set((st) => {
           const bloodline = st.bloodlines.find((b) => b.id === bloodlineId);
@@ -1075,6 +1318,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           manuscripts: s.manuscripts,
           images: s.images,
           bloodlines: s.bloodlines,
+          factionWebs: s.factionWebs,
           seedFlag: s.seedFlag,
         };
       },

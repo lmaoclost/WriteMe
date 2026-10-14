@@ -1,6 +1,7 @@
 import type {
   ProjectData, WorldEntry, Atlas, Manuscript, Region, Pin, Project,
   Bloodline, BloodlinePerson, BloodlineHouse, BloodlineTitle, BloodlineTenure,
+  FactionWeb, Faction, FactionConnection,
 } from "../domain/types";
 import { ENTRY_CATEGORIES, PIN_TYPES } from "../domain/types";
 
@@ -88,6 +89,27 @@ const isBloodlineHouse = (v: unknown): v is BloodlineHouse => {
     && isBool(h.isMainBranch) && isBool(h.isMonarch) && optionalStr(h.subtitle);
 };
 
+const CONNECTION_TYPES: readonly string[] = ["ally", "rival", "vassal", "trade", "neutral"];
+
+const isFaction = (v: unknown): v is Faction => {
+  const f = v as Faction;
+  return !!f && isStr(f.id) && isNum(f.x) && isNum(f.y) && isStr(f.name) && isStr(f.color)
+    && optionalStr(f.leader) && optionalStr(f.territory) && optionalStr(f.goals) && optionalStr(f.description);
+};
+
+const isFactionConnection = (v: unknown): v is FactionConnection => {
+  const c = v as FactionConnection;
+  return !!c && isStr(c.id) && isStr(c.fromId) && isStr(c.toId) && (CONNECTION_TYPES as readonly string[]).includes(c.type);
+};
+
+const isFactionWeb = (v: unknown): v is FactionWeb => {
+  const w = v as FactionWeb;
+  return !!w && isStr(w.id) && isStr(w.projectId) && isStr(w.name)
+    && isArr(w.factions) && w.factions.every(isFaction)
+    && isArr(w.connections) && w.connections.every(isFactionConnection)
+    && isStr(w.notes);
+};
+
 const isBloodline = (v: unknown): v is Bloodline => {
   const b = v as Bloodline;
   return !!b && isStr(b.id) && isStr(b.projectId) && isStr(b.name)
@@ -104,12 +126,14 @@ export function validateProjectData(v: unknown): boolean {
     && isArr(d.manuscripts) && d.manuscripts.every(isManuscript)
     && !!d.images && Object.values(d.images).every(isStr)
     && (d.bloodlines === undefined
-      || (isArr(d.bloodlines) && d.bloodlines.every(isBloodline)));
+      || (isArr(d.bloodlines) && d.bloodlines.every(isBloodline)))
+    && (d.factionWebs === undefined
+      || (isArr(d.factionWebs) && d.factionWebs.every(isFactionWeb)));
 }
 
 /** Fresh shape: bloodlines is optional in the schema but a fresh state always carries []. */
 export function emptyProjectData(): ProjectData & { bloodlines: Bloodline[] } {
-  return { projects: [], entries: [], atlases: [], manuscripts: [], images: {}, bloodlines: [] };
+  return { projects: [], entries: [], atlases: [], manuscripts: [], images: {}, bloodlines: [], factionWebs: [] };
 }
 
 export function serialize(data: ProjectData): string {
@@ -134,5 +158,6 @@ export function parseExport(text: string): ProjectData {
     manuscripts: d.manuscripts,
     images: d.images,
     bloodlines: d.bloodlines ?? [],
+    factionWebs: d.factionWebs ?? [],
   };
 }

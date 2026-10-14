@@ -116,6 +116,36 @@ export interface Bloodline {
   notes: string;
 }
 
+export type ConnectionType = "ally" | "rival" | "vassal" | "trade" | "neutral";
+
+export type Faction = {
+  id: Id;
+  x: number;
+  y: number;
+  name: string;
+  leader?: string;
+  territory?: string;
+  goals?: string;
+  description?: string;
+  color: string;
+};
+
+export type FactionConnection = {
+  id: Id;
+  fromId: Id;
+  toId: Id;
+  type: ConnectionType;
+};
+
+export type FactionWeb = {
+  id: Id;
+  projectId: Id;
+  name: string;
+  factions: Faction[];
+  connections: FactionConnection[];
+  notes: string;
+};
+
 export interface ProjectData {
   projects: Project[];
   entries: WorldEntry[];
@@ -123,6 +153,7 @@ export interface ProjectData {
   manuscripts: Manuscript[];
   images: Record<string, string>;
   bloodlines?: Bloodline[];
+  factionWebs?: FactionWeb[];
 }
 
 export const ENTRY_CATEGORIES: readonly EntryCategory[] = [
