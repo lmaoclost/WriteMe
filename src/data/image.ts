@@ -18,7 +18,7 @@ async function fileHasAlpha(file: File, w: number, h: number): Promise<boolean> 
   const probeBitmap = await createImageBitmap(file);
   try {
     const probe = document.createElement("canvas");
-    const { w: pw, h: ph } = pickTargetSize(w, h, 1);
+    const { w: pw, h: ph } = pickTargetSize(w, h, 256);
     probe.width = pw;
     probe.height = ph;
     const ctx = probe.getContext("2d");
@@ -41,9 +41,9 @@ export async function fileToDataUrl(
 ): Promise<{ dataUrl: string; keptPng: boolean }> {
   const bitmap = await createImageBitmap(file);
   try {
-    const { w, h, factor } = pickTargetSize(bitmap.width, bitmap.height, cap);
+    const { w, h } = pickTargetSize(bitmap.width, bitmap.height, cap);
     const hasAlpha = await fileHasAlpha(file, bitmap.width, bitmap.height);
-    const keptPng = factor === 1 && shouldKeepPng(file.type, hasAlpha);
+    const keptPng = shouldKeepPng(file.type, hasAlpha);
     const canvas = document.createElement("canvas");
     canvas.width = w;
     canvas.height = h;
