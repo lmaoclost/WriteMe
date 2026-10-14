@@ -3,7 +3,7 @@ import type { Chapter } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { renderMarkdown } from "../entries/markdown";
-import { countWords } from "./ChapterList";
+import { countWords, formatWords } from "./ChapterList";
 
 const CONFIRM_RESET_MS = 3000;
 
@@ -26,15 +26,6 @@ export function ChapterEditor({ chapter, headingRef, onDeleted }: ChapterEditorP
   }, [chapter.id]);
   const headingDraft = useDebouncedDraft(chapter.heading, commitHeading);
   const bodyDraft = useDebouncedDraft(chapter.content, commitBody);
-
-  // Flush the drafts that belong to the CURRENT chapter before going away —
-  // no lost keystroke (the parent also remounts this view per chapter id).
-  useEffect(() => {
-    return () => {
-      headingDraft.flush();
-      bodyDraft.flush();
-    };
-  }, [chapter.id]);
 
   useEffect(() => () => window.clearTimeout(confirmTimerRef.current), []);
 
@@ -107,7 +98,7 @@ export function ChapterEditor({ chapter, headingRef, onDeleted }: ChapterEditorP
         <div className="md-view" dangerouslySetInnerHTML={{ __html: renderMarkdown(chapter.content) }} />
       )}
       <footer className="book-footer">
-        <span className="book-words">{words} palavras</span>
+        <span className="book-words">{formatWords(words)}</span>
         <button
           type="button"
           className={"book-delete" + (armed ? " armed" : "")}

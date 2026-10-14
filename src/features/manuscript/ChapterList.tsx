@@ -4,6 +4,11 @@ import type { Chapter } from "../../domain/types";
 export const countWords = (content: string): number =>
   content.trim().split(/\s+/).filter(Boolean).length;
 
+export const formatWords = (words: number): string => {
+  if (words === 0) return "sem palavras";
+  return words === 1 ? "1 palavra" : `${words} palavras`;
+};
+
 export interface ChapterListProps {
   chapters: Chapter[];
   selectedId: string | null;
@@ -47,7 +52,7 @@ export function ChapterList({ chapters, selectedId, onSelect, onMove, onCreate }
                   onClick={() => onSelect(chapter.id)}
                 >
                   <span className="book-ch-heading">{chapter.heading}</span>
-                  <span className="book-ch-words">{words} palavras</span>
+                  <span className="book-ch-words">{formatWords(words)}</span>
                 </button>
               </li>
             );

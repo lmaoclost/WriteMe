@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppRouter } from "../../app/router";
 import { useScriptorium } from "../../data/store";
 import type { EntryCategory } from "../../domain/types";
-import { PlaceholderPage } from "../workspace/PlaceholderPage";
 
 type EntrySpec = { title: string; category: EntryCategory; body?: string };
 
@@ -287,10 +286,5 @@ describe("entries route wiring", () => {
     render(codexRoute(projectId));
     expect(screen.getByRole("button", { name: /nova entrada/i })).toBeInTheDocument();
     expect(screen.queryByText(/sub-projeto 3/i)).not.toBeInTheDocument();
-  });
-
-  it("placeholder no longer renders for the entries section", () => {
-    const { container } = render(<PlaceholderPage section="entries" />);
-    expect(container).toBeEmptyDOMElement();
   });
 });

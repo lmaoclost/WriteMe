@@ -241,3 +241,19 @@
   .book-columns { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
   .book-chapters { border-right: 0; border-bottom: 1px solid var(--line); }
 }
+
+/* Print dialog: only the book renders — chrome (rail/panels/headers) hides. */
+.print-book {
+  display: none;
+}
+
+@media print {
+  nav, aside, header, .book-chapters, .atlas-panels { display: none !important; }
+  body { background: #fff; }
+  .print-book {
+    display: block;
+    color: #000;
+    background: #fff;
+  }
+  .print-book h1 { font-size: 24pt; }
+}

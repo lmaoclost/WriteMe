@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppRouter } from "../../app/router";
 import { useScriptorium } from "../../data/store";
 import type { Manuscript } from "../../domain/types";
-import { PlaceholderPage } from "../workspace/PlaceholderPage";
 
 type BookSpec = {
   title?: string;
@@ -51,7 +50,7 @@ function manuscriptRoute(projectId: string) {
 function rowHeadings() {
   const list = screen.getByRole("list", { name: "Capítulos" });
   return within(list)
-    .getAllByRole("button", { name: /palavras/ })
+    .getAllByRole("button", { name: /palavra/ })
     .map((row) => row.querySelector(".book-ch-heading")?.textContent);
 }
 
@@ -72,11 +71,6 @@ describe("ManuscriptPage books", () => {
     render(manuscriptRoute(projectId));
     expect(screen.getByRole("button", { name: "Novo livro" })).toBeInTheDocument();
     expect(screen.queryByText(/sub-projeto 4/i)).not.toBeInTheDocument();
-  });
-
-  it("placeholder no longer renders for the manuscript section", () => {
-    const { container } = render(<PlaceholderPage section="manuscript" />);
-    expect(container).toBeEmptyDOMElement();
   });
 
   it("shows the empty-state copy and creates the first book", () => {
@@ -331,8 +325,8 @@ describe("ManuscriptPage chapters", () => {
     });
     expect(chapterByHeading("Dois")?.content).toBe("");
     const list = screen.getByRole("list", { name: "Capítulos" });
-    expect(within(list).getAllByRole("button", { name: /palavras/ })
-      .some((row) => row.textContent?.includes("1 palavras"))).toBe(true);
+    expect(within(list).getAllByRole("button", { name: /palavra/ })
+      .some((row) => row.textContent?.includes("1 palavra"))).toBe(true);
     vi.useRealTimers();
   });
 
