@@ -275,6 +275,19 @@ describe("Stage transform", () => {
     expect(cy).toBe(49);
   });
 
+  it("click after a real drag (>5px) is suppressed; a fresh down/up still clicks", () => {
+    const onStageClick = vi.fn();
+    const m = mountStage({ onStageClick });
+    loadMapImage(m.container);
+    firePointer(m.stageEl, "pointerdown", { pointerId: 3, clientX: 100, clientY: 100, button: 0, pointerType: "mouse" });
+    firePointer(m.stageEl, "pointermove", { pointerId: 3, clientX: 160, clientY: 100, pointerType: "mouse" });
+    firePointer(m.stageEl, "pointerup", { pointerId: 3, clientX: 160, clientY: 100, button: 0, pointerType: "mouse" });
+    expect(onStageClick).not.toHaveBeenCalled();
+    firePointer(m.stageEl, "pointerdown", { pointerId: 3, clientX: 100, clientY: 100, button: 0, pointerType: "mouse" });
+    firePointer(m.stageEl, "pointerup", { pointerId: 3, clientX: 100, clientY: 100, button: 0, pointerType: "mouse" });
+    expect(onStageClick).toHaveBeenCalledTimes(1);
+  });
+
   it("touch pinch scales by distance ratio around the midpoint", () => {
     const m = mountStage();
     loadMapImage(m.container);
