@@ -1,0 +1,19 @@
+.stage {
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+  background: var(--ink);
+  cursor: grab;
+}
+.stage.dragging { cursor: grabbing; }
+.stage-content { position: absolute; transform-origin: 0 0; }
+.stage-map {
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.stage-overlay {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
