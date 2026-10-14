@@ -19,5 +19,5 @@ localStorage (`scriptorium.v1`), com backup automático caso o storage corrompa 
 ## Arquitetura (resumo)
 
 - Estado global com zustand + middleware persist, chave `scriptorium.v1` no localStorage.
-- Rotas com React Router: `/` (biblioteca), `/project/:id` (workspace) e placeholders de atlas/entries/manuscript.
+- Rotas com React Router: `/` (biblioteca), `/p/:projectId` (workspace: overview, atlas, entries, manuscript).
 - Organização por features: `atlas/`, `entries/`, `manuscript/` planejados como sub-projetos 2–4 da fundação.

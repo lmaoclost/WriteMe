@@ -18,7 +18,7 @@ export function backupCorruptRaw(raw: string): boolean {
   }
 }
 
-type PersistedState = ProjectData & { seedFlag: boolean };
+export type PersistedState = ProjectData & { seedFlag: boolean };
 
 interface PersistedDoc {
   state?: unknown;

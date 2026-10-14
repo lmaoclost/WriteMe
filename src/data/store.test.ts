@@ -67,7 +67,36 @@ describe("project CRUD", () => {
     expect(s.atlases).toHaveLength(1);
     expect(s.manuscripts).toHaveLength(1);
     expect(s.seedFlag).toBe(true);
-    expect(s.hasSeed()).toBe(true);
+  });
+});
+
+describe("corrupt recovery toast (spec §6)", () => {
+  it("pushes an info toast on hydrate when storage opened empty over a corrupt backup", () => {
+    localStorage.setItem(STORE_KEY, "{not json at all");
+    act(() => void useScriptorium.persist.rehydrate());
+    const toasts = useScriptorium.getState().toasts;
+    expect(toasts).toHaveLength(1);
+    expect(toasts[0].kind).toBe("info");
+    expect(toasts[0].message).toBe("Dados corrompidos foram preservados em backup; a app abriu vazia.");
+  });
+  it("does not toast on hydrate with clean storage", () => {
+    localStorage.removeItem(STORE_KEY);
+    act(() => void useScriptorium.persist.rehydrate());
+    expect(useScriptorium.getState().toasts).toHaveLength(0);
+  });
+  it("does not toast on hydrate when restored data is non-empty", () => {
+    localStorage.clear();
+    const doc = {
+      state: {
+        projects: [{ id: "prj_a", name: "X", description: "", createdAt: 1, updatedAt: 1 }],
+        entries: [], atlases: [], manuscripts: [], images: {}, seedFlag: false,
+      },
+      version: 1,
+    };
+    localStorage.setItem(STORE_KEY, JSON.stringify(doc));
+    localStorage.setItem("scriptorium.corrupt.2026-01-01T00:00:00.000Z", "{old");
+    act(() => void useScriptorium.persist.rehydrate());
+    expect(useScriptorium.getState().toasts).toHaveLength(0);
   });
 });
 

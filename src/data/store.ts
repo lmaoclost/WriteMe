@@ -4,14 +4,15 @@ import type { ProjectData, Project } from "../domain/types";
 import { newId } from "../domain/id";
 import { emptyProjectData, serialize, parseExport } from "./schema";
 import { seedDemoProject } from "./seed";
-import { STORE_KEY, localStoragePersistence, wipeStore } from "./storage";
+import { STORE_KEY, localStoragePersistence, wipeStore, storageHealth, PersistedState } from "./storage";
 
 export type ToastKind = "info" | "error" | "success";
 export interface Toast { id: string; kind: ToastKind; message: string; }
 
 export type ImageKind = "cover" | "entry" | "map";
 
-type PersistedState = ProjectData & { seedFlag: boolean };
+export const CORRUPTION_TOAST = "Dados corrompidos foram preservados em backup; a app abriu vazia.";
+export const CORRUPTION_TOAST_KIND: ToastKind = "info";
 
 interface ScriptoriumState extends ProjectData {
   toasts: Toast[];
@@ -24,7 +25,6 @@ interface ScriptoriumState extends ProjectData {
   removeImage(key: string): void;
   pushToast(kind: ToastKind, message: string): string;
   dismissToast(id: string): void;
-  hasSeed(): boolean;
   seedDemo(): string | null;
   exportData(): string;
   importData(text: string): { ok: true } | { ok: false; error: string };
@@ -106,10 +106,6 @@ export const useScriptorium = create<ScriptoriumState>()(
         set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
       },
 
-      hasSeed() {
-        return get().seedFlag;
-      },
-
       seedDemo() {
         const demo = seedDemoProject();
         set((s) => ({
@@ -155,6 +151,18 @@ export const useScriptorium = create<ScriptoriumState>()(
         images: s.images,
         seedFlag: s.seedFlag,
       }),
+      onRehydrateStorage: () => (state, error) => {
+        const recoveringCorruption = !!state && !error
+          && state.projects.length === 0
+          && state.entries.length === 0
+          && state.atlases.length === 0
+          && state.manuscripts.length === 0
+          && Object.keys(state.images).length === 0
+          && storageHealth().corruptBackups > 0;
+        if (recoveringCorruption) {
+          state.pushToast(CORRUPTION_TOAST_KIND, CORRUPTION_TOAST);
+        }
+      },
     },
   ),
 );
@@ -172,6 +180,3 @@ export const selectCounts = (projectId: string) => (s: ScriptoriumState): Projec
   chapters: s.manuscripts.filter((m) => m.projectId === projectId)
     .reduce((acc, m) => acc + m.chapters.length, 0),
 });
-
-export const findProjectImage = (s: ProjectData, key?: string): string | undefined =>
-  key ? s.images[key] : undefined;
