@@ -1,0 +1,25 @@
+.library { max-width: 1080px; margin: 0 auto; padding: 48px 24px; }
+.library-head { margin-bottom: 28px; display: grid; gap: 8px; justify-items: start; }
+.library-head h1 { font-size: 40px; color: var(--gold); }
+.library-sub { color: var(--slate); margin: 0; }
+.empty { border: 1px dashed var(--line); border-radius: 8px; padding: 42px; text-align: center; color: var(--parchment-dim); }
+.empty-hint { color: var(--slate); font-size: 14px; }
+.library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.project-card {
+  position: relative; background: var(--night); border: 1px solid var(--line);
+  border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; min-height: 120px;
+}
+.project-card:hover { border-color: var(--gold-dim); }
+.project-link { color: inherit; text-decoration: none; padding: 16px; display: grid; gap: 6px; }
+.project-cover { width: 100%; height: 120px; object-fit: cover; }
+.project-name { font-size: 20px; }
+.project-desc { color: var(--slate); font-size: 13px; margin: 0; }
+.project-delete {
+  position: absolute; top: 8px; right: 8px; background: var(--ink);
+  border: 1px solid var(--line); color: var(--slate); border-radius: 4px;
+  width: 26px; height: 26px; font-size: 12px;
+}
+.project-delete:hover { color: var(--ember); border-color: var(--ember); }
+.form-stack { display: grid; gap: 12px; }
+.form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+.modal-warning { color: var(--parchment-dim); }
