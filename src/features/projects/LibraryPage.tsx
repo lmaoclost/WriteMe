@@ -53,7 +53,7 @@ export function LibraryPage() {
               <h2 className="project-name">{p.name}</h2>
               {p.description && <p className="project-desc">{p.description}</p>}
             </Link>
-            <button title="Excluir projeto" className="project-delete" onClick={() => setToDelete(p.id)}>
+            <button title="Excluir projeto" aria-label="Excluir projeto" className="project-delete" onClick={() => setToDelete(p.id)}>
               ✕
             </button>
           </article>

@@ -59,6 +59,8 @@
 }
 .toast-dismiss { background: none; border: 0; color: var(--slate); font-size: 12px; }
 .toast-dismiss:hover { color: var(--parchment); }
+.form-stack { display: grid; gap: 12px; }
+.form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
 .seal {
   display: inline-grid; place-items: center;
   width: 40px; height: 40px; border-radius: 50%;

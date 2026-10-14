@@ -20,6 +20,4 @@
   width: 26px; height: 26px; font-size: 12px;
 }
 .project-delete:hover { color: var(--ember); border-color: var(--ember); }
-.form-stack { display: grid; gap: 12px; }
-.form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
 .modal-warning { color: var(--parchment-dim); }
