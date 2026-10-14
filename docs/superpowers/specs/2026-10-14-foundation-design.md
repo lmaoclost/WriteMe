@@ -1,5 +1,7 @@
 # Scriptorium — Foundation Design (sub-projeto 1)
 
+> Status 2026-10-14: Fundação implementada (tasks 1–10).
+
 Data: 2026-10-14
 Escopo: implementação local em React. Este documento cobre o **Foundation** — sub-sistema 1 de 5. O app inteiro foi decomposto em: (1) Foundation, (2) Atlas, (3) Entries/Lore, (4) Manuscript, (5) Extras (timeline, bloodline, factions, calendar).
 
