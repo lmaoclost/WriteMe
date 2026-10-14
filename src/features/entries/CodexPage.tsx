@@ -72,7 +72,7 @@ export function CodexPage({ projectId }: { projectId: string }) {
       />
       <section className="codex-main">
         {selectedEntry
-          ? <EntryView entry={selectedEntry} titleRef={titleRef} onDeleted={onEntryDeleted} onSelectEntry={setSelectedId} />
+          ? <EntryView key={selectedEntry.id} entry={selectedEntry} titleRef={titleRef} onDeleted={onEntryDeleted} onSelectEntry={setSelectedId} />
           : null}
       </section>
     </div>

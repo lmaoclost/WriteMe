@@ -242,6 +242,26 @@ describe("CodexPage", () => {
     expect(entry.body).toBe("Torres de pedra.");
   });
 
+  it("does not leak a dirty draft into an entry with the same defaults", () => {
+    vi.useFakeTimers();
+    const projectId = seedProject([
+      { title: "Sem título", category: "lore" },
+      { title: "Sem título", category: "lore" },
+    ]);
+    render(codexRoute(projectId));
+    const body = screen.getByLabelText("Conteúdo");
+    fireEvent.change(body, { target: { value: "abc" } });
+    fireEvent.click(screen.getAllByRole("button", { name: "Sem título" })[1]);
+    expect(screen.getByLabelText("Conteúdo")).toHaveValue("");
+    const [a, b] = projectEntries(projectId);
+    expect(a.body).toBe("abc");
+    expect(b.body).toBe("");
+    act(() => { vi.advanceTimersByTime(300); });
+    expect(a.body).toBe("abc");
+    expect(b.body).toBe("");
+    vi.useRealTimers();
+  });
+
   it("switches the right panel when another entry is selected", () => {
     const projectId = seedProject([
       { title: "Cidade de Vellmora", category: "place" },

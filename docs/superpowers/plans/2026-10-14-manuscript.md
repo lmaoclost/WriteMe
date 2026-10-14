@@ -30,7 +30,7 @@
 - Test: `src/ui/useDebouncedDraft.test.tsx`, `src/data/store-manuscript.test.ts`
 
 **Interfaces:**
-- Produces: hook `useDebouncedDraft(value, onCommit, delay = 300): { draft, setDraft, flush }` — single timer, cleanup on unmount (flush), blur flush; store actions `addManuscript(projectId, title?) → Manuscript` (title default "Livro sem título", author ""), `renameManuscript`, `setManuscriptAuthor`, `deleteManuscript`, `addChapter(manuscriptId, heading?) → Chapter` (order = max+1), `updateChapter(id, patch)` (clone arrays/strings), `deleteChapter(id)`, `moveChapter(id, dir)` (swap with neighbor by order; first↑/last↓ no-op).
+- Produces: hook `useDebouncedDraft(value, onCommit, delay = 300): { draft, setDraft, flush }` — single timer, cleanup on unmount (flush), blur flush; store actions `addManuscript(projectId, title?) → Manuscript` (title default "Livro sem título", author ""), `renameManuscript`, `setManuscriptAuthor`, `deleteManuscript`, `addChapter(manuscriptId, heading?) → Chapter | null` (order = max+1; null for unknown manuscript), `updateChapter(id, patch)` (clone arrays/strings), `deleteChapter(id)`, `moveChapter(id, dir)` (swap with neighbor by order; first↑/last↓ no-op).
 
 - [ ] **Step 1:** RED both test files → implement hook + actions → GREEN + full gate → commit `feat(book): manuscript actions and debounced draft hook`
 
