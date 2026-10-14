@@ -75,3 +75,13 @@ Spec status note; browser smoke (create book → chapters → export buttons vis
 - Spec §1–§8 coverage: store (T1), page/editor (T2), export (T3), a11y/copy (T2), errors (T3), testes (T1–T3).
 - Cross-feature imports documented (renderMarkdown from entries/markdown.ts, useDebouncedDraft in src/ui).
 - Type consistency: Manuscript/Chapter names match domain; moveChapter(dir) signed.
+
+## Fix report (2026-10-14): path-browserify shim for epub deps
+
+Symptom: browser smoke on EPUB export threw `TypeError: _.extname is not a function` (console error); vitest/jsdom passed because jsdom never executes the bundled chunk path for `epub-gen-memory`.
+
+Root cause: a cjs dep in the `epub-gen-memory` chain (`ejs` path) does `require("path")` for the node builtin. Vite leaves an empty shim for bare `path`, so `path.extname` was undefined at runtime.
+
+Fix (controller ruling): `npm install path-browserify`; `vite.config.ts` maps the bare `path` import to `path-browserify` in both `resolve.alias` and `optimizeDeps.esbuildOptions.alias`.
+
+Verification: `npx vitest run src/features/manuscript` 28/28; full gate (tsc, eslint, vitest 341/341, build) clean. Build keeps the lazy chunk (`index-Duph8rLa.js`, 196.83 kB, contains the `epub-gen-memory` dynamic chunk and `path-browserify.extname`). `rg 'from "path"|require("path")' src` → no hits, src clean. Note: ejs's bare `fs` import stays browser-externalized (vite shim, empty module) — unused at runtime, same shim class, no action. Browser smoke still pending (controller re-check).
