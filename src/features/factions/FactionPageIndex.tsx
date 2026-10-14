@@ -26,7 +26,7 @@ export function FactionWebServicePage({ projectId }: { projectId: string }) {
       {mine.length === 0 ? (
         <div className="empty">
           <p>Nenhuma teia ainda.</p>
-          <p className="empty-hint">Começe pela primeira fração da teia.</p>
+          <p className="empty-hint">Adicione a primeira fração da teia.</p>
         </div>
       ) : (
         <div className="library-grid">
@@ -62,7 +62,7 @@ export function FactionWebServicePage({ projectId }: { projectId: string }) {
 
       {target ? (
         <Modal title={`Excluir "${target.name}"?`} onClose={() => setToDelete(null)}>
-          <p className="modal-warning">Remove fracões e relações. Sem voltar.</p>
+          <p className="modal-warning">Remove frações e relações. Sem voltar.</p>
           <div className="form-actions">
             <Button kind="danger" onClick={() => {
               useScriptorium.getState().deleteFactionWeb(target.id);
