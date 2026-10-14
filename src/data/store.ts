@@ -320,6 +320,7 @@ export const useScriptorium = create<ScriptoriumState>()(
 
       linkEntries(from, to) {
         const s = get();
+        if (from === to) return;
         const origin = s.entries.find((e) => e.id === from);
         if (!origin || !s.entries.some((e) => e.id === to) || origin.links.includes(to)) return;
         set((st) => ({

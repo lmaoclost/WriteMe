@@ -262,7 +262,7 @@ describe("EntryView — links", () => {
       { title: "Rio Sarnen" },
       { title: "Lei do Selo" },
     ]);
-    const [aldric, rio, lei] = entries;
+    const [aldric, rio] = entries;
     renderView(aldric);
     fireEvent.click(screen.getByRole("button", { name: "+ Vínculo" }));
     const search = screen.getByLabelText("Buscar entrada");
@@ -274,7 +274,6 @@ describe("EntryView — links", () => {
     expect(entryById(aldric.id).links).toEqual([rio.id]);
     expect(screen.queryByLabelText("Buscar entrada")).toBeNull();
     expect(screen.queryByRole("button", { name: "+ Vínculo" })).not.toBeNull();
-    void lei;
   });
 
   it("does not offer the current entry as its own link target", () => {
@@ -313,5 +312,53 @@ describe("EntryView — links", () => {
     fireEvent.click(screen.getByRole("button", { name: "Confirmar?" }));
     expect(onDeleted).toHaveBeenCalledWith(aldric.id);
     expect(entryById(rio.id).links).toEqual([]);
+  });
+});
+
+describe("EntryView — pickers close (Escape + outside click)", () => {
+  it("closes the codex image picker on Escape (document keydown)", () => {
+    const { entries } = seed([{ title: "Aldric", image: "data:image/jpeg;base64,VELHA" }]);
+    const [aldric] = entries;
+    renderView(aldric);
+    fireEvent.click(screen.getByRole("button", { name: "Imagem do códex" }));
+    expect(screen.getByRole("group", { name: "Imagens do códex" })).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("group", { name: "Imagens do códex" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Imagem do códex" })).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("closes the link chooser on Escape (document keydown)", () => {
+    const { entries } = seed([{ title: "Aldric" }, { title: "Rio Sarnen" }]);
+    const [aldric] = entries;
+    renderView(aldric);
+    fireEvent.click(screen.getByRole("button", { name: "+ Vínculo" }));
+    expect(screen.getByLabelText("Buscar entrada")).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByLabelText("Buscar entrada")).toBeNull();
+    expect(screen.getByRole("button", { name: "+ Vínculo" })).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("closes the codex image picker on outside click (backdrop pointerdown)", () => {
+    const { entries } = seed([{ title: "Aldric", image: "data:image/jpeg;base64,VELHA" }]);
+    const [aldric] = entries;
+    renderView(aldric);
+    fireEvent.click(screen.getByRole("button", { name: "Imagem do códex" }));
+    const backdrop = document.querySelector(".chooser-backdrop") as Element;
+    expect(backdrop).not.toBeNull();
+    fireEvent.pointerDown(backdrop);
+    expect(screen.queryByRole("group", { name: "Imagens do códex" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Imagem do códex" })).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("closes the link chooser on outside click (backdrop pointerdown)", () => {
+    const { entries } = seed([{ title: "Aldric" }, { title: "Rio Sarnen" }]);
+    const [aldric] = entries;
+    renderView(aldric);
+    fireEvent.click(screen.getByRole("button", { name: "+ Vínculo" }));
+    const backdrop = document.querySelector(".chooser-backdrop") as Element;
+    expect(backdrop).not.toBeNull();
+    fireEvent.pointerDown(backdrop);
+    expect(screen.queryByLabelText("Buscar entrada")).toBeNull();
+    expect(screen.getByRole("button", { name: "+ Vínculo" })).toHaveAttribute("aria-pressed", "false");
   });
 });

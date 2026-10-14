@@ -67,6 +67,25 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
 
   useEffect(() => () => window.clearTimeout(confirmTimerRef.current), []);
 
+  const pickersOpen = imagePickerOpen || linkPickerOpen;
+
+  useEffect(() => {
+    if (!pickersOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setImagePickerOpen(false);
+        setLinkPickerOpen(false);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [pickersOpen]);
+
+  const closePickers = () => {
+    setImagePickerOpen(false);
+    setLinkPickerOpen(false);
+  };
+
   const pushToast = (kind: "success" | "error", message: string) => {
     useScriptorium.getState().pushToast(kind, message);
   };
@@ -206,6 +225,9 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           </button>
         ) : null}
       </div>
+      {pickersOpen ? (
+        <div className="chooser-backdrop" aria-hidden="true" onPointerDown={closePickers} />
+      ) : null}
       {imagePickerOpen ? (
         <ImagePicker
           images={images}

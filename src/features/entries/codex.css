@@ -151,7 +151,6 @@
 }
 .codex-body:focus { border-color: var(--gold); outline: none; }
 .codex-body::placeholder { color: var(--slate); }
-.codex-view-actions { display: flex; justify-content: flex-end; }
 .codex-view-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .codex-view-actions.end { justify-content: flex-end; }
 .codex-mode {
@@ -317,6 +316,7 @@
 
 /* Link picker popover (reused) inside the codex view */
 .codex-links .link-picker { align-self: stretch; }
+.codex-imagelist, .codex-links .link-picker { position: relative; z-index: 30; }
 .link-picker .link-current {
   align-self: flex-start;
   font-size: 12px;
@@ -328,9 +328,6 @@
   text-align: left;
 }
 .link-picker .link-current:hover { text-decoration: underline; }
-
-/* Cover actions */
-.codex-cover-action input.visually-hidden { position: absolute; width: 1px; height: 1px; }
 
 .codex-delete {
   align-self: flex-start;

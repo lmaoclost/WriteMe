@@ -92,7 +92,7 @@ describe("Atlas → codex navigation", () => {
   it("keeps the picker open behavior: pick and unlink still work", () => {
     const f = seed();
     render(routesFor(f, <PinPanel pin={f.pin} entries={f.entries} onDelete={vi.fn()} />));
-    expect(() => screen.getByRole("button", { name: "Vincular entrada" })).not.toThrow();
+    expect(screen.getByRole("button", { name: "Vincular entrada" })).toBeInTheDocument();
     // Picker is closed: open it, pick another entry, panel writes entryId.
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: "Vincular entrada" }));
@@ -109,6 +109,6 @@ describe("Atlas → codex navigation", () => {
       fireEvent.click(screen.getByLabelText("Remover vínculo"));
     });
     expect(store().atlases[0].pins[0].entryId).toBeUndefined();
-    expect(() => screen.getByRole("button", { name: "Vincular entrada" })).not.toThrow();
+    expect(screen.getByRole("button", { name: "Vincular entrada" })).toBeInTheDocument();
   });
 });

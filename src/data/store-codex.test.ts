@@ -151,6 +151,13 @@ describe("linkEntries", () => {
     act(() => { store().linkEntries("ent_missing", a.id); });
     expect(store().entries.find((e) => e.id === a.id)?.links).toEqual([]);
   });
+  it("ignores a self-link", () => {
+    const project = makeProject();
+    let a!: WorldEntry;
+    act(() => { a = store().addEntry(project.id); });
+    act(() => { store().linkEntries(a.id, a.id); });
+    expect(store().entries.find((e) => e.id === a.id)?.links).toEqual([]);
+  });
   it("bumps project updatedAt", () => {
     const project = makeProject();
     let a!: WorldEntry;
