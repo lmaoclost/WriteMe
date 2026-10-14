@@ -118,12 +118,18 @@ export const useScriptorium = create<ScriptoriumState>()(
         if (project?.coverImageKey) imageKeys.add(project.coverImageKey);
         const images = { ...s.images };
         imageKeys.forEach((k) => { delete images[k]; });
+        const keptIds = new Set(s.atlases.filter((a) => a.projectId !== id).map((a) => a.id));
+        const histories: Record<string, AtlasHistory> = {};
+        for (const [key, value] of Object.entries(s.histories)) {
+          if (keptIds.has(key)) histories[key] = value;
+        }
         set({
           projects: keptProjects,
           entries: keptEntries,
           atlases: s.atlases.filter((a) => a.projectId !== id),
           manuscripts: s.manuscripts.filter((m) => m.projectId !== id),
           images,
+          histories,
         });
       },
 
@@ -172,7 +178,7 @@ export const useScriptorium = create<ScriptoriumState>()(
       importData(text) {
         try {
           const data = parseExport(text);
-          set({ ...data });
+          set({ ...data, histories: {} });
           return { ok: true as const };
         } catch (e) {
           return { ok: false as const, error: (e as Error).message };
@@ -289,11 +295,13 @@ export const useScriptorium = create<ScriptoriumState>()(
         if (patch.points
           && (patch.points.length < 3 || !isMeaningful(patch.points))) return;
         get().pushHistory(atlas.id);
+        const safe = { ...patch };
+        if (patch.points) safe.points = clonePoints(patch.points);
         set((st) => ({
           atlases: st.atlases.map((a) => ({
             ...a,
             regions: a.regions.map((r) =>
-              r.id === regionId ? { ...r, ...patch, id: r.id } : r),
+              r.id === regionId ? { ...r, ...safe, id: r.id } : r),
           })),
         }));
       },

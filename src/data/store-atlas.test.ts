@@ -299,3 +299,30 @@ describe("persistence boundary", () => {
     expect(raw.state.histories).toBeUndefined();
   });
 });
+
+describe("review fixes (I1/I2)", () => {
+  it("updateRegion deep-clones patch points: caller mutation leaves live state and history unchanged", () => {
+    const a = addAtlas();
+    const r = addRegionDirect(a.id, frame);
+    const patchPoints = [{ x: 0, y: 0 }, { x: 0.5, y: 0 }, { x: 0.5, y: 0.5 }, { x: 0, y: 0.5 }];
+    act(() => { store().updateRegion(r.id, { points: patchPoints }); });
+    expect(store().atlases[0].regions.find((x) => x.id === r.id)!.points).toEqual(patchPoints);
+    patchPoints[0].x = 99;
+    patchPoints[1].y = 0.99;
+    const live = store().atlases[0].regions.find((x) => x.id === r.id)!;
+    expect(live.points).toEqual([{ x: 0, y: 0 }, { x: 0.5, y: 0 }, { x: 0.5, y: 0.5 }, { x: 0, y: 0.5 }]);
+    const snap = store().histories[a.id].undo.at(-1)!.regions.find((x) => x.id === r.id)!;
+    expect(snap.points[0].x).toBe(0);
+    expect(snap.points[1].y).toBe(0);
+    act(() => { store().pushHistory(a.id); });
+    const snap2 = store().histories[a.id].undo.at(-1)!.regions.find((x) => x.id === r.id)!;
+    expect(snap2.points[0].x).toBe(0);
+  });
+  it("deleteAtlas drops the atlas history entry", () => {
+    const a = addAtlas();
+    addRegionDirect(a.id, frame);
+    expect(store().histories[a.id].undo.length).toBeGreaterThan(0);
+    act(() => { store().deleteAtlas(a.id); });
+    expect(store().histories[a.id]).toBeUndefined();
+  });
+});

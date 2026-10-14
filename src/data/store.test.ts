@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { act } from "@testing-library/react";
-import { useScriptorium } from "./store";
+import { useScriptorium, selectHistoryFlags } from "./store";
 import { localStoragePersistence, STORE_KEY } from "./storage";
 import type { Project } from "../domain/types";
 
@@ -56,6 +56,25 @@ describe("project CRUD", () => {
     expect(s.atlases).toHaveLength(0);
     expect(s.manuscripts).toHaveLength(0);
     expect(Object.keys(s.images)).toEqual(["k_other"]);
+  });
+  it("deleteProject drops history keys for the deleted project's atlases", () => {
+    let p!: Project;
+    act(() => { p = useScriptorium.getState().addProject("H"); });
+    act(() => {
+      useScriptorium.setState((st) => ({
+        ...st,
+        atlases: [
+          { id: "atl_1", projectId: p.id, name: "A", regions: [], pins: [] },
+          { id: "atl_keep", projectId: "prj_other", name: "B", regions: [], pins: [] },
+        ],
+        histories: {
+          atl_1: { undo: [{ regions: [], pins: [] }], redo: [] },
+          atl_keep: { undo: [{ regions: [], pins: [] }], redo: [] },
+        },
+      }));
+    });
+    act(() => { useScriptorium.getState().deleteProject(p.id); });
+    expect(Object.keys(useScriptorium.getState().histories)).toEqual(["atl_keep"]);
   });
   it("seedDemo materializes demo data, flips seedFlag, returns project id", () => {
     let id: string | null = null;
@@ -153,6 +172,25 @@ describe("persist + corruption", () => {
       expect(useScriptorium.getState().importData(json).ok).toBe(true);
     });
     expect(useScriptorium.getState().projects[0].name).toBe("Rt");
+  });
+  it("importData clears histories: same-id re-import cannot undo into replaced data", () => {
+    let p!: Project;
+    let atlasId = "";
+    let json = "";
+    act(() => {
+      p = useScriptorium.getState().addProject("Rt");
+      const a = useScriptorium.getState().addAtlas(p.id, "M");
+      atlasId = a.id;
+      useScriptorium.getState().addRegion(atlasId, {
+        points: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }],
+      });
+      json = useScriptorium.getState().exportData();
+    });
+    expect(selectHistoryFlags(atlasId)(useScriptorium.getState())).toEqual({ canUndo: true, canRedo: false });
+    expect(useScriptorium.getState().importData(json).ok).toBe(true);
+    const s = useScriptorium.getState();
+    expect(Object.keys(s.histories)).toHaveLength(0);
+    expect(selectHistoryFlags(atlasId)(s)).toEqual({ canUndo: false, canRedo: false });
   });
   it("resetAll wipes storage and state including seedFlag", () => {
     act(() => { useScriptorium.getState().addProject("R"); });
