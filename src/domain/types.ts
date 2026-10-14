@@ -69,12 +69,60 @@ export interface Manuscript {
   chapters: Chapter[];
 }
 
+export interface BloodlineTitle { title: string }
+
+export interface BloodlineTenure { label: string; from: string; to: string }
+
+/** Person of a genealogy canvas; coords are absolute canvas px (NOT normalized). */
+export interface BloodlinePerson {
+  id: Id;
+  x: number;
+  y: number;
+  name: string;
+  suffix?: string;
+  portraitKey?: string;
+  title?: string;
+  relationship?: string;
+  bio?: string;
+  birthDate?: string;
+  deathDate?: string;
+  additionalTitles: BloodlineTitle[];
+  tenures: BloodlineTenure[];
+  showBadge: boolean;
+  badgeText: string;
+  connectedTo?: Id;
+  siblingId?: Id;
+  partnerId?: Id;
+  birthOrder?: number;
+  isTwin: boolean;
+}
+
+export interface BloodlineHouse {
+  id: Id;
+  x: number;
+  y: number;
+  name: string;
+  subtitle?: string;
+  isMainBranch: boolean;
+  isMonarch: boolean;
+}
+
+export interface Bloodline {
+  id: Id;
+  projectId: Id;
+  name: string;
+  persons: BloodlinePerson[];
+  houses: BloodlineHouse[];
+  notes: string;
+}
+
 export interface ProjectData {
   projects: Project[];
   entries: WorldEntry[];
   atlases: Atlas[];
   manuscripts: Manuscript[];
   images: Record<string, string>;
+  bloodlines?: Bloodline[];
 }
 
 export const ENTRY_CATEGORIES: readonly EntryCategory[] = [

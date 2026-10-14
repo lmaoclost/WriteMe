@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { ProjectData, Project, Atlas, Region, Pin, PinType, WorldEntry, EntryCategory, Manuscript, Chapter } from "../domain/types";
+import type {
+  ProjectData, Project, Atlas, Region, Pin, PinType, WorldEntry, EntryCategory, Manuscript, Chapter,
+  Bloodline, BloodlinePerson, BloodlineHouse,
+} from "../domain/types";
 import { newId } from "../domain/id";
 import type { Pt } from "../domain/geometry";
 import { isMeaningful } from "../domain/geometry";
@@ -34,6 +37,18 @@ export interface AtlasHistory {
   redo: AtlasSnapshot[];
 }
 
+export interface BloodlineSnapshot {
+  persons: BloodlinePerson[];
+  houses: BloodlineHouse[];
+}
+
+export interface BloodlineHistory {
+  undo: BloodlineSnapshot[];
+  redo: BloodlineSnapshot[];
+}
+
+export type AnyHistory = AtlasHistory | BloodlineHistory;
+
 const clonePoints = (points: Pt[]): Pt[] => points.map((p) => ({ ...p }));
 const touchProject = (projects: readonly Project[], id: string): Project[] =>
   projects.map((p) => (p.id === id ? { ...p, updatedAt: Date.now() } : p));
@@ -49,10 +64,36 @@ const cloneSnapshot = (a: Atlas): AtlasSnapshot => ({
   pins: a.pins.map((p) => ({ ...p })),
 });
 
+/** `bl_<id>` keys keep bloodline history buckets in the same ephemeral `histories` record. */
+const blKey = (bloodlineId: string): string => `bl_${bloodlineId}`;
+
+const clonePerson = (p: BloodlinePerson): BloodlinePerson => ({
+  ...p,
+  additionalTitles: p.additionalTitles.map((t) => ({ ...t })),
+  tenures: p.tenures.map((t) => ({ ...t })),
+});
+
+const cloneBLSnapshot = (b: Bloodline): BloodlineSnapshot => ({
+  persons: b.persons.map(clonePerson),
+  houses: b.houses.map((h) => ({ ...h })),
+});
+
+/** Portrait keys live in the shared images map; a key is released only when nothing references it. */
+const imageReferenced = (
+  d: Pick<ProjectData, "projects" | "entries" | "atlases"> & { bloodlines: Bloodline[] },
+  key: string,
+): boolean =>
+  d.projects.some((p) => p.coverImageKey === key)
+  || d.entries.some((e) => e.imageKey === key)
+  || d.atlases.some((a) => a.mapImageKey === key)
+  || d.bloodlines.some((b) => b.persons.some((p) => p.portraitKey === key));
+
+/** Bloodlines are OPTIONAL in the schema but the store state always carries the array. */
 interface ScriptoriumState extends ProjectData {
+  bloodlines: Bloodline[];
   toasts: Toast[];
   seedFlag: boolean;
-  histories: Record<string, AtlasHistory>;
+  histories: Record<string, AnyHistory>;
 
   addProject(name: string, description?: string): Project;
   updateProject(id: string, patch: { name?: string; description?: string; coverImageKey?: string }): void;
@@ -99,6 +140,22 @@ interface ScriptoriumState extends ProjectData {
   pushHistory(atlasId: string): void;
   undo(atlasId: string): void;
   redo(atlasId: string): void;
+
+  addBloodline(projectId: string, name?: string): Bloodline;
+  renameBloodline(id: string, name: string): void;
+  deleteBloodline(id: string): void;
+  addPerson(bloodlineId: string, init?: { x?: number; y?: number; name?: string; portraitKey?: string }): BloodlinePerson | null;
+  updatePerson(id: string, patch: Partial<Omit<BloodlinePerson, "id">>): void;
+  movePerson(id: string, x: number, y: number): void;
+  deletePerson(id: string): void;
+  addHouse(bloodlineId: string, init?: { x?: number; y?: number; name?: string }): BloodlineHouse | null;
+  updateHouse(id: string, patch: Partial<Omit<BloodlineHouse, "id">>): void;
+  moveHouse(id: string, x: number, y: number): void;
+  deleteHouse(id: string): void;
+  setNotes(bloodlineId: string, notes: string): void;
+  pushBLHistory(bloodlineId: string): void;
+  undoBL(bloodlineId: string): void;
+  redoBL(bloodlineId: string): void;
 }
 
 export const useScriptorium = create<ScriptoriumState>()(
@@ -142,18 +199,33 @@ export const useScriptorium = create<ScriptoriumState>()(
         }
         const project = s.projects.find((p) => p.id === id);
         if (project?.coverImageKey) imageKeys.add(project.coverImageKey);
+        for (const b of s.bloodlines) {
+          if (b.projectId !== id) continue;
+          for (const p of b.persons) {
+            if (p.portraitKey) imageKeys.add(p.portraitKey);
+          }
+        }
+        const keptBloodlines = s.bloodlines.filter((b) => b.projectId !== id);
         const images = { ...s.images };
-        imageKeys.forEach((k) => { delete images[k]; });
+        for (const key of imageKeys) {
+          if (!imageReferenced({ projects: keptProjects, entries: keptEntries, atlases: s.atlases.filter((a) => a.projectId !== id), bloodlines: keptBloodlines }, key)) {
+            delete images[key];
+          }
+        }
         const keptIds = new Set(s.atlases.filter((a) => a.projectId !== id).map((a) => a.id));
-        const histories: Record<string, AtlasHistory> = {};
+        const keptBLIds = new Set(keptBloodlines.map((b) => b.id));
+        const histories: Record<string, AnyHistory> = {};
         for (const [key, value] of Object.entries(s.histories)) {
-          if (keptIds.has(key)) histories[key] = value;
+          const isAtlas = keptIds.has(key);
+          const isBloodlineKept = key.startsWith("bl_") && keptBLIds.has(key.slice(3));
+          if (isAtlas || isBloodlineKept) histories[key] = value;
         }
         set({
           projects: keptProjects,
           entries: keptEntries,
           atlases: s.atlases.filter((a) => a.projectId !== id),
           manuscripts: s.manuscripts.filter((m) => m.projectId !== id),
+          bloodlines: keptBloodlines,
           images,
           histories,
         });
@@ -197,8 +269,8 @@ export const useScriptorium = create<ScriptoriumState>()(
       },
 
       exportData() {
-        const { projects, entries, atlases, manuscripts, images } = get();
-        return serialize({ projects, entries, atlases, manuscripts, images });
+        const { projects, entries, atlases, manuscripts, images, bloodlines } = get();
+        return serialize({ projects, entries, atlases, manuscripts, images, bloodlines });
       },
 
       importData(text) {
@@ -666,27 +738,28 @@ export const useScriptorium = create<ScriptoriumState>()(
         set((st) => {
           const atlas = st.atlases.find((a) => a.id === atlasId);
           if (!atlas) return {};
-          const h = st.histories[atlasId] ?? { undo: [], redo: [] };
-          const undo = [...h.undo, cloneSnapshot(atlas)];
+          const h = st.histories[atlasId] as AtlasHistory | undefined;
+          const undo: AtlasSnapshot[] = [...(h?.undo ?? []), cloneSnapshot(atlas)];
           if (undo.length > HISTORY_CAP) undo.shift();
-          return { histories: { ...st.histories, [atlasId]: { undo, redo: [] } } };
+          const entry: AtlasHistory = { undo, redo: [] };
+          const histories: Record<string, AnyHistory> = { ...st.histories, [atlasId]: entry };
+          return { histories };
         });
       },
 
       undo(atlasId) {
         set((st) => {
-          const h = st.histories[atlasId];
+          const h = st.histories[atlasId] as AtlasHistory | undefined;
           const atlas = st.atlases.find((a) => a.id === atlasId);
           if (!h || h.undo.length === 0 || !atlas) return {};
           const snap = h.undo[h.undo.length - 1];
+          const entry: AtlasHistory = {
+            undo: h.undo.slice(0, -1),
+            redo: [...h.redo, cloneSnapshot(atlas)],
+          };
+          const histories: Record<string, AnyHistory> = { ...st.histories, [atlasId]: entry };
           return {
-            histories: {
-              ...st.histories,
-              [atlasId]: {
-                undo: h.undo.slice(0, -1),
-                redo: [...h.redo, cloneSnapshot(atlas)],
-              },
-            },
+            histories,
             atlases: st.atlases.map((a) =>
               a.id === atlasId
                 ? { ...a, regions: snap.regions.map((r) => ({ ...r, points: clonePoints(r.points) })), pins: snap.pins.map((p) => ({ ...p })) }
@@ -697,18 +770,17 @@ export const useScriptorium = create<ScriptoriumState>()(
 
       redo(atlasId) {
         set((st) => {
-          const h = st.histories[atlasId];
+          const h = st.histories[atlasId] as AtlasHistory | undefined;
           const atlas = st.atlases.find((a) => a.id === atlasId);
           if (!h || h.redo.length === 0 || !atlas) return {};
           const snap = h.redo[h.redo.length - 1];
+          const entry: AtlasHistory = {
+            undo: [...h.undo, cloneSnapshot(atlas)],
+            redo: h.redo.slice(0, -1),
+          };
+          const histories: Record<string, AnyHistory> = { ...st.histories, [atlasId]: entry };
           return {
-            histories: {
-              ...st.histories,
-              [atlasId]: {
-                undo: [...h.undo, cloneSnapshot(atlas)],
-                redo: h.redo.slice(0, -1),
-              },
-            },
+            histories,
             atlases: st.atlases.map((a) =>
               a.id === atlasId
                 ? { ...a, regions: snap.regions.map((r) => ({ ...r, points: clonePoints(r.points) })), pins: snap.pins.map((p) => ({ ...p })) }
@@ -716,11 +788,281 @@ export const useScriptorium = create<ScriptoriumState>()(
           };
         });
       },
+
+      addBloodline(projectId, name = "Linhagem sem título") {
+        const bloodline: Bloodline = {
+          id: newId("bl"),
+          projectId,
+          name,
+          persons: [],
+          houses: [],
+          notes: "",
+        };
+        set((s) => ({
+          bloodlines: [...s.bloodlines, bloodline],
+          projects: touchProject(s.projects, projectId),
+        }));
+        return bloodline;
+      },
+
+      renameBloodline(id, name) {
+        const s = get();
+        const bloodline = s.bloodlines.find((b) => b.id === id);
+        if (!bloodline) return;
+        set((st) => ({
+          bloodlines: st.bloodlines.map((b) => (b.id === id ? { ...b, name } : b)),
+          projects: touchProject(st.projects, bloodline.projectId),
+        }));
+      },
+
+      deleteBloodline(id) {
+        const s = get();
+        const bloodline = s.bloodlines.find((b) => b.id === id);
+        if (!bloodline) return;
+        const kept = s.bloodlines.filter((b) => b.id !== id);
+        if (kept.length === s.bloodlines.length) return;
+        const images = { ...s.images };
+        for (const p of bloodline.persons) {
+          if (p.portraitKey
+            && !imageReferenced({ projects: s.projects, entries: s.entries, atlases: s.atlases, bloodlines: kept }, p.portraitKey)) {
+            delete images[p.portraitKey];
+          }
+        }
+        const histories = { ...s.histories };
+        delete histories[blKey(id)];
+        set({
+          bloodlines: kept,
+          images,
+          histories,
+          projects: touchProject(s.projects, bloodline.projectId),
+        });
+      },
+
+      addPerson(bloodlineId, init) {
+        const bloodline = get().bloodlines.find((b) => b.id === bloodlineId);
+        if (!bloodline) return null;
+        get().pushBLHistory(bloodlineId);
+        const person: BloodlinePerson = {
+          id: newId("per"),
+          x: init?.x ?? 4000,
+          y: init?.y ?? 4000,
+          name: init?.name ?? "Sem nome",
+          additionalTitles: [],
+          tenures: [],
+          showBadge: false,
+          badgeText: "",
+          isTwin: false,
+          ...(init?.portraitKey ? { portraitKey: init.portraitKey } : {}),
+        };
+        set((s) => ({
+          bloodlines: s.bloodlines.map((b) =>
+            b.id === bloodlineId ? { ...b, persons: [...b.persons, person] } : b),
+          projects: touchProject(s.projects, bloodline.projectId),
+        }));
+        return person;
+      },
+
+      updatePerson(id, patch) {
+        const s = get();
+        const bloodline = s.bloodlines.find((b) => b.persons.some((p) => p.id === id));
+        if (!bloodline) return;
+        const safe: Partial<BloodlinePerson> = { ...patch };
+        if (patch.additionalTitles) safe.additionalTitles = patch.additionalTitles.map((t) => ({ ...t }));
+        if (patch.tenures) safe.tenures = patch.tenures.map((t) => ({ ...t }));
+        get().pushBLHistory(bloodline.id);
+        set((st) => ({
+          bloodlines: st.bloodlines.map((b) => b.id !== bloodline.id ? b : {
+            ...b,
+            persons: b.persons.map((p) => (p.id === id ? { ...p, ...safe, id: p.id } : p)),
+          }),
+          projects: touchProject(st.projects, bloodline.projectId),
+        }));
+      },
+
+      /** Moves a person without pushing history: the UI calls pushBLHistory once
+       *  per drag, on pointerdown — PinLayer pattern. */
+      movePerson(id, x, y) {
+        const bloodline = get().bloodlines.find((b) => b.persons.some((p) => p.id === id));
+        if (!bloodline) return;
+        set((st) => ({
+          bloodlines: st.bloodlines.map((b) => b.id !== bloodline.id ? b : {
+            ...b,
+            persons: b.persons.map((p) => (p.id === id ? { ...p, x, y } : p)),
+          }),
+          projects: touchProject(st.projects, bloodline.projectId),
+        }));
+      },
+
+      deletePerson(id) {
+        const s = get();
+        const bloodline = s.bloodlines.find((b) => b.persons.some((p) => p.id === id));
+        const person = bloodline?.persons.find((p) => p.id === id);
+        if (!bloodline || !person) return;
+        get().pushBLHistory(bloodline.id);
+        const keptPersons = bloodline.persons.filter((p) => p.id !== id);
+        const clean = (p: BloodlinePerson): BloodlinePerson => {
+          if (p.connectedTo !== id && p.siblingId !== id && p.partnerId !== id) return p;
+          const next = { ...p };
+          if (next.connectedTo === id) delete next.connectedTo;
+          if (next.siblingId === id) delete next.siblingId;
+          if (next.partnerId === id) delete next.partnerId;
+          return next;
+        };
+        const afterBloodlines = s.bloodlines.map((b) =>
+          b.id !== bloodline.id ? b : { ...b, persons: keptPersons.map(clean) });
+        const images = { ...s.images };
+        if (person.portraitKey
+          && !imageReferenced({ projects: s.projects, entries: s.entries, atlases: s.atlases, bloodlines: afterBloodlines }, person.portraitKey)) {
+          delete images[person.portraitKey];
+        }
+        set((st) => ({
+          bloodlines: afterBloodlines,
+          images,
+          projects: touchProject(st.projects, bloodline.projectId),
+        }));
+      },
+
+      addHouse(bloodlineId, init) {
+        const bloodline = get().bloodlines.find((b) => b.id === bloodlineId);
+        if (!bloodline) return null;
+        get().pushBLHistory(bloodlineId);
+        const house: BloodlineHouse = {
+          id: newId("hou"),
+          x: init?.x ?? 4000,
+          y: init?.y ?? 4000,
+          name: init?.name ?? "Casa sem nome",
+          isMainBranch: false,
+          isMonarch: false,
+        };
+        set((s) => ({
+          bloodlines: s.bloodlines.map((b) =>
+            b.id === bloodlineId ? { ...b, houses: [...b.houses, house] } : b),
+          projects: touchProject(s.projects, bloodline.projectId),
+        }));
+        return house;
+      },
+
+      updateHouse(id, patch) {
+        const s = get();
+        const bloodline = s.bloodlines.find((b) => b.houses.some((h) => h.id === id));
+        if (!bloodline) return;
+        get().pushBLHistory(bloodline.id);
+        set((st) => ({
+          bloodlines: st.bloodlines.map((b) => b.id !== bloodline.id ? b : {
+            ...b,
+            houses: b.houses.map((h) => (h.id === id ? { ...h, ...patch, id: h.id } : h)),
+          }),
+          projects: touchProject(st.projects, bloodline.projectId),
+        }));
+      },
+
+      /** Same contract as movePerson: no history push — the UI pushes once per drag. */
+      moveHouse(id, x, y) {
+        const bloodline = get().bloodlines.find((b) => b.houses.some((h) => h.id === id));
+        if (!bloodline) return;
+        set((st) => ({
+          bloodlines: st.bloodlines.map((b) => b.id !== bloodline.id ? b : {
+            ...b,
+            houses: b.houses.map((h) => (h.id === id ? { ...h, x, y } : h)),
+          }),
+          projects: touchProject(st.projects, bloodline.projectId),
+        }));
+      },
+
+      deleteHouse(id) {
+        const s = get();
+        const bloodline = s.bloodlines.find((b) => b.houses.some((h) => h.id === id));
+        if (!bloodline) return;
+        get().pushBLHistory(bloodline.id);
+        set((st) => ({
+          bloodlines: st.bloodlines.map((b) => b.id !== bloodline.id ? b : {
+            ...b,
+            houses: b.houses.filter((h) => h.id !== id),
+          }),
+          projects: touchProject(st.projects, bloodline.projectId),
+        }));
+      },
+
+      /** Notes live outside the { persons, houses } snapshots, so no history push. */
+      setNotes(bloodlineId, notes) {
+        const s = get();
+        const bloodline = s.bloodlines.find((b) => b.id === bloodlineId);
+        if (!bloodline) return;
+        set((st) => ({
+          bloodlines: st.bloodlines.map((b) => (b.id === bloodlineId ? { ...b, notes } : b)),
+          projects: touchProject(st.projects, bloodline.projectId),
+        }));
+      },
+
+      pushBLHistory(bloodlineId) {
+        set((st) => {
+          const bloodline = st.bloodlines.find((b) => b.id === bloodlineId);
+          if (!bloodline) return {};
+          const key = blKey(bloodlineId);
+          const h = (st.histories[key] as BloodlineHistory | undefined) ?? { undo: [], redo: [] };
+          const undo = [...h.undo, cloneBLSnapshot(bloodline)];
+          if (undo.length > HISTORY_CAP) undo.shift();
+          return { histories: { ...st.histories, [key]: { undo, redo: [] } } };
+        });
+      },
+
+      undoBL(bloodlineId) {
+        set((st) => {
+          const key = blKey(bloodlineId);
+          const h = st.histories[key] as BloodlineHistory | undefined;
+          const bloodline = st.bloodlines.find((b) => b.id === bloodlineId);
+          if (!h || h.undo.length === 0 || !bloodline) return {};
+          const snap = h.undo[h.undo.length - 1];
+          return {
+            histories: {
+              ...st.histories,
+              [key]: {
+                undo: h.undo.slice(0, -1),
+                redo: [...h.redo, cloneBLSnapshot(bloodline)],
+              },
+            },
+            bloodlines: st.bloodlines.map((b) =>
+              b.id === bloodlineId
+                ? { ...b, persons: snap.persons.map(clonePerson), houses: snap.houses.map((hc) => ({ ...hc })) }
+                : b),
+          };
+        });
+      },
+
+      redoBL(bloodlineId) {
+        set((st) => {
+          const key = blKey(bloodlineId);
+          const h = st.histories[key] as BloodlineHistory | undefined;
+          const bloodline = st.bloodlines.find((b) => b.id === bloodlineId);
+          if (!h || h.redo.length === 0 || !bloodline) return {};
+          const snap = h.redo[h.redo.length - 1];
+          return {
+            histories: {
+              ...st.histories,
+              [key]: {
+                undo: [...h.undo, cloneBLSnapshot(bloodline)],
+                redo: h.redo.slice(0, -1),
+              },
+            },
+            bloodlines: st.bloodlines.map((b) =>
+              b.id === bloodlineId
+                ? { ...b, persons: snap.persons.map(clonePerson), houses: snap.houses.map((hc) => ({ ...hc })) }
+                : b),
+          };
+        });
+      },
     }),
     {
       name: STORE_KEY,
-      version: 1,
+      version: 2,
       storage: localStoragePersistence,
+      /** v1 persisted docs lack bloodlines; migrate attaches the default empty
+       *  array so every loaded state has the field. */
+      migrate: (persisted, from) => {
+        if (from !== 1) return persisted as PersistedState;
+        const p = persisted as Partial<PersistedState>;
+        return { ...p, bloodlines: p.bloodlines ?? [] } as PersistedState;
+      },
       partialize: ({ histories: _h, ...s }): PersistedState => {
         void _h; // ephemeral histories are never persisted
         return {
@@ -729,6 +1071,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           atlases: s.atlases,
           manuscripts: s.manuscripts,
           images: s.images,
+          bloodlines: s.bloodlines,
           seedFlag: s.seedFlag,
         };
       },
@@ -766,3 +1109,8 @@ export const selectHistoryFlags = (atlasId: string) => (s: ScriptoriumState): { 
   canUndo: (s.histories[atlasId]?.undo.length ?? 0) > 0,
   canRedo: (s.histories[atlasId]?.redo.length ?? 0) > 0,
 });
+
+export const selectBLHistoryFlags = (bloodlineId: string) => (s: ScriptoriumState): { canUndo: boolean; canRedo: boolean } => {
+  const h = s.histories[blKey(bloodlineId)];
+  return { canUndo: (h?.undo.length ?? 0) > 0, canRedo: (h?.redo.length ?? 0) > 0 };
+};

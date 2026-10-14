@@ -131,9 +131,9 @@ describe("persist + corruption", () => {
     expect(raw).toBeTruthy();
     const doc = JSON.parse(raw!) as { state: { projects: unknown[] }; version: number };
     expect(doc.state.projects).toHaveLength(1);
-    expect(doc.version).toBe(1);
+    expect(doc.version).toBe(2);
   });
-  it("adapter reads back a { state, version: 1 } shaped value for a valid doc", () => {
+  it("adapter reads back a { state, version: 2 } shaped value for a valid doc", () => {
     act(() => { useScriptorium.getState().addProject("Adaptador"); });
     const doc = localStoragePersistence.getItem(STORE_KEY) as unknown as {
       state: { projects: { name: string }[]; seedFlag: boolean };
@@ -141,7 +141,7 @@ describe("persist + corruption", () => {
     };
     expect(doc.state.projects.map((p) => p.name)).toEqual(["Adaptador"]);
     expect(doc.state.seedFlag).toBe(false);
-    expect(doc.version).toBe(1);
+    expect(doc.version).toBe(2);
   });
   it("moves raw corrupt payload to a backup key and adapter returns falsy", () => {
     const corrupt = "{not json at all";

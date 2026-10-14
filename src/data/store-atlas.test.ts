@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act } from "@testing-library/react";
 import { useScriptorium, selectHistoryFlags } from "./store";
+import type { AtlasHistory } from "./store";
 import { STORE_KEY } from "./storage";
 import { parseExport, validateProjectData } from "./schema";
 import type { Atlas, Pin, Region, WorldEntry } from "../domain/types";
@@ -330,11 +331,12 @@ describe("review fixes (I1/I2)", () => {
     patchPoints[1].y = 0.99;
     const live = store().atlases[0].regions.find((x) => x.id === r.id)!;
     expect(live.points).toEqual([{ x: 0, y: 0 }, { x: 0.5, y: 0 }, { x: 0.5, y: 0.5 }, { x: 0, y: 0.5 }]);
-    const snap = store().histories[a.id].undo.at(-1)!.regions.find((x) => x.id === r.id)!;
+    const atlasHist = store().histories[a.id] as AtlasHistory;
+    const snap = atlasHist.undo.at(-1)!.regions.find((x) => x.id === r.id)!;
     expect(snap.points[0].x).toBe(0);
     expect(snap.points[1].y).toBe(0);
     act(() => { store().pushHistory(a.id); });
-    const snap2 = store().histories[a.id].undo.at(-1)!.regions.find((x) => x.id === r.id)!;
+    const snap2 = atlasHist.undo.at(-1)!.regions.find((x) => x.id === r.id)!;
     expect(snap2.points[0].x).toBe(0);
   });
   it("deleteAtlas drops the atlas history entry", () => {
