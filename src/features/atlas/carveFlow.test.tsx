@@ -86,13 +86,7 @@ function mountEditor(atlas: Atlas, natural: { w: number; h: number } = { w: 800,
   return { container, stageEl };
 }
 
-function pickTool(name: string) {
-  act(() => {
-    fireEvent.click(screen.getByRole("button", { name }));
-  });
-}
-
-function pickMode(name: string) {
+function pickButton(name: string) {
   act(() => {
     fireEvent.click(screen.getByRole("button", { name }));
   });
@@ -142,8 +136,8 @@ function parentPoly(container: HTMLElement): SVGPolygonElement {
 function setupCarve(modeName: string, atlas?: Atlas, natural?: { w: number; h: number }) {
   const a = atlas ?? makeAtlas([{ points: PARENT, color: PARENT_COLOR, label: "Estado" }]);
   const mounted = mountEditor(a, natural);
-  pickTool("Ferramenta região");
-  pickMode(modeName);
+  pickButton("Ferramenta região");
+  pickButton(modeName);
   clickStage(mounted.stageEl, 166, 120, 11); // near vertex A → snap
   clickStage(mounted.stageEl, 320, 210, 12); // middle (0.4,0.35)
   clickStage(mounted.stageEl, 400, 270, 13); // middle (0.5,0.45)
@@ -242,6 +236,24 @@ describe("carve mode", () => {
     });
     expect(store().atlases[0].regions).toHaveLength(1); // incomplete draw: nothing committed
   });
+
+  it("switching mode mid-carve clears the machine: Enter under fit adds nothing and leaves the parent untouched", () => {
+    const { container } = setupCarve("Carve");
+    expect(container.querySelector("polygon.carve-preview")).toBeTruthy();
+    const before = store().atlases[0].regions;
+    expect(before).toHaveLength(1);
+    pickButton("Encaixe");
+    expect(container.querySelector("polygon.carve-preview")).toBeNull();
+    expect(container.querySelectorAll(".carve-snap-marker")).toHaveLength(0);
+    expect(parentPoly(container).classList.contains("carve-parent")).toBe(false);
+    expect(container.querySelector("polygon.draw-preview")).toBeNull();
+    act(() => {
+      fireEvent.keyDown(document, { key: "Enter" });
+    });
+    const regions = store().atlases[0].regions;
+    expect(regions).toHaveLength(1);
+    expect(regions[0].points).toEqual(PARENT); // no fit commit, no parent trim
+  });
 });
 
 describe("neighbor mode", () => {
@@ -279,8 +291,8 @@ describe("fit mode", () => {
       { points: RIGHT, color: "#654321", label: "Leste" },
     ]);
     const { container, stageEl } = mountEditor(atlas);
-    pickTool("Ferramenta região");
-    pickMode("Encaixe");
+    pickButton("Ferramenta região");
+    pickButton("Encaixe");
     clickStage(stageEl, 376, 120, 11); // (0.47,0.2)
     clickStage(stageEl, 424, 120, 12); // (0.53,0.2)
     clickStage(stageEl, 424, 480, 13); // (0.53,0.8)
@@ -303,8 +315,8 @@ describe("fit mode", () => {
       { points: RIGHT, color: "#654321", label: "Leste" },
     ]);
     const { stageEl } = mountEditor(atlas);
-    pickTool("Ferramenta região");
-    pickMode("Encaixe");
+    pickButton("Ferramenta região");
+    pickButton("Encaixe");
     clickStage(stageEl, 80, 120, 11); // (0.1,0.2)
     clickStage(stageEl, 240, 120, 12); // (0.3,0.2)
     clickStage(stageEl, 240, 480, 13); // (0.3,0.8)
@@ -320,19 +332,18 @@ describe("fit mode", () => {
 describe("mode toggles", () => {
   it("are exclusive, toggle off on second click and only exist in the region tool", () => {
     const atlas = makeAtlas([{ points: PARENT, color: PARENT_COLOR, label: "Estado" }]);
-    const { stageEl } = mountEditor(atlas);
+    mountEditor(atlas);
     expect(screen.queryByRole("button", { name: "Carve" })).toBeNull();
-    pickTool("Ferramenta região");
+    pickButton("Ferramenta região");
     expect(screen.getByRole("button", { name: "Carve" })).toBeTruthy();
-    pickMode("Vizinho");
+    pickButton("Vizinho");
     expect(pressed("Vizinho")).toBe(true);
     expect(pressed("Carve")).toBe(false);
-    pickMode("Encaixe");
+    pickButton("Encaixe");
     expect(pressed("Encaixe")).toBe(true);
     expect(pressed("Vizinho")).toBe(false);
-    pickMode("Encaixe");
+    pickButton("Encaixe");
     expect(pressed("Encaixe")).toBe(false);
-    void stageEl;
   });
 });
 
@@ -356,8 +367,8 @@ describe("carve px convention (imgW × scale)", () => {
   it("flow: the wide-image fixture snaps through the editor with pxPerUnit = imgW", () => {
     const atlas = makeAtlas([{ points: WIDE_PARENT, color: PARENT_COLOR, label: "Estado" }]);
     const { container, stageEl } = mountEditor(atlas, { w: 1600, h: 600 });
-    pickTool("Ferramenta região");
-    pickMode("Carve");
+    pickButton("Ferramenta região");
+    pickButton("Carve");
     // 0.01 offset = 16 px > 14 → no snap → free draw fallback
     clickStage(stageEl, 336, 301, 21);
     expect(parentPoly(container).classList.contains("carve-parent")).toBe(false);

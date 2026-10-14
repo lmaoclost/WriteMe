@@ -377,8 +377,10 @@ export function useDraw({ atlasId, transformApi, tool, mode, onFinish }: UseDraw
     [attemptFinishRegion],
   );
 
+  /** Any mode or tool change resets the whole draw/carve machine — a mid-draw
+   *  switch away from carve must not leave a stale preview for the next mode. */
   useEffect(() => {
-    if (tool !== "region" || mode === "none") clear();
+    clear();
   }, [clear, mode, tool]);
 
   const carveSnapPoints: Pt[] = [];
