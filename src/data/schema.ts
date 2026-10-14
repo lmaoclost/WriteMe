@@ -2,7 +2,7 @@ import type {
   ProjectData, WorldEntry, Atlas, Manuscript, Region, Pin, Project,
   Bloodline, BloodlinePerson, BloodlineHouse, BloodlineTitle, BloodlineTenure,
   FactionWeb, Faction, FactionConnection,
-  CustomCalendar, CalendarEvent,
+  CustomCalendar, CalendarEvent, EntrySection,
 } from "../domain/types";
 import { ENTRY_CATEGORIES, PIN_TYPES } from "../domain/types";
 
@@ -18,7 +18,13 @@ const isEntry = (v: unknown): v is WorldEntry => {
   const e = v as WorldEntry;
   return !!e && isStr(e.id) && isStr(e.projectId) && isStr(e.title)
     && (ENTRY_CATEGORIES as readonly string[]).includes(e.category)
-    && isStr(e.body) && isArr(e.links) && e.links.every(isStr) && optionalStr(e.imageKey);
+    && isStr(e.body) && isArr(e.links) && e.links.every(isStr) && optionalStr(e.imageKey)
+    && optionalStr(e.summary) && optionalStr(e.date)
+    && (e.sections === undefined
+      || (isArr(e.sections) && e.sections.every((sec) =>
+        !!sec && isStr((sec as EntrySection).name)
+        && isArr((sec as EntrySection).fields)
+        && (sec as EntrySection).fields.every((f) => !!f && isStr(f.label) && isStr(f.content)))));
 };
 
 const isRegion = (v: unknown): v is Region => {

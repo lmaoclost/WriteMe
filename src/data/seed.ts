@@ -1,4 +1,4 @@
-import type { Atlas, Chapter, Manuscript, Pin, Project, WorldEntry } from "../domain/types";
+import type { Atlas, Chapter, Manuscript, Project, WorldEntry, Pin } from "../domain/types";
 import { newId } from "../domain/id";
 import { buildDemoMapSvg } from "./seedMap";
 
@@ -6,7 +6,7 @@ export function seedDemoProject() {
   const now = Date.now();
   const project: Project = {
     id: newId("prj"),
-    name: "Reino de Vellmora (Exemplo)",
+    name: "Reino de Vellmora (exemplo)",
     description: "Projeto de demonstração com códex, atlas e manuscrito populados. Exclua quando quiser.",
     createdAt: now,
     updatedAt: now,
@@ -14,33 +14,42 @@ export function seedDemoProject() {
 
   const eCap = newId("ent"), eRiver = newId("ent"), eHouse = newId("ent"),
     eWar = newId("ent"), eRelic = newId("ent"), eLaw = newId("ent"),
-    eFounder = newId("ent");
+    eFounder = newId("ent"),
+    eNat = newId("ent"), eBeast = newId("ent"), eFlora = newId("ent"),
+    eMat = newId("ent"), eTech = newId("ent"), eMagic = newId("ent"),
+    eCult = newId("ent"), eLang = newId("ent"), eDeity = newId("ent");
 
   const entries: WorldEntry[] = [
     {
-      id: eCap, projectId: project.id, title: "Cidade de Vellmora", category: "place",
+      id: eCap, projectId: project.id, title: "Cidade de Vellmora", category: "location",
       body: "Capital do reino, erguida onde o Rio Sarnen se abre em três braços. O portão sul — o Arco da Coroa — leva a marca do primeiro rei ainda legível.",
       links: [eRiver, eWar],
+      sections: [{ name: "Quick Facts", fields: [{ label: "Climate", content: "Chuvoso no inverno" }] }],
     },
     {
-      id: eRiver, projectId: project.id, title: "Rio Sarnen", category: "place",
+      id: eRiver, projectId: project.id, title: "Rio Sarnen", category: "location",
       body: "Artéria do reino. As três pontes do Sarnen datam da fundação e nenhuma caiu em guerra — os capitães sempre pouparam o rio para o abastecimento.",
       links: [eCap],
+      sections: [{ name: "Detail", fields: [{ label: "Points of Interest", content: "As três pontes; a boca da Fala" }] }],
     },
     {
       id: eHouse, projectId: project.id, title: "Casa Vellmor", category: "faction",
       body: "Dinastia fundada por Aldric Vellmor. Governam desde o Tratado das Três Pontes; a legitimidade vem de terem pagado o preço da Lei do Selo.",
       links: [eLaw, eFounder],
+      sections: [{ name: "Detail", fields: [{ label: "Leadership", content: "Juíza do Selo em exercício" }] }],
     },
     {
       id: eWar, projectId: project.id, title: "Guerra dos Cinco Invernos", category: "event",
+      date: "1200-05-10",
       body: "Conflito que definiu as fronteiras norte. O rio ficou vermelho por dias, contam os registros da Catedral — e a capital sobreviveu ao cerco por um inverno inteiro.",
       links: [eCap, eRelic],
+      sections: [{ name: "Detail", fields: [{ label: "Key Figures", content: "Aldric Vellmor" }] }],
     },
     {
-      id: eRelic, projectId: project.id, title: "Coroa de Sarnen", category: "item",
+      id: eRelic, projectId: project.id, title: "Coroa de Sarnen", category: "artifact",
       body: "Coroa cerimonial perdida no último inverno da guerra. Dizem que carregar quem a carregar a fumaça dos anos difíceis. Nenhum rei a usou desde.",
       links: [eWar, eFounder],
+      sections: [{ name: "Detail", fields: [{ label: "Current Location", content: "Fundo do Sarnen (?)" }] }],
     },
     {
       id: eLaw, projectId: project.id, title: "Lei do Selo", category: "lore",
@@ -48,9 +57,73 @@ export function seedDemoProject() {
       links: [eHouse],
     },
     {
-      id: eFounder, projectId: project.id, title: "Aldric Vellmor", category: "person",
+      id: eFounder, projectId: project.id, title: "Aldric Vellmor", category: "character",
       body: "Fundador da Casa. Não morreu na guerra dos Cinco Invernos — entregou a Coroa ao rio e desapareceu. O que resta é o nome nos portões.",
       links: [eHouse, eRelic],
+      sections: [{ name: "Quick Facts", fields: [{ label: "Identity", content: "Fundador, sumido no 9º mês" }] }],
+    },
+    {
+      id: eNat, projectId: project.id, title: "Reino de Vellmora", category: "nation",
+      body: "O reino inteiro, sob a Lei do Selo: do rio ao mar, três casas juram à coroa e uma espera.",
+      links: [eCap, eHouse],
+      summary: "O reino dos três braços do Sarnen.",
+      sections: [{ name: "Detail", fields: [{ label: "Government", content: "Monarquia selada" }] }],
+    },
+    {
+      id: eBeast, projectId: project.id, title: "Heron-da-Prata", category: "creature",
+      body: "A ave do selo da Casa Vellmor. Dizem que os herons reais ouviram os juramentos e nunca mais pousaram em outro telhado.",
+      links: [eHouse],
+      summary: "A ave de três asas do selo.",
+      sections: [{ name: "Detail", fields: [{ label: "Danger Level", content: "Nenhum — sagrada" }] }],
+    },
+    {
+      id: eFlora, projectId: project.id, title: "Cera-Fria", category: "flora",
+      body: "A cera que a Lei do Selo manda usar: derrete só no tribunal, à mão do juiz.",
+      links: [eLaw],
+      summary: "A cera sagrada dos selos.",
+      sections: [{ name: "Detail", fields: [{ label: "Uses", content: "Selos da coroa" }] }],
+    },
+    {
+      id: eMat, projectId: project.id, title: "Prata das Três Pontes", category: "material",
+      body: "O metal das moedas do reino — e das três pontes. Não enferruja no Sarnen.",
+      links: [eRiver],
+      summary: "O metal das pontes.",
+      sections: [{ name: "Detail", fields: [{ label: "Applications", content: "Moedas, pontes, sinos" }] }],
+    },
+    {
+      id: eTech, projectId: project.id, title: "Prensa do Selo", category: "technology",
+      body: "A prensa do tribunal: imprime selos idênticos. Inventada para a Lei — e odiada pelos artesãos.",
+      links: [eLaw],
+      summary: "A prensa dos selos.",
+      sections: [{ name: "Detail", fields: [{ label: "Origin", content: "Tribunal do Selo" }] }],
+    },
+    {
+      id: eMagic, projectId: project.id, title: "A Fala do Rio", category: "magic",
+      body: "O Sarnen avisa. Quem ouve, salva a cidade — quem não ouve, lê a história depois.",
+      links: [eRiver, eWar],
+      summary: "O aviso do rio.",
+      sections: [{ name: "Detail", fields: [{ label: "Rules", content: "Só quem nasceu na beira ouve" }] }],
+    },
+    {
+      id: eCult, projectId: project.id, title: "Povo das Pontes", category: "culture",
+      body: "Os ponteiros casam sobre a água e criam filhos com dois sobrenomes — um de cada margem.",
+      links: [eRiver, eCap],
+      summary: "O povo das três pontes.",
+      sections: [{ name: "Detail", fields: [{ label: "Customs", content: "Casamentos sobre a água" }] }],
+    },
+    {
+      id: eLang, projectId: project.id, title: "Fala do Selo", category: "language",
+      body: "A língua dos tribunais: sem pronomes de segunda pessoa — ninguém acusa outra pessoa pelo nome.",
+      links: [eLaw],
+      summary: "A língua do tribunal.",
+      sections: [{ name: "Detail", fields: [{ label: "Common Phrases", content: "“A cera esfriou.” = decisão final" }] }],
+    },
+    {
+      id: eDeity, projectId: project.id, title: "A Mulher do Rio", category: "deity",
+      body: "Divindade fluvial do Sarnen. Os capitães poupam o rio em guerra — e ela retribui com avisos.",
+      links: [eRiver, eMagic],
+      summary: "Divindade do Sarnen.",
+      sections: [{ name: "Detail", fields: [{ label: "Domain", content: "O rio, os avisos, as pontes" }] }],
     },
   ];
 

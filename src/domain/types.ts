@@ -1,6 +1,13 @@
 export type Id = string;
 
-export type EntryCategory = "person" | "place" | "faction" | "event" | "item" | "lore";
+export type EntryCategory =
+  | "nation" | "character" | "creature" | "location" | "flora" | "material"
+  | "technology" | "magic" | "culture" | "artifact" | "language" | "event"
+  | "faction" | "deity" | "lore"
+  | "person" | "place" | "item"; // legacy v1 keys, still valid
+
+export interface EntrySectionField { label: string; content: string }
+export interface EntrySection { name: string; fields: EntrySectionField[] }
 
 export interface Project {
   id: Id;
@@ -20,6 +27,8 @@ export interface WorldEntry {
   imageKey?: string;
   links: Id[];
   date?: string;
+  summary?: string;
+  sections?: EntrySection[];
 }
 
 export interface Pt { x: number; y: number; }
@@ -173,7 +182,10 @@ export interface ProjectData {
 }
 
 export const ENTRY_CATEGORIES: readonly EntryCategory[] = [
-  "person", "place", "faction", "event", "item", "lore",
+  "nation", "character", "creature", "location", "flora", "material",
+  "technology", "magic", "culture", "artifact", "language", "event",
+  "faction", "deity", "lore",
+  "person", "place", "item",
 ] as const;
 
 export const PIN_TYPES: readonly PinType[] = ["place", "person", "event", "item"] as const;

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { seedDemoProject } from "./seed";
 import { validateProjectData } from "./schema";
-import { ENTRY_CATEGORIES, PIN_TYPES } from "../domain/types";
+import { CODEX_CATEGORIES } from "../features/entries/categories";
+import { PIN_TYPES } from "../domain/types";
 
 describe("seedDemoProject", () => {
   const data = seedDemoProject();
@@ -11,11 +12,11 @@ describe("seedDemoProject", () => {
   });
   it("one project named for the demo", () => {
     expect(data.projects).toHaveLength(1);
-    expect(data.projects[0].name).toContain("Exemplo");
+    expect(data.projects[0].name).toContain("exemplo");
   });
-  it("entries cover every category with links between them", () => {
+  it("entries cover every forge category with links between them", () => {
     const cats = new Set(data.entries.map((e) => e.category));
-    ENTRY_CATEGORIES.forEach((c) => expect(cats.has(c)).toBe(true));
+    CODEX_CATEGORIES.forEach((c) => expect(cats.has(c.key)).toBe(true));
     expect(data.entries.some((e) => e.links.length > 0)).toBe(true);
     // every link points at an existing entry id
     const ids = new Set(data.entries.map((e) => e.id));

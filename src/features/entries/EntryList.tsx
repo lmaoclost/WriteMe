@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { WorldEntry, EntryCategory } from "../../domain/types";
-import { CATEGORY_COLORS, CATEGORY_LABELS } from "./categories";
+import { CATEGORY_COLORS, CODEX_CATEGORY_CHIPS, CATEGORY_CANONICAL } from "./categories";
 
 export interface EntryListProps {
   entries: WorldEntry[];
@@ -9,24 +9,14 @@ export interface EntryListProps {
   onCreate(): void;
 }
 
-interface Chip {
-  value: EntryCategory | null;
-  label: string;
-}
-
-const CHIPS: Chip[] = [
-  { value: null, label: "Todas" },
-  ...(["person", "place", "faction", "event", "item", "lore"] as EntryCategory[])
-    .map((c) => ({ value: c, label: CATEGORY_LABELS[c] })),
-];
-
 export function EntryList({ entries, selectedId, onSelect, onCreate }: EntryListProps) {
   const [chip, setChip] = useState<EntryCategory | null>(null);
   const [query, setQuery] = useState("");
 
   const needle = query.trim().toLowerCase();
+  const canonical = (c: string) => CATEGORY_CANONICAL[c] ?? c;
   const filtered = entries.filter((e) =>
-    (chip === null || e.category === chip)
+    (chip === null || canonical(e.category) === chip)
     && (needle === "" || e.title.toLowerCase().includes(needle)));
 
   return (
@@ -44,15 +34,17 @@ export function EntryList({ entries, selectedId, onSelect, onCreate }: EntryList
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
-      <div className="codex-chips" role="group" aria-label="Filtrar por categoria">
-        {CHIPS.map((c) => (
+      <div className="codex-chips codex-chips-codex" role="group" aria-label="Filtrar por categoria">
+        {CODEX_CATEGORY_CHIPS.map((c) => (
           <button
             type="button"
             key={c.label}
             aria-pressed={chip === c.value}
             onClick={() => setChip(c.value)}
+            title={c.label}
           >
-            {c.label}
+            <span aria-hidden="true">{c.icon}</span>
+            <span className="codex-chip-label">{c.label}</span>
           </button>
         ))}
       </div>
