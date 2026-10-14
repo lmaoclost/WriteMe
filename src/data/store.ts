@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { ProjectData, Project, Atlas, Region, Pin, PinType, WorldEntry, EntryCategory } from "../domain/types";
+import type { ProjectData, Project, Atlas, Region, Pin, PinType, WorldEntry, EntryCategory, Manuscript, Chapter } from "../domain/types";
 import { newId } from "../domain/id";
 import type { Pt } from "../domain/geometry";
 import { isMeaningful } from "../domain/geometry";
@@ -37,6 +37,11 @@ export interface AtlasHistory {
 const clonePoints = (points: Pt[]): Pt[] => points.map((p) => ({ ...p }));
 const touchProject = (projects: readonly Project[], id: string): Project[] =>
   projects.map((p) => (p.id === id ? { ...p, updatedAt: Date.now() } : p));
+/** max(orders)+1; 0 when the book is empty. */
+const nextChapterOrder = (chapters: readonly Chapter[]): number =>
+  chapters.length === 0
+    ? 0
+    : chapters.reduce((max, c) => (c.order > max ? c.order : max), 0) + 1;
 /** Spec §7: polygon-clipping failure surfaces once, state untouched. */
 const CLIP_FAILURE_TOAST = "Não consegui calcular os encaixes.";
 const cloneSnapshot = (a: Atlas): AtlasSnapshot => ({
@@ -67,6 +72,15 @@ interface ScriptoriumState extends ProjectData {
   linkEntries(from: string, to: string): void;
   unlinkEntries(from: string, to: string): void;
   putEntryImage(entryId: string, dataUrl: string): boolean;
+
+  addManuscript(projectId: string, title?: string): Manuscript;
+  renameManuscript(id: string, title: string): void;
+  setManuscriptAuthor(id: string, author: string): void;
+  deleteManuscript(id: string): void;
+  addChapter(manuscriptId: string, heading?: string): Chapter | null;
+  updateChapter(chapterId: string, patch: Partial<Omit<Chapter, "id">>): void;
+  deleteChapter(chapterId: string): void;
+  moveChapter(chapterId: string, dir: -1 | 1): void;
 
   addAtlas(projectId: string, name: string): Atlas;
   renameAtlas(atlasId: string, name: string): void;
@@ -385,6 +399,118 @@ export const useScriptorium = create<ScriptoriumState>()(
         const src = entry?.imageKey ? s.images[entry.imageKey] : undefined;
         if (!src) return false;
         return s.putMapImage(atlasId, src);
+      },
+
+      addManuscript(projectId, title = "Livro sem título") {
+        const manuscript: Manuscript = {
+          id: newId("man"),
+          projectId,
+          title,
+          author: "",
+          chapters: [],
+        };
+        set((s) => ({
+          manuscripts: [...s.manuscripts, manuscript],
+          projects: touchProject(s.projects, projectId),
+        }));
+        return manuscript;
+      },
+
+      renameManuscript(id, title) {
+        const s = get();
+        const m = s.manuscripts.find((x) => x.id === id);
+        if (!m) return;
+        set((st) => ({
+          manuscripts: st.manuscripts.map((x) => (x.id === id ? { ...x, title } : x)),
+          projects: touchProject(st.projects, m.projectId),
+        }));
+      },
+
+      setManuscriptAuthor(id, author) {
+        const s = get();
+        const m = s.manuscripts.find((x) => x.id === id);
+        if (!m) return;
+        set((st) => ({
+          manuscripts: st.manuscripts.map((x) => (x.id === id ? { ...x, author } : x)),
+          projects: touchProject(st.projects, m.projectId),
+        }));
+      },
+
+      deleteManuscript(id) {
+        const s = get();
+        const m = s.manuscripts.find((x) => x.id === id);
+        if (!m) return;
+        // Chapters hold no images — nothing to release.
+        set((st) => ({
+          manuscripts: st.manuscripts.filter((x) => x.id !== id),
+          projects: touchProject(st.projects, m.projectId),
+        }));
+      },
+
+      addChapter(manuscriptId, heading = "Capítulo sem título") {
+        const m = get().manuscripts.find((x) => x.id === manuscriptId);
+        if (!m) return null;
+        const chapter: Chapter = {
+          id: newId("ch"),
+          heading,
+          content: "",
+          order: nextChapterOrder(m.chapters),
+        };
+        set((s) => ({
+          manuscripts: s.manuscripts.map((x) =>
+            x.id === manuscriptId ? { ...x, chapters: [...x.chapters, chapter] } : x),
+          projects: touchProject(s.projects, m.projectId),
+        }));
+        return chapter;
+      },
+
+      updateChapter(chapterId, patch) {
+        const m = get().manuscripts.find((x) => x.chapters.some((c) => c.id === chapterId));
+        if (!m) return;
+        const safe: Partial<Omit<Chapter, "id">> = { ...patch };
+        set((s) => ({
+          manuscripts: s.manuscripts.map((x) => (x.id !== m.id ? x : {
+            ...x,
+            chapters: x.chapters.map((c) =>
+              c.id === chapterId ? { ...c, ...safe, id: c.id } : c),
+          })),
+          projects: touchProject(s.projects, m.projectId),
+        }));
+      },
+
+      deleteChapter(chapterId) {
+        const m = get().manuscripts.find((x) => x.chapters.some((c) => c.id === chapterId));
+        if (!m) return;
+        set((s) => ({
+          manuscripts: s.manuscripts.map((x) => (x.id !== m.id ? x : {
+            ...x,
+            chapters: x.chapters.filter((c) => c.id !== chapterId),
+          })),
+          projects: touchProject(s.projects, m.projectId),
+        }));
+      },
+
+      /** Swaps the chapter's order with its nearest neighbor by sorted order;
+       *  gaps are tolerated (no renumbering) — spec §7 ruling. */
+      moveChapter(chapterId, dir) {
+        const m = get().manuscripts.find((x) => x.chapters.some((c) => c.id === chapterId));
+        if (!m) return;
+        const sorted = [...m.chapters].sort((a, b) => a.order - b.order);
+        const idx = sorted.findIndex((c) => c.id === chapterId);
+        const neighbor = sorted[idx + dir];
+        if (!neighbor) return;
+        const orderA = sorted[idx].order;
+        set((s) => ({
+          manuscripts: s.manuscripts.map((x) => (x.id !== m.id ? x : {
+            ...x,
+            chapters: x.chapters.map((c) => {
+              if (c.id === chapterId) return { ...c, order: neighbor.order };
+              if (c.id === neighbor.id) return { ...c, order: orderA };
+              return c;
+            }),
+          })),
+          projects: touchProject(s.projects, m.projectId),
+        }));
       },
 
       addRegion(atlasId, input) {

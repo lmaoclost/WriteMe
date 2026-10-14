@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, type ChangeEvent, type MutableRefObject } from "react";
+import { useEffect, useRef, useState, useCallback, type ChangeEvent, type MutableRefObject } from "react";
 import { useShallow } from "zustand/react/shallow";
 import type { EntryCategory, WorldEntry } from "../../domain/types";
 import { ENTRY_CATEGORIES } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
 import { fileToDataUrl } from "../../data/image";
 import { LinkPicker } from "../atlas/panels/LinkPicker";
+import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { CATEGORY_COLORS, CATEGORY_LABELS } from "./categories";
 import { ImagePicker } from "./ImagePicker";
 import { MarkdownView } from "./MarkdownView";
@@ -16,47 +17,36 @@ export interface EntryViewProps {
   onSelectEntry?(id: string): void;
 }
 
-const COMMIT_MS = 300;
 const CONFIRM_RESET_MS = 3000;
-
-interface PendingDraft {
-  id: string;
-  patch: { title?: string; body?: string };
-}
 
 export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryViewProps) {
   const images = useScriptorium((s) => s.images);
   const siblings = useScriptorium(
     useShallow((s) => s.entries.filter((e) => e.projectId === entry.projectId)),
   );
-  const [title, setTitle] = useState(entry.title);
-  const [body, setBody] = useState(entry.body);
   const [writing, setWriting] = useState(true);
   const [armed, setArmed] = useState(false);
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
   const [linkPickerOpen, setLinkPickerOpen] = useState(false);
-  const pendingRef = useRef<PendingDraft | null>(null);
-  const timerRef = useRef<number | undefined>(undefined);
   const confirmTimerRef = useRef<number | undefined>(undefined);
 
-  // Flush the draft that belongs to the CURRENT entry id before switching to
+  const commitTitle = useCallback((v: string) => {
+    useScriptorium.getState().updateEntry(entry.id, { title: v });
+  }, [entry.id]);
+  const commitBody = useCallback((v: string) => {
+    useScriptorium.getState().updateEntry(entry.id, { body: v });
+  }, [entry.id]);
+  const titleDraft = useDebouncedDraft(entry.title, commitTitle);
+  const bodyDraft = useDebouncedDraft(entry.body, commitBody);
+
+  // Flush the drafts that belong to the CURRENT entry id before switching to
   // another entry (or unmounting) — no lost keystroke.
   useEffect(() => {
     return () => {
-      const pending = pendingRef.current;
-      if (!pending) return;
-      pendingRef.current = null;
-      window.clearTimeout(timerRef.current);
-      timerRef.current = undefined;
-      useScriptorium.getState().updateEntry(pending.id, pending.patch);
+      titleDraft.flush();
+      bodyDraft.flush();
     };
   }, [entry.id]);
-
-  // Re-sync the local draft from the store for the freshly-selected entry.
-  useEffect(() => {
-    setTitle(entry.title);
-    setBody(entry.body);
-  }, [entry.id, entry.title, entry.body]);
 
   useEffect(() => {
     setArmed(false);
@@ -91,21 +81,8 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
   };
 
   const flush = () => {
-    const pending = pendingRef.current;
-    if (!pending) return;
-    pendingRef.current = null;
-    window.clearTimeout(timerRef.current);
-    timerRef.current = undefined;
-    useScriptorium.getState().updateEntry(pending.id, pending.patch);
-  };
-
-  const schedule = (patch: { title?: string; body?: string }) => {
-    const current = pendingRef.current && pendingRef.current.id === entry.id
-      ? pendingRef.current.patch
-      : {};
-    pendingRef.current = { id: entry.id, patch: { ...current, ...patch } };
-    if (timerRef.current !== undefined) window.clearTimeout(timerRef.current);
-    timerRef.current = window.setTimeout(flush, COMMIT_MS);
+    titleDraft.flush();
+    bodyDraft.flush();
   };
 
   const confirmOrDelete = () => {
@@ -162,11 +139,8 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           type="text"
           className="codex-title-input"
           aria-label="Título"
-          value={title}
-          onChange={(e) => {
-            setTitle(e.target.value);
-            schedule({ title: e.target.value });
-          }}
+          value={titleDraft.draft}
+          onChange={(e) => titleDraft.setDraft(e.target.value)}
           onBlur={flush}
         />
         <select
@@ -244,17 +218,14 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           className="codex-body"
           aria-label="Conteúdo"
           placeholder="Sem conteúdo ainda."
-          value={body}
-          onChange={(e) => {
-            setBody(e.target.value);
-            schedule({ body: e.target.value });
-          }}
+          value={bodyDraft.draft}
+          onChange={(e) => bodyDraft.setDraft(e.target.value)}
           onBlur={flush}
         />
-      ) : body.trim() === "" ? (
+      ) : bodyDraft.draft.trim() === "" ? (
         <p className="codex-md-empty">Sem conteúdo ainda.</p>
       ) : (
-        <MarkdownView body={body} />
+        <MarkdownView body={bodyDraft.draft} />
       )}
       <section className="codex-links" aria-label="Vínculos">
         <span className="codex-links-title">Vínculos</span>
