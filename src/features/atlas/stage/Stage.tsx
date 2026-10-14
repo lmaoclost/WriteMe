@@ -1,7 +1,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import type { Atlas, Pt } from "../../../domain/types";
 import { useScriptorium } from "../../../data/store";
-import { MOVE_THRESHOLD_PX, useStageTransform, type TransformApi } from "./useStageTransform";
+import { MOVE_THRESHOLD_PX, useStageTransform, type StageTransform, type TransformApi } from "./useStageTransform";
 import "../atlas.css";
 
 export interface StageProps {
@@ -9,6 +9,9 @@ export interface StageProps {
   onStageClick?(pt: Pt, clientX: number, clientY: number): void;
   onStageMove?(pt: Pt, clientX: number, clientY: number): void;
   onStageDblClick?(pt: Pt, clientX: number, clientY: number): void;
+  /** Called whenever the view (scale/pan/size) changes — lets the header show
+   *  the zoom percentage. Re-entrancy-safe: same-scale updates are cheap. */
+  onTransformChange?(t: StageTransform): void;
   /** DOM overlays (pin layer, tooltips) rendered AFTER the svg inside the
    *  transform wrapper; the layer is counter-transformed so children position
    *  in stage coordinates. */
@@ -21,6 +24,7 @@ export function Stage({
   onStageClick,
   onStageMove,
   onStageDblClick,
+  onTransformChange,
   overlayChildren,
   children,
 }: StageProps) {
@@ -30,6 +34,12 @@ export function Stage({
   const transform = useStageTransform(stageRef, imgRef);
   const { setImageSize } = transform;
   const clickAnchor = useRef<{ clientX: number; clientY: number } | null>(null);
+
+  const notifyTransformRef = useRef(onTransformChange);
+  notifyTransformRef.current = onTransformChange;
+  useEffect(() => {
+    notifyTransformRef.current?.(transform);
+  }, [transform]);
 
   useEffect(() => {
     if (!mapImage) {

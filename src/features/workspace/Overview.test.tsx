@@ -82,10 +82,11 @@ describe("shell routes", () => {
     expect(rail.getByRole("link", { name: /Livro/i })).toHaveAttribute("href", `/p/${p.id}/manuscript`);
   });
 
-  it("atlas placeholder explains next step", () => {
+  it("atlas route shows the atlas index (not a placeholder)", () => {
     const p = useScriptorium.getState().addProject("X");
     render(at(`/p/${p.id}/atlas`));
-    expect(screen.getByText(/sub-projeto 2/i)).toBeInTheDocument();
+    expect(screen.getByText("Crie o primeiro atlas do mundo.")).toBeInTheDocument();
+    expect(screen.queryByText(/sub-projeto 2/i)).not.toBeInTheDocument();
   });
 
   it("export downloads a JSON file", () => {

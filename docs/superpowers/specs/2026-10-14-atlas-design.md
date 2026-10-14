@@ -54,7 +54,7 @@ História por atlas: `undoStack/redoStack` (cap 50) com snapshot `{regions, pins
 
 **Pin layer**: divs absolutos por `pinStyle` (`left = panX + x*imgW*scale`), 18px círculo com anel da cor do pin + ícone por tipo (place=⚑, person=○, event=✦, item=◆, via `<svg>` inline). Hover: tooltip (`hoverCard` popover posicionado) mostrando `label` + título do entry linkado. Selected: anel duplo. Drag: pointerdown não inicia pan quando tool select e pin ativo; `movePin` no move com `pushHistory` só no pointerdown; touch idem. Delete: botão no panel + Delete key em selected.
 
-**Panels** (direita, 280px): mostra `RegionPanel` (nome, cor: picker + `recentColors` (localStorage ui), fillOpacity slider 0–1, link picker) ou `PinPanel` (label, tipo 4 escolhas, cor, link picker, deletar). LinkPicker: busca entries do projeto (title case-insensitive substring), lista clicável, cria `entryId`+toast; mostra título atual com X para remover.
+**Panels** (direita, 280px): mostra `RegionPanel` (nome, cor: picker + `recentColors` (efêmero — módulo singleton), fillOpacity slider 0–1, link picker) ou `PinPanel` (label, tipo 4 escolhas, cor, link picker, deletar). LinkPicker: busca entries do projeto (title case-insensitive substring), lista clicável, cria `entryId`+toast; mostra título atual com X para remover.
 
 **Undo/redo**: botões (disabled por stack) + ctrl+z / ctrl+shift+z|ctrl+y; cap 50. Sem ctrl+s (persist é automática).
 

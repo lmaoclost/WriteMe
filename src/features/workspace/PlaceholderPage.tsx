@@ -1,5 +1,4 @@
 const COPY: Record<string, { title: string; next: string; project: string }> = {
-  atlas: { title: "Atlas", next: "Pintar regiões e cravar pinos sobre o mapa do mundo.", project: "sub-projeto 2" },
   entries: { title: "Códex", next: "Registrar pessoas, lugares e eventos com links entre eles.", project: "sub-projeto 3" },
   manuscript: { title: "Livro", next: "Escrever capítulos e exportar o manuscrito.", project: "sub-projeto 4" },
 };
