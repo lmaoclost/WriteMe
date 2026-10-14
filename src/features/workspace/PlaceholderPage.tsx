@@ -1,6 +1,5 @@
-const COPY: Record<string, { title: string; next: string; project: string }> = {
-  manuscript: { title: "Livro", next: "Escrever capítulos e exportar o manuscrito.", project: "sub-projeto 4" },
-};
+// All sections wired; kept for future route stubs only.
+const COPY: Record<string, { title: string; next: string; project: string }> = {};
 
 export function PlaceholderPage({ section }: { section: string }) {
   const copy = COPY[section];

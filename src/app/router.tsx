@@ -3,8 +3,8 @@ import { LibraryPage } from "../features/projects/LibraryPage";
 import { AtlasIndexPage } from "../features/atlas/AtlasIndexPage";
 import { AtlasEditor } from "../features/atlas/AtlasEditor";
 import { CodexPage } from "../features/entries/CodexPage";
+import { ManuscriptPage } from "../features/manuscript/ManuscriptPage";
 import { OverviewPage } from "../features/workspace/OverviewPage";
-import { PlaceholderPage } from "../features/workspace/PlaceholderPage";
 import { WorkspaceLayout } from "../features/workspace/WorkspaceLayout";
 
 function AtlasEditorRoute() {
@@ -17,6 +17,11 @@ function CodexRoute() {
   return <CodexPage projectId={projectId ?? ""} />;
 }
 
+function ManuscriptRoute() {
+  const { projectId } = useParams();
+  return <ManuscriptPage projectId={projectId ?? ""} />;
+}
+
 export function AppRouter() {
   return (
     <Routes>
@@ -26,7 +31,7 @@ export function AppRouter() {
         <Route path="atlas" element={<AtlasIndexPage />} />
         <Route path="atlas/:atlasId" element={<AtlasEditorRoute />} />
         <Route path="entries" element={<CodexRoute />} />
-        <Route path="manuscript" element={<PlaceholderPage section="manuscript" />} />
+        <Route path="manuscript" element={<ManuscriptRoute />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
