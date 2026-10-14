@@ -51,6 +51,9 @@ export function unionBorderRing(regions: Pt[][]): { ring: Pt[]; ok: boolean } {
       adj.set(from, list);
     }
   }
+  for (const [, edges] of adj) {
+    if (edges.length !== 2) return { ring: [], ok: false };
+  }
   const startKey = adj.keys().next().value;
   if (!startKey) return { ring: [], ok: false };
   const ring: Pt[] = [vertexOf.get(startKey)!];

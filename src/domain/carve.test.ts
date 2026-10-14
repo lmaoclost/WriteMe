@@ -36,6 +36,12 @@ describe("unionBorderRing", () => {
     expect(ok).toBe(true);
     expect(ring).toHaveLength(6);
   });
+  it("corner-touch (degree-4) -> not ok", () => {
+    const t1 = [{ x: 0, y: 0 }, { x: 2, y: 0 }, { x: 1, y: 1 }];
+    const t2 = [{ x: 1, y: 1 }, { x: 2, y: 4 }, { x: 0, y: 4 }];
+    const { ok } = unionBorderRing([t1, t2]);
+    expect(ok).toBe(false);
+  });
   it("islands: multiple closed cycles -> not ok (handled by caller)", () => {
     const a = [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 1 }];
     const b = [{ x: 5, y: 5 }, { x: 6, y: 5 }, { x: 6, y: 6 }, { x: 5, y: 6 }];
