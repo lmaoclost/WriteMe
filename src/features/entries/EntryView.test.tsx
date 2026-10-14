@@ -12,7 +12,7 @@ vi.mock("../../data/image", () => ({
 
 const store = () => useScriptorium.getState();
 
-type Spec = { title: string; category?: EntryCategory; body?: string; image?: string };
+type Spec = { title: string; category?: EntryCategory; body?: string; image?: string; date?: string };
 
 function seed(specs: Spec[]): { projectId: string; entries: WorldEntry[] } {
   const project = store().addProject("Vellmora");
@@ -24,6 +24,7 @@ function seed(specs: Spec[]): { projectId: string; entries: WorldEntry[] } {
       ...(spec.image !== undefined
         ? { imageKey: store().putImage(spec.image, "entry") }
         : {}),
+      ...(spec.date !== undefined ? { date: spec.date } : {}),
     });
     return entryById(entry.id);
   });
@@ -312,6 +313,99 @@ describe("EntryView — links", () => {
     fireEvent.click(screen.getByRole("button", { name: "Confirmar?" }));
     expect(onDeleted).toHaveBeenCalledWith(aldric.id);
     expect(entryById(rio.id).links).toEqual([]);
+  });
+});
+
+describe("EntryView — campo Data", () => {
+  it("sits between the category select and the body textarea", () => {
+    const { entries } = seed([{ title: "Batalha de Sarnen", category: "event" }]);
+    const [entry] = entries;
+    renderView(entry);
+    const input = screen.getByLabelText("Data");
+    expect(input.compareDocumentPosition(screen.getByLabelText("Categoria")) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+    expect(input.compareDocumentPosition(screen.getByLabelText("Conteúdo")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(entryById(entry.id).date).toBeUndefined();
+  });
+
+  it("commits a valid date after 300ms, not before (fake timers)", () => {
+    vi.useFakeTimers();
+    const { entries } = seed([{ title: "Batalha de Sarnen", category: "event" }]);
+    const [entry] = entries;
+    renderView(entry);
+    fireEvent.change(screen.getByLabelText("Data"), { target: { value: "1200-05" } });
+    act(() => {
+      vi.advanceTimersByTime(299);
+    });
+    expect(entryById(entry.id).date).toBeUndefined();
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(entryById(entry.id).date).toBe("1200-05");
+  });
+
+  it("does not persist an invalid date and shows the hint until fixed", () => {
+    vi.useFakeTimers();
+    const { entries } = seed([{ title: "Batalha de Sarnen", category: "event" }]);
+    const [entry] = entries;
+    renderView(entry);
+    const input = screen.getByLabelText("Data");
+    fireEvent.change(input, { target: { value: "1200-13" } });
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(entryById(entry.id).date).toBeUndefined();
+    expect(screen.getByText("Data inválida.")).toBeTruthy();
+    fireEvent.change(input, { target: { value: "1200" } });
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(entryById(entry.id).date).toBe("1200");
+    expect(screen.queryByText("Data inválida.")).toBeNull();
+  });
+
+  it("clears the date when the field is emptied", () => {
+    vi.useFakeTimers();
+    const { entries } = seed([{ title: "Batalha de Sarnen", category: "event", date: "1200-05" }]);
+    const [entry] = entries;
+    renderView(entry);
+    fireEvent.change(screen.getByLabelText("Data"), { target: { value: "" } });
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(entryById(entry.id).date).toBeUndefined();
+  });
+
+  it("shows the formatted date as an eyebrow above the title when present", () => {
+    const { entries } = seed([{ title: "Batalha de Sarnen", category: "event", date: "1200-05-06" }]);
+    const [entry] = entries;
+    renderView(entry);
+    expect(document.querySelector(".codex-eyebrow")?.textContent).toBe("6 de Maio de 1200");
+    // Corrupted stored dates render no eyebrow (sanitize fails).
+    act(() => {
+      store().updateEntry(entry.id, { date: "1200-13" });
+    });
+    expect(document.querySelector(".codex-eyebrow")).toBeNull();
+  });
+
+  it("flushes a pending date draft when switching entries", () => {
+    const { entries } = seed([
+      { title: "Batalha de Sarnen", category: "event" },
+      { title: "Rio Sarnen" },
+    ]);
+    const [batalha, rio] = entries;
+    const { rerender } = render(
+      <MemoryRouter>
+        <EntryView key={batalha.id} entry={batalha} onDeleted={vi.fn()} />
+      </MemoryRouter>,
+    );
+    fireEvent.change(screen.getByLabelText("Data"), { target: { value: "1200-05" } });
+    rerender(
+      <MemoryRouter>
+        <EntryView key={rio.id} entry={rio} onDeleted={vi.fn()} />
+      </MemoryRouter>,
+    );
+    expect(entryById(batalha.id).date).toBe("1200-05");
+    expect(screen.getByLabelText("Data")).toHaveValue("");
   });
 });
 

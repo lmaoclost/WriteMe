@@ -19,6 +19,7 @@ export interface WorldEntry {
   body: string;
   imageKey?: string;
   links: Id[];
+  date?: string;
 }
 
 export interface Pt { x: number; y: number; }

@@ -4,6 +4,7 @@ import type { EntryCategory, WorldEntry } from "../../domain/types";
 import { ENTRY_CATEGORIES } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
 import { fileToDataUrl } from "../../data/image";
+import { dateIsEmpty, formatDate, sanitizeDate } from "../../domain/dates";
 import { LinkPicker } from "../atlas/panels/LinkPicker";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { CATEGORY_COLORS, CATEGORY_LABELS } from "./categories";
@@ -36,8 +37,18 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
   const commitBody = useCallback((v: string) => {
     useScriptorium.getState().updateEntry(entry.id, { body: v });
   }, [entry.id]);
+  const commitDate = useCallback((v: string) => {
+    if (dateIsEmpty(v)) {
+      useScriptorium.getState().updateEntry(entry.id, { date: undefined });
+      return;
+    }
+    const clean = sanitizeDate(v);
+    if (clean === null) return;
+    useScriptorium.getState().updateEntry(entry.id, { date: clean });
+  }, [entry.id]);
   const titleDraft = useDebouncedDraft(entry.title, commitTitle);
   const bodyDraft = useDebouncedDraft(entry.body, commitBody);
+  const dateDraft = useDebouncedDraft(entry.date ?? "", commitDate);
 
   // Flush the drafts that belong to the CURRENT entry id before switching to
   // another entry (or unmounting) — no lost keystroke.
@@ -45,6 +56,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
     return () => {
       titleDraft.flush();
       bodyDraft.flush();
+      dateDraft.flush();
     };
   }, [entry.id]);
 
@@ -83,6 +95,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
   const flush = () => {
     titleDraft.flush();
     bodyDraft.flush();
+    dateDraft.flush();
   };
 
   const confirmOrDelete = () => {
@@ -127,12 +140,15 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
     (e) => e.id !== entry.id && e.imageKey !== undefined && images[e.imageKey] !== undefined,
   );
   const cover = entry.imageKey ? images[entry.imageKey] : undefined;
+  const entryDate = dateIsEmpty(entry.date ?? "") ? null : sanitizeDate(entry.date ?? "");
+  const dateInvalid = !dateIsEmpty(dateDraft.draft) && sanitizeDate(dateDraft.draft) === null;
 
   return (
     <div className="codex-view">
       {cover ? (
         <img className="codex-cover" src={cover} alt={`Capa de ${entry.title}`} />
       ) : null}
+      {entryDate ? <span className="codex-eyebrow">{formatDate(entryDate)}</span> : null}
       <div className="codex-view-head">
         <input
           ref={titleRef}
@@ -158,6 +174,18 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
             <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
           ))}
         </select>
+      </div>
+      <div className="codex-date-row">
+        <input
+          type="text"
+          className="codex-date-input"
+          aria-label="Data"
+          placeholder="1200 · 1200-05 · 1200-05-10"
+          value={dateDraft.draft}
+          onChange={(e) => dateDraft.setDraft(e.target.value)}
+          onBlur={dateDraft.flush}
+        />
+        {dateInvalid ? <p className="date-hint error">Data inválida.</p> : null}
       </div>
       <div className="codex-view-actions">
         <button
