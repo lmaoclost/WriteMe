@@ -11,6 +11,7 @@ export function LibraryPage() {
   const addProject = useScriptorium((s) => s.addProject);
   const deleteProject = useScriptorium((s) => s.deleteProject);
   const pushToast = useScriptorium((s) => s.pushToast);
+  const seedDemo = useScriptorium((s) => s.seedDemo);
   const images = useScriptorium((s) => s.images);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
@@ -24,6 +25,11 @@ export function LibraryPage() {
     setCreating(false);
     setName("");
     setDescription("");
+  };
+
+  const doSeed = () => {
+    seedDemo();
+    pushToast("success", "Projeto de exemplo carregado.");
   };
 
   const target = projects.find((p) => p.id === toDelete);
@@ -40,6 +46,7 @@ export function LibraryPage() {
         <div className="empty">
           <p>Nenhum mundo ainda.</p>
           <p className="empty-hint">Crie seu primeiro mundo para começar a construir.</p>
+          <Button kind="ghost" onClick={doSeed}>Carregar projeto de exemplo</Button>
         </div>
       )}
 

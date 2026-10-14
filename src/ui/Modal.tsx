@@ -1,6 +1,13 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 export function Modal({ title, onClose, children }: { title: ReactNode; onClose: () => void; children?: ReactNode | undefined }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
   return (
     <div className="modal-scrim" onClick={onClose} role="presentation">
       <div

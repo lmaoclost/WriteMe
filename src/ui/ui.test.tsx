@@ -1,10 +1,10 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { Button } from "./Button";
 import { Field } from "./Field";
 import { Modal } from "./Modal";
 import { Toasts, toastKindAttr } from "./Toasts";
-import { act, useScriptorium } from "../data/store";
+import { useScriptorium } from "../data/store";
 
 describe("Button", () => {
   it("renders label and fires click", () => {
@@ -28,6 +28,12 @@ describe("Field / Modal", () => {
     const onClose = vi.fn();
     render(<Modal title="Excluir projeto" onClose={onClose}><p>confirmar</p></Modal>);
     fireEvent.click(screen.getByRole("button", { name: "Fechar" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+  it("modal closes on Escape keydown", () => {
+    const onClose = vi.fn();
+    render(<Modal title="Excluir projeto" onClose={onClose}><p>confirmar</p></Modal>);
+    fireEvent.keyDown(document, { key: "Escape" });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

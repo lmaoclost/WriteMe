@@ -1,6 +1,7 @@
 import { Link, useOutletContext } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import { selectCounts, selectProject, useScriptorium } from "../../data/store";
+import { fileToDataUrl } from "../../data/image";
 import { Button } from "../../ui/Button";
 
 export interface WorkspaceContext {
@@ -16,6 +17,10 @@ export function OverviewPage() {
   const pushToast = useScriptorium((s) => s.pushToast);
   const seedFlag = useScriptorium((s) => s.seedFlag);
   const seedDemo = useScriptorium((s) => s.seedDemo);
+  const putImage = useScriptorium((s) => s.putImage);
+  const updateProject = useScriptorium((s) => s.updateProject);
+  const removeImage = useScriptorium((s) => s.removeImage);
+  const images = useScriptorium((s) => s.images);
 
   const doExport = () => {
     const blob = new Blob([exportData()], { type: "application/json" });
@@ -32,6 +37,25 @@ export function OverviewPage() {
     const r = importData(text);
     if (r.ok) pushToast("success", "Projeto importado.");
     else pushToast("error", r.error);
+  };
+
+  const doSeed = () => {
+    seedDemo();
+    pushToast("success", "Projeto de exemplo carregado.");
+  };
+
+  const onCover = async (file: File) => {
+    if (!project) return;
+    try {
+      const { dataUrl } = await fileToDataUrl(file);
+      const key = putImage(dataUrl, "cover");
+      const oldKey = project.coverImageKey;
+      updateProject(projectId, { coverImageKey: key });
+      if (oldKey && oldKey !== key) removeImage(oldKey);
+      pushToast("success", "Capa atualizada.");
+    } catch {
+      pushToast("error", "Não foi possível carregar a capa.");
+    }
   };
 
   return (
@@ -54,11 +78,29 @@ export function OverviewPage() {
             }}
           />
         </label>
-        {!seedFlag && <Button onClick={() => void seedDemo()}>Carregar projeto de exemplo</Button>}
+        {seedFlag && project && (
+          <Button kind="ghost" onClick={doSeed}>Recriar exemplo (novo projeto)</Button>
+        )}
       </div>
       <p className="overview-note">
         Seus dados vivem apenas neste navegador. Exporte de vez em quando.
       </p>
+      <label className="cover-upload">
+        {project?.coverImageKey && images[project.coverImageKey] && (
+          <img src={images[project.coverImageKey]} alt="" className="cover-img" />
+        )}
+        <span className="cover-hint">Trocar capa</span>
+        <input
+          type="file"
+          accept="image/*"
+          className="visually-hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) void onCover(f);
+            e.target.value = "";
+          }}
+        />
+      </label>
       <div className="stats">
         <Stat label="Entradas" value={counts.entries} />
         <Stat label="Atlas" value={counts.atlases} />

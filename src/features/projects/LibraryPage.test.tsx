@@ -44,4 +44,18 @@ describe("LibraryPage", () => {
     const link = screen.getByRole("link", { name: /Linkado/i });
     expect(link).toHaveAttribute("href", `/p/${p.id}`);
   });
+  it("offers demo seed on first use and creates a populated project", async () => {
+    render(wrap());
+    expect(screen.getByRole("button", { name: /novo mundo/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /carregar.*exemplo/i }));
+    await waitFor(() => expect(useScriptorium.getState().seedFlag).toBe(true));
+    expect(useScriptorium.getState().projects).toHaveLength(1);
+    expect(useScriptorium.getState().entries.length).toBeGreaterThanOrEqual(6);
+    expect(useScriptorium.getState().toasts.some((t) => t.message === "Projeto de exemplo carregado.")).toBe(true);
+  });
+  it("hides seed button once a project exists", () => {
+    useScriptorium.getState().addProject("X");
+    render(wrap());
+    expect(screen.queryByRole("button", { name: /carregar.*exemplo/i })).toBeNull();
+  });
 });
