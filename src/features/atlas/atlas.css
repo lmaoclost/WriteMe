@@ -17,3 +17,62 @@
   inset: 0;
   overflow: visible;
 }
+
+/* Editor shell */
+.atlas-editor { display: flex; flex-direction: column; height: 100%; }
+.atlas-editor[data-tool="region"] .stage { cursor: crosshair; }
+.editor-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--night);
+  border-bottom: 1px solid var(--line);
+}
+.editor-toolbar button {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--parchment);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+.editor-toolbar button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+
+/* Region layer */
+.region-poly { stroke-width: 2; }
+.region-poly.selected,
+.region-poly.hovered { stroke-width: 3; }
+.region-label { font-family: var(--font-mono); font-size: 12px; }
+
+/* Draw layer */
+.draw-preview {
+  fill: var(--gold);
+  fill-opacity: 0.12;
+  stroke: var(--gold);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+.draw-first-marker { fill: none; stroke: var(--gold); stroke-width: 2; }
+
+/* Region chooser */
+.chooser-backdrop { position: fixed; inset: 0; z-index: 29; background: transparent; }
+.region-chooser {
+  position: fixed;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+  padding: 4px;
+  background: var(--night-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.region-chooser button {
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  color: var(--parchment);
+  padding: 6px 10px;
+  text-align: left;
+}
+.region-chooser button:hover { background: var(--night); }
