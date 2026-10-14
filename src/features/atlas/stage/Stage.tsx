@@ -9,10 +9,21 @@ export interface StageProps {
   onStageClick?(pt: Pt, clientX: number, clientY: number): void;
   onStageMove?(pt: Pt, clientX: number, clientY: number): void;
   onStageDblClick?(pt: Pt, clientX: number, clientY: number): void;
+  /** DOM overlays (pin layer, tooltips) rendered AFTER the svg inside the
+   *  transform wrapper; the layer is counter-transformed so children position
+   *  in stage coordinates. */
+  overlayChildren?: (api: TransformApi) => ReactNode;
   children: (api: TransformApi) => ReactNode;
 }
 
-export function Stage({ atlas, onStageClick, onStageMove, onStageDblClick, children }: StageProps) {
+export function Stage({
+  atlas,
+  onStageClick,
+  onStageMove,
+  onStageDblClick,
+  overlayChildren,
+  children,
+}: StageProps) {
   const mapImage = useScriptorium((s) => (atlas.mapImageKey ? s.images[atlas.mapImageKey] : undefined));
   const stageRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -83,6 +94,16 @@ export function Stage({ atlas, onStageClick, onStageMove, onStageDblClick, child
         >
           {children(transform)}
         </svg>
+        {overlayChildren ? (
+          <div
+            className="stage-overlay-dom"
+            style={{
+              transform: `translate(${-transform.panX}px, ${-transform.panY}px) scale(${transform.scale ? 1 / transform.scale : 1})`,
+            }}
+          >
+            {overlayChildren(transform)}
+          </div>
+        ) : null}
       </div>
     </div>
   );

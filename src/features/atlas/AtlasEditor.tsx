@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Id, Pt, Region } from "../../domain/types";
 import { pointInPolygon, polygonArea } from "../../domain/geometry";
 import { useScriptorium } from "../../data/store";
@@ -6,12 +6,19 @@ import { Stage } from "./stage/Stage";
 import type { TransformApi } from "./stage/useStageTransform";
 import { RegionLayer } from "./stage/RegionLayer";
 import { DrawLayer } from "./stage/DrawLayer";
+import { PinLayer, type PinHoverState } from "./stage/PinLayer";
+import { PinPanel } from "./panels/PinPanel";
+import { RegionPanel } from "./panels/RegionPanel";
 import { useDraw, type AtlasTool, type DrawMode } from "./useDraw";
 import "./atlas.css";
 
 export interface AtlasEditorProps {
   atlasId: string;
 }
+
+const TOOLTIP_SIZE = { width: 180, height: 48 } as const;
+
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
 const DRAW_MODES: Array<{ value: Exclude<DrawMode, "none">; label: string }> = [
   { value: "carve", label: "Carve" },
@@ -73,9 +80,12 @@ function RegionChooser({ options, position, onPick, onClear, onClose }: {
 
 export function AtlasEditor({ atlasId }: AtlasEditorProps) {
   const atlas = useScriptorium((s) => s.atlases.find((a) => a.id === atlasId));
+  const allEntries = useScriptorium((s) => s.entries);
   const [tool, setTool] = useState<AtlasTool>("select");
   const [mode, setMode] = useState<DrawMode>("none");
   const [selectedRegionId, setSelectedRegionId] = useState<Id | null>(null);
+  const [selectedPinId, setSelectedPinId] = useState<Id | null>(null);
+  const [hover, setHover] = useState<PinHoverState | null>(null);
   const [chooser, setChooser] = useState<ChooserState | null>(null);
   const apiRef = useRef<TransformApi | null>(null);
   const draw = useDraw({
@@ -86,6 +96,11 @@ export function AtlasEditor({ atlasId }: AtlasEditorProps) {
     onFinish: (region) => setSelectedRegionId(region.id),
   });
   const { drawing, cancelDraw, attemptFinishRegion, confirmCarve } = draw;
+
+  const projectEntries = useMemo(
+    () => allEntries.filter((e) => e.projectId === atlas?.projectId),
+    [allEntries, atlas],
+  );
 
   const confirmPreview = useCallback(() => {
     const region = confirmCarve();
@@ -103,9 +118,47 @@ export function AtlasEditor({ atlasId }: AtlasEditorProps) {
     return () => document.removeEventListener("keydown", onKey);
   }, [drawing, cancelDraw, attemptFinishRegion, confirmPreview, draw.carvePreview]);
 
+  // Selection may outlive its pin (undo/delete) — drop it when the pin is gone.
+  useEffect(() => {
+    if (!selectedPinId) return;
+    const alive = useScriptorium.getState().atlases.some(
+      (a) => a.id === atlasId && a.pins.some((p) => p.id === selectedPinId),
+    );
+    if (!alive) setSelectedPinId(null);
+  }, [atlasId, atlas, selectedPinId]);
+
+  // Delete key on the selected pin: direct delete (store pushes history).
+  useEffect(() => {
+    if (!selectedPinId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Delete") return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      const s = useScriptorium.getState();
+      if (s.atlases.some((a) => a.id === atlasId && a.pins.some((p) => p.id === selectedPinId))) {
+        s.deletePin(selectedPinId);
+        setSelectedPinId(null);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [atlasId, selectedPinId]);
+
   if (!atlas) return null;
 
+  const selectedPin = atlas.pins.find((p) => p.id === selectedPinId) ?? null;
+  const selectedRegion = atlas.regions.find((r) => r.id === selectedRegionId) ?? null;
+  const hoveredPin = hover ? atlas.pins.find((p) => p.id === hover.pinId) ?? null : null;
+  const hoverEntryTitle = hoveredPin?.entryId
+    ? projectEntries.find((e) => e.id === hoveredPin.entryId)?.title
+    : undefined;
+
   const handleStageClick = (pt: Pt, clientX: number, clientY: number) => {
+    if (tool === "pin") {
+      const pin = useScriptorium.getState().addPin(atlasId, { x: clamp01(pt.x), y: clamp01(pt.y) });
+      if (pin) setSelectedPinId(pin.id);
+      return;
+    }
     if (tool === "region") {
       draw.onStageClick(pt, clientX, clientY);
       return;
@@ -162,31 +215,92 @@ export function AtlasEditor({ atlasId }: AtlasEditorProps) {
             ))
           : null}
       </div>
-      <Stage atlas={atlas} onStageClick={handleStageClick} onStageMove={handleStageMove} onStageDblClick={handleStageDblClick}>
-        {(api) => {
-          apiRef.current = api;
-          return (
+      <div className="atlas-body">
+        <Stage
+          atlas={atlas}
+          onStageClick={handleStageClick}
+          onStageMove={handleStageMove}
+          onStageDblClick={handleStageDblClick}
+          overlayChildren={(api) => (
             <>
-              <RegionLayer
-                regions={atlas.regions}
+              <PinLayer
+                atlasId={atlasId}
+                pins={atlas.pins}
                 transformApi={api}
-                selectedRegionId={selectedRegionId}
-                onSelectRegion={setSelectedRegionId}
-                interactive={tool === "select"}
-                carveParentId={draw.carveParentId}
+                interactive={tool !== "region"}
+                selectedPinId={selectedPinId}
+                onSelectPin={setSelectedPinId}
+                onHoverEnter={(pinId, cursor, stage) => setHover({ pinId, cursor, stage })}
+                onHoverLeave={() => setHover(null)}
               />
-              <DrawLayer
-                drawVertices={draw.drawVertices}
-                drawCursor={draw.drawCursor}
-                imgW={api.imgW}
-                imgH={api.imgH}
-                carvePreview={draw.carvePreview}
-                carveSnapPoints={draw.carveSnapPoints}
-              />
+              {hoveredPin ? (
+                (() => {
+                  const left = hover!.stage.w > 0
+                    ? Math.max(0, Math.min(hover!.cursor.x + 12, hover!.stage.w - TOOLTIP_SIZE.width))
+                    : hover!.cursor.x + 12;
+                  const top = hover!.stage.h > 0
+                    ? Math.max(0, Math.min(hover!.cursor.y - TOOLTIP_SIZE.height, hover!.stage.h - TOOLTIP_SIZE.height))
+                    : hover!.cursor.y - TOOLTIP_SIZE.height;
+                  return (
+                    <div className="pin-tooltip" data-testid="pin-tooltip" style={{ left, top }}>
+                      <span className="pin-tooltip-label">{hoveredPin.label || "Pino"}</span>
+                      {hoverEntryTitle ? <span className="pin-tooltip-entry">{hoverEntryTitle}</span> : null}
+                    </div>
+                  );
+                })()
+              ) : null}
             </>
-          );
-        }}
-      </Stage>
+          )}
+        >
+          {(api) => {
+            apiRef.current = api;
+            return (
+              <>
+                <RegionLayer
+                  regions={atlas.regions}
+                  transformApi={api}
+                  selectedRegionId={selectedRegionId}
+                  onSelectRegion={setSelectedRegionId}
+                  interactive={tool === "select"}
+                  carveParentId={draw.carveParentId}
+                />
+                <DrawLayer
+                  drawVertices={draw.drawVertices}
+                  drawCursor={draw.drawCursor}
+                  imgW={api.imgW}
+                  imgH={api.imgH}
+                  carvePreview={draw.carvePreview}
+                  carveSnapPoints={draw.carveSnapPoints}
+                />
+              </>
+            );
+          }}
+        </Stage>
+        <aside className="atlas-panels" aria-label="Painéis do atlas">
+          {selectedPin ? (
+            <PinPanel
+              pin={selectedPin}
+              entries={projectEntries}
+              onDelete={(pinId) => {
+                useScriptorium.getState().deletePin(pinId);
+                setSelectedPinId(null);
+              }}
+            />
+          ) : selectedRegion ? (
+            <RegionPanel
+              atlasId={atlasId}
+              region={selectedRegion}
+              entries={projectEntries}
+              onDelete={(regionId) => {
+                useScriptorium.getState().deleteRegion(regionId);
+                setSelectedRegionId(null);
+              }}
+            />
+          ) : (
+            <p className="panel-placeholder">Selecione ou crie um pino ou região.</p>
+          )}
+        </aside>
+      </div>
       {draw.carvePreview ? (
         <div className="mode-actions" role="toolbar" aria-label="Ações de recorte">
           <button type="button" onClick={draw.flipCarvePreview}>Outro lado</button>

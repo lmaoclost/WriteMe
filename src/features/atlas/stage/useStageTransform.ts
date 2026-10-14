@@ -50,6 +50,13 @@ const clampScale = (s: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s));
 // browsers always report "mouse"/"touch"/"pen".
 const isMousePointer = (e: PointerEvent) => !e.pointerType || e.pointerType === "mouse";
 
+/** Pointer interactions with the DOM overlay (pins, tooltips) must not pan
+ *  or pinch the stage — the overlay owns its own pointer handling. */
+const fromOverlayDom = (e: { target: EventTarget | null }) => {
+  const t = e.target as Element | null;
+  return !!(t && typeof t.closest === "function" && t.closest(".stage-overlay-dom"));
+};
+
 export type StageTransform = TransformApi & {
   dragging: boolean;
   setImageSize(w: number, h: number): void;
@@ -201,6 +208,7 @@ export function useStageTransform(
 
     const onPointerDown = (e: PointerEvent) => {
       if (e.button !== 0 || !isMousePointer(e)) return;
+      if (fromOverlayDom(e)) return;
       if (grabRef.current || pinchRef.current) return;
       startGrab(e.clientX, e.clientY, e.pointerId);
       if (typeof stage.setPointerCapture === "function") {
@@ -234,7 +242,7 @@ export function useStageTransform(
 
     const onTouchStart = (e: TouchEvent) => {
       if (e.touches.length < 2) {
-        if (e.touches.length === 1 && !pinchRef.current) {
+        if (e.touches.length === 1 && !pinchRef.current && !fromOverlayDom(e)) {
           startGrab(e.touches[0].clientX, e.touches[0].clientY);
         }
         return;
