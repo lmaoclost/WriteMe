@@ -14,11 +14,11 @@ describe("buildCarveChild", () => {
       { x: 0.5, y: 0 }, { x: 0.7, y: 0.25 }, { x: 1, y: 0.5 }, { x: 1, y: 1 }, { x: 0, y: 1 }, { x: 0, y: 0 },
     ]);
   });
-  it("backward path excludes intermediate vertices", () => {
+  it("backward path picks the complementary border vertices", () => {
     const entry = { point: { x: 0.5, y: 0 }, edgeIndex: 0, t: 0.5 };
     const exit = { point: { x: 1, y: 0.5 }, edgeIndex: 1, t: 0.5 };
     const child = buildCarveChild(parent, entry, exit, false, []);
-    expect(child).toEqual([{ x: 0.5, y: 0 }, { x: 1, y: 0.5 }]);
+    expect(child).toEqual([{ x: 0.5, y: 0 }, { x: 1, y: 0.5 }, { x: 1, y: 0 }]);
   });
 });
 

@@ -12,12 +12,12 @@ export function buildCarveChild(parentPts: Pt[], entry: SnapRef, exit: SnapRef, 
     ...middle.map(p => ({ x: p.x, y: p.y })),
     { x: exit.point.x, y: exit.point.y },
   ];
-  if (!forward) return child;
   const span = ((i - o) % n + n) % n;
   const picks: { k: number; key: number }[] = [];
   for (let u = 0; u < n; u++) {
-    const f = ((u - o) % n + n) % n;
-    if (f > 1e-9 && f < span - 1e-9) picks.push({ k: u, key: f });
+    const f = forward ? ((u - o) % n + n) % n : ((o - u) % n + n) % n;
+    const spanF = forward ? span : n - span;
+    if (f > 1e-9 && f < spanF - 1e-9) picks.push({ k: u, key: f });
   }
   picks.sort((a, b) => a.key - b.key);
   for (const p of picks) child.push({ x: parentPts[p.k].x, y: parentPts[p.k].y });
