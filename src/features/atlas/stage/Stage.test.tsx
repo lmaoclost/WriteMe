@@ -229,6 +229,31 @@ describe("overlay-dom counter transform", () => {
 });
 
 describe("Stage render", () => {
+  it("S1: image load fits the stage immediately (scale min(cw/naw, ch/nah), centered)", () => {
+    // Stage 395×701, image 1024×640 → scale 0.3857 (width-limited), pan ≥ 0.
+    const m = mountStage({ rect: { left: 0, top: 0, w: 395, h: 701 }, client: { w: 395, h: 701 } });
+    expect(m.api().scale).toBe(1); // before load: scale-1 view
+    loadMapImage(m.container, 1024, 640);
+    expect(m.api().scale).toBeCloseTo(395 / 1024, 12);
+    expect(m.api().panX).toBeCloseTo((395 - 1024 * (395 / 1024)) / 2, 12);
+    expect(m.api().panY).toBeCloseTo((701 - 640 * (395 / 1024)) / 2, 12);
+    expect(m.api().panX).toBeGreaterThanOrEqual(0);
+    expect(m.api().panY).toBeGreaterThanOrEqual(0);
+    // The image fits: fitted rect (pan + natural·scale) stays inside the stage.
+    const right = m.api().panX + 1024 * m.api().scale;
+    const bottom = m.api().panY + 640 * m.api().scale;
+    expect(right).toBeLessThanOrEqual(395 + 1e-9);
+    expect(bottom).toBeLessThanOrEqual(701 + 1e-9);
+  });
+
+  it("S1 fallback: load with an unmeasurable stage resets to scale 1 / pan 0", () => {
+    const m = mountStage({ client: { w: 0, h: 0 } });
+    loadMapImage(m.container);
+    expect(m.api().scale).toBe(1);
+    expect(m.api().panX).toBe(0);
+    expect(m.api().panY).toBe(0);
+  });
+
   it("renders img + overlay svg with viewBox from natural size after load", () => {
     const m = mountStage();
     expect(m.api().imgW).toBe(0);

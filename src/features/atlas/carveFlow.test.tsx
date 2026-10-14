@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import type { Atlas, Pt } from "../../domain/types";
-import { polygonArea, snapToCarveBorder } from "../../domain/geometry";
+import { polygonArea, pointInPolygon, snapToCarveBorder } from "../../domain/geometry";
 import { useScriptorium } from "../../data/store";
 import { AtlasEditor } from "./AtlasEditor";
 
@@ -217,6 +217,46 @@ describe("carve mode", () => {
     expect(regions[0].points[1].y).toBeCloseTo(0.35, 12);
   });
 
+  it("S2: armed entry with no snapped exit → Enter toasts the border hint and commits nothing", () => {
+    const atlas = makeAtlas([{ points: PARENT, color: PARENT_COLOR, label: "Estado" }]);
+    const { container, stageEl } = mountEditor(atlas);
+    pickButton("Ferramenta região");
+    pickButton("Carve");
+    clickStage(stageEl, 166, 120, 11); // near vertex A → entry arms, parent detected
+    expect(parentPoly(container).classList.contains("carve-parent")).toBe(true);
+    clickStage(stageEl, 320, 210, 12); // middle (0.4,0.35)
+    clickStage(stageEl, 260, 340, 13); // middle FAR from the border → no exit snap
+    expect(container.querySelector("polygon.carve-preview")).toBeNull();
+    act(() => {
+      fireEvent.keyDown(document, { key: "Enter" });
+    });
+    expect(store().toasts.some((t) => t.kind === "error" && t.message === "Mova as extremidades para a borda do Estado.")).toBe(true);
+    expect(store().atlases[0].regions).toHaveLength(1); // nothing committed
+  });
+
+  it("S2: a boundary-snapped entry still arms the carve when ray-cast misclassifies the point", () => {
+    // A snap point on the hex's vertical edge classifies OUTSIDE under the
+    // half-open ray-cast (crossing x == pt.x fails the strict `<`) — the
+    // detect fallback (nearest border) must still resolve the parent.
+    const HEX: Pt[] = [
+      { x: 0.5, y: 0.05 }, { x: 0.85, y: 0.27 }, { x: 0.85, y: 0.73 },
+      { x: 0.5, y: 0.95 }, { x: 0.15, y: 0.73 }, { x: 0.15, y: 0.27 },
+    ];
+    const atlas = makeAtlas([{ points: HEX, color: PARENT_COLOR, label: "Hexagão" }]);
+    const { container, stageEl } = mountEditor(atlas);
+    expect(pointInPolygon({ x: 0.85, y: 0.5 }, HEX)).toBe(false);
+    pickButton("Ferramenta região");
+    pickButton("Carve");
+    clickStage(stageEl, 680, 300, 11); // (0.85,0.5): exactly on the right edge
+    expect(parentPoly(container).classList.contains("carve-parent")).toBe(true);
+    expect(store().atlases[0].regions).toHaveLength(1);
+    // Armed entry (snap marker present); Enter without exit → §7 toast, no commit.
+    act(() => {
+      fireEvent.keyDown(document, { key: "Enter" });
+    });
+    expect(store().toasts.some((t) => t.kind === "error" && t.message === "Mova as extremidades para a borda do Estado.")).toBe(true);
+  });
+
   it("Escape clears preview and draw state but the carve mode stays armed", () => {
     const { container, stageEl } = setupCarve("Carve");
     act(() => {
@@ -369,16 +409,17 @@ describe("carve px convention (imgW × scale)", () => {
     const { container, stageEl } = mountEditor(atlas, { w: 1600, h: 600 });
     pickButton("Ferramenta região");
     pickButton("Carve");
-    // 0.01 offset = 16 px > 14 → no snap → free draw fallback
-    clickStage(stageEl, 336, 301, 21);
+    // S1: the fit-on-load view is scale 0.5 (800/1600), panY 150 → pxPerUnit = imgW·scale = 800.
+    // A 0.02 vertex offset = 16 px > 14 → no snap → free draw fallback
+    clickStage(stageEl, 176, 300.3, 21); // unit (0.22, 0.501)
     expect(parentPoly(container).classList.contains("carve-parent")).toBe(false);
     const marker = container.querySelector("circle.draw-first-marker") as SVGCircleElement;
-    expect(Number(marker.getAttribute("cx"))).toBeCloseTo(336, 6); // raw click, unsnapped
-    // Escape resets the machine (mode stays), then 0.008 ≈ 12.8 px ≤ 14 → snap
+    expect(Number(marker.getAttribute("cx"))).toBeCloseTo(352, 6); // raw click, unsnapped (0.22·1600)
+    // Escape resets the machine (mode stays), then 0.016 ≈ 12.8 px ≤ 14 → snap
     act(() => {
       fireEvent.keyDown(document, { key: "Escape" });
     });
-    clickStage(stageEl, 332.8, 301, 22);
+    clickStage(stageEl, 172.8, 300.3, 22); // unit (0.216, 0.501)
     expect(parentPoly(container).classList.contains("carve-parent")).toBe(true);
     const snapped = container.querySelector("circle.draw-first-marker") as SVGCircleElement;
     expect(Number(snapped.getAttribute("cx"))).toBeCloseTo(320, 6); // vertex (0.2,·) exact

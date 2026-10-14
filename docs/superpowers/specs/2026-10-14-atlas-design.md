@@ -1,5 +1,7 @@
 # Scriptorium — Atlas Design (sub-projeto 2)
 
+> Status 2026-10-14: Atlas implementado (tasks 1–9).
+
 Data: 2026-10-14
 Escopo: editor de mapa estilo Scriptorium sobre a Foundation — upload de mapa, pintura de regiões poligonais, pins, carve/vizinho/fit por compartilhamento de borda, undo/redo, multi-atlas por projeto. A mecânica é implementada algoritmicamente.
 
@@ -44,7 +46,7 @@ História por atlas: `undoStack/redoStack` (cap 50) com snapshot `{regions, pins
 **Draw (region)**: cliques adicionam vértices (`drawVertices`); preview: polígono atual + linha do cursor; close: clique ≤14px do primeiro vértice (screen px), **Enter**, ou dblclick → `finishRegion` (region tool) / `attemptFinishRegion` com carve path. Escape → `cancelDraw`. Cursor exibido com o último ponto carregado. `drawCursor`/`carveSnapPoint` atualizam em mousemove quando borderShare.
 
 **Carve/vizinho/fit** (toggle trio mutuamente exclusivo, conforme especificado):
-- **carve**: desenha sobre uma região maior detectada (`detectCarveParent`: região contendo primeiro vértice, maior área). Extremos snapam; `carvePreview` mostra `carvePreviewPoints` (useForward/backward); botões "usar outro lado"/"descartar"; confirm: child criado com `buildCarveChild(..., forward|backward)`; quando `inside` o **pai é trimado** com o caminho oposto (`parent.points = backward`) — igual `confirmCarve` . O caminho `unionMode`  (união de shapes via borda) NÃO entra nesta fase — carve trima pai, neighbor não; simplificação registrada.
+- **carve**: desenha sobre uma região maior detectada (`detectCarveParent`: região contendo primeiro vértice, menor área ganha). Extremos snapam; `carvePreview` mostra `carvePreviewPoints` (useForward/backward); botões "usar outro lado"/"descartar"; confirm: child criado com `buildCarveChild(..., forward|backward)`; quando `inside` o **pai é trimado** com o caminho oposto (`parent.points = backward`) — igual `confirmCarve` . O caminho `unionMode`  (união de shapes via borda) NÃO entra nesta fase — carve trima pai, neighbor não; simplificação registrada.
 - **neighbor**: borderShare com a região mais próxima (`regionNearestToPoint`), sem trim; child pode sair do lado de fora.
 - **fit**: desenho livre; confirm → `difference(desenho, todasAsRegiões)` via polygon-clipping; maior área resultante vira a região ("region fitted to its neighbors — name it" toast).
 

@@ -74,7 +74,10 @@ export function detectCarveParent(pt: Pt, regions: { id: string; points: Pt[] }[
   const containing = regions
     .filter(r => r.points.length >= 3 && pointInPolygon(pt, r.points))
     .sort((a, b) => polygonArea(a.points) - polygonArea(b.points));
-  return containing[0]?.id ?? null;
+  // Ray-casting is orientation-dependent for points exactly on the boundary —
+  // snapped carve entries are by construction ON an edge. When classification
+  // misses, the nearest region's border is the deterministic parent.
+  return containing[0]?.id ?? regionNearestToPoint(pt, regions);
 }
 
 export function regionNearestToPoint(pt: Pt, regions: { id: string; points: Pt[] }[]): string | null {

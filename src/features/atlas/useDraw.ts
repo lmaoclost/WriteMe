@@ -234,6 +234,9 @@ export function useDraw({ atlasId, transformApi, tool, mode, onFinish }: UseDraw
       }
       // No border parent: legacy falls back to free drawing → normal finish.
       if (!entryRef.current) return finishRegion() !== null;
+      // Armed entry without a snapped exit must not be a silent dead end (S2):
+      // legacy §7 toast fires and the carve stays armed for a better exit click.
+      useScriptorium.getState().pushToast("error", "Mova as extremidades para a borda do Estado.");
       return false;
     }
     if (current === "fit") return commitFit();

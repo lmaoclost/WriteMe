@@ -7,6 +7,7 @@ import { isMeaningful } from "../domain/geometry";
 import { emptyProjectData, serialize, parseExport } from "./schema";
 import { seedDemoProject } from "./seed";
 import { claimRest, fitGap } from "./clip";
+import { getLastRegionColor } from "../features/atlas/panels/recentColors";
 import { STORE_KEY, localStoragePersistence, wipeStore, storageHealth, PersistedState } from "./storage";
 
 export type ToastKind = "info" | "error" | "success";
@@ -34,6 +35,8 @@ export interface AtlasHistory {
 }
 
 const clonePoints = (points: Pt[]): Pt[] => points.map((p) => ({ ...p }));
+/** Spec §7: polygon-clipping failure surfaces once, state untouched. */
+const CLIP_FAILURE_TOAST = "Não consegui calcular os encaixes.";
 const cloneSnapshot = (a: Atlas): AtlasSnapshot => ({
   regions: a.regions.map((r) => ({ ...r, points: clonePoints(r.points) })),
   pins: a.pins.map((p) => ({ ...p })),
@@ -277,7 +280,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         const region: Region = {
           id: newId("reg"),
           points: clonePoints(input.points),
-          color: input.color ?? REGION_DEFAULT_COLOR,
+          color: input.color ?? getLastRegionColor() ?? REGION_DEFAULT_COLOR,
           fillOpacity: input.fillOpacity ?? REGION_DEFAULT_OPACITY,
           label: input.label ?? "",
           entryId: input.entryId,
@@ -381,7 +384,13 @@ export const useScriptorium = create<ScriptoriumState>()(
         const others = atlas.regions
           .filter((r) => r.id !== regionId)
           .map((r) => r.points);
-        const rest = claimRest(region.points, others);
+        let rest: Pt[][];
+        try {
+          rest = claimRest(region.points, others);
+        } catch {
+          get().pushToast("error", CLIP_FAILURE_TOAST);
+          return 0;
+        }
         if (rest.length === 0) return 0;
         get().pushHistory(atlasId);
         const created: Region[] = rest.map((points) => ({
@@ -401,7 +410,13 @@ export const useScriptorium = create<ScriptoriumState>()(
       fitRegionIntoGap(atlasId, drawn, color) {
         const atlas = get().atlases.find((a) => a.id === atlasId);
         if (!atlas) return null;
-        const fitted = fitGap(drawn, atlas.regions.map((r) => r.points));
+        let fitted: Pt[] | null;
+        try {
+          fitted = fitGap(drawn, atlas.regions.map((r) => r.points));
+        } catch {
+          get().pushToast("error", CLIP_FAILURE_TOAST);
+          return null;
+        }
         if (!fitted) return null;
         return get().addRegion(atlasId, { points: fitted, ...(color !== undefined ? { color } : {}) });
       },

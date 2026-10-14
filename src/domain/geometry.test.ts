@@ -32,6 +32,11 @@ describe("regionCentroid", () => {
     expect(c.x).toBeCloseTo(2 / 3);
     expect(c.y).toBeCloseTo(2 / 3);
   });
+  it("collinear (degenerate) polygon falls back to the vertex mean", () => {
+    const c = regionCentroid([{ x: 0, y: 1 }, { x: 2, y: 1 }, { x: 4, y: 1 }]);
+    expect(c.x).toBeCloseTo(2);
+    expect(c.y).toBeCloseTo(1);
+  });
 });
 
 describe("projectToBoundary", () => {

@@ -390,6 +390,30 @@ describe("editor header", () => {
     expect(store().atlases[0].regions).toHaveLength(1);
   });
 
+  it("ctrl+shift+z and ctrl+y both redo (each restores the region ctrl+z removed)", () => {
+    const pid = seedProject();
+    const atlas = seedAtlas(pid, { withMap: true });
+    const { stageEl } = mountEditor(pid, atlas.id);
+    drawTestRegion(stageEl);
+    expect(store().atlases[0].regions).toHaveLength(1);
+    act(() => {
+      fireEvent.keyDown(document, { key: "z", ctrlKey: true });
+    });
+    expect(store().atlases[0].regions).toHaveLength(0);
+    act(() => {
+      fireEvent.keyDown(document, { key: "z", ctrlKey: true, shiftKey: true });
+    });
+    expect(store().atlases[0].regions).toHaveLength(1);
+    act(() => {
+      fireEvent.keyDown(document, { key: "z", ctrlKey: true });
+    });
+    expect(store().atlases[0].regions).toHaveLength(0);
+    act(() => {
+      fireEvent.keyDown(document, { key: "y", ctrlKey: true });
+    });
+    expect(store().atlases[0].regions).toHaveLength(1);
+  });
+
   it("zoom label follows the scale; Ajustar restores fit scale", () => {
     const pid = seedProject();
     const atlas = seedAtlas(pid, { withMap: true });

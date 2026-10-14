@@ -79,14 +79,37 @@ export function useStageTransform(
     setView(next);
   }, []);
 
+  const fitToContainer = useCallback(() => {
+    const stage = stageRef.current;
+    const { w, h } = sizeRef.current;
+    if (!stage || !w || !h) return;
+    const cw = stage.clientWidth;
+    const ch = stage.clientHeight;
+    if (!cw || !ch) return;
+    const scale = clampScale(Math.min(cw / w, ch / h));
+    applyView({
+      scale,
+      panX: (cw - w * scale) / 2,
+      panY: (ch - h * scale) / 2,
+    });
+  }, [applyView, stageRef]);
+
   const setImageSize = useCallback(
     (w: number, h: number) => {
       if (sizeRef.current.w === w && sizeRef.current.h === h) return;
       sizeRef.current = { w, h };
       setSize({ w, h });
-      applyView({ scale: 1, panX: 0, panY: 0 });
+      // S1: a map that just landed must fit the stage immediately (the old
+      // scale-1 reset cropped it); when the stage is not yet measurable
+      // (jsdom / first paint) fall back to the scale-1 reset.
+      const stage = stageRef.current;
+      if (!w || !h || !stage || !stage.clientWidth || !stage.clientHeight) {
+        applyView({ scale: 1, panX: 0, panY: 0 });
+        return;
+      }
+      fitToContainer();
     },
-    [applyView],
+    [applyView, fitToContainer, stageRef],
   );
 
   const zoomAtPoint = useCallback(
@@ -123,21 +146,6 @@ export function useStageTransform(
     },
     [applyView],
   );
-
-  const fitToContainer = useCallback(() => {
-    const stage = stageRef.current;
-    const { w, h } = sizeRef.current;
-    if (!stage || !w || !h) return;
-    const cw = stage.clientWidth;
-    const ch = stage.clientHeight;
-    if (!cw || !ch) return;
-    const scale = clampScale(Math.min(cw / w, ch / h));
-    applyView({
-      scale,
-      panX: (cw - w * scale) / 2,
-      panY: (ch - h * scale) / 2,
-    });
-  }, [applyView, stageRef]);
 
   const zoomBy = useCallback(
     (factor: number) => {

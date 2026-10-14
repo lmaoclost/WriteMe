@@ -1,9 +1,26 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act } from "@testing-library/react";
 import { useScriptorium, selectHistoryFlags } from "./store";
 import { STORE_KEY } from "./storage";
 import { parseExport, validateProjectData } from "./schema";
 import type { Atlas, Pin, Region, WorldEntry } from "../domain/types";
+import { getLastRegionColor, pushRecentColor, resetRecentColors } from "../features/atlas/panels/recentColors";
+
+const clipState = vi.hoisted(() => ({ fail: false }));
+vi.mock("./clip", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./clip")>();
+  return {
+    ...actual,
+    fitGap: (...args: Parameters<typeof actual.fitGap>) => {
+      if (clipState.fail) throw new Error("clip boom");
+      return actual.fitGap(...args);
+    },
+    claimRest: (...args: Parameters<typeof actual.claimRest>) => {
+      if (clipState.fail) throw new Error("clip boom");
+      return actual.claimRest(...args);
+    },
+  };
+});
 
 /**
  * Cases:
@@ -49,6 +66,8 @@ function addRegionDirect(atlasId: string, points: { x: number; y: number }[]): R
 beforeEach(() => {
   localStorage.clear();
   useScriptorium.setState(useScriptorium.getInitialState());
+  resetRecentColors();
+  clipState.fail = false;
 });
 
 describe("atlas CRUD (case 1)", () => {
@@ -324,5 +343,58 @@ describe("review fixes (I1/I2)", () => {
     expect(store().histories[a.id].undo.length).toBeGreaterThan(0);
     act(() => { store().deleteAtlas(a.id); });
     expect(store().histories[a.id]).toBeUndefined();
+  });
+});
+
+describe("fix wave: clip failure guard (F5)", () => {
+  it("fitRegionIntoGap → clip throw toasts and returns null with state untouched", () => {
+    const a = addAtlas();
+    addRegionDirect(a.id, frame);
+    const flagsBefore = selectHistoryFlags(a.id)(store());
+    clipState.fail = true;
+    let fitted: Region | null = null;
+    act(() => { fitted = store().fitRegionIntoGap(a.id, quadrant); });
+    clipState.fail = false;
+    expect(fitted).toBeNull();
+    expect(store().atlases[0].regions).toHaveLength(1);
+    expect(selectHistoryFlags(a.id)(store())).toEqual(flagsBefore);
+    expect(store().toasts.some((t) => t.kind === "error" && t.message === "Não consegui calcular os encaixes.")).toBe(true);
+  });
+  it("claimRemainingArea → clip throw toasts and returns 0 with state untouched", () => {
+    const a = addAtlas();
+    const orig = addRegionDirect(a.id, frame);
+    addRegionDirect(a.id, rightHalf);
+    const flagsBefore = selectHistoryFlags(a.id)(store());
+    clipState.fail = true;
+    let count = -1;
+    act(() => { count = store().claimRemainingArea(a.id, orig.id); });
+    clipState.fail = false;
+    expect(count).toBe(0);
+    expect(store().atlases[0].regions).toHaveLength(2);
+    expect(selectHistoryFlags(a.id)(store())).toEqual(flagsBefore);
+    expect(store().toasts.some((t) => t.kind === "error" && t.message === "Não consegui calcular os encaixes.")).toBe(true);
+  });
+});
+
+describe("fix wave: lastColor default (F6)", () => {
+  it("addRegion defaults to the last picked color; no pick yet → #3498db fallback", () => {
+    const a = addAtlas();
+    expect(getLastRegionColor()).toBeNull();
+    let plain!: Region;
+    act(() => { plain = store().addRegion(a.id, { points: leftHalf }) as Region; });
+    expect(plain.color).toBe("#3498db");
+    // A panel pick (ColorSwatches → pushRecentColor) sets the default:
+    act(() => { pushRecentColor("#c9a227"); });
+    expect(getLastRegionColor()).toBe("#c9a227");
+    let next!: Region | null;
+    act(() => { next = store().addRegion(a.id, { points: rightHalf }) as Region | null; });
+    expect(next!.color).toBe("#c9a227");
+    // Explicit input color still wins.
+    let forced!: Region;
+    act(() => { forced = store().addRegion(a.id, { points: quadrant, color: "#e74c3c" }) as Region; });
+    expect(forced.color).toBe("#e74c3c");
+    expect(getLastRegionColor()).toBe("#c9a227");
+    resetRecentColors();
+    expect(getLastRegionColor()).toBeNull();
   });
 });

@@ -199,19 +199,20 @@ describe("pin layer", () => {
   it("pin drag maps x by imgW and y by imgH (wide/tall image) and clamps at the border", () => {
     const atlas = makeAtlas({ pins: [{ x: 0.25, y: 0.25, label: "Cidade" }] });
     const { container } = mountEditor(atlas, { w: 1600, h: 600 });
+    // S1: fit-on-load → scale 0.5, so the conversion divisor is imgW·scale = 800 / imgH·scale = 300.
     const btn = pinDot(container);
-    firePointer(btn, "pointerdown", { pointerId: 31, clientX: 400, clientY: 150 });
-    firePointer(btn, "pointermove", { pointerId: 31, clientX: 480, clientY: 0 });
+    firePointer(btn, "pointerdown", { pointerId: 31, clientX: 400, clientY: 450 });
+    firePointer(btn, "pointermove", { pointerId: 31, clientX: 480, clientY: 300 });
     let pin = store().atlases[0].pins[0];
-    expect(pin.x).toBeCloseTo(0.3, 9); // 0.25 + 80/1600
-    expect(pin.y).toBeCloseTo(0, 9); // 0.25 - 150/600
-    firePointer(btn, "pointerup", { pointerId: 31, clientX: 480, clientY: 0 });
+    expect(pin.x).toBeCloseTo(0.35, 9); // 0.25 + 80/800
+    expect(pin.y).toBeCloseTo(0, 9); // 0.25 - 150/300 → clamped at 0
+    firePointer(btn, "pointerup", { pointerId: 31, clientX: 480, clientY: 300 });
     // another drag upward would overshoot → clamped at 0
-    firePointer(btn, "pointerdown", { pointerId: 32, clientX: 480, clientY: 0 });
-    firePointer(btn, "pointermove", { pointerId: 32, clientX: 480, clientY: -150 });
-    firePointer(btn, "pointerup", { pointerId: 32, clientX: 480, clientY: -150 });
+    firePointer(btn, "pointerdown", { pointerId: 32, clientX: 480, clientY: 300 });
+    firePointer(btn, "pointermove", { pointerId: 32, clientX: 480, clientY: 150 });
+    firePointer(btn, "pointerup", { pointerId: 32, clientX: 480, clientY: 150 });
     pin = store().atlases[0].pins[0];
-    expect(pin.x).toBeCloseTo(0.3, 9);
+    expect(pin.x).toBeCloseTo(0.35, 9);
     expect(pin.y).toBeCloseTo(0, 9);
     expect(Number.isFinite(pin.y)).toBe(true);
   });

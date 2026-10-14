@@ -352,7 +352,10 @@
   color: var(--slate);
 }
 .panel-placeholder { color: var(--parchment-dim); font-size: 13px; }
-.panel .field button {
+/* Direct-child scoping: .seg/.swatch/.link-list buttons live NESTED inside
+   .field and style themselves — without `>` this rule (0,2,1) stomped their
+   radius/border/padding (swatch circle indistinguishable, type grid overflow). */
+.panel .field > button {
   background: none;
   border: 1px solid var(--line);
   color: var(--parchment);
@@ -360,10 +363,19 @@
   padding: 6px 10px;
   font-size: 13px;
 }
-.panel .field button:hover { border-color: var(--gold-dim); }
-.panel .field button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+.panel .field > button:hover { border-color: var(--gold-dim); }
+.panel .field > button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
 .seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
-.seg button { padding: 4px 2px; font-size: 12px; white-space: nowrap; }
+.seg button {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--parchment);
+  border-radius: 6px;
+  padding: 4px 2px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.seg button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
 .swatch-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .swatch {
   width: 20px;
