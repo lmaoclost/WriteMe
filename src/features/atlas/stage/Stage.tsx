@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import type { Atlas, Pt } from "../../../domain/types";
 import { useScriptorium } from "../../../data/store";
 import { MOVE_THRESHOLD_PX, useStageTransform, type TransformApi } from "./useStageTransform";
+import "../atlas.css";
 
 export interface StageProps {
   atlas: Atlas;
