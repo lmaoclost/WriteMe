@@ -52,7 +52,7 @@ export function ExportTools({ manuscript }: ExportToolsProps) {
     if (disabled) return;
     setBusy(true);
     try {
-      const { default: Epub } = await import("epub-gen-memory");
+      const { EPub } = await import("epub-gen-memory");
       const state = useScriptorium.getState();
       const project = state.projects.find((p) => p.id === manuscript.projectId);
       const cover = project?.coverImageKey ? state.images[project.coverImageKey] : undefined;
@@ -68,7 +68,9 @@ export function ExportTools({ manuscript }: ExportToolsProps) {
           title: chapter.heading,
           content: renderMarkdown(chapter.content || ""),
         }));
-      const data = await Epub(options, content);
+      // genEpub() itself runs render(); real export is the EPub class (not the default fn).
+      const epub = new EPub(options, content);
+      const data = await epub.genEpub();
       const blob = new Blob([data as BlobPart], { type: "application/epub+zip" });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
@@ -77,7 +79,8 @@ export function ExportTools({ manuscript }: ExportToolsProps) {
       anchor.click();
       URL.revokeObjectURL(url);
       pushToast("success", "EPUB gerado.");
-    } catch {
+    } catch (error) {
+      console.error("EPUB export failed:", error);
       pushToast("error", "Falha ao gerar o EPUB.");
     } finally {
       setBusy(false);

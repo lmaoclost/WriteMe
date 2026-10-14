@@ -1,19 +1,37 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import Epub from "epub-gen-memory";
 import { AppRouter } from "../../app/router";
 import { useScriptorium } from "../../data/store";
 import type { Manuscript } from "../../domain/types";
 import { buildBookHtml } from "./buildBook";
 
-vi.mock("epub-gen-memory", () => ({
-  default: vi.fn(async () =>
-    new Uint8Array([1, 2, 3]) as unknown as ReturnType<typeof import("epub-gen-memory").default>,
-  ),
+// Real package shape: { EPub (class), default (fn), chapterDefaults, optionsDefaults }.
+// The app path instantiates EPub and awaits genEpub() (render() runs inside genEpub).
+const epubMock = vi.hoisted(() => ({
+  genEpub: vi.fn(async () => new Uint8Array([1, 2, 3])),
+  calls: [] as { options: unknown; content: unknown }[],
+  expectedOrder: null as string[] | null,
 }));
 
-const mockEpub = vi.mocked(Epub);
+vi.mock("epub-gen-memory", () => ({
+  EPub: class {
+    constructor(public options: unknown, public content: unknown) {
+      epubMock.calls.push({ options, content });
+      if (epubMock.expectedOrder) {
+        const chapters = Array.isArray(content) ? (content as { title?: unknown }[]) : [];
+        expect(chapters.map((chapter) => chapter?.title)).toEqual(epubMock.expectedOrder);
+      }
+    }
+    genEpub(): Promise<Uint8Array> {
+      return epubMock.genEpub();
+    }
+  },
+}));
+
+function lastOptions(index: number): Record<string, unknown> {
+  return epubMock.calls[index].options as Record<string, unknown>;
+}
 
 function seedProject(): string {
   return useScriptorium.getState().addProject("Vellmora").id;
@@ -86,7 +104,9 @@ function stubWindowPrint(spy: ReturnType<typeof vi.fn>) {
 beforeEach(() => {
   localStorage.clear();
   useScriptorium.setState(useScriptorium.getInitialState());
-  mockEpub.mockClear();
+  epubMock.genEpub.mockClear();
+  epubMock.calls.length = 0;
+  epubMock.expectedOrder = null;
   stubAnchorDownload();
 });
 
@@ -169,18 +189,20 @@ describe("EPUB export", () => {
         { heading: "Fim", content: "A última linha." },
       ],
     });
+    epubMock.expectedOrder = ["Prólogo", "Fim"];
     render(manuscriptRoute(projectId));
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
     await waitFor(() => {
       expect(useScriptorium.getState().toasts.some((t) => t.message === "EPUB gerado.")).toBe(true);
     });
-    expect(mockEpub).toHaveBeenCalledTimes(1);
-    const [options, content] = mockEpub.mock.calls[0];
-    expect(options).toEqual(expect.objectContaining({ title: "Cantar de Vellmora", author: "Renan", lang: "pt" }));
+    expect(epubMock.calls).toHaveLength(1);
+    expect(epubMock.genEpub).toHaveBeenCalledTimes(1);
+    const content = epubMock.calls[0].content as { title: string; content: string }[];
     expect(content).toHaveLength(2);
-    expect(content?.[0]).toMatchObject({ title: "Prólogo" });
-    expect(content?.[0].content).toContain("<strong>Negrito</strong>");
-    expect(content?.[1]).toMatchObject({ title: "Fim" });
+    expect(content[0]).toMatchObject({ title: "Prólogo" });
+    expect(content[0].content).toContain("<strong>Negrito</strong>");
+    expect(content[1]).toMatchObject({ title: "Fim" });
+    expect(lastOptions(0)).toEqual(expect.objectContaining({ title: "Cantar de Vellmora", author: "Renan", lang: "pt" }));
     expect(anchorDownload).toBe("cantar-de-vellmora.epub");
     expect(anchorHref).toBe("blob:mock-url");
     expect(screen.getByRole("button", { name: "Exportar EPUB" })).toBeEnabled();
@@ -194,8 +216,8 @@ describe("EPUB export", () => {
     seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "x" }] });
     const covered = render(manuscriptRoute(projectId));
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
-    await waitFor(() => expect(mockEpub).toHaveBeenCalledTimes(1));
-    expect(mockEpub.mock.calls[0][0]).toEqual(expect.objectContaining({ cover: "data:image/png;base64,COVER" }));
+    await waitFor(() => expect(epubMock.calls).toHaveLength(1));
+    expect(lastOptions(0)).toEqual(expect.objectContaining({ cover: "data:image/png;base64,COVER" }));
     covered.unmount();
 
     useScriptorium.setState(useScriptorium.getInitialState());
@@ -203,8 +225,8 @@ describe("EPUB export", () => {
     seedBook(bareId, { title: "B", chapters: [{ heading: "Um", content: "x" }] });
     render(manuscriptRoute(bareId));
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
-    await waitFor(() => expect(mockEpub).toHaveBeenCalledTimes(2));
-    expect("cover" in (mockEpub.mock.calls[1][0] as object)).toBe(false);
+    await waitFor(() => expect(epubMock.calls).toHaveLength(2));
+    expect("cover" in lastOptions(1)).toBe(false);
   });
 
   it("falls back to the 'livro' slug when the title has no alnum characters", async () => {
@@ -212,7 +234,7 @@ describe("EPUB export", () => {
     seedBook(projectId, { title: "???", chapters: [{ heading: "Um", content: "x" }] });
     render(manuscriptRoute(projectId));
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
-    await waitFor(() => expect(mockEpub).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(epubMock.calls).toHaveLength(1));
     expect(anchorDownload).toBe("livro.epub");
   });
 
@@ -220,7 +242,7 @@ describe("EPUB export", () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "x" }] });
     let resolve!: (value: never) => void;
-    mockEpub.mockImplementationOnce(
+    epubMock.genEpub.mockImplementationOnce(
       () => new Promise<never>((res) => { resolve = res; }),
     );
     render(manuscriptRoute(projectId));
@@ -231,13 +253,13 @@ describe("EPUB export", () => {
     resolve([1, 2, 3] as never);
     await waitFor(() => expect(button).toBeEnabled());
     expect(button).not.toHaveAttribute("aria-busy");
-    expect(mockEpub).toHaveBeenCalledTimes(1);
+    expect(epubMock.genEpub).toHaveBeenCalledTimes(1);
   });
 
   it("toasts the failure message and re-enables the button", async () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "x" }] });
-    mockEpub.mockRejectedValueOnce(new Error("boom"));
+    epubMock.genEpub.mockRejectedValueOnce(new Error("boom"));
     render(manuscriptRoute(projectId));
     const button = screen.getByRole("button", { name: "Exportar EPUB" });
     fireEvent.click(button);
