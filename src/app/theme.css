@@ -1,0 +1,38 @@
+:root {
+  --ink: #12121e;
+  --night: #1a1a2e;
+  --night-2: #20203a;
+  --parchment: #e8dcc3;
+  --parchment-dim: #b9b0a0;
+  --gold: #c9a227;
+  --gold-dim: #8a7322;
+  --slate: #7a7a99;
+  --ember: #a64b35;
+  --line: #2a2a44;
+  --font-display: "Fraunces Variable", Georgia, serif;
+  --font-body: "Inter Variable", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--parchment);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin: 0;
+}
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+button:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
