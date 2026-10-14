@@ -4,7 +4,7 @@ import type { EntryCategory, WorldEntry } from "../../domain/types";
 import { ENTRY_CATEGORIES } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
 import { fileToDataUrl } from "../../data/image";
-import { dateIsEmpty, formatDate, sanitizeDate } from "../../domain/dates";
+import { dateIsEmpty, formatDate, isValidDate, sanitizeDate } from "../../domain/dates";
 import { LinkPicker } from "../atlas/panels/LinkPicker";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { CATEGORY_COLORS, CATEGORY_LABELS } from "./categories";
@@ -141,7 +141,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
   );
   const cover = entry.imageKey ? images[entry.imageKey] : undefined;
   const entryDate = dateIsEmpty(entry.date ?? "") ? null : sanitizeDate(entry.date ?? "");
-  const dateInvalid = !dateIsEmpty(dateDraft.draft) && sanitizeDate(dateDraft.draft) === null;
+  const dateInvalid = !dateIsEmpty(dateDraft.draft) && !isValidDate(dateDraft.draft);
 
   return (
     <div className="codex-view">

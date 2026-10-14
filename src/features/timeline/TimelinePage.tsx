@@ -111,7 +111,7 @@ export function TimelinePage({ projectId }: { projectId: string }) {
                   <span
                     className="codex-dot timeline-undated-dot"
                     aria-hidden="true"
-                    style={{ backgroundColor: row.corrupted ? "#a64b35" : "#7a7a99" }}
+                    style={{ backgroundColor: row.corrupted ? CATEGORY_COLORS.event : "#7a7a99" }}
                   />
                   <span className="timeline-undated-row-title">{row.title}</span>
                 </button>
