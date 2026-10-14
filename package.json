@@ -17,6 +17,7 @@
     "@fontsource/jetbrains-mono": "^5.2.5",
     "epub-gen-memory": "^1.1.2",
     "marked": "^18.1.1",
+    "path-browserify": "^1.0.1",
     "polygon-clipping": "^0.15.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
