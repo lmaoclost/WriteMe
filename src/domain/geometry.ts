@@ -59,26 +59,26 @@ export function projectToBoundary(pt: Pt, pts: Pt[]): { dist: number; point: Pt;
 
 export interface SnapTarget { point: Pt; regionId: string }
 
+// pxPerUnit = screen px per normalized unit (imgW * uiScale)
 export function snapToCarveBorder(
   pt: Pt,
   regions: { points: Pt[]; id: string }[],
-  scale: number,
+  pxPerUnit: number,
   opts?: { vertexPx?: number; edgePx?: number },
 ): SnapTarget | null {
-  if (!scale) return null;
+  if (!pxPerUnit) return null;
   const vertexPx = opts?.vertexPx ?? 14;
   const edgePx = opts?.edgePx ?? 8;
-  const PX_PER_PCT = 100;
   let vertexHit: { dist: number; point: Pt; regionId: string } | null = null;
   let edgeHit: { dist: number; point: Pt; regionId: string; edgeIdx: number; t: number } | null = null;
   for (const r of regions) {
     if (r.points.length < 3) continue;
     for (const v of r.points) {
-      const d = Math.hypot((pt.x - v.x), (pt.y - v.y)) * PX_PER_PCT * scale;
+      const d = Math.hypot(pt.x - v.x, pt.y - v.y) * pxPerUnit;
       if (d < (vertexHit?.dist ?? Infinity) && d <= vertexPx) vertexHit = { dist: d, point: { ...v }, regionId: r.id };
     }
     const p = projectToBoundary(pt, r.points);
-    const d = p.dist * PX_PER_PCT * scale;
+    const d = p.dist * pxPerUnit;
     if (d < (edgeHit?.dist ?? Infinity) && d <= edgePx) edgeHit = { dist: d, point: p.point, regionId: r.id, edgeIdx: p.edgeIndex, t: p.t };
   }
   if (vertexHit) return { point: vertexHit.point, regionId: vertexHit.regionId };

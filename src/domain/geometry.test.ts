@@ -50,16 +50,16 @@ describe("projectToBoundary", () => {
 describe("snapToCarveBorder", () => {
   const regions = [{ id: "r1", points: square }];
   it("snaps to a near vertex when within vertexPx", () => {
-    const s = snapToCarveBorder({ x: 0.04, y: 0.02 }, regions, 1);
+    const s = snapToCarveBorder({ x: 0.04, y: 0.02 }, regions, 100);
     expect(s?.regionId).toBe("r1");
     expect(s?.point).toEqual({ x: 0, y: 0 });
   });
   it("snaps to edge projection when within edgePx", () => {
-    const s = snapToCarveBorder({ x: 0.5, y: 1.04 }, regions, 1);
+    const s = snapToCarveBorder({ x: 0.5, y: 1.04 }, regions, 100);
     expect(s?.point).toEqual({ x: 0.5, y: 1 });
   });
   it("returns null when far", () => {
-    expect(snapToCarveBorder({ x: 0.5, y: 0.5 }, regions, 1)).toBeNull();
+    expect(snapToCarveBorder({ x: 0.5, y: 0.5 }, regions, 100)).toBeNull();
   });
 });
 
