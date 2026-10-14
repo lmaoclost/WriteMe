@@ -10,6 +10,7 @@ const SECTIONS = [
   { key: "entries", label: "Códex", to: "entries" },
   { key: "timeline", label: "Cronologia", to: "timeline" },
   { key: "bloodline", label: "Linhagem", to: "bloodline" },
+  { key: "factions", label: "Frações", to: "factions" },
   { key: "manuscript", label: "Livro", to: "manuscript" },
 ] as const;
 
