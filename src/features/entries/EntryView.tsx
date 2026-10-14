@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState, useCallback, type ChangeEvent, type MutableRefObject } from "react";
 import { useShallow } from "zustand/react/shallow";
-import type { EntryCategory, WorldEntry } from "../../domain/types";
+import type { EntryCategory, WorldEntry, EntrySection } from "../../domain/types";
 import { ENTRY_CATEGORIES } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
 import { fileToDataUrl } from "../../data/image";
 import { dateIsEmpty, formatDate, isValidDate, sanitizeDate } from "../../domain/dates";
 import { LinkPicker } from "../atlas/panels/LinkPicker";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
-import { CATEGORY_COLORS, CATEGORY_LABELS } from "./categories";
+import { CATEGORY_COLORS, CATEGORY_LABELS, categoryIcon } from "./categories";
 import { ImagePicker } from "./ImagePicker";
 import { MarkdownView } from "./MarkdownView";
 
@@ -46,7 +46,12 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
     if (clean === null) return;
     useScriptorium.getState().updateEntry(entry.id, { date: clean });
   }, [entry.id]);
+  const commitSummary = useCallback((v: string) => {
+    useScriptorium.getState().updateEntry(entry.id, { summary: v });
+  }, [entry.id]);
   const titleDraft = useDebouncedDraft(entry.title, commitTitle);
+  const summaryDraft = useDebouncedDraft(entry.summary ?? "", commitSummary);
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const bodyDraft = useDebouncedDraft(entry.body, commitBody);
   const dateDraft = useDebouncedDraft(entry.date ?? "", commitDate);
 
@@ -57,6 +62,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
       titleDraft.flush();
       bodyDraft.flush();
       dateDraft.flush();
+      summaryDraft.flush();
     };
   }, [entry.id]);
 
@@ -96,6 +102,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
     titleDraft.flush();
     bodyDraft.flush();
     dateDraft.flush();
+    summaryDraft.flush();
   };
 
   const confirmOrDelete = () => {
@@ -171,10 +178,31 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           }}
         >
           {ENTRY_CATEGORIES.map((c) => (
-            <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
+            <option key={c} value={c}>{categoryIcon(c)} {CATEGORY_LABELS[c]}</option>
           ))}
         </select>
       </div>
+      <button
+        type="button"
+        className="codex-summary-toggle"
+        aria-expanded={summaryOpen}
+        onClick={() => { flush(); setSummaryOpen((v) => !v); }}
+      >
+        <span>Summary</span>
+        <span className="codex-summary-hint">{summaryDraft.draft.trim() || "Add a short blurb…"}</span>
+        <span aria-hidden="true">{summaryOpen ? "▾" : "▸"}</span>
+      </button>
+      {summaryOpen ? (
+        <textarea
+          className="codex-summary-input"
+          aria-label="Summary"
+          placeholder="Add a short blurb…"
+          value={summaryDraft.draft}
+          onChange={(e) => summaryDraft.setDraft(e.target.value)}
+          onBlur={flush}
+          rows={2}
+        />
+      ) : null}
       <div className="codex-date-row">
         <input
           type="text"
@@ -240,6 +268,49 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
             setImagePickerOpen(false);
           }}
         />
+      ) : null}
+      {(entry.sections ?? []).length ? (
+        <div className="codex-sections">
+          {(entry.sections ?? []).map((sec, si) => (
+            <SectionBlock
+              key={si}
+              sec={sec}
+              onField={(fi, content) => {
+                const sections = (entry.sections ?? []).map((s, j) => j === si
+                  ? { ...s, fields: s.fields.map((f, k) => (k === fi ? { ...f, content } : f)) }
+                  : s);
+                useScriptorium.getState().updateEntry(entry.id, { sections });
+              }}
+              onAddField={() => {
+                const sections = (entry.sections ?? []).map((s, j) => j === si
+                  ? { ...s, fields: [...s.fields, { label: "Novo campo", content: "" }] }
+                  : s);
+                useScriptorium.getState().updateEntry(entry.id, { sections });
+              }}
+              onRemoveField={(fi) => {
+                const sections = (entry.sections ?? []).map((s, j) => j === si
+                  ? { ...s, fields: s.fields.filter((_f, k) => k !== fi) }
+                  : s);
+                useScriptorium.getState().updateEntry(entry.id, { sections });
+              }}
+              onRename={(name) => {
+                const sections = (entry.sections ?? []).map((s, j) => (j === si ? { ...s, name } : s));
+                useScriptorium.getState().updateEntry(entry.id, { sections });
+              }}
+            />
+          ))}
+          <button
+            type="button"
+            className="codex-section-add"
+            aria-label="Nova seção"
+            onClick={() => {
+              const sections = [...(entry.sections ?? []), { name: "Nova seção", fields: [] } satisfies EntrySection];
+              useScriptorium.getState().updateEntry(entry.id, { sections });
+            }}
+          >
+            + Seção
+          </button>
+        </div>
       ) : null}
       {writing ? (
         <textarea
@@ -314,5 +385,57 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
         </button>
       </div>
     </div>
+  );
+}
+
+function SectionBlock({ sec, onField, onAddField, onRemoveField, onRename }: {
+  sec: EntrySection;
+  onField(fi: number, content: string): void;
+  onAddField(): void;
+  onRemoveField(fi: number): void;
+  onRename(name: string): void;
+}) {
+  return (
+    <section className="codex-section" aria-label={sec.name}>
+      <header className="codex-section-head">
+        <input
+          className="codex-section-name"
+          aria-label={`Nome da seção ${sec.name}`}
+          value={sec.name}
+          onChange={(e) => onRename(e.target.value)}
+        />
+        <button type="button" className="codex-field-add" aria-label={`Adicionar campo em ${sec.name}`} onClick={onAddField}>+ campo</button>
+      </header>
+      {sec.fields.length === 0 ? <p className="codex-field-empty">Sem campos.</p> : null}
+      {sec.fields.map((f, fi) => (
+        <div className="codex-field" key={fi}>
+          <div className="codex-field-label-row">
+            <span className="codex-field-label">{f.label}</span>
+            <button
+              type="button"
+              className="codex-field-remove"
+              aria-label={`Remover campo ${f.label}`}
+              onClick={() => onRemoveField(fi)}
+            >✕</button>
+          </div>
+          <SectionFieldInput label={f.label} value={f.content} onCommit={(content) => onField(fi, content)} />
+        </div>
+      ))}
+    </section>
+  );
+}
+
+function SectionFieldInput({ label, value, onCommit }: { label: string; value: string; onCommit(v: string): void }) {
+  const draft = useDebouncedDraft(value, onCommit, 300);
+  const unmount = useRef(draft.flush);
+  unmount.current = draft.flush;
+  useEffect(() => () => unmount.current(), []);
+  return (
+    <input
+      aria-label={label}
+      value={draft.draft}
+      onChange={(e) => draft.setDraft(e.target.value)}
+      onBlur={() => draft.flush()}
+    />
   );
 }

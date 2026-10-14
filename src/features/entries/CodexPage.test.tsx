@@ -3,7 +3,7 @@ import { MemoryRouter, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppRouter } from "../../app/router";
 import { useScriptorium } from "../../data/store";
-import type { EntryCategory } from "../../domain/types";
+import type { EntryCategory, WorldEntry } from "../../domain/types";
 
 type EntrySpec = { title: string; category: EntryCategory; body?: string };
 
@@ -286,5 +286,50 @@ describe("entries route wiring", () => {
     render(codexRoute(projectId));
     expect(screen.getByRole("button", { name: /nova entrada/i })).toBeInTheDocument();
     expect(screen.queryByText(/sub-projeto 3/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("CodexPage — sections and summary (codex-15)", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    useScriptorium.setState(useScriptorium.getInitialState());
+  });
+
+  it("new character entry comes with template sections pre-created", () => {
+    const pid = useScriptorium.getState().addProject("V").id;
+    let entry: WorldEntry;
+    act(() => { entry = useScriptorium.getState().addEntry(pid, "character"); });
+    const e = entry!;
+    expect(e.sections?.length).toBeGreaterThan(0);
+    const labels = e.sections!.flatMap((s) => s.fields.map((f) => f.label));
+    expect(labels).toContain("Identity");
+    expect(labels).toContain("Appearance");
+  });
+
+  it("summary toggle edits and persists", () => {
+    vi.useFakeTimers();
+    const pid = useScriptorium.getState().addProject("V").id;
+    act(() => { useScriptorium.getState().addEntry(pid, "lore"); });
+    render(codexRoute(pid));
+    fireEvent.click(screen.getByRole("button", { name: /Summary/ }));
+    const inp = screen.getByLabelText("Summary");
+    fireEvent.change(inp, { target: { value: "Uma lei rígida." } });
+    act(() => vi.advanceTimersByTime(320));
+    expect(useScriptorium.getState().entries[0].summary).toBe("Uma lei rígida.");
+    vi.useRealTimers();
+  });
+
+  it("field content commits debounced into sections", async () => {
+    vi.useFakeTimers();
+    const pid = useScriptorium.getState().addProject("V").id;
+    const e = useScriptorium.getState().addEntry(pid, "character");
+    if (!e) throw new Error("addEntry falhou");
+    render(codexRoute(pid));
+    const inp = screen.getByLabelText("Identity");
+    fireEvent.change(inp, { target: { value: "31 anos, humana" } });
+    act(() => vi.advanceTimersByTime(320));
+    const sec = useScriptorium.getState().entries.find((x) => x.id === e.id)!.sections!;
+    expect(sec.flatMap((s) => s.fields.map((f) => f.content))).toContain("31 anos, humana");
+    vi.useRealTimers();
   });
 });

@@ -10,6 +10,7 @@ import { newId } from "../domain/id";
 import type { Pt } from "../domain/geometry";
 import { isMeaningful } from "../domain/geometry";
 import { emptyProjectData, serialize, parseExport } from "./schema";
+import { templateSections } from "../features/entries/categories";
 import { seedDemoProject } from "./seed";
 import { claimRest, fitGap } from "./clip";
 import { getLastRegionColor } from "../features/atlas/panels/recentColors";
@@ -427,6 +428,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           category,
           body: "",
           links: [],
+          sections: templateSections(category),
         };
         set((s) => ({
           entries: [...s.entries, entry],
