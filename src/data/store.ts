@@ -16,7 +16,7 @@ import { STORE_KEY, localStoragePersistence, wipeStore, storageHealth, Persisted
 export type ToastKind = "info" | "error" | "success";
 export interface Toast { id: string; kind: ToastKind; message: string; }
 
-export type ImageKind = "cover" | "entry" | "map";
+export type ImageKind = "cover" | "entry" | "map" | "person";
 
 export const CORRUPTION_TOAST = "Dados corrompidos foram preservados em backup; a app abriu vazia.";
 export const CORRUPTION_TOAST_KIND: ToastKind = "info";
@@ -148,7 +148,7 @@ interface ScriptoriumState extends ProjectData {
   updatePerson(id: string, patch: Partial<Omit<BloodlinePerson, "id">>): void;
   movePerson(id: string, x: number, y: number): void;
   deletePerson(id: string): void;
-  addHouse(bloodlineId: string, init?: { x?: number; y?: number; name?: string }): BloodlineHouse | null;
+  addHouse(bloodlineId: string, init?: { x?: number; y?: number; name?: string; subtitle?: string; isMainBranch?: boolean; isMonarch?: boolean }): BloodlineHouse | null;
   updateHouse(id: string, patch: Partial<Omit<BloodlineHouse, "id">>): void;
   moveHouse(id: string, x: number, y: number): void;
   deleteHouse(id: string): void;
@@ -933,6 +933,9 @@ export const useScriptorium = create<ScriptoriumState>()(
           name: init?.name ?? "Casa sem nome",
           isMainBranch: false,
           isMonarch: false,
+          ...(init?.subtitle !== undefined ? { subtitle: init.subtitle } : {}),
+          ...(init?.isMainBranch !== undefined ? { isMainBranch: init.isMainBranch } : {}),
+          ...(init?.isMonarch !== undefined ? { isMonarch: init.isMonarch } : {}),
         };
         set((s) => ({
           bloodlines: s.bloodlines.map((b) =>

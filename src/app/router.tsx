@@ -4,6 +4,8 @@ import { AtlasIndexPage } from "../features/atlas/AtlasIndexPage";
 import { AtlasEditor } from "../features/atlas/AtlasEditor";
 import { CodexPage } from "../features/entries/CodexPage";
 import { TimelinePage } from "../features/timeline/TimelinePage";
+import { BloodlineIndexPage } from "../features/bloodline/BloodlineIndexPage";
+import { BloodlineCanvasPage } from "../features/bloodline/BloodlineCanvas";
 import { ManuscriptPage } from "../features/manuscript/ManuscriptPage";
 import { OverviewPage } from "../features/workspace/OverviewPage";
 import { WorkspaceLayout } from "../features/workspace/WorkspaceLayout";
@@ -28,6 +30,16 @@ function TimelineRoute() {
   return <TimelinePage projectId={projectId ?? ""} />;
 }
 
+function BloodlineCanvasRoute() {
+  const { bloodlineId } = useParams();
+  return <BloodlineCanvasPage bloodlineId={bloodlineId ?? ""} />;
+}
+
+function BloodlineIndexRoute() {
+  const { projectId } = useParams();
+  return <BloodlineIndexPage projectId={projectId ?? ""} />;
+}
+
 export function AppRouter() {
   return (
     <Routes>
@@ -38,6 +50,8 @@ export function AppRouter() {
         <Route path="atlas/:atlasId" element={<AtlasEditorRoute />} />
         <Route path="entries" element={<CodexRoute />} />
         <Route path="timeline" element={<TimelineRoute />} />
+        <Route path="bloodline" element={<BloodlineIndexRoute />} />
+        <Route path="bloodline/:bloodlineId" element={<BloodlineCanvasRoute />} />
         <Route path="manuscript" element={<ManuscriptRoute />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

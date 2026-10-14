@@ -9,6 +9,7 @@ const SECTIONS = [
   { key: "atlas", label: "Atlas", to: "atlas" },
   { key: "entries", label: "Códex", to: "entries" },
   { key: "timeline", label: "Cronologia", to: "timeline" },
+  { key: "bloodline", label: "Linhagem", to: "bloodline" },
   { key: "manuscript", label: "Livro", to: "manuscript" },
 ] as const;
 
