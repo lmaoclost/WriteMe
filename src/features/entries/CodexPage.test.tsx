@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppRouter } from "../../app/router";
 import { useScriptorium } from "../../data/store";
@@ -181,13 +181,43 @@ describe("CodexPage", () => {
       { title: "Rio Sarnen", category: "place" },
     ]);
     const rio = entryOf("Rio Sarnen");
+    window.history.replaceState({ key: "k1", idx: 2, usr: { foo: 1 } }, "");
     const replaceSpy = vi.spyOn(window.history, "replaceState");
     render(codexRoute(projectId, { select: rio.id }));
     expect(screen.getByRole("button", { name: "Rio Sarnen" })).toHaveClass("active");
     expect(screen.getByLabelText("Título")).toHaveValue("Rio Sarnen");
-    expect(replaceSpy).toHaveBeenCalledWith({}, "");
+    expect(replaceSpy).toHaveBeenCalledWith({ key: "k1", idx: 2, usr: null }, "");
+    expect(window.history.state).toEqual({ key: "k1", idx: 2, usr: null });
     fireEvent.click(screen.getByRole("button", { name: "Cidade de Vellmora" }));
     expect(screen.getByRole("button", { name: "Cidade de Vellmora" })).toHaveClass("active");
+  });
+
+  it("keeps navigation intact after consuming the select state", () => {
+    const projectId = seedProject([{ title: "Cidade de Vellmora", category: "place" }]);
+    const city = entryOf("Cidade de Vellmora");
+    function NavButtons() {
+      const navigate = useNavigate();
+      return (
+        <>
+          <button onClick={() => navigate("/")}>go home</button>
+          <button onClick={() => navigate(-1)}>go back</button>
+        </>
+      );
+    }
+    render(
+      <MemoryRouter
+        initialEntries={[{ pathname: `/p/${projectId}/entries`, state: { select: city.id } }]}
+      >
+        <NavButtons />
+        <AppRouter />
+      </MemoryRouter>,
+    );
+    expect(screen.getByLabelText("Título")).toHaveValue("Cidade de Vellmora");
+    fireEvent.click(screen.getByRole("button", { name: "go home" }));
+    expect(screen.getByRole("heading", { name: "Scriptorium" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "go back" }));
+    expect(screen.getByRole("button", { name: "Cidade de Vellmora" })).toHaveClass("active");
+    expect(screen.getByLabelText("Título")).toHaveValue("Cidade de Vellmora");
   });
 
   it("ignores route state select for a missing entry", () => {

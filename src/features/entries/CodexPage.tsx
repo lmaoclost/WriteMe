@@ -36,7 +36,7 @@ export function CodexPage({ projectId }: { projectId: string }) {
     if (select && entries.some((e) => e.id === select)) {
       stateConsumedRef.current = true;
       setSelectedId(select);
-      window.history.replaceState({}, "");
+      window.history.replaceState({ ...window.history.state, usr: null }, "");
     }
   }, [location, entries]);
 
