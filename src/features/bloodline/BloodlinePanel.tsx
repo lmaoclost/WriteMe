@@ -79,7 +79,8 @@ function PersonPanel({ bloodline, person, onSelect }: {
     <div className="bl-person-panel">
       <header className="bl-panel-head">
         <h2>{person.name || "Sem nome"}</h2>
-        <button type="button" className={armDelete ? "btn-danger" : ""} onClick={removePerson} aria-label="Excluir pessoa">
+        <button type="button" className={armDelete ? "btn-danger" : ""} onClick={removePerson}
+          aria-label={armDelete ? "Confirmar exclusão da pessoa" : "Excluir pessoa"}>
           {armDelete ? "Confirmar?" : "Excluir"}
         </button>
       </header>
@@ -323,7 +324,8 @@ function HousePanel({ bloodline, house, onSelect }: {
     <div className="bl-house-panel">
       <header className="bl-panel-head">
         <h2>{house.name}</h2>
-        <button type="button" className={armDelete ? "btn-danger" : ""} onClick={removeHouse} aria-label="Excluir casa">
+        <button type="button" className={armDelete ? "btn-danger" : ""} onClick={removeHouse}
+          aria-label={armDelete ? "Confirmar exclusão da casa" : "Excluir casa"}>
           {armDelete ? "Confirmar?" : "Excluir"}
         </button>
       </header>
