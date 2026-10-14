@@ -1,0 +1,317 @@
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { fileToDataUrl } from "../../data/image";
+import { useScriptorium } from "../../data/store";
+import type { EntryCategory, WorldEntry } from "../../domain/types";
+import { EntryView } from "./EntryView";
+
+vi.mock("../../data/image", () => ({
+  fileToDataUrl: vi.fn(async () => ({ dataUrl: "data:image/png;base64,NOVA", keptPng: true })),
+}));
+
+const store = () => useScriptorium.getState();
+
+type Spec = { title: string; category?: EntryCategory; body?: string; image?: string };
+
+function seed(specs: Spec[]): { projectId: string; entries: WorldEntry[] } {
+  const project = store().addProject("Vellmora");
+  const entries = specs.map((spec) => {
+    const entry = store().addEntry(project.id, spec.category ?? "lore");
+    store().updateEntry(entry.id, {
+      title: spec.title,
+      ...(spec.body !== undefined ? { body: spec.body } : {}),
+      ...(spec.image !== undefined
+        ? { imageKey: store().putImage(spec.image, "entry") }
+        : {}),
+    });
+    return entryById(entry.id);
+  });
+  return { projectId: project.id, entries };
+}
+
+function LiveEntryView({ id, onDeleted, onSelectEntry }: { id: string; onDeleted(id: string): void; onSelectEntry?(id: string): void }) {
+  const entry = useScriptorium((s) => s.entries.find((e) => e.id === id));
+  if (!entry) return null;
+  return <EntryView entry={entry} onDeleted={onDeleted} onSelectEntry={onSelectEntry} />;
+}
+
+function renderView(entry: WorldEntry, handlers: { onDeleted?: (id: string) => void; onSelectEntry?: (id: string) => void } = {}) {
+  const onDeleted = handlers.onDeleted ?? vi.fn();
+  const onSelectEntry = handlers.onSelectEntry ?? vi.fn();
+  const result = render(
+    <MemoryRouter>
+      <LiveEntryView id={entry.id} onDeleted={onDeleted} onSelectEntry={onSelectEntry} />
+    </MemoryRouter>,
+  );
+  return { onDeleted, onSelectEntry, unmount: () => { if (!result.container.isConnected) return; result.unmount(); } };
+}
+
+function entryById(id: string): WorldEntry {
+  const entry = useScriptorium.getState().entries.find((e) => e.id === id);
+  expect(entry, `entry ${id} should exist`).toBeTruthy();
+  return entry as WorldEntry;
+}
+
+function toasts() {
+  return useScriptorium.getState().toasts;
+}
+
+beforeEach(() => {
+  localStorage.clear();
+  useScriptorium.setState(useScriptorium.getInitialState());
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.useRealTimers();
+});
+
+describe("EntryView — debounced commits", () => {
+  it("commits title and body after 300ms, not before (fake timers)", () => {
+    vi.useFakeTimers();
+    const { entries } = seed([{ title: "Aldric", body: "Velho corpo" }]);
+    const [entry] = entries;
+    renderView(entry);
+    fireEvent.change(screen.getByLabelText("Título"), { target: { value: "Aldric II" } });
+    fireEvent.change(screen.getByLabelText("Conteúdo"), { target: { value: "Novo corpo" } });
+    act(() => {
+      vi.advanceTimersByTime(299);
+    });
+    expect(entryById(entry.id).title).toBe("Aldric");
+    expect(entryById(entry.id).body).toBe("Velho corpo");
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(entryById(entry.id).title).toBe("Aldric II");
+    expect(entryById(entry.id).body).toBe("Novo corpo");
+  });
+
+  it("flushes the pending draft on blur", () => {
+    const { entries } = seed([{ title: "Aldric", body: "" }]);
+    const [entry] = entries;
+    renderView(entry);
+    const body = screen.getByLabelText("Conteúdo");
+    fireEvent.change(body, { target: { value: "Rascunho no blur" } });
+    expect(entryById(entry.id).body).toBe("");
+    fireEvent.blur(body);
+    expect(entryById(entry.id).body).toBe("Rascunho no blur");
+  });
+
+  it("flushes the pending draft on unmount (no lost keystroke)", () => {
+    const { entries } = seed([{ title: "Aldric", body: "" }]);
+    const [entry] = entries;
+    const { unmount } = renderView(entry);
+    fireEvent.change(screen.getByLabelText("Conteúdo"), { target: { value: "Rascunho perdido?" } });
+    unmount();
+    expect(entryById(entry.id).body).toBe("Rascunho perdido?");
+  });
+
+  it("flushes the pending draft for the PREVIOUS entry when switching entries", () => {
+    const { entries } = seed([
+      { title: "Aldric", body: "" },
+      { title: "Rio Sarnen", body: "" },
+    ]);
+    const [aldric, rio] = entries;
+    const { rerender } = render(
+      <MemoryRouter>
+        <EntryView entry={aldric} onDeleted={vi.fn()} />
+      </MemoryRouter>,
+    );
+    fireEvent.change(screen.getByLabelText("Conteúdo"), { target: { value: "Corpo do Aldric" } });
+    rerender(
+      <MemoryRouter>
+        <EntryView entry={rio} onDeleted={vi.fn()} />
+      </MemoryRouter>,
+    );
+    expect(entryById(aldric.id).body).toBe("Corpo do Aldric");
+    expect(screen.getByLabelText("Título")).toHaveValue("Rio Sarnen");
+  });
+});
+
+describe("EntryView — Escrever/Prévia", () => {
+  it("toggles between textarea and markdown preview (aria-pressed pair)", () => {
+    const { entries } = seed([{ title: "Aldric", body: "# Capítulo\n**força** e `código`" }]);
+    const [entry] = entries;
+    renderView(entry);
+    const escrever = screen.getByRole("button", { name: "Escrever" });
+    const previa = screen.getByRole("button", { name: "Prévia" });
+    expect(escrever).toHaveAttribute("aria-pressed", "true");
+    expect(previa).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByLabelText("Conteúdo").tagName).toBe("TEXTAREA");
+    fireEvent.click(previa);
+    expect(previa).toHaveAttribute("aria-pressed", "true");
+    expect(escrever).toHaveAttribute("aria-pressed", "false");
+    expect(screen.queryByLabelText("Conteúdo")).toBeNull();
+    const view = document.querySelector(".md-view");
+    expect(view).not.toBeNull();
+    expect(view?.querySelector("h1")?.textContent).toBe("Capítulo");
+    expect(view?.querySelector("strong")?.textContent).toBe("força");
+    expect(view?.querySelector("code")?.textContent).toBe("código");
+    fireEvent.click(escrever);
+    expect(screen.getByLabelText("Conteúdo")).toHaveValue("# Capítulo\n**força** e `código`");
+  });
+
+  it("renders the preview from the flushed draft", () => {
+    const { entries } = seed([{ title: "Aldric", body: "" }]);
+    const [entry] = entries;
+    renderView(entry);
+    fireEvent.change(screen.getByLabelText("Conteúdo"), { target: { value: "# Novo rascunho" } });
+    fireEvent.click(screen.getByRole("button", { name: "Prévia" }));
+    expect(entryById(entry.id).body).toBe("# Novo rascunho");
+    expect(document.querySelector(".md-view")?.querySelector("h1")?.textContent).toBe("Novo rascunho");
+  });
+
+  it("shows placeholder copy when the preview body is empty", () => {
+    const { entries } = seed([{ title: "Aldric", body: "" }]);
+    const [entry] = entries;
+    renderView(entry);
+    fireEvent.click(screen.getByRole("button", { name: "Prévia" }));
+    expect(screen.getByText("Sem conteúdo ainda.")).toBeInTheDocument();
+  });
+});
+
+describe("EntryView — category + cover", () => {
+  it("commits the category select directly", () => {
+    const { entries } = seed([{ title: "Aldric", category: "person" }]);
+    const [entry] = entries;
+    renderView(entry);
+    fireEvent.change(screen.getByLabelText("Categoria"), { target: { value: "faction" } });
+    expect(entryById(entry.id).category).toBe("faction");
+    expect(screen.getByLabelText("Categoria")).toHaveValue("faction");
+  });
+
+  it("uploads a cover via hidden file input, swaps and releases the old key", async () => {
+    const { entries } = seed([{ title: "Aldric", image: "data:image/jpeg;base64,VELHA" }]);
+    const [entry] = entries;
+    const oldKey = entryById(entry.id).imageKey as string;
+    renderView(entry);
+    const input = document.querySelector('input[type="file"].visually-hidden') as HTMLInputElement;
+    expect(input).not.toBeNull();
+    await act(async () => {
+      fireEvent.change(input, { target: { files: [new File(["x"], "capa.png", { type: "image/png" })] } });
+    });
+    await waitFor(() => {
+      expect(entryById(entry.id).imageKey).toBeTruthy();
+      expect(entryById(entry.id).imageKey).not.toBe(oldKey);
+    });
+    const newKey = entryById(entry.id).imageKey as string;
+    expect(useScriptorium.getState().images[newKey]).toBe("data:image/png;base64,NOVA");
+    expect(useScriptorium.getState().images[oldKey]).toBeUndefined();
+    expect(toasts().some((t) => t.kind === "success" && t.message === "Capa atualizada.")).toBe(true);
+    expect(vi.mocked(fileToDataUrl)).toHaveBeenCalledTimes(1);
+  });
+
+  it("toasts an error when the cover upload fails", async () => {
+    vi.mocked(fileToDataUrl).mockRejectedValueOnce(new Error("boom"));
+    const { entries } = seed([{ title: "Aldric" }]);
+    const [entry] = entries;
+    renderView(entry);
+    const input = document.querySelector('input[type="file"].visually-hidden') as HTMLInputElement;
+    await act(async () => {
+      fireEvent.change(input, { target: { files: [new File(["x"], "capa.png", { type: "image/png" })] } });
+    });
+    await waitFor(() => {
+      expect(toasts().some((t) => t.kind === "error" && t.message === "Não foi possível carregar a capa.")).toBe(true);
+    });
+    expect(entryById(entry.id).imageKey).toBeUndefined();
+  });
+
+  it("removes the cover: releases the image and clears the key", () => {
+    const { entries } = seed([{ title: "Aldric", image: "data:image/jpeg;base64,VELHA" }]);
+    const [entry] = entries;
+    const key = entryById(entry.id).imageKey as string;
+    renderView(entry);
+    fireEvent.click(screen.getByRole("button", { name: "Remover capa" }));
+    expect(entryById(entry.id).imageKey).toBeUndefined();
+    expect(useScriptorium.getState().images[key]).toBeUndefined();
+  });
+
+  it("copies another entry's image as this cover via 'Imagem do códex'", () => {
+    const { entries } = seed([
+      { title: "Aldric", image: "data:image/jpeg;base64,VELHA" },
+      { title: "Rio Sarnen", image: "data:image/jpeg;base64,OUTRO" },
+      { title: "Lei do Selo" },
+    ]);
+    const [aldric, rio, lei] = entries;
+    const rioKey = entryById(rio.id).imageKey as string;
+    const oldKey = entryById(aldric.id).imageKey as string;
+    renderView(aldric);
+    fireEvent.click(screen.getByRole("button", { name: "Imagem do códex" }));
+    const picker = screen.getByRole("group", { name: "Imagens do códex" });
+    expect(picker.querySelectorAll(".codex-thumbgrid button")).toHaveLength(1);
+    const thumb = picker.querySelector(".codex-thumbgrid img");
+    expect(thumb).not.toBeNull();
+    expect(thumb).toHaveAttribute("src", "data:image/jpeg;base64,OUTRO");
+    fireEvent.click(screen.getByRole("button", { name: /rio sarnen/i }));
+    const newKey = entryById(aldric.id).imageKey as string;
+    expect(newKey).toBeTruthy();
+    expect(newKey).not.toBe(rioKey);
+    expect(newKey).not.toBe(oldKey);
+    expect(useScriptorium.getState().images[newKey]).toBe("data:image/jpeg;base64,OUTRO");
+    expect(entryById(rio.id).imageKey).toBe(rioKey);
+    expect(useScriptorium.getState().images[oldKey]).toBeUndefined();
+    expect(entryById(lei.id).imageKey).toBeUndefined();
+  });
+});
+
+describe("EntryView — links", () => {
+  it("adds a link through the entry chooser popover", () => {
+    const { entries } = seed([
+      { title: "Aldric" },
+      { title: "Rio Sarnen" },
+      { title: "Lei do Selo" },
+    ]);
+    const [aldric, rio, lei] = entries;
+    renderView(aldric);
+    fireEvent.click(screen.getByRole("button", { name: "+ Vínculo" }));
+    const search = screen.getByLabelText("Buscar entrada");
+    fireEvent.change(search, { target: { value: "zzz" } });
+    expect(screen.getByText("Nenhum resultado")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Rio Sarnen" })).toBeNull();
+    fireEvent.change(search, { target: { value: "rio" } });
+    fireEvent.click(screen.getByRole("button", { name: "Rio Sarnen" }));
+    expect(entryById(aldric.id).links).toEqual([rio.id]);
+    expect(screen.queryByLabelText("Buscar entrada")).toBeNull();
+    expect(screen.queryByRole("button", { name: "+ Vínculo" })).not.toBeNull();
+    void lei;
+  });
+
+  it("does not offer the current entry as its own link target", () => {
+    const { entries } = seed([{ title: "Aldric" }]);
+    const [aldric] = entries;
+    renderView(aldric);
+    fireEvent.click(screen.getByRole("button", { name: "+ Vínculo" }));
+    expect(screen.queryByRole("button", { name: "Aldric" })).toBeNull();
+    expect(entryById(aldric.id).links).toEqual([]);
+  });
+
+  it("unlinks via the chip ✕ and selects via the chip title", () => {
+    const { entries } = seed([{ title: "Aldric" }, { title: "Rio Sarnen" }]);
+    const [aldric, rio] = entries;
+    store().linkEntries(aldric.id, rio.id);
+    const onSelectEntry = vi.fn();
+    renderView(aldric, { onSelectEntry });
+    const chip = document.querySelector(".codex-link-chip");
+    expect(chip).not.toBeNull();
+    expect(screen.getAllByRole("button", { name: "Rio Sarnen" })[0]).toBeTruthy();
+    fireEvent.click(screen.getAllByRole("button", { name: "Rio Sarnen" })[0]);
+    expect(onSelectEntry).toHaveBeenCalledWith(rio.id);
+    expect(entryById(aldric.id).links).toEqual([rio.id]);
+    fireEvent.click(screen.getByLabelText("Remover vínculo com Rio Sarnen"));
+    expect(entryById(aldric.id).links).toEqual([]);
+    expect(document.querySelector(".codex-link-chip")).toBeNull();
+  });
+
+  it("deleting the entry cleans reverse links elsewhere (store via onDeleted)", () => {
+    const { entries } = seed([{ title: "Aldric" }, { title: "Rio Sarnen" }]);
+    const [aldric, rio] = entries;
+    store().linkEntries(aldric.id, rio.id);
+    const onDeleted = vi.fn((id: string) => store().deleteEntry(id));
+    renderView(aldric, { onDeleted });
+    fireEvent.click(screen.getByRole("button", { name: "Excluir" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar?" }));
+    expect(onDeleted).toHaveBeenCalledWith(aldric.id);
+    expect(entryById(rio.id).links).toEqual([]);
+  });
+});

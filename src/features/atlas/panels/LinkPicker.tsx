@@ -1,8 +1,23 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Id, WorldEntry } from "../../../domain/types";
 import "../atlas.css";
 
 export const LINK_PICKER_MAX_ITEMS = 8;
+
+function LinkTarget({ entry }: { entry: WorldEntry }) {
+  const navigate = useNavigate();
+  return (
+    <button
+      type="button"
+      className="link-current"
+      title="Abrir no códex"
+      onClick={() => navigate("../entries", { state: { select: entry.id } })}
+    >
+      {entry.title}
+    </button>
+  );
+}
 
 export interface LinkPickerProps {
   entries: WorldEntry[];
@@ -29,7 +44,7 @@ export function LinkPicker({ entries, currentEntryId, onPick, onClear }: LinkPic
           </button>
         ) : null}
       </div>
-      {current ? <div className="link-current">{current.title}</div> : null}
+      {current ? <LinkTarget entry={current} /> : null}
       <input
         className="link-search"
         type="text"

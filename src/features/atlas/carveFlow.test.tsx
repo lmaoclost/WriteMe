@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import type { Atlas, Pt } from "../../domain/types";
 import { polygonArea, pointInPolygon, snapToCarveBorder } from "../../domain/geometry";
 import { useScriptorium } from "../../data/store";
@@ -73,7 +74,11 @@ function makeAtlas(regions: Array<{ points: Pt[]; color: string; label: string }
 }
 
 function mountEditor(atlas: Atlas, natural: { w: number; h: number } = { w: 800, h: 600 }) {
-  const { container } = render(<AtlasEditor atlasId={atlas.id} />);
+  const { container } = render(
+    <MemoryRouter>
+      <AtlasEditor atlasId={atlas.id} />
+    </MemoryRouter>,
+  );
   const stageEl = screen.getByTestId("stage");
   stubStageLayout(stageEl, { left: 0, top: 0, w: 800, h: 600 }, { w: 800, h: 600 });
   const img = stageEl.querySelector(".stage-map") as HTMLImageElement;

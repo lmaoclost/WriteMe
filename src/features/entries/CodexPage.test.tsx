@@ -232,8 +232,10 @@ describe("CodexPage", () => {
     const projectId = seedProject([{ title: "Cidade de Vellmora", category: "place", body: "capital" }]);
     render(codexRoute(projectId));
     fireEvent.change(screen.getByLabelText("Título"), { target: { value: "Porto de Vellmora" } });
+    fireEvent.blur(screen.getByLabelText("Título"));
     fireEvent.change(screen.getByLabelText("Categoria"), { target: { value: "faction" } });
     fireEvent.change(screen.getByLabelText("Conteúdo"), { target: { value: "Torres de pedra." } });
+    fireEvent.blur(screen.getByLabelText("Conteúdo"));
     const [entry] = projectEntries(projectId);
     expect(entry.title).toBe("Porto de Vellmora");
     expect(entry.category).toBe("faction");

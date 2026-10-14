@@ -152,6 +152,186 @@
 .codex-body:focus { border-color: var(--gold); outline: none; }
 .codex-body::placeholder { color: var(--slate); }
 .codex-view-actions { display: flex; justify-content: flex-end; }
+.codex-view-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.codex-view-actions.end { justify-content: flex-end; }
+.codex-mode {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--parchment-dim);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+.codex-mode:hover { border-color: var(--gold-dim); }
+.codex-mode[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+.codex-action, .codex-link-add {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--parchment-dim);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.codex-action:hover, .codex-link-add:hover { border-color: var(--gold-dim); }
+.codex-action[aria-pressed="true"], .codex-link-add[aria-pressed="true"] {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* Markdown preview */
+.codex-md-empty { color: var(--slate); font-size: 14px; font-style: italic; }
+.md-view {
+  color: var(--parchment);
+  font-size: 15px;
+  line-height: 1.7;
+}
+.md-view h1, .md-view h2, .md-view h3, .md-view h4, .md-view h5, .md-view h6 {
+  font-family: var(--font-display);
+  color: var(--parchment);
+  margin: 14px 0 6px;
+}
+.md-view h1 { font-size: 24px; }
+.md-view h2 { font-size: 20px; }
+.md-view h3 { font-size: 17px; }
+.md-view p { margin: 8px 0; }
+.md-view ul, .md-view ol { margin: 8px 0; padding-left: 22px; }
+.md-view li { margin: 2px 0; }
+.md-view blockquote {
+  margin: 10px 0;
+  padding: 4px 12px;
+  border-left: 2px solid var(--gold-dim);
+  color: var(--parchment-dim);
+}
+.md-view code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  background: var(--night-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+.md-view pre {
+  background: var(--night-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  overflow-x: auto;
+}
+.md-view pre code { background: none; border: 0; padding: 0; }
+.md-view img { max-width: 100%; border-radius: 8px; }
+
+/* Links (vínculos) */
+.codex-links {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+.codex-links-title {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--slate);
+}
+.codex-link-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--night-2);
+  padding: 1px 3px 1px 2px;
+}
+.codex-link-chip-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 0;
+  color: var(--parchment);
+  padding: 3px 4px 3px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.codex-link-chip-main:hover { color: var(--gold); }
+.codex-link-chip-title {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.codex-link-unlink, .link-picker .link-unlink { font-size: 11px; }
+.codex-link-unlink {
+  background: none;
+  border: 0;
+  color: var(--slate);
+  padding: 3px 7px;
+  cursor: pointer;
+}
+.codex-link-unlink:hover { color: var(--ember); }
+
+/* "Imagem do códex" picker */
+.codex-imagelist {
+  background: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px;
+}
+.codex-picker-empty { margin: 4px; color: var(--parchment-dim); font-size: 13px; }
+.codex-thumbgrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+.codex-thumbgrid button {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  background: var(--night-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px;
+  color: var(--parchment-dim);
+  font-size: 12px;
+  cursor: pointer;
+}
+.codex-thumbgrid button:hover { border-color: var(--gold-dim); color: var(--gold); }
+.codex-thumbgrid img {
+  width: 100%;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.codex-thumbgrid span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Link picker popover (reused) inside the codex view */
+.codex-links .link-picker { align-self: stretch; }
+.link-picker .link-current {
+  align-self: flex-start;
+  font-size: 12px;
+  color: var(--gold);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.link-picker .link-current:hover { text-decoration: underline; }
+
+/* Cover actions */
+.codex-cover-action input.visually-hidden { position: absolute; width: 1px; height: 1px; }
+
 .codex-delete {
   align-self: flex-start;
   background: none;
