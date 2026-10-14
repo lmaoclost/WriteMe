@@ -1,5 +1,6 @@
 import { marked } from "marked";
 
+// marked v18: mangle/headerIds were removed in marked v5+; kept per plan for option compatibility — inert here.
 marked.setOptions({ breaks: true, mangle: false, headerIds: false } as never);
 
 const ALLOWED = new Set([
