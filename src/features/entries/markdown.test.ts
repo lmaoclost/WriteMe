@@ -57,6 +57,12 @@ describe("renderMarkdown", () => {
   it("drops external img without alt entirely", () => {
     expect(renderMarkdown('<img src="https://x.com/i.png">')).not.toContain("<img");
   });
+  it("escapes attribute quote breakout in img alt", () => {
+    const out = renderMarkdown('<img alt=\'x" onerror="alert(1)\' src="data:image/png;base64,x">');
+    expect(out).toContain('alt="x&quot; onerror=&quot;alert(1)"');
+    const img = new DOMParser().parseFromString(out, "text/html").querySelector("img");
+    expect(img?.getAttribute("onerror")).toBeNull();
+  });
   it("keeps nested formatting when a disallowed wrapper is dropped", () => {
     expect(renderMarkdown("<div><strong>x</strong></div>")).toContain("<strong>x</strong>");
   });

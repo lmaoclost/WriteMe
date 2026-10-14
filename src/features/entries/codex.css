@@ -152,7 +152,6 @@
 .codex-body:focus { border-color: var(--gold); outline: none; }
 .codex-body::placeholder { color: var(--slate); }
 .codex-view-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
-.codex-view-actions.end { justify-content: flex-end; }
 .codex-mode {
   background: none;
   border: 1px solid var(--line);

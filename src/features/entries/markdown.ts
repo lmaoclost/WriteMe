@@ -15,7 +15,7 @@ const DATA_IMAGE_RE = /^data:image\//;
 const TEXT_NODE = 3;
 const ELEMENT_NODE = 1;
 
-export function escapeHtml(text: string): string {
+function escapeHtml(text: string): string {
   return text
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")

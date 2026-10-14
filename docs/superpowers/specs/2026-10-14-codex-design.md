@@ -3,6 +3,8 @@
 Data: 2026-10-14
 Escopo: códex de entries (person/place/faction/event/item/lore) com edição em markdown, imagens de capa, links estruturados entre entradas, filtro/busca e navegação de grafo. Fecha o loop aberto no Atlas: pins e regiões já são vinculáveis a entries.
 
+> Status 2026-10-14: Códex implementado (tasks 1–4).
+
 ## 1. Rotas
 
 | Rota | Conteúdo |
@@ -10,7 +12,7 @@ Escopo: códex de entries (person/place/faction/event/item/lore) com edição em
 | `/p/:projectId/entries` | Códex: sidebar-lista (filtro categoria + busca por título), painel central do entry selecionado; criar/excluir |
 | (nenhuma rota extra) | Entry = estado selecionado na mesma rota (view única com painel) |
 
-`src/features/entries/`: `CodexPage.tsx`, `EntryList.tsx`, `EntryView.tsx`, `EntryEditor.tsx`, `MarkdownView.tsx`, `codex.css`.
+`src/features/entries/`: `CodexPage.tsx`, `EntryList.tsx`, `EntryView.tsx`, `MarkdownView.tsx`, `codex.css`.
 
 ## 2. Editor (decisão aprovada)
 

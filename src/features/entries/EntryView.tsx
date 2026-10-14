@@ -305,7 +305,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           />
         ) : null}
       </section>
-      <div className="codex-view-actions end">
+      <div className="codex-view-actions">
         <button
           type="button"
           className={"codex-delete" + (armed ? " armed" : "")}
