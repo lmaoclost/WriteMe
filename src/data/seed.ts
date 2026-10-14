@@ -1,0 +1,125 @@
+import type { Atlas, Chapter, Manuscript, Pin, Project, WorldEntry } from "../domain/types";
+import { newId } from "../domain/id";
+import { buildDemoMapSvg } from "./seedMap";
+
+export function seedDemoProject() {
+  const now = Date.now();
+  const project: Project = {
+    id: newId("prj"),
+    name: "Reino de Vellmora (Exemplo)",
+    description: "Projeto de demonstração com códex, atlas e manuscrito populados. Exclua quando quiser.",
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const eCap = newId("ent"), eRiver = newId("ent"), eHouse = newId("ent"),
+    eWar = newId("ent"), eRelic = newId("ent"), eLaw = newId("ent"),
+    eFounder = newId("ent");
+
+  const entries: WorldEntry[] = [
+    {
+      id: eCap, projectId: project.id, title: "Cidade de Vellmora", category: "place",
+      body: "Capital do reino, erguida onde o Rio Sarnen se abre em três braços. O portão sul — o Arco da Coroa — leva a marca do primeiro rei ainda legível.",
+      links: [eRiver, eWar],
+    },
+    {
+      id: eRiver, projectId: project.id, title: "Rio Sarnen", category: "place",
+      body: "Artéria do reino. As três pontes do Sarnen datam da fundação e nenhuma caiu em guerra — os capitães sempre pouparam o rio para o abastecimento.",
+      links: [eCap],
+    },
+    {
+      id: eHouse, projectId: project.id, title: "Casa Vellmor", category: "faction",
+      body: "Dinastia fundada por Aldric Vellmor. Governam desde o Tratado das Três Pontes; a legitimidade vem de terem pagado o preço da Lei do Selo.",
+      links: [eLaw, eFounder],
+    },
+    {
+      id: eWar, projectId: project.id, title: "Guerra dos Cinco Invernos", category: "event",
+      body: "Conflito que definiu as fronteiras norte. O rio ficou vermelho por dias, contam os registros da Catedral — e a capital sobreviveu ao cerco por um inverno inteiro.",
+      links: [eCap, eRelic],
+    },
+    {
+      id: eRelic, projectId: project.id, title: "Coroa de Sarnen", category: "item",
+      body: "Coroa cerimonial perdida no último inverno da guerra. Dizem que carregar quem a carregar a fumaça dos anos difíceis. Nenhum rei a usou desde.",
+      links: [eWar, eFounder],
+    },
+    {
+      id: eLaw, projectId: project.id, title: "Lei do Selo", category: "lore",
+      body: "Todo pacto no reino é feito em cera: o selo é a palavra. Romper um selo é romper o nome de casa — punição pior do que a morte nos tribunais antigos.",
+      links: [eHouse],
+    },
+    {
+      id: eFounder, projectId: project.id, title: "Aldric Vellmor", category: "person",
+      body: "Fundador da Casa. Não morreu na guerra dos Cinco Invernos — entregou a Coroa ao rio e desapareceu. O que resta é o nome nos portões.",
+      links: [eHouse, eRelic],
+    },
+  ];
+
+  const pins: Pin[] = [
+    { id: newId("pin"), x: 0.50, y: 0.55, type: "place", color: "#c9a227", label: "Vellmora", entryId: eCap },
+    { id: newId("pin"), x: 0.30, y: 0.42, type: "event", color: "#a64b35", label: "Cerco de inverno", entryId: eWar },
+    { id: newId("pin"), x: 0.75, y: 0.46, type: "item", color: "#8f7fd0", label: "Onde a Coroa afundou", entryId: eRelic },
+    { id: newId("pin"), x: 0.58, y: 0.68, type: "person", color: "#5fa0b8", label: "Tribunal do Selo", entryId: eLaw },
+  ];
+
+  const atlases: Atlas[] = [{
+    id: newId("atl"),
+    projectId: project.id,
+    name: "Atlas de Vellmora",
+    regions: [
+      {
+        id: newId("reg"),
+        label: "Terras Altas de Sarnen",
+        color: "#4d8f5f",
+        fillOpacity: 0.28,
+        points: [
+          { x: 0.16, y: 0.30 }, { x: 0.34, y: 0.22 }, { x: 0.52, y: 0.30 },
+          { x: 0.58, y: 0.48 }, { x: 0.44, y: 0.60 }, { x: 0.24, y: 0.54 },
+        ],
+      },
+      {
+        id: newId("reg"),
+        label: "Meados do Reino",
+        color: "#c9a227",
+        fillOpacity: 0.28,
+        points: [
+          { x: 0.42, y: 0.58 }, { x: 0.60, y: 0.52 }, { x: 0.72, y: 0.66 },
+          { x: 0.64, y: 0.82 }, { x: 0.44, y: 0.80 }, { x: 0.36, y: 0.70 },
+        ],
+      },
+      {
+        id: newId("reg"),
+        label: "Costa do Selo",
+        color: "#4d6f8f",
+        fillOpacity: 0.28,
+        points: [
+          { x: 0.66, y: 0.30 }, { x: 0.84, y: 0.34 }, { x: 0.86, y: 0.52 },
+          { x: 0.74, y: 0.58 }, { x: 0.62, y: 0.50 },
+        ],
+      },
+    ],
+    pins,
+  }];
+
+  const ch = (heading: string, content: string, order: number): Chapter => ({
+    id: newId("ch"), heading, content, order,
+  });
+
+  const manuscripts: Manuscript[] = [{
+    id: newId("man"),
+    projectId: project.id,
+    title: "A Coroa e o Rio",
+    author: "Renan",
+    chapters: [
+      ch("Arco da Coroa", "Havia um ditado em Vellmora: a cidade se fecha quando o rio fala. Nessa manhã o rio falava baixo, e o vigia de turno esticou o pescoço para sobre as três pontes — nada vindo do sul, só a poeira comum do mercado...", 0),
+      ch("O Tribunal do Selo", "A sala dos selos tinha cheiro de cera quente e papel velho. A juíza de cabelos brancos pôs o último documento sobre a mesa e disse: — Rompeu o selo, rompeu o nome. Ainda tem algo a dizer antes que a cera esfrie?...", 1),
+      ch("Último Inverno", "No nono mês do cerco, quando os celeiros cantavam vazios, Aldric Vellmor subiu a torre do sino com a Coroa sob o braço. Ninguém combinou, mas a cidade inteira parou de olhar as muralhas e olhou para ele...", 2),
+    ],
+  }];
+
+  const images: Record<string, string> = {};
+  const mapKey = newId("img_map");
+  images[mapKey] = buildDemoMapSvg();
+  atlases[0].mapImageKey = mapKey;
+
+  return { projects: [project], entries, atlases, manuscripts, images };
+}

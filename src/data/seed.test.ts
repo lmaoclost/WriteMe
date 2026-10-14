@@ -1,0 +1,47 @@
+import { describe, expect, it } from "vitest";
+import { seedDemoProject } from "./seed";
+import { validateProjectData } from "./schema";
+import { ENTRY_CATEGORIES, PIN_TYPES } from "../domain/types";
+
+describe("seedDemoProject", () => {
+  const data = seedDemoProject();
+
+  it("produces valid data", () => {
+    expect(validateProjectData(data)).toBe(true);
+  });
+  it("one project named for the demo", () => {
+    expect(data.projects).toHaveLength(1);
+    expect(data.projects[0].name).toContain("Exemplo");
+  });
+  it("entries cover every category with links between them", () => {
+    const cats = new Set(data.entries.map((e) => e.category));
+    ENTRY_CATEGORIES.forEach((c) => expect(cats.has(c)).toBe(true));
+    expect(data.entries.some((e) => e.links.length > 0)).toBe(true);
+    // every link points at an existing entry id
+    const ids = new Set(data.entries.map((e) => e.id));
+    data.entries.forEach((e) => e.links.forEach((l) => expect(ids.has(l)).toBe(true)));
+  });
+  it("one atlas with procedural svg map, regions with >=3 points, pins of varied types", () => {
+    expect(data.atlases).toHaveLength(1);
+    const atlas = data.atlases[0];
+    const mapKey = atlas.mapImageKey;
+    expect(mapKey).toBeTruthy();
+    const map = data.images[mapKey!];
+    expect(map.startsWith("data:image/svg+xml")).toBe(true);
+    expect(atlas.regions.length).toBeGreaterThanOrEqual(3);
+    atlas.regions.forEach((r) => expect(r.points.length).toBeGreaterThanOrEqual(3));
+    expect(atlas.pins.length).toBeGreaterThanOrEqual(4);
+    expect(new Set(atlas.pins.map((p) => p.type)).size).toBe(PIN_TYPES.length);
+  });
+  it("regions/pins reference real entry ids", () => {
+    const ids = new Set(data.entries.map((e) => e.id));
+    data.atlases[0].pins.forEach((p) => p.entryId && expect(ids.has(p.entryId)).toBe(true));
+  });
+  it("manuscript with 3 non-empty chapters in order", () => {
+    expect(data.manuscripts).toHaveLength(1);
+    const m = data.manuscripts[0];
+    expect(m.chapters).toHaveLength(3);
+    expect(m.chapters.map((c) => c.order)).toEqual([0, 1, 2]);
+    m.chapters.forEach((c) => expect(c.content.length).toBeGreaterThan(50));
+  });
+});

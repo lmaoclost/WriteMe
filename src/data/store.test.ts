@@ -57,11 +57,17 @@ describe("project CRUD", () => {
     expect(s.manuscripts).toHaveLength(0);
     expect(Object.keys(s.images)).toEqual(["k_other"]);
   });
-  it("seedDemo is a stub and hasSeed reads seedFlag", () => {
-    let stubbed: string | null = "sentinel";
-    act(() => { stubbed = useScriptorium.getState().seedDemo(); });
-    expect(stubbed).toBeNull();
-    expect(useScriptorium.getState().hasSeed()).toBe(false);
+  it("seedDemo materializes demo data, flips seedFlag, returns project id", () => {
+    let id: string | null = null;
+    act(() => { id = useScriptorium.getState().seedDemo(); });
+    const s = useScriptorium.getState();
+    expect(id).toBe(s.projects[0]?.id);
+    expect(s.projects).toHaveLength(1);
+    expect(s.entries).toHaveLength(7);
+    expect(s.atlases).toHaveLength(1);
+    expect(s.manuscripts).toHaveLength(1);
+    expect(s.seedFlag).toBe(true);
+    expect(s.hasSeed()).toBe(true);
   });
 });
 

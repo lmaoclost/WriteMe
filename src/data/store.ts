@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import type { ProjectData, Project } from "../domain/types";
 import { newId } from "../domain/id";
 import { emptyProjectData, serialize, parseExport } from "./schema";
+import { seedDemoProject } from "./seed";
 import { STORE_KEY, localStoragePersistence, wipeStore } from "./storage";
 
 export { act } from "react";
@@ -112,7 +113,16 @@ export const useScriptorium = create<ScriptoriumState>()(
       },
 
       seedDemo() {
-        return null; // replaced in Task 8
+        const demo = seedDemoProject();
+        set((s) => ({
+          projects: [...s.projects, ...demo.projects],
+          entries: [...s.entries, ...demo.entries],
+          atlases: [...s.atlases, ...demo.atlases],
+          manuscripts: [...s.manuscripts, ...demo.manuscripts],
+          images: { ...s.images, ...demo.images },
+          seedFlag: true,
+        }));
+        return demo.projects[0].id;
       },
 
       exportData() {
