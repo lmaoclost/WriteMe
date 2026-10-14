@@ -146,6 +146,21 @@ export type FactionWeb = {
   notes: string;
 };
 
+export type CalendarEvent = { id: Id; text: string; category: string; color?: string };
+
+export type CustomCalendar = {
+  id: Id;
+  projectId: Id;
+  name: string;
+  era?: string;
+  months: { name: string; days: number }[];
+  weekdays: string[];
+  weekendDays: number[];
+  events: Record<string, CalendarEvent[]>;
+  startingWeekday: number;
+  notes: string;
+};
+
 export interface ProjectData {
   projects: Project[];
   entries: WorldEntry[];
@@ -154,6 +169,7 @@ export interface ProjectData {
   images: Record<string, string>;
   bloodlines?: Bloodline[];
   factionWebs?: FactionWeb[];
+  calendars?: CustomCalendar[];
 }
 
 export const ENTRY_CATEGORIES: readonly EntryCategory[] = [

@@ -40,7 +40,7 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
     const t = setTimeout(() => plane.fitToContainer(), 0);
     return () => clearTimeout(t);
     // fit once on mount
-  }, [bloodline?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [bloodline?.id]);
 
   if (!bloodline) return null;
 

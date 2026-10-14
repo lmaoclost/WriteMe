@@ -117,7 +117,7 @@ describe("BloodlineCanvasPage", () => {
     mount(b);
     expect(screen.getByTestId("edge-blood")).toBeInTheDocument();
     act(() => { store().deletePerson(father.id); });
-    b; // store updated
+    void b; // store updated
     expect(store().bloodlines[0].persons.find((p) => p.id === child.id)?.connectedTo).toBeUndefined();
   });
 

@@ -49,7 +49,7 @@ export function FactionWebPage({ webId }: { webId: string }) {
     const s = Math.min(8, Math.max(0.1, fit));
     setScale({ s, panX: (el.clientWidth - planeSize * s) / 2, panY: (el.clientHeight - planeSize * s) / 2 });
     // run once per web mount
-  }, [webId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [webId]);
 
   if (!web) return null;
 

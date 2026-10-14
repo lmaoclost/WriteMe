@@ -64,7 +64,7 @@ describe("validateProjectData", () => {
 describe("parseExport", () => {
   it("round-trips", () => {
     const text = JSON.stringify({ app: "scriptorium", version: 1, ...valid });
-    expect(parseExport(text)).toEqual({ ...valid, bloodlines: [], factionWebs: [] });
+    expect(parseExport(text)).toEqual({ ...valid, bloodlines: [], factionWebs: [], calendars: [] });
   });
   it("throws with clear message on invalid payload", () => {
     expect(() => parseExport("not json")).toThrow(/JSON/);

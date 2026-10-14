@@ -4,6 +4,7 @@ import type {
   ProjectData, Project, Atlas, Region, Pin, PinType, WorldEntry, EntryCategory, Manuscript, Chapter,
   Bloodline, BloodlinePerson, BloodlineHouse,
   FactionWeb, Faction, FactionConnection, ConnectionType,
+  CustomCalendar, CalendarEvent,
 } from "../domain/types";
 import { newId } from "../domain/id";
 import type { Pt } from "../domain/geometry";
@@ -50,7 +51,9 @@ export interface BloodlineHistory {
 
 export interface FactionWebSnapshot { factions: Faction[]; connections: FactionConnection[] }
 export interface FactionWebHistory { undo: FactionWebSnapshot[]; redo: FactionWebSnapshot[] }
-export type AnyHistory = AtlasHistory | BloodlineHistory | FactionWebHistory;
+export interface CalendarSnapshot { months: CustomCalendar["months"]; weekdays: string[]; weekendDays: number[]; era?: string; startingWeekday: number; events: Record<string, CalendarEvent[]> }
+export interface CalendarHistory { undo: CalendarSnapshot[]; redo: CalendarSnapshot[] }
+export type AnyHistory = AtlasHistory | BloodlineHistory | FactionWebHistory | CalendarHistory;
 
 const clonePoints = (points: Pt[]): Pt[] => points.map((p) => ({ ...p }));
 const touchProject = (projects: readonly Project[], id: string): Project[] =>
@@ -70,11 +73,21 @@ const cloneSnapshot = (a: Atlas): AtlasSnapshot => ({
 /** `bl_<id>` keys keep bloodline history buckets in the same ephemeral `histories` record. */
 const blKey = (bloodlineId: string): string => `bl_${bloodlineId}`;
 const fwKey = (webId: string): string => `fw_${webId}`;
+const clKey = (calendarId: string): string => `cl_${calendarId}`;
 
 const clonePerson = (p: BloodlinePerson): BloodlinePerson => ({
   ...p,
   additionalTitles: p.additionalTitles.map((t) => ({ ...t })),
   tenures: p.tenures.map((t) => ({ ...t })),
+});
+
+const cloneCLSnapshot = (c: CustomCalendar): CalendarSnapshot => ({
+  months: c.months.map((m) => ({ ...m })),
+  weekdays: [...c.weekdays],
+  weekendDays: [...c.weekendDays],
+  era: c.era,
+  startingWeekday: c.startingWeekday,
+  events: Object.fromEntries(Object.entries(c.events).map(([k, v]) => [k, v.map((e) => ({ ...e }))])),
 });
 
 const cloneFWSnapshot = (w: FactionWeb): FactionWebSnapshot => ({
@@ -180,6 +193,19 @@ interface ScriptoriumState extends ProjectData {
   pushFWHistory(webId: string): void;
   undoFW(webId: string): void;
   redoFW(webId: string): void;
+
+  addCalendar(projectId: string, name?: string): CustomCalendar;
+  renameCalendar(id: string, name: string): void;
+  setEra(id: string, era: string | undefined): void;
+  setStartingWeekday(id: string, weekday: number): void;
+  setMonth(id: string, index: number, patch: { name?: string; days?: number }): void;
+  addCalendarEvent(id: string, dayKey: string, ev: { text: string; category: string; color?: string }): CalendarEvent | null;
+  updateCalendarEvent(id: string, dayKey: string, eventId: string, patch: { text?: string; category?: string; color?: string }): void;
+  removeCalendarEvent(id: string, dayKey: string, eventId: string): void;
+  setCalendarNotes(id: string, notes: string): void;
+  pushCLHistory(id: string): void;
+  undoCL(id: string): void;
+  redoCL(id: string): void;
 }
 
 export const useScriptorium = create<ScriptoriumState>()(
@@ -1240,6 +1266,174 @@ export const useScriptorium = create<ScriptoriumState>()(
         });
       },
 
+      addCalendar(projectId, name = "Calendário sem título") {
+        const calendar: CustomCalendar = {
+          id: newId("cal"),
+          projectId,
+          name,
+          months: Array.from({ length: 12 }, (_, i) => ({ name: `Mês ${i + 1}`, days: 30 })),
+          weekdays: ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"],
+          weekendDays: [0, 6],
+          events: {},
+          startingWeekday: 0,
+          notes: "",
+        };
+        set((s) => ({
+          calendars: [...(s.calendars ?? []), calendar],
+          projects: touchProject(s.projects, projectId),
+        }));
+        return calendar;
+      },
+
+      renameCalendar(id, name) {
+        const cal = (get().calendars ?? []).find((c) => c.id === id);
+        if (!cal) return;
+        set((st) => ({
+          calendars: (st.calendars ?? []).map((c) => (c.id === id ? { ...c, name } : c)),
+          projects: touchProject(st.projects, cal.projectId),
+        }));
+      },
+
+      setEra(id, era) {
+        const cal = (get().calendars ?? []).find((c) => c.id === id);
+        if (!cal) return;
+        get().pushCLHistory(id);
+        set((st) => ({
+          calendars: (st.calendars ?? []).map((c) => (c.id === id ? { ...c, era } : c)),
+          projects: touchProject(st.projects, cal.projectId),
+        }));
+      },
+
+      setStartingWeekday(id, weekday) {
+        const cal = (get().calendars ?? []).find((c) => c.id === id);
+        if (!cal || weekday < 0 || weekday > 6) return;
+        get().pushCLHistory(id);
+        set((st) => ({
+          calendars: (st.calendars ?? []).map((c) => (c.id === id ? { ...c, startingWeekday: weekday } : c)),
+          projects: touchProject(st.projects, cal.projectId),
+        }));
+      },
+
+      setMonth(id, index, patch) {
+        const cal = (get().calendars ?? []).find((c) => c.id === id);
+        if (!cal || !cal.months[index]) return;
+        const next = { ...cal.months[index] };
+        if (patch.name !== undefined) next.name = patch.name.trim() || next.name;
+        if (patch.days !== undefined && Number.isFinite(patch.days) && patch.days >= 1) next.days = Math.round(patch.days);
+        get().pushCLHistory(id);
+        set((st) => ({
+          calendars: (st.calendars ?? []).map((c) => (c.id === id
+            ? { ...c, months: c.months.map((m, j) => (j === index ? next : m)) }
+            : c)),
+          projects: touchProject(st.projects, cal.projectId),
+        }));
+      },
+
+      addCalendarEvent(id, dayKey, ev) {
+        const cal = (get().calendars ?? []).find((c) => c.id === id);
+        if (!cal || !ev.text.trim()) return null;
+        get().pushCLHistory(id);
+        const event: CalendarEvent = { id: newId("clv"), text: ev.text.trim(), category: ev.category, color: ev.color };
+        set((st) => ({
+          calendars: (st.calendars ?? []).map((c) => (c.id === id
+            ? { ...c, events: { ...c.events, [dayKey]: [...(c.events[dayKey] ?? []), event] } }
+            : c)),
+          projects: touchProject(st.projects, cal.projectId),
+        }));
+        return event;
+      },
+
+      updateCalendarEvent(id, dayKey, eventId, patch) {
+        const cal = (get().calendars ?? []).find((c) => c.id === id);
+        if (!cal || !cal.events[dayKey]?.some((e) => e.id === eventId)) return;
+        get().pushCLHistory(id);
+        set((st) => ({
+          calendars: (st.calendars ?? []).map((c) => (c.id === id
+            ? { ...c, events: { ...c.events, [dayKey]: c.events[dayKey].map((e) => (e.id === eventId ? { ...e, ...patch, id: e.id } : e)) } }
+            : c)),
+          projects: touchProject(st.projects, cal.projectId),
+        }));
+      },
+
+      removeCalendarEvent(id, dayKey, eventId) {
+        const cal = (get().calendars ?? []).find((c) => c.id === id);
+        if (!cal || !cal.events[dayKey]?.some((e) => e.id === eventId)) return;
+        get().pushCLHistory(id);
+        const remaining = cal.events[dayKey].filter((e) => e.id !== eventId);
+        set((st) => ({
+          calendars: (st.calendars ?? []).map((c) => {
+            if (c.id !== id) return c;
+            const events = { ...c.events };
+            if (remaining.length) events[dayKey] = remaining;
+            else delete events[dayKey];
+            return { ...c, events };
+          }),
+          projects: touchProject(st.projects, cal.projectId),
+        }));
+      },
+
+      setCalendarNotes(id, notes) {
+        const cal = (get().calendars ?? []).find((c) => c.id === id);
+        if (!cal) return;
+        set((st) => ({
+          calendars: (st.calendars ?? []).map((c) => (c.id === id ? { ...c, notes } : c)),
+          projects: touchProject(st.projects, cal.projectId),
+        }));
+      },
+
+      pushCLHistory(id) {
+        set((st) => {
+          const cal = (st.calendars ?? []).find((c) => c.id === id);
+          if (!cal) return {};
+          const key = clKey(id);
+          const h = (st.histories[key] as CalendarHistory | undefined) ?? { undo: [], redo: [] };
+          const undo = [...h.undo, cloneCLSnapshot(cal)];
+          if (undo.length > HISTORY_CAP) undo.shift();
+          const entry: CalendarHistory = { undo, redo: [] };
+          return { histories: { ...st.histories, [key]: entry } };
+        });
+      },
+
+      undoCL(id) {
+        set((st) => {
+          const key = clKey(id);
+          const h = st.histories[key] as CalendarHistory | undefined;
+          const cal = (st.calendars ?? []).find((c) => c.id === id);
+          if (!h || h.undo.length === 0 || !cal) return {};
+          const snap = h.undo[h.undo.length - 1];
+          const entry: CalendarHistory = {
+            undo: h.undo.slice(0, -1),
+            redo: [...h.redo, cloneCLSnapshot(cal)],
+          };
+          return {
+            histories: { ...st.histories, [key]: entry },
+            calendars: (st.calendars ?? []).map((c) => (c.id === id
+              ? { ...c, months: snap.months.map((m) => ({ ...m })), weekdays: [...snap.weekdays], weekendDays: [...snap.weekendDays], era: snap.era, startingWeekday: snap.startingWeekday, events: snap.events }
+              : c)),
+          };
+        });
+      },
+
+      redoCL(id) {
+        set((st) => {
+          const key = clKey(id);
+          const h = st.histories[key] as CalendarHistory | undefined;
+          const cal = (st.calendars ?? []).find((c) => c.id === id);
+          if (!h || h.redo.length === 0 || !cal) return {};
+          const snap = h.redo[h.redo.length - 1];
+          const entry: CalendarHistory = {
+            undo: [...h.undo, cloneCLSnapshot(cal)],
+            redo: h.redo.slice(0, -1),
+          };
+          return {
+            histories: { ...st.histories, [key]: entry },
+            calendars: (st.calendars ?? []).map((c) => (c.id === id
+              ? { ...c, months: snap.months.map((m) => ({ ...m })), weekdays: [...snap.weekdays], weekendDays: [...snap.weekendDays], era: snap.era, startingWeekday: snap.startingWeekday, events: snap.events }
+              : c)),
+          };
+        });
+      },
+
       pushBLHistory(bloodlineId) {
         set((st) => {
           const bloodline = st.bloodlines.find((b) => b.id === bloodlineId);
@@ -1319,6 +1513,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           images: s.images,
           bloodlines: s.bloodlines,
           factionWebs: s.factionWebs,
+          calendars: s.calendars,
           seedFlag: s.seedFlag,
         };
       },

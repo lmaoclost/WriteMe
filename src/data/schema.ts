@@ -2,6 +2,7 @@ import type {
   ProjectData, WorldEntry, Atlas, Manuscript, Region, Pin, Project,
   Bloodline, BloodlinePerson, BloodlineHouse, BloodlineTitle, BloodlineTenure,
   FactionWeb, Faction, FactionConnection,
+  CustomCalendar, CalendarEvent,
 } from "../domain/types";
 import { ENTRY_CATEGORIES, PIN_TYPES } from "../domain/types";
 
@@ -110,6 +111,26 @@ const isFactionWeb = (v: unknown): v is FactionWeb => {
     && isStr(w.notes);
 };
 
+const isCalendarEvent = (v: unknown): v is CalendarEvent => {
+  const e = v as CalendarEvent;
+  return !!e && isStr(e.id) && isStr(e.text) && isStr(e.category) && optionalStr(e.color);
+};
+
+const isCustomCalendar = (v: unknown): v is CustomCalendar => {
+  const c = v as CustomCalendar;
+  return !!c && isStr(c.id) && isStr(c.projectId) && isStr(c.name)
+    && isArr(c.months) && c.months.every((m) => {
+      const mm = m as { name: unknown; days: unknown };
+      return !!mm && isStr(mm.name) && isNum(mm.days) && (mm.days as number) >= 1;
+    })
+    && isArr(c.weekdays) && c.weekdays.every(isStr)
+    && isArr(c.weekendDays) && c.weekendDays.every(isNum)
+    && !!c.events && Object.values(c.events).every((evs) => isArr(evs) && evs.every(isCalendarEvent))
+    && isNum(c.startingWeekday)
+    && isStr(c.notes)
+    && optionalStr(c.era);
+};
+
 const isBloodline = (v: unknown): v is Bloodline => {
   const b = v as Bloodline;
   return !!b && isStr(b.id) && isStr(b.projectId) && isStr(b.name)
@@ -128,12 +149,14 @@ export function validateProjectData(v: unknown): boolean {
     && (d.bloodlines === undefined
       || (isArr(d.bloodlines) && d.bloodlines.every(isBloodline)))
     && (d.factionWebs === undefined
-      || (isArr(d.factionWebs) && d.factionWebs.every(isFactionWeb)));
+      || (isArr(d.factionWebs) && d.factionWebs.every(isFactionWeb)))
+    && (d.calendars === undefined
+      || (isArr(d.calendars) && d.calendars.every(isCustomCalendar)));
 }
 
 /** Fresh shape: bloodlines is optional in the schema but a fresh state always carries []. */
 export function emptyProjectData(): ProjectData & { bloodlines: Bloodline[] } {
-  return { projects: [], entries: [], atlases: [], manuscripts: [], images: {}, bloodlines: [], factionWebs: [] };
+  return { projects: [], entries: [], atlases: [], manuscripts: [], images: {}, bloodlines: [], factionWebs: [], calendars: [] };
 }
 
 export function serialize(data: ProjectData): string {
@@ -159,5 +182,6 @@ export function parseExport(text: string): ProjectData {
     images: d.images,
     bloodlines: d.bloodlines ?? [],
     factionWebs: d.factionWebs ?? [],
+    calendars: d.calendars ?? [],
   };
 }
