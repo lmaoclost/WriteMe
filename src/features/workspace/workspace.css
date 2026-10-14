@@ -39,10 +39,6 @@
 .cover-upload { display: inline-grid; gap: 6px; cursor: pointer; color: var(--slate); font-size: 13px; }
 .cover-img { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
 .cover-upload:hover .cover-hint { color: var(--gold); }
-.placeholder { max-width: 520px; margin: 20vh auto; text-align: center; }
-.placeholder h1 { font-size: 30px; color: var(--gold); }
-.placeholder p { color: var(--parchment-dim); }
-.placeholder-note { color: var(--slate); font-size: 13px; }
 @media (max-width: 720px) {
   .workspace { grid-template-columns: 1fr; }
   .rail { position: static; height: auto; flex-direction: row; align-items: center; overflow-x: auto; }

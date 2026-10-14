@@ -242,16 +242,18 @@
   .book-chapters { border-right: 0; border-bottom: 1px solid var(--line); }
 }
 
-/* Print dialog: only the book renders — chrome (rail/panels/headers) hides. */
+/* Print dialog: only the book renders. The book is portaled to document.body
+   (outside .workspace), so hiding the shell leaves the bare book. */
 .print-book {
   display: none;
 }
 
 @media print {
-  nav, aside, header, .book-chapters, .atlas-panels { display: none !important; }
+  .workspace, .toasts { display: none !important; }
   body { background: #fff; }
   .print-book {
     display: block;
+    position: static;
     color: #000;
     background: #fff;
   }

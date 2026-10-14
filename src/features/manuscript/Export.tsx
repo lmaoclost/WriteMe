@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Manuscript } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
 import { renderMarkdown } from "../entries/markdown";
@@ -6,11 +7,13 @@ import { buildBookHtml } from "./buildBook";
 
 const PRINT_FALLBACK_MS = 500;
 
-/** Lowercase, runs of non-alnum become one dash, trimmed; empty → "livro". */
+/** Lowercase, accent-folded, runs of non-alnum become one dash, trimmed; empty → "livro". */
 function slugify(text: string): string {
   return (
     text
       .toLowerCase()
+      .normalize("NFD")
+      .replace(/\p{M}/gu, "")
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "") || "livro"
   );
@@ -115,13 +118,17 @@ export function ExportTools({ manuscript }: ExportToolsProps) {
           Exportar PDF
         </button>
       </div>
-      {printing ? (
-        <div
-          className="print-book"
-          data-testid="print-book"
-          dangerouslySetInnerHTML={{ __html: buildBookHtml(manuscript) }}
-        />
-      ) : null}
+      {/* Portal to body keeps .print-book outside .workspace so print CSS can hide the shell. */}
+      {printing
+        ? createPortal(
+            <div
+              className="print-book"
+              data-testid="print-book"
+              dangerouslySetInnerHTML={{ __html: buildBookHtml(manuscript) }}
+            />,
+            document.body,
+          )
+        : null}
     </>
   );
 }

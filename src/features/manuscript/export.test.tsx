@@ -238,6 +238,28 @@ describe("EPUB export", () => {
     expect(anchorDownload).toBe("livro.epub");
   });
 
+  it("folds accents out of the download filename slug", async () => {
+    const projectId = seedProject();
+    seedBook(projectId, { title: "Época Antiga", chapters: [{ heading: "Um", content: "x" }] });
+    render(manuscriptRoute(projectId));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
+    await waitFor(() => expect(epubMock.calls).toHaveLength(1));
+    expect(anchorDownload).toBe("epoca-antiga.epub");
+
+    act(() => {
+      const state = useScriptorium.getState();
+      const created = state.addManuscript(projectId, "Açúcar & Sal");
+      state.addChapter(created.id, "Um");
+    });
+    const second = useScriptorium.getState().manuscripts[1].id;
+    fireEvent.change(screen.getByRole("combobox", { name: "Livro" }), {
+      target: { value: second },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
+    await waitFor(() => expect(epubMock.calls).toHaveLength(2));
+    expect(anchorDownload).toBe("acucar-sal.epub");
+  });
+
   it("shows disabled + aria-busy while generating, then re-enables", async () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "x" }] });
@@ -286,6 +308,9 @@ describe("PDF export", () => {
     render(manuscriptRoute(projectId));
     fireEvent.click(screen.getByRole("button", { name: "Exportar PDF" }));
     const printBook = screen.getByTestId("print-book");
+    // Portal regression: the print book must live on document.body, outside the app shell.
+    expect(printBook.parentElement).toBe(document.body);
+    expect(printBook.closest(".workspace")).toBeNull();
     expect(printBook.querySelector("h1")?.textContent).toBe("Cantar de Vellmora");
     expect(printBook.querySelector("h2")?.textContent).toBe("Prólogo");
     await waitFor(() => expect(printSpy).toHaveBeenCalled());
