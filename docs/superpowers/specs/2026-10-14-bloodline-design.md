@@ -1,6 +1,7 @@
 # Scriptorium — Bloodline Design (sub-projeto 5b)
 
 Data: 2026-10-14
+> Status 2026-10-14: Bloodline implementado (tasks 1–5). Notas: `familyColors`  fica fora (cores por casa = 2 flags); notepad position ephemeral.
 Escopo: canvas livre editável de genealogia com Casas, Persons, conexões parent/partner/sibling, notepad flutuante, find, undo, cores de família.
 
 ## 1. Modelo (schema v2)
