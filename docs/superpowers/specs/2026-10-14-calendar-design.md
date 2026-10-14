@@ -1,6 +1,7 @@
 # Scriptorium — Cronograma/Calendar Design (sub-projeto 5d)
 
 Data: 2026-10-14
+> Status 2026-10-14: Calendar implementado (tasks 1–3). Skip v1: chapter links por dia.
 > Status: em implementação (plan `2026-10-14-calendar.md`). Calendário custom do mundo — padrões (meses/weekdays custom, eventos por dia com cores/categorias, navegação por anos).
 
 ## 1. Modelo (schema v2, opcional)
