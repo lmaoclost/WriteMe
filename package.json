@@ -15,6 +15,7 @@
     "@fontsource-variable/fraunces": "^5.2.5",
     "@fontsource-variable/inter": "^5.2.5",
     "@fontsource/jetbrains-mono": "^5.2.5",
+    "marked": "^18.1.1",
     "polygon-clipping": "^0.15.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

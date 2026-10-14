@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { ProjectData, Project, Atlas, Region, Pin, PinType } from "../domain/types";
+import type { ProjectData, Project, Atlas, Region, Pin, PinType, WorldEntry, EntryCategory } from "../domain/types";
 import { newId } from "../domain/id";
 import type { Pt } from "../domain/geometry";
 import { isMeaningful } from "../domain/geometry";
@@ -35,6 +35,8 @@ export interface AtlasHistory {
 }
 
 const clonePoints = (points: Pt[]): Pt[] => points.map((p) => ({ ...p }));
+const touchProject = (projects: readonly Project[], id: string): Project[] =>
+  projects.map((p) => (p.id === id ? { ...p, updatedAt: Date.now() } : p));
 /** Spec §7: polygon-clipping failure surfaces once, state untouched. */
 const CLIP_FAILURE_TOAST = "Não consegui calcular os encaixes.";
 const cloneSnapshot = (a: Atlas): AtlasSnapshot => ({
@@ -58,6 +60,13 @@ interface ScriptoriumState extends ProjectData {
   exportData(): string;
   importData(text: string): { ok: true } | { ok: false; error: string };
   resetAll(): void;
+
+  addEntry(projectId: string, category?: EntryCategory): WorldEntry;
+  updateEntry(id: string, patch: Partial<Omit<WorldEntry, "id">>): void;
+  deleteEntry(id: string): void;
+  linkEntries(from: string, to: string): void;
+  unlinkEntries(from: string, to: string): void;
+  putEntryImage(entryId: string, dataUrl: string): boolean;
 
   addAtlas(projectId: string, name: string): Atlas;
   renameAtlas(atlasId: string, name: string): void;
@@ -255,6 +264,111 @@ export const useScriptorium = create<ScriptoriumState>()(
           atlases: st.atlases.map((a) => (a.id === atlasId ? { ...a, mapImageKey: key } : a)),
         }));
         if (prevKey && prevKey !== key && !get().atlases.some((a) => a.mapImageKey === prevKey)) {
+          set((st) => {
+            const images = { ...st.images };
+            delete images[prevKey];
+            return { images };
+          });
+        }
+        return true;
+      },
+
+      addEntry(projectId, category = "lore") {
+        const entry: WorldEntry = {
+          id: newId("ent"),
+          projectId,
+          title: "Sem título",
+          category,
+          body: "",
+          links: [],
+        };
+        set((s) => ({
+          entries: [...s.entries, entry],
+          projects: touchProject(s.projects, projectId),
+        }));
+        return entry;
+      },
+
+      updateEntry(id, patch) {
+        const entry = get().entries.find((e) => e.id === id);
+        if (!entry) return;
+        const safe: Partial<Omit<WorldEntry, "id">> = { ...patch };
+        if (patch.links) safe.links = [...patch.links];
+        set((s) => ({
+          entries: s.entries.map((e) =>
+            e.id === id ? { ...e, ...safe, id: e.id } : e),
+          projects: touchProject(s.projects, entry.projectId),
+        }));
+      },
+
+      deleteEntry(id) {
+        const s = get();
+        const entry = s.entries.find((e) => e.id === id);
+        if (!entry) return;
+        const kept = s.entries.filter((e) => e.id !== id);
+        const images = { ...s.images };
+        if (entry.imageKey && !kept.some((e) => e.imageKey === entry.imageKey)) {
+          delete images[entry.imageKey];
+        }
+        set({
+          entries: kept.map((e) =>
+            e.links.includes(id) ? { ...e, links: e.links.filter((l) => l !== id) } : e),
+          images,
+          projects: touchProject(s.projects, entry.projectId),
+        });
+      },
+
+      linkEntries(from, to) {
+        const s = get();
+        const origin = s.entries.find((e) => e.id === from);
+        if (!origin || !s.entries.some((e) => e.id === to) || origin.links.includes(to)) return;
+        set((st) => ({
+          entries: st.entries.map((e) =>
+            e.id === from ? { ...e, links: [...e.links, to] } : e),
+          projects: touchProject(st.projects, origin.projectId),
+        }));
+      },
+
+      unlinkEntries(from, to) {
+        const origin = get().entries.find((e) => e.id === from);
+        if (!origin || !origin.links.includes(to)) return;
+        set((st) => ({
+          entries: st.entries.map((e) =>
+            e.id === from ? { ...e, links: e.links.filter((l) => l !== to) } : e),
+          projects: touchProject(st.projects, origin.projectId),
+        }));
+      },
+
+      putEntryImage(entryId, dataUrl) {
+        const entry = get().entries.find((e) => e.id === entryId);
+        if (!entry) return false;
+        const key = `img_entry_${newId("")}`;
+        set((st) => ({ images: { ...st.images, [key]: dataUrl } }));
+        let stored = false;
+        try {
+          const raw = localStorage.getItem(STORE_KEY);
+          if (raw) {
+            const doc = JSON.parse(raw) as { state: { images: Record<string, string> } };
+            stored = doc.state.images[key] === dataUrl;
+          }
+        } catch {
+          stored = false;
+        }
+        if (!stored) {
+          set((st) => {
+            const images = { ...st.images };
+            delete images[key];
+            return { images };
+          });
+          return false;
+        }
+        const prevKey = entry.imageKey;
+        set((st) => ({
+          entries: st.entries.map((e) =>
+            e.id === entryId ? { ...e, imageKey: key } : e),
+          projects: touchProject(st.projects, entry.projectId),
+        }));
+        if (prevKey && prevKey !== key && !get().entries.some((e) => e.imageKey === prevKey)) {
           set((st) => {
             const images = { ...st.images };
             delete images[prevKey];
