@@ -51,6 +51,50 @@ export function ExportTools({ manuscript }: ExportToolsProps) {
     };
   }, [printing]);
 
+  const exportDocx = async () => {
+    if (disabled) return;
+    setBusy(true);
+    try {
+      const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } = await import("docx");
+      const { htmlToBlocks } = await import("./docx");
+      const chapters = [...manuscript.chapters].sort((a, b) => a.order - b.order);
+      const children = [
+        new Paragraph({ children: [new TextRun({ text: manuscript.title, bold: true, size: 48 })], alignment: AlignmentType.CENTER }),
+        ...(manuscript.author ? [new Paragraph({ children: [new TextRun({ text: manuscript.author, italics: true, size: 24 })], alignment: AlignmentType.CENTER })] : []),
+      ];
+      for (const ch of chapters) {
+        children.push(new Paragraph({ children: [new TextRun({ text: ch.heading, bold: true })], heading: HeadingLevel.HEADING_2 }));
+        if (ch.noteTop) children.push(new Paragraph({ children: [new TextRun({ text: ch.noteTop, italics: true, color: "7A7A99" })] }));
+        const blocks = htmlToBlocks(ch.content || "");
+        if (!blocks.length) children.push(new Paragraph({ children: [new TextRun({ text: "Sem conteúdo ainda.", italics: true })] }));
+        for (const block of blocks) {
+          if (block.kind === "li") {
+            children.push(new Paragraph({ children: [new TextRun({ text: block.text })], bullet: { level: 0 } }));
+          } else if (block.kind === "quote") {
+            children.push(new Paragraph({ children: [new TextRun({ text: block.text, italics: true })], indent: { left: 360 } }));
+          } else if (block.kind === "h1" || block.kind === "h2" || block.kind === "h3") {
+            children.push(new Paragraph({ children: [new TextRun({ text: block.text, bold: true })], heading: block.kind === "h1" ? HeadingLevel.HEADING_2 : block.kind === "h2" ? HeadingLevel.HEADING_3 : HeadingLevel.HEADING_4 }));
+          } else {
+            children.push(new Paragraph({ children: [new TextRun({ text: block.text })] }));
+          }
+        }
+        if (ch.endMarker) children.push(new Paragraph({ children: [new TextRun({ text: ch.endMarker, smallCaps: true })], alignment: AlignmentType.CENTER }));
+      }
+      const blob = await Packer.toBlob(new Document({ sections: [{ children }] }));
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${slugify(manuscript.title)}.docx`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      useScriptorium.getState().pushToast("success", "Word gerado.");
+    } catch {
+      useScriptorium.getState().pushToast("error", "Falha ao gerar o Word.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const exportEpub = async () => {
     if (disabled) return;
     setBusy(true);
@@ -116,6 +160,15 @@ export function ExportTools({ manuscript }: ExportToolsProps) {
           onClick={exportPdf}
         >
           Exportar PDF
+        </button>
+        <button
+          type="button"
+          className="book-export-btn"
+          disabled={disabled}
+          title={title}
+          onClick={() => void exportDocx()}
+        >
+          Exportar Word
         </button>
       </div>
       {/* Portal to body keeps .print-book outside .workspace so print CSS can hide the shell. */}

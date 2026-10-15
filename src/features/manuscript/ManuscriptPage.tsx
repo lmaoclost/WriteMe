@@ -190,7 +190,7 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
           {chapter ? (
             <ChapterEditor
               key={chapter.id}
-              chapter={chapter}
+              chapterId={chapter.id}
               headingRef={headingRef}
               onDeleted={onChapterDeleted}
             />

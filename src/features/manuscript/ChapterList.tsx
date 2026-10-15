@@ -1,4 +1,5 @@
 import type { Chapter } from "../../domain/types";
+import { useScriptorium } from "../../data/store";
 
 /** `content.trim().split(/\s+/).filter(Boolean)` — the plan's wordcount rule. */
 export const countWords = (content: string): number =>
@@ -63,5 +64,28 @@ export function ChapterList({ chapters, selectedId, onSelect, onMove, onCreate }
         Novo capítulo
       </button>
     </aside>
+  );
+}
+
+export function DocxReplaceButton({ chapterId }: { chapterId: string }) {
+  const pushToast = useScriptorium((s) => s.pushToast);
+  const onChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    try {
+      const { importDocxToHtml } = await import("./docx");
+      const html = await importDocxToHtml(file);
+      useScriptorium.getState().updateChapter(chapterId, { content: html });
+      pushToast("success", "Capítulo substituído pelo .docx.");
+    } catch {
+      pushToast("error", "Não foi possível ler o .docx.");
+    }
+  };
+  return (
+    <label className="book-mode book-docx-btn" title="Replace this chapter's body from a .docx">
+      Trocar conteúdo (.docx)
+      <input type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="visually-hidden" onChange={(e) => void onChange(e)} />
+    </label>
   );
 }

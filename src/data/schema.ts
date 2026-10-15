@@ -52,7 +52,9 @@ const isAtlas = (v: unknown): v is Atlas => {
 
 const isChapter = (v: unknown): boolean => {
   const c = v as Manuscript["chapters"][number];
-  return !!c && isStr(c.id) && isStr(c.heading) && isStr(c.content) && isNum(c.order);
+  return !!c && isStr(c.id) && isStr(c.heading) && isStr(c.content) && isNum(c.order)
+    && optionalStr(c.noteTop) && optionalStr(c.noteEnd) && optionalStr(c.endMarker)
+    && optionalStr(c.linkedCalendarId) && optionalStr(c.calendarDayKey);
 };
 
 const isManuscript = (v: unknown): v is Manuscript => {

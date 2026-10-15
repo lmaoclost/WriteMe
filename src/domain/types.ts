@@ -66,8 +66,14 @@ export interface Atlas {
 export interface Chapter {
   id: Id;
   heading: string;
+  /** Markdown by default; HTML when edited in the rich editor (starts with "<"). */
   content: string;
   order: number;
+  noteTop?: string;
+  noteEnd?: string;
+  endMarker?: string;
+  linkedCalendarId?: Id;
+  calendarDayKey?: string; // "y:m:d" (calendar-relative)
 }
 
 export interface Manuscript {

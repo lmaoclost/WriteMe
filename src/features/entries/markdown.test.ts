@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderMarkdown } from "./markdown";
+import { renderMarkdown, isHtmlFragment } from "./markdown";
 
 describe("renderMarkdown", () => {
   it("renders h1", () => {
@@ -35,7 +35,9 @@ describe("renderMarkdown", () => {
     const out = renderMarkdown('<span onerror="x" style="color:red">t</span>');
     expect(out).not.toContain("onerror");
     expect(out).not.toContain("style");
-    expect(out).toContain("t</p>");
+    // raw HTML fragments are treated as HTML now (rich editor); the span is
+    // disallowed, so only its text survives
+    expect(out).toBe("t");
   });
   it("drops href from links but keeps text and title", () => {
     const out = renderMarkdown('<a href="https://x.com" title="Ex">texto</a>');
@@ -70,5 +72,24 @@ describe("renderMarkdown", () => {
     const out = renderMarkdown("<div><a href='https://x.com'>y</a></div>");
     expect(out).toContain("<a>y</a>");
     expect(out).not.toContain("href");
+  });
+});
+
+describe("rich editor HTML passthrough", () => {
+  it("HTML content renders sanitized without markdown processing", () => {
+    const html = '<p><b>negrito</b> e <u>linha</u></p>';
+    expect(renderMarkdown(html)).toContain("<b>negrito</b>");
+    expect(renderMarkdown(html)).toContain("<u>linha</u>");
+    expect(renderMarkdown(html)).not.toContain("&lt;");
+  });
+  it("script/attrs discarded; align kept on div", () => {
+    expect(renderMarkdown('<div align="center">x</div>')).toContain('align="center"');
+    expect(renderMarkdown('<div onclick="x()" style="evil">x</div>')).not.toContain("onclick");
+    expect(renderMarkdown("<p><img src='https://x' onerror='y'>z</p>")).not.toContain("onerror");
+  });
+  it("markdown still works (mixed content starts with tag = html, else md)", () => {
+    expect(renderMarkdown("# Título")).toContain("<h1>");
+    expect(isHtmlFragment("# Título")).toBe(false);
+    expect(isHtmlFragment("<p>x</p>")).toBe(true);
   });
 });

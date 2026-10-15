@@ -145,6 +145,7 @@ interface ScriptoriumState extends ProjectData {
   updateChapter(chapterId: string, patch: Partial<Omit<Chapter, "id">>): void;
   deleteChapter(chapterId: string): void;
   moveChapter(chapterId: string, dir: -1 | 1): void;
+  setChapterCalendar(chapterId: string, calendarId: string | undefined, dayKey?: string): void;
 
   addAtlas(projectId: string, name: string): Atlas;
   renameAtlas(atlasId: string, name: string): void;
@@ -626,6 +627,21 @@ export const useScriptorium = create<ScriptoriumState>()(
 
       /** Swaps the chapter's order with its nearest neighbor by sorted order;
        *  gaps are tolerated (no renumbering) — spec §7 ruling. */
+      setChapterCalendar(chapterId, calendarId, dayKey) {
+        const m = get().manuscripts.find((x) => x.chapters.some((c) => c.id === chapterId));
+        if (!m) return;
+        set((s) => ({
+          manuscripts: s.manuscripts.map((x) => (x.id !== m.id ? x : {
+            ...x,
+            chapters: x.chapters.map((c) =>
+              c.id === chapterId
+                ? { ...c, linkedCalendarId: calendarId, calendarDayKey: calendarId ? dayKey : undefined }
+                : c),
+          })),
+          projects: touchProject(s.projects, m.projectId),
+        }));
+      },
+
       moveChapter(chapterId, dir) {
         const m = get().manuscripts.find((x) => x.chapters.some((c) => c.id === chapterId));
         if (!m) return;
@@ -1287,6 +1303,12 @@ export const useScriptorium = create<ScriptoriumState>()(
         set({
           calendars: (s.calendars ?? []).filter((c) => c.id !== id),
           histories,
+          manuscripts: s.manuscripts.map((m) => ({
+            ...m,
+            chapters: m.chapters.map((c) => (c.linkedCalendarId === id
+              ? { ...c, linkedCalendarId: undefined, calendarDayKey: undefined }
+              : c)),
+          })),
           projects: touchProject(s.projects, cal.projectId),
         });
       },

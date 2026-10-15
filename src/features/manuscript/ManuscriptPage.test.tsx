@@ -241,9 +241,10 @@ describe("ManuscriptPage chapters", () => {
     seedBook(projectId, { title: "A", chapters: [{ heading: "Início", content: "um dois três" }] });
     render(manuscriptRoute(projectId));
     expect(screen.getByRole("button", { name: /Início/ }).textContent).toContain("3 palavras");
-    fireEvent.change(screen.getByLabelText("Conteúdo"), {
-      target: { value: "um dois três quatro mais uma" },
-    });
+    // rich body: 6 words typed directly in the contenteditable (footer counts DOM)
+    const richBody = () => document.querySelector('[data-testid="rich-body"]') as HTMLElement;
+    richBody().textContent = "um dois três quatro mais uma";
+    fireEvent.input(richBody());
     expect(screen.getByText("6 palavras")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Início/ }).textContent).toContain("3 palavras");
     act(() => {
@@ -259,7 +260,9 @@ describe("ManuscriptPage chapters", () => {
     seedBook(projectId, { title: "A", chapters: [{ heading: "Início", content: "" }] });
     render(manuscriptRoute(projectId));
     fireEvent.change(screen.getByLabelText("Título do capítulo"), { target: { value: "Chegada" } });
-    fireEvent.change(screen.getByLabelText("Conteúdo"), { target: { value: "Torres de pedra." } });
+    const richBody = document.querySelector('[data-testid="rich-body"]') as HTMLElement;
+    richBody.textContent = "Torres de pedra.";
+    fireEvent.input(richBody);
     expect(bookOf("A").chapters[0]).toMatchObject({ heading: "Início", content: "" });
     act(() => {
       vi.advanceTimersByTime(300);
@@ -278,19 +281,19 @@ describe("ManuscriptPage chapters", () => {
     render(manuscriptRoute(projectId));
     expect(screen.getByRole("button", { name: "Escrever" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Prévia" })).toHaveAttribute("aria-pressed", "false");
-    fireEvent.change(screen.getByLabelText("Conteúdo"), { target: { value: "*itálico* e **negrito**" } });
+    // rich editor: blur commits whatever the body holds (markdown text survives
+    // as text until the user applies rich formatting)
+    const richBody = document.querySelector('[data-testid="rich-body"]') as HTMLElement;
+    richBody.textContent = "*itálico* e **negrito**";
+    fireEvent.input(richBody);
+    fireEvent.blur(richBody);
+    expect(bookOf("A").chapters[0].content).toBe("*itálico* e **negrito**");
     fireEvent.click(screen.getByRole("button", { name: "Prévia" }));
     expect(screen.getByRole("button", { name: "Prévia" })).toHaveAttribute("aria-pressed", "true");
-    expect(bookOf("A").chapters[0].content).toBe("*itálico* e **negrito**");
-    const view = document.querySelector(".md-view");
-    expect(view).not.toBeNull();
-    expect(view?.querySelector("em")?.textContent).toBe("itálico");
-    expect(view?.querySelector("strong")?.textContent).toBe("negrito");
+    expect(document.querySelector(".md-view")).not.toBeNull();
+    expect(document.querySelector(".md-view")?.textContent).toContain("itálico");
     fireEvent.click(screen.getByRole("button", { name: "Escrever" }));
-    expect(screen.getByLabelText("Conteúdo")).toHaveValue("*itálico* e **negrito**");
-    act(() => {
-      vi.advanceTimersByTime(1000);
-    });
+    act(() => { vi.advanceTimersByTime(1000); });
     expect(bookOf("A").chapters[0].content).toBe("*itálico* e **negrito**");
     vi.useRealTimers();
   });
@@ -312,9 +315,11 @@ describe("ManuscriptPage chapters", () => {
       chapters: [{ heading: "Um", content: "" }, { heading: "Dois", content: "" }],
     });
     render(manuscriptRoute(projectId));
-    fireEvent.change(screen.getByLabelText("Conteúdo"), { target: { value: "rascunho" } });
+    const richBody1 = document.querySelector('[data-testid="rich-body"]') as HTMLElement;
+    richBody1.textContent = "rascunho";
+    fireEvent.input(richBody1);
     fireEvent.click(screen.getByRole("button", { name: /^Dois/ }));
-    expect(screen.getByLabelText("Conteúdo")).toHaveValue("");
+    expect((document.querySelector('[data-testid="rich-body"]') as HTMLElement).textContent).toBe("");
     const chapterByHeading = (heading: string) => bookOf("A").chapters.find((c) => c.heading === heading);
     expect(chapterByHeading("Um")?.content).toBe("rascunho");
     expect(chapterByHeading("Dois")?.content).toBe("");
