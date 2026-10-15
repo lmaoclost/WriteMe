@@ -39,7 +39,7 @@ export function LinkPicker({ entries, currentEntryId, onPick, onClear }: LinkPic
       <div className="link-picker-head">
         <span className="link-picker-title">Link entry</span>
         {current ? (
-          <button type="button" className="link-unlink" aria-label="Unlink " onClick={onClear}>
+          <button type="button" className="link-unlink" aria-label={`Unlink ${current.title}`} onClick={onClear}>
             ✕
           </button>
         ) : null}
@@ -49,7 +49,7 @@ export function LinkPicker({ entries, currentEntryId, onPick, onClear }: LinkPic
         className="link-search"
         type="text"
         aria-label="Search entries"
-        placeholder="Buscar entrada…"
+        placeholder="Search entries..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />

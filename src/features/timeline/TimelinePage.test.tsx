@@ -95,7 +95,7 @@ describe("TimelinePage", () => {
     ]);
     render(timelineRoute(projectId));
     fireEvent.click(screen.getByRole("button", { name: "Tratado das Três Pontes — 1200 · Maio" }));
-    expect(screen.getByLabelText("Título")).toHaveValue("Tratado das Três Pontes");
+    expect(screen.getByLabelText("Title")).toHaveValue("Tratado das Três Pontes");
     expect(screen.getByRole("link", { name: "Códex" }).getAttribute("class")).toContain("active");
   });
 
@@ -134,7 +134,7 @@ describe("TimelinePage", () => {
     expect(guerra.querySelector(".codex-dot")).toHaveStyle({ backgroundColor: "#7a7a99" });
     expect(portao.querySelector(".codex-dot")).toHaveStyle({ backgroundColor: "#a64b35" });
     fireEvent.click(rows.getByRole("button", { name: "Portão Sul" }));
-    expect(screen.getByLabelText("Título")).toHaveValue("Portão Sul");
+    expect(screen.getByLabelText("Title")).toHaveValue("Portão Sul");
   });
 
   it("applies the category chip to the Sem data section too", () => {

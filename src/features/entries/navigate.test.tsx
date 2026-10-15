@@ -64,7 +64,7 @@ describe("Atlas → codex navigation", () => {
     const f = seed();
     render(routesFor(f, <PinPanel pin={f.pin} entries={f.entries} onDelete={vi.fn()} />));
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Vincular entrada" }));
+      fireEvent.click(screen.getByRole("button", { name: "Link entry" }));
     });
     const titleButton = screen.getByRole("button", { name: "Rio Sarnen" });
     expect(titleButton).toHaveClass("link-current");
@@ -79,7 +79,7 @@ describe("Atlas → codex navigation", () => {
     const f = seed();
     render(routesFor(f, <RegionPanel atlasId={f.atlasId} region={f.region} entries={f.entries} onDelete={vi.fn()} />));
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Vincular entrada" }));
+      fireEvent.click(screen.getByRole("button", { name: "Link entry" }));
     });
     const titleButton = screen.getByRole("button", { name: "Aldric" });
     expect(titleButton).toHaveClass("link-current");
@@ -92,10 +92,10 @@ describe("Atlas → codex navigation", () => {
   it("keeps the picker open behavior: pick and unlink still work", () => {
     const f = seed();
     render(routesFor(f, <PinPanel pin={f.pin} entries={f.entries} onDelete={vi.fn()} />));
-    expect(screen.getByRole("button", { name: "Vincular entrada" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Link entry" })).toBeInTheDocument();
     // Picker is closed: open it, pick another entry, panel writes entryId.
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Vincular entrada" }));
+      fireEvent.click(screen.getByRole("button", { name: "Link entry" }));
     });
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: "Aldric" }));
@@ -103,12 +103,12 @@ describe("Atlas → codex navigation", () => {
     const pin = store().atlases[0].pins[0];
     expect(pin.entryId).toBe(f.entries[1].id);
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Vincular entrada" }));
+      fireEvent.click(screen.getByRole("button", { name: "Link entry" }));
     });
     act(() => {
-      fireEvent.click(screen.getByLabelText("Unlink Rio Sarnen"));
+      fireEvent.click(screen.getByLabelText(/Unlink Rio Sarnen/));
     });
     expect(store().atlases[0].pins[0].entryId).toBeUndefined();
-    expect(screen.getByRole("button", { name: "Vincular entrada" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Link entry" })).toBeInTheDocument();
   });
 });

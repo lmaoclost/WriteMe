@@ -266,14 +266,14 @@ describe("EntryView — links", () => {
     const [aldric, rio] = entries;
     renderView(aldric);
     fireEvent.click(screen.getByRole("button", { name: "+ Link" }));
-    const search = screen.getByLabelText("Buscar entrada");
+    const search = screen.getByLabelText("Search entries");
     fireEvent.change(search, { target: { value: "zzz" } });
-    expect(screen.getByText("Nenhum resultado")).toBeInTheDocument();
+    expect(screen.getByText("No matching entries.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Rio Sarnen" })).toBeNull();
     fireEvent.change(search, { target: { value: "rio" } });
     fireEvent.click(screen.getByRole("button", { name: "Rio Sarnen" }));
     expect(entryById(aldric.id).links).toEqual([rio.id]);
-    expect(screen.queryByLabelText("Buscar entrada")).toBeNull();
+    expect(screen.queryByLabelText("Search entries")).toBeNull();
     expect(screen.queryByRole("button", { name: "+ Link" })).not.toBeNull();
   });
 
@@ -426,9 +426,9 @@ describe("EntryView — pickers close (Escape + outside click)", () => {
     const [aldric] = entries;
     renderView(aldric);
     fireEvent.click(screen.getByRole("button", { name: "+ Link" }));
-    expect(screen.getByLabelText("Buscar entrada")).toBeInTheDocument();
+    expect(screen.getByLabelText("Search entries")).toBeInTheDocument();
     fireEvent.keyDown(document, { key: "Escape" });
-    expect(screen.queryByLabelText("Buscar entrada")).toBeNull();
+    expect(screen.queryByLabelText("Search entries")).toBeNull();
     expect(screen.getByRole("button", { name: "+ Link" })).toHaveAttribute("aria-pressed", "false");
   });
 
@@ -452,7 +452,7 @@ describe("EntryView — pickers close (Escape + outside click)", () => {
     const backdrop = document.querySelector(".chooser-backdrop") as Element;
     expect(backdrop).not.toBeNull();
     fireEvent.pointerDown(backdrop);
-    expect(screen.queryByLabelText("Buscar entrada")).toBeNull();
+    expect(screen.queryByLabelText("Search entries")).toBeNull();
     expect(screen.getByRole("button", { name: "+ Link" })).toHaveAttribute("aria-pressed", "false");
   });
 });
