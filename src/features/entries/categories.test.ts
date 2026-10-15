@@ -67,6 +67,6 @@ describe("schema v2 — entry sections + summary + 15 categories", () => {
       entries: [{ id: "ent_1", projectId: "prj_a", title: "X", category: "place", body: "", links: [] }],
     };
     expect(validateProjectData(d)).toBe(true);
-    expect(parseExport(JSON.stringify({ app: "scriptorium", version: 2, ...d }))).toEqual({ ...d, bloodlines: [], factionWebs: [], calendars: [], plotBoards: [] });
+    expect(parseExport(JSON.stringify({ app: "scriptorium", version: 2, ...d }))).toEqual({ ...d, bloodlines: [], factionWebs: [], calendars: [], plotBoards: [], timelines: [] });
   });
 });

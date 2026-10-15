@@ -148,7 +148,7 @@ describe("parseExport", () => {
   it("case 5: v2 round-trips with bloodlines", () => {
     const data: ProjectData = { ...base, bloodlines: [bloodline({ persons: [person({ showBadge: true, badgeText: "b" })] })] };
     const text = serialize(data);
-    expect(parseExport(text)).toEqual({ ...data, factionWebs: [], calendars: [], plotBoards: [] });
+    expect(parseExport(text)).toEqual({ ...data, factionWebs: [], calendars: [], plotBoards: [], timelines: [] });
   });
   it("v2 without bloodlines normalizes to [] in the returned data", () => {
     const v2 = JSON.stringify({ app: "scriptorium", version: 2, ...base });

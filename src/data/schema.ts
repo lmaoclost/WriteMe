@@ -4,6 +4,7 @@ import type {
   FactionWeb, Faction, FactionConnection,
   CustomCalendar, CalendarEvent, EntrySection,
   PlotBoard, PlotCard, PlotWire, PlotPart,
+  TimelineWire, TimelineBead, TimelineSegment,
 } from "../domain/types";
 import { ENTRY_CATEGORIES, PIN_TYPES } from "../domain/types";
 
@@ -166,6 +167,25 @@ const isPlotBoard = (v: unknown): boolean => {
     && isStr(b.notes);
 };
 
+const isTimelineBead = (v: unknown): boolean => {
+  const b = v as TimelineBead;
+  return !!b && isStr(b.id) && isNum(b.x) && isNum(b.y) && isStr(b.label) && isStr(b.color)
+    && optionalStr(b.dateText) && optionalStr(b.summary);
+};
+
+const isTimelineSegment = (v: unknown): boolean => {
+  const g = v as TimelineSegment;
+  return !!g && isStr(g.id) && isNum(g.fromX) && isNum(g.toX) && isStr(g.label) && isStr(g.lineColor);
+};
+
+const isTimelineWire = (v: unknown): boolean => {
+  const t = v as TimelineWire;
+  return !!t && isStr(t.id) && isStr(t.projectId) && isStr(t.name)
+    && isArr(t.beads) && t.beads.every(isTimelineBead)
+    && isArr(t.segments) && t.segments.every(isTimelineSegment)
+    && isStr(t.notes);
+};
+
 const isBloodline = (v: unknown): v is Bloodline => {
   const b = v as Bloodline;
   return !!b && isStr(b.id) && isStr(b.projectId) && isStr(b.name)
@@ -188,12 +208,14 @@ export function validateProjectData(v: unknown): boolean {
     && (d.calendars === undefined
       || (isArr(d.calendars) && d.calendars.every(isCustomCalendar)))
     && (d.plotBoards === undefined
-      || (isArr(d.plotBoards) && d.plotBoards.every(isPlotBoard)));
+      || (isArr(d.plotBoards) && d.plotBoards.every(isPlotBoard)))
+    && (d.timelines === undefined
+      || (isArr(d.timelines) && d.timelines.every(isTimelineWire)));
 }
 
 /** Fresh shape: bloodlines is optional in the schema but a fresh state always carries []. */
 export function emptyProjectData(): ProjectData & { bloodlines: Bloodline[] } {
-  return { projects: [], entries: [], atlases: [], manuscripts: [], images: {}, bloodlines: [], factionWebs: [], calendars: [], plotBoards: [] };
+  return { projects: [], entries: [], atlases: [], manuscripts: [], images: {}, bloodlines: [], factionWebs: [], calendars: [], plotBoards: [], timelines: [] };
 }
 
 export function serialize(data: ProjectData): string {
@@ -221,5 +243,6 @@ export function parseExport(text: string): ProjectData {
     factionWebs: d.factionWebs ?? [],
     calendars: d.calendars ?? [],
     plotBoards: d.plotBoards ?? [],
+    timelines: d.timelines ?? [],
   };
 }

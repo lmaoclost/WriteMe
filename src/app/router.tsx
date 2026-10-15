@@ -12,6 +12,8 @@ import { CalendarIndexPage } from "../features/calendar/CalendarIndexPage";
 import { CalendarPage } from "../features/calendar/CalendarPage";
 import { PlotBoardPage } from "../features/plotboard/PlotBoardPage";
 import { PlotBoardIndexPage } from "../features/plotboard/PlotBoardIndexPage";
+import { TimelineIndexPage } from "../features/timelinecanvas/TimelineIndexPage";
+import { TimelineCanvasPage } from "../features/timelinecanvas/TimelineCanvasPage";
 import { ManuscriptPage } from "../features/manuscript/ManuscriptPage";
 import { OverviewPage } from "../features/workspace/OverviewPage";
 import { WorkspaceLayout } from "../features/workspace/WorkspaceLayout";
@@ -76,6 +78,16 @@ function PlotBoardRoute() {
   return <PlotBoardPage boardId={boardId ?? ""} />;
 }
 
+function TimelineIndexRoute() {
+  const { projectId } = useParams();
+  return <TimelineIndexPage projectId={projectId ?? ""} />;
+}
+
+function TimelineWheelRoute() {
+  const { timelineId } = useParams();
+  return <TimelineCanvasPage timelineId={timelineId ?? ""} />;
+}
+
 export function AppRouter() {
   return (
     <Routes>
@@ -94,6 +106,8 @@ export function AppRouter() {
         <Route path="calendar/:calendarId" element={<CalendarRoute />} />
         <Route path="plotboard" element={<PlotBoardIndexRoute />} />
         <Route path="plotboard/:boardId" element={<PlotBoardRoute />} />
+        <Route path="linewheel" element={<TimelineIndexRoute />} />
+        <Route path="linewheel/:timelineId" element={<TimelineWheelRoute />} />
         <Route path="manuscript" element={<ManuscriptRoute />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

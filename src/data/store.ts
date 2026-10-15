@@ -6,6 +6,7 @@ import type {
   FactionWeb, Faction, FactionConnection, ConnectionType,
   CustomCalendar, CalendarEvent,
   PlotBoard, PlotCard, PlotWire,
+  TimelineWire, TimelineBead, TimelineSegment,
 } from "../domain/types";
 import { newId } from "../domain/id";
 import type { Pt } from "../domain/geometry";
@@ -57,7 +58,9 @@ export interface CalendarSnapshot { months: CustomCalendar["months"]; weekdays: 
 export interface CalendarHistory { undo: CalendarSnapshot[]; redo: CalendarSnapshot[] }
 export interface PlotBoardSnapshot { acts: PlotBoard["acts"]; hasPrologue: boolean; hasEpilogue: boolean; cards: PlotCard[]; wires: PlotWire[] }
 export interface PlotBoardHistory { undo: PlotBoardSnapshot[]; redo: PlotBoardSnapshot[] }
-export type AnyHistory = AtlasHistory | BloodlineHistory | FactionWebHistory | CalendarHistory | PlotBoardHistory;
+export interface TimelineSnapshot { beads: TimelineBead[]; segments: TimelineSegment[] }
+export interface TimelineHistory { undo: TimelineSnapshot[]; redo: TimelineSnapshot[] }
+export type AnyHistory = AtlasHistory | BloodlineHistory | FactionWebHistory | CalendarHistory | PlotBoardHistory | TimelineHistory;
 
 const clonePoints = (points: Pt[]): Pt[] => points.map((p) => ({ ...p }));
 const touchProject = (projects: readonly Project[], id: string): Project[] =>
@@ -79,11 +82,17 @@ const blKey = (bloodlineId: string): string => `bl_${bloodlineId}`;
 const fwKey = (webId: string): string => `fw_${webId}`;
 const clKey = (calendarId: string): string => `cl_${calendarId}`;
 const pbKey = (boardId: string): string => `pb_${boardId}`;
+const tlKey = (timelineId: string): string => `tl_${timelineId}`;
 
 const clonePerson = (p: BloodlinePerson): BloodlinePerson => ({
   ...p,
   additionalTitles: p.additionalTitles.map((t) => ({ ...t })),
   tenures: p.tenures.map((t) => ({ ...t })),
+});
+
+const cloneTLSnapshot = (t: TimelineWire): TimelineSnapshot => ({
+  beads: t.beads.map((b) => ({ ...b })),
+  segments: t.segments.map((g) => ({ ...g })),
 });
 
 const clonePBSnapshot = (b: PlotBoard): PlotBoardSnapshot => ({
@@ -237,6 +246,21 @@ interface ScriptoriumState extends ProjectData {
   pushPBHistory(id: string): void;
   undoPB(id: string): void;
   redoPB(id: string): void;
+
+  addTimeline(projectId: string, name?: string): TimelineWire;
+  renameTimeline(id: string, name: string): void;
+  deleteTimeline(id: string): void;
+  addBead(timelineId: string, init?: { x?: number; y?: number; label?: string; color?: string; dateText?: string }): TimelineBead | null;
+  updateBead(id: string, patch: Partial<Omit<TimelineBead, "id">>): void;
+  moveBead(id: string, x: number, y: number): void;
+  deleteBead(id: string): void;
+  addSegment(timelineId: string, fromX: number, toX: number, label?: string): TimelineSegment | null;
+  updateSegment(id: string, patch: Partial<Omit<TimelineSegment, "id">>): void;
+  deleteSegment(id: string): void;
+  setTimelineNotes(id: string, notes: string): void;
+  pushTLHistory(id: string): void;
+  undoTL(id: string): void;
+  redoTL(id: string): void;
 }
 
 export const useScriptorium = create<ScriptoriumState>()(
@@ -361,6 +385,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           factionWebs: s.factionWebs,
           calendars: s.calendars,
           plotBoards: s.plotBoards,
+          timelines: s.timelines,
         });
       },
 
@@ -1685,6 +1710,209 @@ export const useScriptorium = create<ScriptoriumState>()(
         });
       },
 
+      addTimeline(projectId, name = "Linha sem título") {
+        const timeline: TimelineWire = {
+          id: newId("tl"),
+          projectId,
+          name,
+          beads: [],
+          segments: [],
+          notes: "",
+        };
+        set((s) => ({
+          timelines: [...(s.timelines ?? []), timeline],
+          projects: touchProject(s.projects, projectId),
+        }));
+        return timeline;
+      },
+
+      renameTimeline(id, name) {
+        const t = (get().timelines ?? []).find((x) => x.id === id);
+        if (!t) return;
+        set((st) => ({
+          timelines: (st.timelines ?? []).map((x) => (x.id === id ? { ...x, name } : x)),
+          projects: touchProject(st.projects, t.projectId),
+        }));
+      },
+
+      deleteTimeline(id) {
+        const s = get();
+        const t = (s.timelines ?? []).find((x) => x.id === id);
+        if (!t) return;
+        const histories = { ...s.histories };
+        delete histories[tlKey(id)];
+        set({
+          timelines: (s.timelines ?? []).filter((x) => x.id !== id),
+          histories,
+          projects: touchProject(s.projects, t.projectId),
+        });
+      },
+
+      addBead(timelineId, init) {
+        const t = (get().timelines ?? []).find((x) => x.id === timelineId);
+        if (!t) return null;
+        get().pushTLHistory(timelineId);
+        const bead: TimelineBead = {
+          id: newId("bead"),
+          x: init?.x ?? 4000,
+          y: init?.y ?? -60,
+          label: init?.label ?? "Evento",
+          color: init?.color ?? "#e67e22",
+          ...(init?.dateText ? { dateText: init.dateText } : {}),
+        };
+        set((s) => ({
+          timelines: (s.timelines ?? []).map((x) =>
+            x.id === timelineId ? { ...x, beads: [...x.beads, bead] } : x),
+          projects: touchProject(s.projects, t.projectId),
+        }));
+        return bead;
+      },
+
+      updateBead(id, patch) {
+        const s = get();
+        const t = (s.timelines ?? []).find((x) => x.beads.some((b) => b.id === id));
+        if (!t) return;
+        get().pushTLHistory(t.id);
+        set((st) => ({
+          timelines: (st.timelines ?? []).map((x) => x.id !== t.id ? x : {
+            ...x,
+            beads: x.beads.map((b) => (b.id === id ? { ...b, ...patch, id: b.id } : b)),
+          }),
+          projects: touchProject(st.projects, t.projectId),
+        }));
+      },
+
+      moveBead(id, x, y) {
+        const s = get();
+        const t = (s.timelines ?? []).find((tl) => tl.beads.some((b) => b.id === id));
+        if (!t) return;
+        set((st) => ({
+          timelines: (st.timelines ?? []).map((tl) => tl.id !== t.id ? tl : {
+            ...tl,
+            beads: tl.beads.map((b) => (b.id === id ? { ...b, x, y } : b)),
+          }),
+          projects: touchProject(st.projects, t.projectId),
+        }));
+      },
+
+      deleteBead(id) {
+        const s = get();
+        const t = (s.timelines ?? []).find((x) => x.beads.some((b) => b.id === id));
+        if (!t) return;
+        get().pushTLHistory(t.id);
+        set((st) => ({
+          timelines: (st.timelines ?? []).map((x) => x.id !== t.id ? x : {
+            ...x,
+            beads: x.beads.filter((b) => b.id !== id),
+          }),
+          projects: touchProject(st.projects, t.projectId),
+        }));
+      },
+
+      addSegment(timelineId, fromX, toX, label = "") {
+        const t = (get().timelines ?? []).find((x) => x.id === timelineId);
+        if (!t) return null;
+        if (!(toX > fromX)) return null;
+        get().pushTLHistory(timelineId);
+        const seg: TimelineSegment = { id: newId("seg"), fromX, toX, label, lineColor: "#e67e22" };
+        set((s) => ({
+          timelines: (s.timelines ?? []).map((x) =>
+            x.id === timelineId ? { ...x, segments: [...x.segments, seg] } : x),
+          projects: touchProject(s.projects, t.projectId),
+        }));
+        return seg;
+      },
+
+      updateSegment(id, patch) {
+        const s = get();
+        const t = (s.timelines ?? []).find((x) => x.segments.some((g) => g.id === id));
+        if (!t) return;
+        get().pushTLHistory(t.id);
+        set((st) => ({
+          timelines: (st.timelines ?? []).map((x) => x.id !== t.id ? x : {
+            ...x,
+            segments: x.segments.map((g) => (g.id === id ? { ...g, ...patch, id: g.id } : g)),
+          }),
+          projects: touchProject(st.projects, t.projectId),
+        }));
+      },
+
+      deleteSegment(id) {
+        const s = get();
+        const t = (s.timelines ?? []).find((x) => x.segments.some((g) => g.id === id));
+        if (!t) return;
+        get().pushTLHistory(t.id);
+        set((st) => ({
+          timelines: (st.timelines ?? []).map((x) => x.id !== t.id ? x : {
+            ...x,
+            segments: x.segments.filter((g) => g.id !== id),
+          }),
+          projects: touchProject(st.projects, t.projectId),
+        }));
+      },
+
+      setTimelineNotes(id, notes) {
+        const t = (get().timelines ?? []).find((x) => x.id === id);
+        if (!t) return;
+        set((st) => ({
+          timelines: (st.timelines ?? []).map((x) => (x.id === id ? { ...x, notes } : x)),
+          projects: touchProject(st.projects, t.projectId),
+        }));
+      },
+
+      pushTLHistory(id) {
+        set((st) => {
+          const t = (st.timelines ?? []).find((x) => x.id === id);
+          if (!t) return {};
+          const key = tlKey(id);
+          const h = (st.histories[key] as TimelineHistory | undefined) ?? { undo: [], redo: [] };
+          const undo = [...h.undo, cloneTLSnapshot(t)];
+          if (undo.length > HISTORY_CAP) undo.shift();
+          const entry: TimelineHistory = { undo, redo: [] };
+          return { histories: { ...st.histories, [key]: entry } };
+        });
+      },
+
+      undoTL(id) {
+        set((st) => {
+          const key = tlKey(id);
+          const h = st.histories[key] as TimelineHistory | undefined;
+          const t = (st.timelines ?? []).find((x) => x.id === id);
+          if (!h || h.undo.length === 0 || !t) return {};
+          const snap = h.undo[h.undo.length - 1];
+          const entry: TimelineHistory = {
+            undo: h.undo.slice(0, -1),
+            redo: [...h.redo, cloneTLSnapshot(t)],
+          };
+          return {
+            histories: { ...st.histories, [key]: entry },
+            timelines: (st.timelines ?? []).map((x) => x.id === id
+              ? { ...x, beads: snap.beads.map((b) => ({ ...b })), segments: snap.segments.map((g) => ({ ...g })) }
+              : x),
+          };
+        });
+      },
+
+      redoTL(id) {
+        set((st) => {
+          const key = tlKey(id);
+          const h = st.histories[key] as TimelineHistory | undefined;
+          const t = (st.timelines ?? []).find((x) => x.id === id);
+          if (!h || h.redo.length === 0 || !t) return {};
+          const snap = h.redo[h.redo.length - 1];
+          const entry: TimelineHistory = {
+            undo: [...h.undo, cloneTLSnapshot(t)],
+            redo: h.redo.slice(0, -1),
+          };
+          return {
+            histories: { ...st.histories, [key]: entry },
+            timelines: (st.timelines ?? []).map((x) => x.id === id
+              ? { ...x, beads: snap.beads.map((b) => ({ ...b })), segments: snap.segments.map((g) => ({ ...g })) }
+              : x),
+          };
+        });
+      },
+
       pushCLHistory(id) {
         set((st) => {
           const cal = (st.calendars ?? []).find((c) => c.id === id);
@@ -1819,6 +2047,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           factionWebs: s.factionWebs,
           calendars: s.calendars,
           plotBoards: s.plotBoards,
+          timelines: s.timelines,
           seedFlag: s.seedFlag,
         };
       },

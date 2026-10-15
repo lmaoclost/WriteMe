@@ -205,6 +205,33 @@ export type PlotBoard = {
   notes: string;
 };
 
+export type TimelineBead = {
+  id: Id;
+  x: number; // posição no fio (plane px)
+  y: number; // offset perpendicular ao fio (negativo = acima)
+  label: string;
+  dateText?: string;
+  summary?: string;
+  color: string;
+};
+
+export type TimelineSegment = {
+  id: Id;
+  fromX: number;
+  toX: number;
+  label: string;
+  lineColor: string;
+};
+
+export type TimelineWire = {
+  id: Id;
+  projectId: Id;
+  name: string;
+  beads: TimelineBead[];
+  segments: TimelineSegment[];
+  notes: string;
+};
+
 export interface ProjectData {
   projects: Project[];
   entries: WorldEntry[];
@@ -215,6 +242,7 @@ export interface ProjectData {
   factionWebs?: FactionWeb[];
   calendars?: CustomCalendar[];
   plotBoards?: PlotBoard[];
+  timelines?: TimelineWire[];
 }
 
 export const ENTRY_CATEGORIES: readonly EntryCategory[] = [

@@ -13,6 +13,7 @@ const SECTIONS = [
   { key: "factions", label: "Frações", to: "factions" },
   { key: "calendar", label: "Calendário", to: "calendar" },
   { key: "plotboard", label: "Planos", to: "plotboard" },
+  { key: "linewheel", label: "Linha do Tempo", to: "linewheel" },
   { key: "manuscript", label: "Livro", to: "manuscript" },
 ] as const;
 
