@@ -18,7 +18,7 @@ describe("ConlangPage — alfabeto", () => {
   it("adds glyph (next letter), opens editor, draws stroke persists path", () => {
     const c = seed();
     render(<ConlangPage conlangId={c.id} />);
-    fireEvent.click(screen.getByRole("button", { name: "Novo glifo" }));
+    fireEvent.click(screen.getByRole("button", { name: "New glyph" }));
     expect(store().conlangs![0].glyphs[0].char).toBe("A");
     const svg = document.querySelector(".glyph-canvas") as unknown as HTMLElement;
     svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: 360, height: 360, right: 360, bottom: 360, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
@@ -37,7 +37,7 @@ describe("ConlangPage — alfabeto", () => {
   it("duplicate letter rejected; delete glyph", () => {
     const c = seed();
     render(<ConlangPage conlangId={c.id} />);
-    fireEvent.click(screen.getByRole("button", { name: "Novo glifo" }));
+    fireEvent.click(screen.getByRole("button", { name: "New glyph" }));
     let again: unknown;
     act(() => { again = store().addGlyph(c.id, "A"); });
     expect(again).toBeNull();
@@ -77,14 +77,14 @@ describe("ConlangPage — léxico", () => {
   it("add word row + theme chip + filter + delete", () => {
     const c = seed();
     render(<ConlangPage conlangId={c.id} />);
-    fireEvent.click(screen.getByRole("button", { name: "Léxico" }));
-    fireEvent.change(screen.getByLabelText("Nova palavra"), { target: { value: "sarnen" } });
-    fireEvent.change(screen.getByLabelText("Significado"), { target: { value: "rio-mãe" } });
+    fireEvent.click(screen.getByRole("button", { name: "Lexicon" }));
+    fireEvent.change(screen.getByLabelText("New word"), { target: { value: "sarnen" } });
+    fireEvent.change(screen.getByLabelText("Meaning"), { target: { value: "rio-mãe" } });
     fireEvent.change(screen.getByLabelText("Grupo temático"), { target: { value: "águas" } });
     fireEvent.click(screen.getByRole("button", { name: "Adicionar" }));
     expect(store().conlangs![0].words).toHaveLength(1);
-    fireEvent.change(screen.getByLabelText("Nova palavra"), { target: { value: "vellmor" } });
-    fireEvent.change(screen.getByLabelText("Significado"), { target: { value: "coroa quebrada" } });
+    fireEvent.change(screen.getByLabelText("New word"), { target: { value: "vellmor" } });
+    fireEvent.change(screen.getByLabelText("Meaning"), { target: { value: "coroa quebrada" } });
     fireEvent.click(screen.getByRole("button", { name: "Adicionar" }));
     expect(screen.getByText("águas")).toBeInTheDocument();
     fireEvent.click(screen.getByText("águas"));

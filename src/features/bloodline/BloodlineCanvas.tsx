@@ -23,7 +23,7 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
   }));
 
   useEffect(() => {
-    if (!bloodline) pushToast("error", "Linhagem não encontrada.");
+    if (!bloodline) pushToast("error", "Bloodline not found.");
   }, [bloodline, pushToast]);
 
   const planeSize = useMemo(() => {

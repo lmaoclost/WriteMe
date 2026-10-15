@@ -52,11 +52,11 @@ describe("WellSpringPage", () => {
   it("placing nodes by kind, moving them, panel edits text", () => {
     const w = seed();
     render(<WellSpringPage wellId={w.id} />);
-    fireEvent.click(screen.getByRole("button", { name: "⚔ Conflito" }));
+    fireEvent.click(screen.getByRole("button", { name: "⚔ Conflict" }));
     const canvas = screen.getByTestId("well-canvas");
     firePointer(canvas, "pointerdown", { clientX: 300, clientY: 200 });
     const node = screen.getByTestId("well-node");
-    expect(node.textContent).toContain("Conflito");
+    expect(node.textContent).toContain("Conflict");
     // drag
     firePointer(node, "pointerdown", { clientX: 300, clientY: 200 });
     firePointer(node, "pointermove", { clientX: 360, clientY: 260 });
@@ -79,8 +79,8 @@ describe("WellSpringPage", () => {
     render(<WellSpringPage wellId={w.id} />);
     const node = screen.getAllByTestId("well-node").find((n) => n.getAttribute("data-node-id") === store().wellsprings![0].nodes[0].id)!;
     firePointer(node, "pointerdown", { clientX: 0, clientY: 0 });
-    fireEvent.change(screen.getByLabelText("Destino da borda"), { target: { value: store().wellsprings![0].nodes[1].id } });
-    fireEvent.change(screen.getByLabelText("Label da nova borda"), { target: { value: "ouviu o aviso" } });
+    fireEvent.change(screen.getByLabelText("Border target"), { target: { value: store().wellsprings![0].nodes[1].id } });
+    fireEvent.change(screen.getByLabelText("Name this border"), { target: { value: "ouviu o aviso" } });
     fireEvent.click(screen.getByRole("button", { name: "+ Borda" }));
     expect(screen.getByText("ouviu o aviso")).toBeInTheDocument();
     const borderRow = screen.getAllByLabelText("Label da borda com Por que o rio fala?")[0] as HTMLInputElement;
@@ -90,7 +90,7 @@ describe("WellSpringPage", () => {
 });
 
 function renderText() {
-  const inp = document.querySelector('[data-testid="well-panel"] input[aria-label="Texto do nó"]') as HTMLInputElement | null;
+  const inp = document.querySelector('[data-testid="well-panel"] input[aria-label="Node text"]') as HTMLInputElement | null;
   if (!inp) return;
   const setValue = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
   setValue?.call(inp, "O rio virou sangue");

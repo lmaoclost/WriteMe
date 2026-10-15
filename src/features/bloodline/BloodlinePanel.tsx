@@ -29,13 +29,13 @@ export function BloodlinePanel({ bloodline, selectedId, onSelect }: {
   );
 }
 
-function PersonField({ label, value, onCommit }: { label: string; value: string; onCommit(v: string): void }) {
+function PersonField({ label, value, onCommit, placeholder }: { label: string; value: string; onCommit(v: string): void; placeholder?: string }) {
   const { draft, setDraft, flush } = useDebouncedDraft(value, onCommit);
   useEffect(() => () => flush(), [flush]);
   return (
     <label className="field">
       <span className="field-label">{label}</span>
-      <input value={draft} onChange={(e) => setDraft(e.target.value)} onBlur={() => flush()} aria-label={label} />
+      <input value={draft} onChange={(e) => setDraft(e.target.value)} onBlur={() => flush()} aria-label={label} placeholder={placeholder} />
     </label>
   );
 }
@@ -60,7 +60,7 @@ function PersonPanel({ bloodline, person, onSelect }: {
       update({ portraitKey: key });
       pushToast("success", "Retrato atualizado.");
     } catch {
-      pushToast("error", "Não foi possível carregar o retrato.");
+      pushToast("error", "Couldn't load the portrait.");
     } finally {
       setPortraitUploading(false);
     }
@@ -80,8 +80,8 @@ function PersonPanel({ bloodline, person, onSelect }: {
       <header className="bl-panel-head">
         <h2>{person.name || "Sem nome"}</h2>
         <button type="button" className={armDelete ? "btn-danger" : ""} onClick={removePerson}
-          aria-label={armDelete ? "Confirmar exclusão da pessoa" : "Excluir pessoa"}>
-          {armDelete ? "Confirmar?" : "Excluir"}
+          aria-label={armDelete ? "Confirm delete person" : "Delete person"}>
+          {armDelete ? "Confirm?" : "Delete"}
         </button>
       </header>
       <div className="field">
@@ -98,12 +98,12 @@ function PersonPanel({ bloodline, person, onSelect }: {
               type="file"
               accept="image/*"
               className="visually-hidden"
-              aria-label="Carregar retrato"
+              aria-label="Upload portrait"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) void onPortrait(f); e.target.value = ""; }}
             />
           </label>
           {person.portraitKey ? (
-            <button type="button" aria-label="Remover retrato" onClick={() => {
+            <button type="button" aria-label="Remove portrait" onClick={() => {
               const key = person.portraitKey!;
               update({ portraitKey: undefined });
               store().removeImage(key);
@@ -111,37 +111,37 @@ function PersonPanel({ bloodline, person, onSelect }: {
           ) : null}
         </div>
       </div>
-      <PersonField label="Nome" value={person.name} onCommit={(v) => { const name = v.trim(); if (name) update({ name }); }} />
-      <PersonField label="Sufixo" value={person.suffix ?? ""} onCommit={(v) => update({ suffix: v.trim() || undefined })} />
+      <PersonField label="Name" placeholder="Full name..." value={person.name} onCommit={(v) => { const name = v.trim(); if (name) update({ name }); }} />
+      <PersonField label="Suffix" placeholder="Jr, Sr, II, III, IV..." value={person.suffix ?? ""} onCommit={(v) => update({ suffix: v.trim() || undefined })} />
       <div className="field">
-        <span className="field-label">Título</span>
-        <input value={person.title ?? ""} onChange={(e) => update({ title: e.target.value })} aria-label="Título" />
+        <span className="field-label">Title</span>
+        <input value={person.title ?? ""} onChange={(e) => update({ title: e.target.value })} aria-label="Title" placeholder="e.g. King, Queen, Lord..." />
       </div>
       <div className="field">
-        <span className="field-label">Relação</span>
-        <input value={person.relationship ?? ""} onChange={(e) => update({ relationship: e.target.value })} aria-label="Relação" />
+        <span className="field-label">Relationship</span>
+        <input value={person.relationship ?? ""} onChange={(e) => update({ relationship: e.target.value })} aria-label="Relationship" placeholder="Child of / Sibling of / Partner of" />
       </div>
       <label className="field">
         <span className="field-label">Bio</span>
-        <textarea value={person.bio ?? ""} onChange={(e) => update({ bio: e.target.value })} aria-label="Bio" rows={3} />
+        <textarea value={person.bio ?? ""} onChange={(e) => update({ bio: e.target.value })} aria-label="Bio" placeholder="A brief biography of this person..." rows={3} />
       </label>
-      <PersonField label="Nascimento" value={person.birthDate ?? ""} onCommit={(v) => update({ birthDate: v.trim() || undefined })} />
-      <PersonField label="Morte" value={person.deathDate ?? ""} onCommit={(v) => update({ deathDate: v.trim() || undefined })} />
+      <PersonField label="Birth Date" placeholder="e.g. 12th of Joremein, Year 250" value={person.birthDate ?? ""} onCommit={(v) => update({ birthDate: v.trim() || undefined })} />
+      <PersonField label="Death Date" placeholder="e.g. 5th of Forun, Year 312" value={person.deathDate ?? ""} onCommit={(v) => update({ deathDate: v.trim() || undefined })} />
 
       <section className="bl-subsection">
-        <h3>Títulos adicionais</h3>
+        <h3>Additional titles</h3>
         <ul className="titles-list">
           {person.additionalTitles.map((t, i) => (
             <li key={i}>
               {t.title}
-              <button type="button" aria-label={`Remover título ${t.title}`}
+              <button type="button" aria-label={`Remove title ${t.title}`}
                 onClick={() => update({ additionalTitles: person.additionalTitles.filter((_, j) => j !== i) })}>✕</button>
             </li>
           ))}
         </ul>
         <div className="titles-add">
-          <input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} aria-label="Novo título" placeholder="Novo título" />
-          <button type="button" aria-label="Adicionar título" onClick={() => {
+          <input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} aria-label="New title" placeholder="New title" />
+          <button type="button" aria-label="Add title" onClick={() => {
             const t = newTitle.trim();
             if (!t) return;
             update({ additionalTitles: [...person.additionalTitles, { title: t }] });
@@ -156,28 +156,28 @@ function PersonPanel({ bloodline, person, onSelect }: {
           {person.tenures.map((t, i) => (
             <li key={i} className="tenure-row">
               <select
-                aria-label="Rótulo do período"
+                aria-label="Tenure label"
                 value={t.label}
                 onChange={(e) => update({ tenures: person.tenures.map((tt, j) => (j === i ? { ...tt, label: e.target.value } : tt)) })}
               >
                 {TENURE_LABELS.map((l) => <option key={l} value={l}>{l}</option>)}
               </select>
-              <input value={t.from} aria-label="Início do período" onChange={(e) => update({ tenures: person.tenures.map((tt, j) => (j === i ? { ...tt, from: e.target.value } : tt)) })} placeholder="De" />
-              <input value={t.to} aria-label="Fim do período" onChange={(e) => update({ tenures: person.tenures.map((tt, j) => (j === i ? { ...tt, to: e.target.value } : tt)) })} placeholder="Até" />
-              <button type="button" aria-label="Remover período" onClick={() => update({ tenures: person.tenures.filter((_, j) => j !== i) })}>✕</button>
+              <input value={t.from} aria-label="Start" onChange={(e) => update({ tenures: person.tenures.map((tt, j) => (j === i ? { ...tt, from: e.target.value } : tt)) })} placeholder="From" />
+              <input value={t.to} aria-label="End" onChange={(e) => update({ tenures: person.tenures.map((tt, j) => (j === i ? { ...tt, to: e.target.value } : tt)) })} placeholder="To" />
+              <button type="button" aria-label="Remove tenure" onClick={() => update({ tenures: person.tenures.filter((_, j) => j !== i) })}>✕</button>
             </li>
           ))}
         </ul>
-        <button type="button" aria-label="Adicionar período" onClick={() => {
+        <button type="button" aria-label="Add tenure" onClick={() => {
           const t: BloodlineTenure = { label: TENURE_LABELS[0], from: "", to: "" };
           update({ tenures: [...person.tenures, t] });
-        }}>+ Período</button>
+        }}>+ Tenure</button>
       </section>
 
       <section className="bl-subsection">
-        <h3>Vínculos de sangue</h3>
+        <h3>Blood bonds</h3>
         <ConnectionPicker
-          label="Vínculo de sangue (pai/mãe)"
+          label="Blood bond (parent)"
           persons={candidates.filter((c) => c.id !== person.id)}
           currentId={person.connectedTo}
           onPick={(id) => update({ connectedTo: id })}
@@ -206,7 +206,7 @@ function PersonPanel({ bloodline, person, onSelect }: {
         />
         <div className="row-2">
           <ConnectionPicker
-            label="Irmão(a) imediato"
+            label="Sibling / Cousin of"
             persons={candidates.filter((c) => c.id !== person.id)}
             currentId={person.siblingId}
             onPick={(id) => update({ siblingId: id })}
@@ -224,21 +224,21 @@ function PersonPanel({ bloodline, person, onSelect }: {
         </div>
         <label className="check-row">
           <input type="checkbox" checked={person.isTwin} onChange={(e) => update({ isTwin: e.target.checked })} />
-          <span>Gêmeo(a)</span>
+          <span>Twin</span>
         </label>
       </section>
 
       <section className="bl-subsection">
-        <h3>Insígnia</h3>
+        <h3>Badge</h3>
         <label className="check-row">
           <input type="checkbox" checked={person.showBadge} onChange={(e) => update({ showBadge: e.target.checked, ...(e.target.checked ? {} : { badgeText: person.badgeText }) })} />
-          <span>Mostrar insígnia</span>
+          <span>Show badge</span>
         </label>
         <input
           value={person.badgeText}
-          aria-label="Texto da insígnia"
+          aria-label="Badge text"
           onChange={(e) => update({ badgeText: e.target.value })}
-          placeholder="Ex.: Rei - 3ª Casa"
+          placeholder="e.g. King - 3rd House"
         />
       </section>
     </div>
@@ -290,14 +290,14 @@ function ConnectionPicker({ label, persons, currentId, onPick, onClear }: {
       </div>
       {open ? (
         <div className="connection-pop" onClick={(e) => e.stopPropagation()}>
-          <input value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Buscar pessoas" placeholder="Buscar…" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search persons" placeholder="Type to search persons..." />
           <ul className="link-list">
             {matches.map((p) => (
               <li key={p.id}>
                 <button type="button" onClick={() => { onPick(p.id); setOpen(false); }}>{p.name}</button>
               </li>
             ))}
-            {matches.length === 0 ? <li><span className="dim">Nenhum resultado</span></li> : null}
+            {matches.length === 0 ? <li><span className="dim">No matches.</span></li> : null}
           </ul>
         </div>
       ) : null}
@@ -325,22 +325,22 @@ function HousePanel({ bloodline, house, onSelect }: {
       <header className="bl-panel-head">
         <h2>{house.name}</h2>
         <button type="button" className={armDelete ? "btn-danger" : ""} onClick={removeHouse}
-          aria-label={armDelete ? "Confirmar exclusão da casa" : "Excluir casa"}>
-          {armDelete ? "Confirmar?" : "Excluir"}
+          aria-label={armDelete ? "Confirm delete house" : "Delete house"}>
+          {armDelete ? "Confirm?" : "Delete"}
         </button>
       </header>
       <div className="field">
-        <span className="field-label">Nome</span>
-        <input value={house.name} onChange={(e) => update({ name: e.target.value })} aria-label="Nome da casa" />
+        <span className="field-label">Name</span>
+        <input value={house.name} onChange={(e) => update({ name: e.target.value })} aria-label="House Name" />
       </div>
-      <PersonField label="Subtítulo" value={house.subtitle ?? ""} onCommit={(v) => update({ subtitle: v.trim() || undefined })} />
+      <PersonField label="Subtitle" value={house.subtitle ?? ""} onCommit={(v) => update({ subtitle: v.trim() || undefined })} />
       <label className="check-row">
         <input type="checkbox" checked={house.isMainBranch} onChange={(e) => update({ isMainBranch: e.target.checked })} />
         <span>Ramo principal</span>
       </label>
       <label className="check-row">
         <input type="checkbox" checked={house.isMonarch} onChange={(e) => update({ isMonarch: e.target.checked })} />
-        <span>Casa monárquica</span>
+        <span>Monarch House</span>
       </label>
       <p className="bl-panel-note" aria-hidden="true">{bloodline.persons.length} pessoas no canvas</p>
     </div>

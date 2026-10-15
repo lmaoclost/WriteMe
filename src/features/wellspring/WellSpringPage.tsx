@@ -6,10 +6,10 @@ import type { WellSpring, WellKind } from "../../domain/types";
 import "./wellspring.css";
 
 export const WELL_KIND_META: Record<WellKind, { label: string; icon: string; color: string }> = {
-  character: { label: "Personagem", icon: "👤", color: "#e74c3c" },
-  setting: { label: "Ambientação", icon: "🗺", color: "#3498db" },
-  conflict: { label: "Conflito", icon: "⚔", color: "#e67e22" },
-  question: { label: "Pergunta", icon: "❓", color: "#9b59b6" },
+  character: { label: "Character", icon: "👤", color: "#e74c3c" },
+  setting: { label: "Setting", icon: "🗺", color: "#3498db" },
+  conflict: { label: "Conflict", icon: "⚔", color: "#e67e22" },
+  question: { label: "Question", icon: "❓", color: "#9b59b6" },
 };
 
 export function WellSpringPage({ wellId }: { wellId: string }) {
@@ -32,7 +32,7 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
   const pan = useRef<{ x: number; basePanX: number; y: number; basePanY: number } | null>(null);
 
   useEffect(() => {
-    if (!well) pushToast("error", "Fonte não encontrada.");
+    if (!well) pushToast("error", "Wellspring not found.");
   }, [well, pushToast]);
 
   if (!well) return null;
@@ -44,7 +44,7 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
       <header className="bl-header">
         <input
           className="bl-name"
-          aria-label="Nome da fonte"
+          aria-label="Wellspring name"
           value={well.name}
           onChange={(e) => useScriptorium.getState().renameWellSpring(wellId, e.target.value)}
         />
@@ -63,9 +63,9 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
           ))}
         </div>
         <div className="bl-actions">
-          <button type="button" aria-label="Desfazer" disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoWS(wellId)}>↶</button>
-          <button type="button" aria-label="Refazer" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoWS(wellId)}>↷</button>
-          <button type="button" onClick={() => setNotesOpen((v) => !v)}>Notas</button>
+          <button type="button" aria-label="Undo" disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoWS(wellId)}>↶</button>
+          <button type="button" aria-label="Redo" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoWS(wellId)}>↷</button>
+          <button type="button" onClick={() => setNotesOpen((v) => !v)}>Notes</button>
         </div>
       </header>
       <div className="bl-body">
@@ -154,7 +154,7 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
                   data-node-id={n.id}
                   style={{ left: n.x - 80, top: n.y - 26, borderColor: meta.color, color: meta.color }}
                   role="button"
-                  aria-label={`Nó ${meta.label}: ${n.text || "vazio"}`}
+                  aria-label={`Note ${meta.label}: ${n.text || "empty"}`}
                   tabIndex={0}
                   onPointerDown={(e) => {
                     if (e.button !== 0) return;
@@ -186,7 +186,7 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
             <div className="bl-empty">
               {placingKind
                 ? `Escolha onde ancorar: ${WELL_KIND_META[placingKind].label}`
-                : "Escolha um tipo e clique no quadro — a fonte da história começa aqui."}
+                : "Choose a type and click the canvas — sketch a loose idea before it has a home."}
             </div>
           ) : null}
           <WellPanel well={well} selectedId={selectedId} onSelect={setSelectedId} otherNodes={well.nodes} />
@@ -213,7 +213,7 @@ function WellPanel({ well, selectedId, onSelect, otherNodes }: {
   if (!node) {
     return (
       <aside className="bl-panel" data-testid="well-panel">
-        <p className="bl-panel-hint">Escolha um nó da fonte.</p>
+        <p className="bl-panel-hint">Pick a note on the canvas.</p>
       </aside>
     );
   }
@@ -221,7 +221,7 @@ function WellPanel({ well, selectedId, onSelect, otherNodes }: {
   const remove = () => {
     if (!armDelete) { setArmDelete(true); return; }
     store().deleteWellNode(node.id);
-    pushToast("success", "Nó removido.");
+    pushToast("success", "Note deleted.");
     onSelect(null);
   };
 
@@ -233,17 +233,17 @@ function WellPanel({ well, selectedId, onSelect, otherNodes }: {
       <header className="bl-panel-head">
         <h2>{node.text || WELL_KIND_META[node.kind].label}</h2>
         <button type="button" className={armDelete ? "btn-danger" : ""} onClick={remove}
-          aria-label={armDelete ? "Confirmar exclusão do nó" : "Excluir nó"}>
+          aria-label={armDelete ? "Confirm delete note" : "Delete note"}>
           {armDelete ? "Confirmar?" : "Excluir"}
         </button>
       </header>
       <div className="field">
-        <span className="field-label">Texto</span>
-        <input aria-label="Texto do nó" value={node.text} onChange={(e) => store().updateWellNode(node.id, { text: e.target.value })} />
+        <span className="field-label">Text</span>
+        <input aria-label="Node text" value={node.text} onChange={(e) => store().updateWellNode(node.id, { text: e.target.value })} />
       </div>
       <div className="field">
-        <span className="field-label">Tipo</span>
-        <select aria-label="Tipo do nó" value={node.kind} onChange={(e) => store().updateWellNode(node.id, { kind: e.target.value as WellKind })}>
+        <span className="field-label">Type</span>
+        <select aria-label="Node type" value={node.kind} onChange={(e) => store().updateWellNode(node.id, { kind: e.target.value as WellKind })}>
           {(Object.keys(WELL_KIND_META) as WellKind[]).map((k) => (
             <option key={k} value={k}>{WELL_KIND_META[k].label}</option>
           ))}
@@ -264,29 +264,29 @@ function WellPanel({ well, selectedId, onSelect, otherNodes }: {
                 onChange={(e) => store().updateWellBorder(b.id, e.target.value)}
                 onBlur={() => { if (!b.label.trim()) store().removeWellBorder(b.id); }}
               />
-              <button type="button" aria-label="Remover borda" onClick={() => store().removeWellBorder(b.id)}>✕</button>
+              <button type="button" aria-label="Remove border" onClick={() => store().removeWellBorder(b.id)}>✕</button>
             </div>
           );
         })}
         <div className="well-border-add">
-          <select aria-label="Destino da borda" value={fromId} onChange={(e) => setFromId(e.target.value)}>
-            <option value="">Conectar a…</option>
+          <select aria-label="Border target" value={fromId} onChange={(e) => setFromId(e.target.value)}>
+            <option value="">Connect to...</option>
             {others.map((n) => <option key={n.id} value={n.id}>{n.text || WELL_KIND_META[n.kind].label}</option>)}
           </select>
-          <input aria-label="Label da nova borda" placeholder="como essa fronteira se chama?" value={borderLabel} onChange={(e) => setBorderLabel(e.target.value)} />
+          <input aria-label="Name this border" placeholder="como essa fronteira se chama?" value={borderLabel} onChange={(e) => setBorderLabel(e.target.value)} />
           <button
             type="button"
             disabled={!fromId || !borderLabel.trim()}
             onClick={() => {
               const b = store().addWellBorder(well.id, node.id, fromId, borderLabel.trim());
-              if (!b) { pushToast("error", "Borda duplicada ou inválida."); return; }
+              if (!b) { pushToast("error", "Those two are already connected."); return; }
               setFromId("");
               setBorderLabel("");
             }}
           >+ Borda</button>
         </div>
       </section>
-      <p className="bl-panel-note">{well.nodes.length} nós · {well.borders.length} bordas</p>
+      <p className="bl-panel-note">{well.nodes.length} notes · {well.borders.length} borders</p>
     </aside>
   );
 }

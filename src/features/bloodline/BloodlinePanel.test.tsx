@@ -45,7 +45,7 @@ describe("BloodlinePanel — person", () => {
     const { b, p1 } = seed();
     mountCanvas(b.id);
     firePointer(screen.getAllByTestId("person-node")[0], "pointerdown", { clientX: 0, clientY: 0 });
-    const inp = screen.getByLabelText("Nome");
+    const inp = screen.getByLabelText("Name");
     fireEvent.change(inp, { target: { value: "Aldric Vellmor" } });
     act(() => vi.advanceTimersByTime(320));
     expect(store().bloodlines[0].persons.find((p) => p.id === p1)!.name).toBe("Aldric Vellmor");
@@ -56,8 +56,8 @@ describe("BloodlinePanel — person", () => {
     const { b, p1 } = seed();
     mountCanvas(b.id);
     firePointer(screen.getAllByTestId("person-node")[0], "pointerdown", { clientX: 0, clientY: 0 });
-    fireEvent.click(screen.getByLabelText("Mostrar insígnia"));
-    fireEvent.change(screen.getByLabelText("Texto da insígnia"), { target: { value: "Rei em exílio" } });
+    fireEvent.click(screen.getByLabelText("Show badge"));
+    fireEvent.change(screen.getByLabelText("Badge text"), { target: { value: "Rei em exílio" } });
     screen.getByText("Rei em exílio");
     void p1;
   });
@@ -66,7 +66,7 @@ describe("BloodlinePanel — person", () => {
     const { b, p1 } = seed();
     mountCanvas(b.id);
     firePointer(screen.getAllByTestId("person-node")[0], "pointerdown", { clientX: 0, clientY: 0 });
-    fireEvent.click(screen.getByRole("button", { name: "Adicionar período" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add tenure" }));
     act(() => { store().updatePerson(p1, { tenures: [{ label: "Reigned", from: "1200", to: "1230" }] }); });
     const t = store().bloodlines[0].persons.find((p) => p.id === p1)!.tenures;
     expect(t).toHaveLength(1);
@@ -103,7 +103,7 @@ describe("BloodlinePanel — person", () => {
     vi.spyOn(mod, "fileToDataUrl").mockResolvedValue({ dataUrl: "data:image/png;base64,AAA", keptPng: false });
     mountCanvas(b.id);
     firePointer(screen.getAllByTestId("person-node")[0], "pointerdown", { clientX: 0, clientY: 0 });
-    const input = screen.getByLabelText("Carregar retrato") as HTMLInputElement;
+    const input = screen.getByLabelText("Upload portrait") as HTMLInputElement;
     const file = new File(["x"], "p.png", { type: "image/png" });
     fireEvent.change(input, { target: { files: [file] } });
     await waitFor(() => expect(store().bloodlines[0].persons.find((p) => p.id === p1)!.portraitKey).toBeTruthy());
@@ -120,12 +120,12 @@ describe("BloodlinePanel — house", () => {
     void h;
     mountCanvas(b.id);
     firePointer(screen.getByTestId("house-node"), "pointerdown", { clientX: 0, clientY: 0 });
-    const inp = screen.getByLabelText("Subtítulo");
+    const inp = screen.getByLabelText("Subtitle");
     fireEvent.change(inp, { target: { value: "Ramo do rio" } });
     act(() => vi.advanceTimersByTime(320));
     expect(store().bloodlines[0].houses[0].subtitle).toBe("Ramo do rio");
-    fireEvent.click(screen.getByRole("button", { name: "Excluir casa" }));
-    fireEvent.click(screen.getByRole("button", { name: "Confirmar exclusão da casa" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete house" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm delete house" }));
     expect(store().bloodlines[0].houses).toHaveLength(0);
     vi.useRealTimers();
   });
