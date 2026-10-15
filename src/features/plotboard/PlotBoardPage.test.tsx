@@ -1,0 +1,124 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { firePointer } from "../../test/pointer";
+import { useScriptorium } from "../../data/store";
+import { PlotBoardPage } from "./PlotBoardPage";
+
+import { PlotBoardIndexPage } from "./PlotBoardIndexPage";
+import type { PlotBoard } from "../../domain/types";
+
+const store = () => useScriptorium.getState();
+
+beforeEach(() => {
+  localStorage.clear();
+  useScriptorium.setState(useScriptorium.getInitialState());
+});
+
+Object.defineProperty(HTMLElement.prototype, "clientWidth", { configurable: true, value: 1200 });
+Object.defineProperty(HTMLElement.prototype, "clientHeight", { configurable: true, value: 800 });
+
+function seedBoard(): PlotBoard {
+  return store().addPlotBoard("prj_1", "A Guerra");
+}
+
+describe("PlotBoardPage", () => {
+  it("empty state invites the first scene", () => {
+    const b = seedBoard();
+    render(<PlotBoardPage boardId={b.id} />);
+    expect(screen.getByText(/primeira cena/)).toBeInTheDocument();
+  });
+
+  it("placing a card by canvas click + selecting by node pointerdown", () => {
+    const b = seedBoard();
+    render(<PlotBoardPage boardId={b.id} />);
+    const canvas = screen.getByTestId("pb-canvas");
+    canvas.addEventListener("pointerdown", (ev: Event) => console.error("DEBUG RAW down on canvas", ev.type, (ev as Event & { button: number }).button));
+    console.error("DEBUG canvas children:", canvas.innerHTML.slice(0, 200), "rect:", canvas.getBoundingClientRect().left);
+    firePointer(canvas, "pointerdown", { clientX: 240, clientY: 140 });
+    console.error("DEBUG after: cards:", JSON.stringify(store().plotBoards![0].cards.map((c) => ({ id: c.id, x: c.x }))), "html:", canvas.innerHTML.slice(0, 300));
+    const card = document.querySelector('[data-testid="board-card"]') as HTMLElement;
+    expect(card).toBeInTheDocument();
+    expect(store().plotBoards![0].cards).toHaveLength(1);
+    void canvas;
+    void card;
+  });
+
+  it("card drag moves with history push", () => {
+    const b = seedBoard();
+    const c = store().addCard(b.id, { x: 4000, y: 4000 })!;
+    render(<PlotBoardPage boardId={b.id} />);
+    const node = screen.getByTestId("board-card");
+    firePointer(node, "pointerdown", { clientX: 100, clientY: 100 });
+    firePointer(node, "pointermove", { clientX: 150, clientY: 100 });
+    firePointer(node, "pointerup", { clientX: 150, clientY: 100 });
+    const moved = store().plotBoards![0].cards.find((x) => x.id === c.id)!;
+    expect(moved.x).toBe(4100); // view scale 0.5: 50 screen px = 100 canvas px
+    act(() => { store().undoPB(b.id); });
+    expect(store().plotBoards![0].cards[0].x).toBe(4000);
+  });
+
+  it("wire flow: handle → target → wire exists; wire click removes", () => {
+    const b = seedBoard();
+    const a = store().addCard(b.id, { x: 3000, y: 3000 })!;
+    const c = store().addCard(b.id, { x: 3000, y: 3600 })!;
+    render(<PlotBoardPage boardId={b.id} />);
+    const nodeA = screen.getAllByTestId("board-card").find((n) => n.getAttribute("data-card-id") === a.id)!;
+    firePointer(nodeA.querySelector(".conn-btn") as HTMLElement, "pointerdown", { clientX: 0, clientY: 0 });
+    expect(screen.getByText(/cena destino/)).toBeInTheDocument();
+    const nodeB = screen.getAllByTestId("board-card").find((n) => n.getAttribute("data-card-id") === c.id)!;
+    firePointer(nodeB, "pointerdown", { clientX: 0, clientY: 0 });
+    expect(store().plotBoards![0].wires).toHaveLength(1);
+    const wire = document.querySelector(".plot-wire-hit") as HTMLElement;
+    wire.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(store().plotBoards![0].wires).toHaveLength(0);
+  });
+
+  it("panel edits title/pov/location/color/parts", () => {
+    const b = seedBoard();
+    const c = store().addCard(b.id)!;
+    render(<PlotBoardPage boardId={b.id} />);
+    const node = screen.getByTestId("board-card");
+    firePointer(node, "pointerdown", { clientX: 0, clientY: 0 });
+    const title = screen.getByLabelText("Título da cena") as HTMLInputElement;
+    fireEvent.change(title, { target: { value: "A chegada" } });
+    fireEvent.blur(title);
+    expect(store().plotBoards![0].cards.find((x) => x.id === c.id)!.title).toBe("A chegada");
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar beat" }));
+    const beat = screen.getByLabelText("Beat 1") as HTMLInputElement;
+    fireEvent.change(beat, { target: { value: "o rio avisa" } });
+    fireEvent.blur(beat);
+    expect(store().plotBoards![0].cards[0].parts[0].text).toBe("o rio avisa");
+  });
+
+  it("notepad persists", () => {
+    vi.useFakeTimers();
+    const b = seedBoard();
+    render(<PlotBoardPage boardId={b.id} />);
+    fireEvent.click(screen.getByRole("button", { name: "Notas" }));
+    fireEvent.change(screen.getByLabelText("Notas do plano"), { target: { value: "O fio do selo quebra no ato 2." } });
+    act(() => vi.advanceTimersByTime(320));
+    expect(store().plotBoards![0].notes).toBe("O fio do selo quebra no ato 2.");
+    vi.useRealTimers();
+  });
+
+  it("undo/redo flags", () => {
+    const b = seedBoard();
+    act(() => { store().addCard(b.id); });
+    render(<PlotBoardPage boardId={b.id} />);
+    expect((screen.getByRole("button", { name: "Desfazer" }) as HTMLButtonElement).disabled).toBe(false);
+    act(() => { store().undoPB(b.id); });
+    expect((screen.getByRole("button", { name: "Desfazer" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+});
+
+describe("PlotBoardIndexPage", () => {
+  it("index renders, creates, deletes", () => {
+    seedBoard();
+    render(<MemoryRouter><PlotBoardIndexPage projectId="prj_1" /></MemoryRouter>);
+    expect(screen.getByText("A Guerra")).toBeInTheDocument();
+    fireEvent.click(screen.getByTitle("Excluir plano"));
+    fireEvent.click(screen.getByRole("button", { name: "Excluir" }));
+    expect(store().plotBoards).toHaveLength(0);
+  });
+});

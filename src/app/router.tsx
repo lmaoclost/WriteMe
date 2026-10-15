@@ -10,6 +10,8 @@ import { FactionWebServicePage } from "../features/factions/FactionPageIndex";
 import { FactionWebPage } from "../features/factions/FactionWebPage";
 import { CalendarIndexPage } from "../features/calendar/CalendarIndexPage";
 import { CalendarPage } from "../features/calendar/CalendarPage";
+import { PlotBoardPage } from "../features/plotboard/PlotBoardPage";
+import { PlotBoardIndexPage } from "../features/plotboard/PlotBoardIndexPage";
 import { ManuscriptPage } from "../features/manuscript/ManuscriptPage";
 import { OverviewPage } from "../features/workspace/OverviewPage";
 import { WorkspaceLayout } from "../features/workspace/WorkspaceLayout";
@@ -64,6 +66,16 @@ function CalendarRoute() {
   return <CalendarPage calendarId={calendarId ?? ""} />;
 }
 
+function PlotBoardIndexRoute() {
+  const { projectId } = useParams();
+  return <PlotBoardIndexPage projectId={projectId ?? ""} />;
+}
+
+function PlotBoardRoute() {
+  const { boardId } = useParams();
+  return <PlotBoardPage boardId={boardId ?? ""} />;
+}
+
 export function AppRouter() {
   return (
     <Routes>
@@ -80,6 +92,8 @@ export function AppRouter() {
         <Route path="factions/:webId" element={<FactionWebRoute />} />
         <Route path="calendar" element={<CalendarIndexRoute />} />
         <Route path="calendar/:calendarId" element={<CalendarRoute />} />
+        <Route path="plotboard" element={<PlotBoardIndexRoute />} />
+        <Route path="plotboard/:boardId" element={<PlotBoardRoute />} />
         <Route path="manuscript" element={<ManuscriptRoute />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

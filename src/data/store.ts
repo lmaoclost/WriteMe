@@ -227,7 +227,7 @@ interface ScriptoriumState extends ProjectData {
   deletePlotBoard(id: string): void;
   setBoardActs(id: string, acts: { id: string; name: string }[]): void;
   setBoardFlags(id: string, patch: { hasPrologue?: boolean; hasEpilogue?: boolean }): void;
-  addCard(boardId: string, init?: { x?: number; y?: number; actId?: string }): PlotCard | null;
+  addCard(boardId: string, init?: { x?: number; y?: number; actId?: string; title?: string }): PlotCard | null;
   updateCard(id: string, patch: Partial<Omit<PlotCard, "id">>): void;
   moveCard(id: string, x: number, y: number): void;
   deleteCard(id: string): void;
@@ -1532,7 +1532,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           actId,
           x: init?.x ?? 4000,
           y: init?.y ?? 4000,
-          title: "",
+          title: init?.title ?? "",
           pov: "",
           location: "",
           parts: [],
