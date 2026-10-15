@@ -3,7 +3,7 @@ import type { WorldEntry } from "../../domain/types";
 
 marked.setOptions({ breaks: true } as never);
 
-const WIKILINK = /\[\[([^\[\]|]{1,200})\]\]/g;
+const WIKILINK = /\[\[([^\]|]{1,200})\]\]/g;
 
 export function parseWikilinks(text: string): string[] {
   return [...text.matchAll(WIKILINK)].map((m) => m[1].trim()).filter(Boolean);
@@ -27,7 +27,7 @@ export function renderWithLinks(body: string, entries: WorldEntry[]): string {
   }
   // mark.wikilink-style: escape happens in the parser; [[Title]] stays literal
   // text (with &-escapes) — replace occurrences with anchor markup.
-  return html.replace(/\[\[([^\[\]]{1,200})\]\]/g, (_m, rawTitle: string) => {
+  return html.replace(/\[\[([^\]]{1,200})\]\]/g, (_m, rawTitle: string) => {
     const title = unescapeHtml(rawTitle); // marked may have escaped quotes/ampersands
     const e = resolveWikilink(title, entries);
     if (!e) return escapeHtml(title.trim()); // unresolvable: keep the title as plain text

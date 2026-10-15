@@ -2243,7 +2243,7 @@ export const useScriptorium = create<ScriptoriumState>()(
       addWellNode(wellId, init) {
         const well = (get().wellsprings ?? []).find((w) => w.id === wellId);
         if (!well) return null;
-        WELL_KIND_LIST.includes(init.kind) || (() => { throw new Error("kinds inválido"); })();
+        if (!WELL_KIND_LIST.includes(init.kind)) throw new Error("invalid wellspring kind");
         get().pushWSHistory(wellId);
         const node: WellNode = { id: newId("wn"), text: "", ...init };
         set((s) => ({
@@ -2760,7 +2760,3 @@ export const selectBLHistoryFlags = (bloodlineId: string) => (s: ScriptoriumStat
   const h = s.histories[blKey(bloodlineId)];
   return { canUndo: (h?.undo.length ?? 0) > 0, canRedo: (h?.redo.length ?? 0) > 0 };
 };
-
-
-
-
