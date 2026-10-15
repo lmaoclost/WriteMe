@@ -231,7 +231,7 @@ function LexiconTab({ conlang }: { conlang: NonNullable<ReturnType<typeof useScr
         <select aria-label="Part of speech" value={pos} onChange={(e) => setPos(e.target.value)}>
           {POS_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
         </select>
-        <input aria-label="Theme group" placeholder="Tema…" value={theme} onChange={(e) => setTheme(e.target.value)} />
+        <input aria-label="Theme group" placeholder="Theme..." value={theme} onChange={(e) => setTheme(e.target.value)} />
         <button type="submit" className="btn-primary">Add</button>
       </form>
       {themes.length ? (

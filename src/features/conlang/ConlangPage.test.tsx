@@ -80,12 +80,12 @@ describe("ConlangPage — léxico", () => {
     fireEvent.click(screen.getByRole("button", { name: "Lexicon" }));
     fireEvent.change(screen.getByLabelText("New word"), { target: { value: "sarnen" } });
     fireEvent.change(screen.getByLabelText("Meaning"), { target: { value: "rio-mãe" } });
-    fireEvent.change(screen.getByLabelText("Grupo temático"), { target: { value: "águas" } });
-    fireEvent.click(screen.getByRole("button", { name: "Adicionar" }));
+    fireEvent.change(screen.getByLabelText("Theme group"), { target: { value: "águas" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
     expect(store().conlangs![0].words).toHaveLength(1);
     fireEvent.change(screen.getByLabelText("New word"), { target: { value: "vellmor" } });
     fireEvent.change(screen.getByLabelText("Meaning"), { target: { value: "coroa quebrada" } });
-    fireEvent.click(screen.getByRole("button", { name: "Adicionar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
     expect(screen.getByText("águas")).toBeInTheDocument();
     fireEvent.click(screen.getByText("águas"));
     fireEvent.click(screen.getByLabelText("Remover sarnen"));

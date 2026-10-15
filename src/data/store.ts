@@ -2709,6 +2709,10 @@ export const useScriptorium = create<ScriptoriumState>()(
               }));
             }
           }
+          const posMap: Record<string, string> = { "substantivo": "noun", "verbo": "verb", "adjetivo": "adjective", "advérbio": "adverb", "pronome": "pronoun", "partícula": "particle" };
+          for (const lang of s.conlangs ?? []) {
+            for (const w of lang.words) w.pos = posMap[w.pos] ?? w.pos;
+          }
           return s;
         };
         if (from !== 1) return norm(persisted as PersistedState);
