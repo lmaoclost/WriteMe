@@ -5,6 +5,7 @@ import type {
   Bloodline, BloodlinePerson, BloodlineHouse,
   FactionWeb, Faction, FactionConnection, ConnectionType,
   CustomCalendar, CalendarEvent,
+  PlotBoard, PlotCard, PlotWire,
 } from "../domain/types";
 import { newId } from "../domain/id";
 import type { Pt } from "../domain/geometry";
@@ -54,7 +55,9 @@ export interface FactionWebSnapshot { factions: Faction[]; connections: FactionC
 export interface FactionWebHistory { undo: FactionWebSnapshot[]; redo: FactionWebSnapshot[] }
 export interface CalendarSnapshot { months: CustomCalendar["months"]; weekdays: string[]; weekendDays: number[]; era?: string; startingWeekday: number; events: Record<string, CalendarEvent[]> }
 export interface CalendarHistory { undo: CalendarSnapshot[]; redo: CalendarSnapshot[] }
-export type AnyHistory = AtlasHistory | BloodlineHistory | FactionWebHistory | CalendarHistory;
+export interface PlotBoardSnapshot { acts: PlotBoard["acts"]; hasPrologue: boolean; hasEpilogue: boolean; cards: PlotCard[]; wires: PlotWire[] }
+export interface PlotBoardHistory { undo: PlotBoardSnapshot[]; redo: PlotBoardSnapshot[] }
+export type AnyHistory = AtlasHistory | BloodlineHistory | FactionWebHistory | CalendarHistory | PlotBoardHistory;
 
 const clonePoints = (points: Pt[]): Pt[] => points.map((p) => ({ ...p }));
 const touchProject = (projects: readonly Project[], id: string): Project[] =>
@@ -75,11 +78,20 @@ const cloneSnapshot = (a: Atlas): AtlasSnapshot => ({
 const blKey = (bloodlineId: string): string => `bl_${bloodlineId}`;
 const fwKey = (webId: string): string => `fw_${webId}`;
 const clKey = (calendarId: string): string => `cl_${calendarId}`;
+const pbKey = (boardId: string): string => `pb_${boardId}`;
 
 const clonePerson = (p: BloodlinePerson): BloodlinePerson => ({
   ...p,
   additionalTitles: p.additionalTitles.map((t) => ({ ...t })),
   tenures: p.tenures.map((t) => ({ ...t })),
+});
+
+const clonePBSnapshot = (b: PlotBoard): PlotBoardSnapshot => ({
+  acts: b.acts.map((a) => ({ ...a })),
+  hasPrologue: b.hasPrologue,
+  hasEpilogue: b.hasEpilogue,
+  cards: b.cards.map((c) => ({ ...c, parts: c.parts.map((p) => ({ ...p })) })),
+  wires: b.wires.map((w) => ({ ...w })),
 });
 
 const cloneCLSnapshot = (c: CustomCalendar): CalendarSnapshot => ({
@@ -209,6 +221,22 @@ interface ScriptoriumState extends ProjectData {
   pushCLHistory(id: string): void;
   undoCL(id: string): void;
   redoCL(id: string): void;
+
+  addPlotBoard(projectId: string, name?: string): PlotBoard;
+  renamePlotBoard(id: string, name: string): void;
+  deletePlotBoard(id: string): void;
+  setBoardActs(id: string, acts: { id: string; name: string }[]): void;
+  setBoardFlags(id: string, patch: { hasPrologue?: boolean; hasEpilogue?: boolean }): void;
+  addCard(boardId: string, init?: { x?: number; y?: number; actId?: string }): PlotCard | null;
+  updateCard(id: string, patch: Partial<Omit<PlotCard, "id">>): void;
+  moveCard(id: string, x: number, y: number): void;
+  deleteCard(id: string): void;
+  addWire(boardId: string, fromCardId: string, toCardId: string): PlotWire | null;
+  removeWire(id: string): void;
+  setBoardNotes(id: string, notes: string): void;
+  pushPBHistory(id: string): void;
+  undoPB(id: string): void;
+  redoPB(id: string): void;
 }
 
 export const useScriptorium = create<ScriptoriumState>()(
@@ -332,6 +360,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           bloodlines: s.bloodlines,
           factionWebs: s.factionWebs,
           calendars: s.calendars,
+          plotBoards: s.plotBoards,
         });
       },
 
@@ -1428,6 +1457,234 @@ export const useScriptorium = create<ScriptoriumState>()(
         }));
       },
 
+      addPlotBoard(projectId, name = "Plano sem título") {
+        const board: PlotBoard = {
+          id: newId("pb"),
+          projectId,
+          name,
+          acts: [
+            { id: newId("act"), name: "Ato 1" },
+            { id: newId("act"), name: "Ato 2" },
+            { id: newId("act"), name: "Ato 3" },
+          ],
+          hasPrologue: false,
+          hasEpilogue: false,
+          cards: [],
+          wires: [],
+          notes: "",
+        };
+        set((s) => ({
+          plotBoards: [...(s.plotBoards ?? []), board],
+          projects: touchProject(s.projects, projectId),
+        }));
+        return board;
+      },
+
+      renamePlotBoard(id, name) {
+        const board = (get().plotBoards ?? []).find((b) => b.id === id);
+        if (!board) return;
+        set((st) => ({
+          plotBoards: (st.plotBoards ?? []).map((b) => (b.id === id ? { ...b, name } : b)),
+          projects: touchProject(st.projects, board.projectId),
+        }));
+      },
+
+      deletePlotBoard(id) {
+        const s = get();
+        const board = (s.plotBoards ?? []).find((b) => b.id === id);
+        if (!board) return;
+        const histories = { ...s.histories };
+        delete histories[pbKey(id)];
+        set({
+          plotBoards: (s.plotBoards ?? []).filter((b) => b.id !== id),
+          histories,
+          projects: touchProject(s.projects, board.projectId),
+        });
+      },
+
+      setBoardActs(id, acts) {
+        const board = (get().plotBoards ?? []).find((b) => b.id === id);
+        if (!board) return;
+        get().pushPBHistory(id);
+        set((st) => ({
+          plotBoards: (st.plotBoards ?? []).map((b) => (b.id === id ? { ...b, acts: acts.map((a) => ({ ...a })) } : b)),
+          projects: touchProject(st.projects, board.projectId),
+        }));
+      },
+
+      setBoardFlags(id, patch) {
+        const board = (get().plotBoards ?? []).find((b) => b.id === id);
+        if (!board) return;
+        get().pushPBHistory(id);
+        set((st) => ({
+          plotBoards: (st.plotBoards ?? []).map((b) => (b.id === id ? { ...b, ...patch } : b)),
+          projects: touchProject(st.projects, board.projectId),
+        }));
+      },
+
+      addCard(boardId, init) {
+        const board = (get().plotBoards ?? []).find((b) => b.id === boardId);
+        if (!board) return null;
+        get().pushPBHistory(boardId);
+        const actId = init?.actId ?? board.acts[0]?.id ?? "act";
+        const card: PlotCard = {
+          id: newId("card"),
+          actId,
+          x: init?.x ?? 4000,
+          y: init?.y ?? 4000,
+          title: "",
+          pov: "",
+          location: "",
+          parts: [],
+          color: "#7c5cbf",
+        };
+        set((s) => ({
+          plotBoards: (s.plotBoards ?? []).map((b) =>
+            b.id === boardId ? { ...b, cards: [...b.cards, card] } : b),
+          projects: touchProject(s.projects, board.projectId),
+        }));
+        return card;
+      },
+
+      updateCard(id, patch) {
+        const s = get();
+        const board = (s.plotBoards ?? []).find((b) => b.cards.some((c) => c.id === id));
+        if (!board) return;
+        const safe: Partial<PlotCard> = { ...patch };
+        if (patch.parts) safe.parts = patch.parts.map((p) => ({ ...p }));
+        get().pushPBHistory(board.id);
+        set((st) => ({
+          plotBoards: (st.plotBoards ?? []).map((b) => b.id !== board.id ? b : {
+            ...b,
+            cards: b.cards.map((c) => (c.id === id ? { ...c, ...safe, id: c.id } : c)),
+          }),
+          projects: touchProject(st.projects, board.projectId),
+        }));
+      },
+
+      moveCard(id, x, y) {
+        const s = get();
+        const board = (s.plotBoards ?? []).find((b) => b.cards.some((c) => c.id === id));
+        if (!board) return;
+        set((st) => ({
+          plotBoards: (st.plotBoards ?? []).map((b) => b.id !== board.id ? b : {
+            ...b,
+            cards: b.cards.map((c) => (c.id === id ? { ...c, x, y } : c)),
+          }),
+          projects: touchProject(st.projects, board.projectId),
+        }));
+      },
+
+      deleteCard(id) {
+        const s = get();
+        const board = (s.plotBoards ?? []).find((b) => b.cards.some((c) => c.id === id));
+        if (!board) return;
+        get().pushPBHistory(board.id);
+        set((st) => ({
+          plotBoards: (st.plotBoards ?? []).map((b) => b.id !== board.id ? b : {
+            ...b,
+            cards: b.cards.filter((c) => c.id !== id),
+            wires: b.wires.filter((w) => w.fromCardId !== id && w.toCardId !== id),
+          }),
+          projects: touchProject(st.projects, board.projectId),
+        }));
+      },
+
+      addWire(boardId, fromCardId, toCardId) {
+        const board = (get().plotBoards ?? []).find((b) => b.id === boardId);
+        if (!board) return null;
+        if (fromCardId === toCardId) return null;
+        if (!board.cards.some((c) => c.id === fromCardId) || !board.cards.some((c) => c.id === toCardId)) return null;
+        const dup = board.wires.some(
+          (w) => (w.fromCardId === fromCardId && w.toCardId === toCardId) || (w.fromCardId === toCardId && w.toCardId === fromCardId),
+        );
+        if (dup) return null;
+        get().pushPBHistory(boardId);
+        const wire: PlotWire = { id: newId("wire"), fromCardId, toCardId };
+        set((s) => ({
+          plotBoards: (s.plotBoards ?? []).map((b) =>
+            b.id === boardId ? { ...b, wires: [...b.wires, wire] } : b),
+          projects: touchProject(s.projects, board.projectId),
+        }));
+        return wire;
+      },
+
+      removeWire(id) {
+        const s = get();
+        const board = (s.plotBoards ?? []).find((b) => b.wires.some((w) => w.id === id));
+        if (!board) return;
+        get().pushPBHistory(board.id);
+        set((st) => ({
+          plotBoards: (st.plotBoards ?? []).map((b) => b.id !== board.id ? b : {
+            ...b,
+            wires: b.wires.filter((w) => w.id !== id),
+          }),
+          projects: touchProject(st.projects, board.projectId),
+        }));
+      },
+
+      setBoardNotes(id, notes) {
+        const board = (get().plotBoards ?? []).find((b) => b.id === id);
+        if (!board) return;
+        set((st) => ({
+          plotBoards: (st.plotBoards ?? []).map((b) => (b.id === id ? { ...b, notes } : b)),
+          projects: touchProject(st.projects, board.projectId),
+        }));
+      },
+
+      pushPBHistory(boardId) {
+        set((st) => {
+          const board = (st.plotBoards ?? []).find((b) => b.id === boardId);
+          if (!board) return {};
+          const key = pbKey(boardId);
+          const h = (st.histories[key] as PlotBoardHistory | undefined) ?? { undo: [], redo: [] };
+          const undo = [...h.undo, clonePBSnapshot(board)];
+          if (undo.length > HISTORY_CAP) undo.shift();
+          const entry: PlotBoardHistory = { undo, redo: [] };
+          return { histories: { ...st.histories, [key]: entry } };
+        });
+      },
+
+      undoPB(boardId) {
+        set((st) => {
+          const key = pbKey(boardId);
+          const h = st.histories[key] as PlotBoardHistory | undefined;
+          const board = (st.plotBoards ?? []).find((b) => b.id === boardId);
+          if (!h || h.undo.length === 0 || !board) return {};
+          const snap = h.undo[h.undo.length - 1];
+          const entry: PlotBoardHistory = {
+            undo: h.undo.slice(0, -1),
+            redo: [...h.redo, clonePBSnapshot(board)],
+          };
+          return {
+            histories: { ...st.histories, [key]: entry },
+            plotBoards: (st.plotBoards ?? []).map((b) => b.id === boardId
+              ? { ...b, ...snap, cards: snap.cards.map((c) => ({ ...c, parts: c.parts.map((p) => ({ ...p })) })), wires: snap.wires.map((w) => ({ ...w })) }
+              : b),
+          };
+        });
+      },
+
+      redoPB(boardId) {
+        set((st) => {
+          const key = pbKey(boardId);
+          const h = st.histories[key] as PlotBoardHistory | undefined;
+          const board = (st.plotBoards ?? []).find((b) => b.id === boardId);
+          if (!h || h.redo.length === 0 || !board) return {};
+          const snap = h.redo[h.redo.length - 1];
+          const entry: PlotBoardHistory = {
+            undo: [...h.undo, clonePBSnapshot(board)],
+            redo: h.redo.slice(0, -1),
+          };
+          return {
+            histories: { ...st.histories, [key]: entry },
+            plotBoards: (st.plotBoards ?? []).map((b) => b.id === boardId
+              ? { ...b, ...snap, cards: snap.cards.map((c) => ({ ...c, parts: c.parts.map((p) => ({ ...p })) })), wires: snap.wires.map((w) => ({ ...w })) }
+              : b),
+          };
+        });
+      },
+
       pushCLHistory(id) {
         set((st) => {
           const cal = (st.calendars ?? []).find((c) => c.id === id);
@@ -1561,6 +1818,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           bloodlines: s.bloodlines,
           factionWebs: s.factionWebs,
           calendars: s.calendars,
+          plotBoards: s.plotBoards,
           seedFlag: s.seedFlag,
         };
       },

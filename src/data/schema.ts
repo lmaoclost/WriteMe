@@ -3,6 +3,7 @@ import type {
   Bloodline, BloodlinePerson, BloodlineHouse, BloodlineTitle, BloodlineTenure,
   FactionWeb, Faction, FactionConnection,
   CustomCalendar, CalendarEvent, EntrySection,
+  PlotBoard, PlotCard, PlotWire, PlotPart,
 } from "../domain/types";
 import { ENTRY_CATEGORIES, PIN_TYPES } from "../domain/types";
 
@@ -139,6 +140,32 @@ const isCustomCalendar = (v: unknown): v is CustomCalendar => {
     && optionalStr(c.era);
 };
 
+const isPlotPart = (v: unknown): boolean => {
+  const t = v as PlotPart;
+  return !!t && isStr(t.id) && isStr(t.text);
+};
+
+const isPlotCard = (v: unknown): boolean => {
+  const c = v as PlotCard;
+  return !!c && isStr(c.id) && isStr(c.actId) && isNum(c.x) && isNum(c.y)
+    && isStr(c.title) && isStr(c.pov) && isStr(c.location) && isStr(c.color)
+    && isArr(c.parts) && c.parts.every(isPlotPart)
+    && optionalStr(c.locationEntryId);
+};
+
+const isPlotBoard = (v: unknown): boolean => {
+  const b = v as PlotBoard;
+  return !!b && isStr(b.id) && isStr(b.projectId) && isStr(b.name)
+    && isArr(b.acts) && b.acts.every((a) => !!a && isStr((a as PlotBoard["acts"][number]).id) && isStr((a as PlotBoard["acts"][number]).name))
+    && typeof b.hasPrologue === "boolean" && typeof b.hasEpilogue === "boolean"
+    && isArr(b.cards) && b.cards.every(isPlotCard)
+    && isArr(b.wires) && b.wires.every((w) => {
+      const wf = w as PlotWire;
+      return !!wf && isStr(wf.id) && isStr(wf.fromCardId) && isStr(wf.toCardId);
+    })
+    && isStr(b.notes);
+};
+
 const isBloodline = (v: unknown): v is Bloodline => {
   const b = v as Bloodline;
   return !!b && isStr(b.id) && isStr(b.projectId) && isStr(b.name)
@@ -159,12 +186,14 @@ export function validateProjectData(v: unknown): boolean {
     && (d.factionWebs === undefined
       || (isArr(d.factionWebs) && d.factionWebs.every(isFactionWeb)))
     && (d.calendars === undefined
-      || (isArr(d.calendars) && d.calendars.every(isCustomCalendar)));
+      || (isArr(d.calendars) && d.calendars.every(isCustomCalendar)))
+    && (d.plotBoards === undefined
+      || (isArr(d.plotBoards) && d.plotBoards.every(isPlotBoard)));
 }
 
 /** Fresh shape: bloodlines is optional in the schema but a fresh state always carries []. */
 export function emptyProjectData(): ProjectData & { bloodlines: Bloodline[] } {
-  return { projects: [], entries: [], atlases: [], manuscripts: [], images: {}, bloodlines: [], factionWebs: [], calendars: [] };
+  return { projects: [], entries: [], atlases: [], manuscripts: [], images: {}, bloodlines: [], factionWebs: [], calendars: [], plotBoards: [] };
 }
 
 export function serialize(data: ProjectData): string {
@@ -191,5 +220,6 @@ export function parseExport(text: string): ProjectData {
     bloodlines: d.bloodlines ?? [],
     factionWebs: d.factionWebs ?? [],
     calendars: d.calendars ?? [],
+    plotBoards: d.plotBoards ?? [],
   };
 }

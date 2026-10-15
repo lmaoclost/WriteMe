@@ -176,6 +176,35 @@ export type CustomCalendar = {
   notes: string;
 };
 
+export type PlotPart = { id: Id; text: string };
+
+export type PlotCard = {
+  id: Id;
+  actId: Id;
+  x: number;
+  y: number;
+  title: string;
+  pov: string;
+  location: string;
+  locationEntryId?: Id;
+  parts: PlotPart[];
+  color: string;
+};
+
+export type PlotWire = { id: Id; fromCardId: Id; toCardId: Id };
+
+export type PlotBoard = {
+  id: Id;
+  projectId: Id;
+  name: string;
+  acts: { id: Id; name: string }[];
+  hasPrologue: boolean;
+  hasEpilogue: boolean;
+  cards: PlotCard[];
+  wires: PlotWire[];
+  notes: string;
+};
+
 export interface ProjectData {
   projects: Project[];
   entries: WorldEntry[];
@@ -185,6 +214,7 @@ export interface ProjectData {
   bloodlines?: Bloodline[];
   factionWebs?: FactionWeb[];
   calendars?: CustomCalendar[];
+  plotBoards?: PlotBoard[];
 }
 
 export const ENTRY_CATEGORIES: readonly EntryCategory[] = [
