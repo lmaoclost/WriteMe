@@ -8,6 +8,7 @@ import type {
   PlotBoard, PlotCard, PlotWire,
   TimelineWire, TimelineBead, TimelineSegment,
   OathsChart, OathMember, OathLink,
+  WellSpring, WellNode, WellBorder, WellKind,
 } from "../domain/types";
 import { newId } from "../domain/id";
 import type { Pt } from "../domain/geometry";
@@ -63,7 +64,9 @@ export interface TimelineSnapshot { beads: TimelineBead[]; segments: TimelineSeg
 export interface TimelineHistory { undo: TimelineSnapshot[]; redo: TimelineSnapshot[] }
 export interface OathsSnapshot { members: OathMember[]; oathLinks: OathLink[] }
 export interface OathsChartHistory { undo: OathsSnapshot[]; redo: OathsSnapshot[] }
-export type AnyHistory = AtlasHistory | BloodlineHistory | FactionWebHistory | CalendarHistory | PlotBoardHistory | TimelineHistory | OathsChartHistory;
+export interface WellSnapshot { nodes: WellNode[]; borders: WellBorder[] }
+export interface WellHistory { undo: WellSnapshot[]; redo: WellSnapshot[] }
+export type AnyHistory = AtlasHistory | BloodlineHistory | FactionWebHistory | CalendarHistory | PlotBoardHistory | TimelineHistory | OathsChartHistory | WellHistory;
 
 const clonePoints = (points: Pt[]): Pt[] => points.map((p) => ({ ...p }));
 const touchProject = (projects: readonly Project[], id: string): Project[] =>
@@ -87,11 +90,18 @@ const clKey = (calendarId: string): string => `cl_${calendarId}`;
 const pbKey = (boardId: string): string => `pb_${boardId}`;
 const tlKey = (timelineId: string): string => `tl_${timelineId}`;
 const oKey = (chartId: string): string => `oc_${chartId}`;
+const wsKey = (wellId: string): string => `ws_${wellId}`;
+const WELL_KIND_LIST = ["character", "setting", "conflict", "question"];
 
 const clonePerson = (p: BloodlinePerson): BloodlinePerson => ({
   ...p,
   additionalTitles: p.additionalTitles.map((t) => ({ ...t })),
   tenures: p.tenures.map((t) => ({ ...t })),
+});
+
+const cloneWLDSnapshot = (w: WellSpring): WellSnapshot => ({
+  nodes: w.nodes.map((n) => ({ ...n })),
+  borders: w.borders.map((b) => ({ ...b })),
 });
 
 const cloneOCLSnapshot = (c: OathsChart): OathsSnapshot => ({
@@ -283,6 +293,21 @@ interface ScriptoriumState extends ProjectData {
   pushOCHistory(chartId: string): void;
   undoOC(chartId: string): void;
   redoOC(chartId: string): void;
+
+  addWellSpring(projectId: string, name?: string): WellSpring;
+  renameWellSpring(id: string, name: string): void;
+  deleteWellSpring(id: string): void;
+  addWellNode(wellId: string, init: { kind: WellKind; x: number; y: number; text?: string }): WellNode | null;
+  updateWellNode(id: string, patch: Partial<Omit<WellNode, "id">>): void;
+  moveWellNode(id: string, x: number, y: number): void;
+  deleteWellNode(id: string): void;
+  addWellBorder(wellId: string, fromId: string, toId: string, label: string): WellBorder | null;
+  updateWellBorder(id: string, label: string): void;
+  removeWellBorder(id: string): void;
+  setWellNotes(id: string, notes: string): void;
+  pushWSHistory(wellId: string): void;
+  undoWS(wellId: string): void;
+  redoWS(wellId: string): void;
 }
 
 export const useScriptorium = create<ScriptoriumState>()(
@@ -409,6 +434,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           plotBoards: s.plotBoards,
           timelines: s.timelines,
           oathsCharts: s.oathsCharts,
+          wellsprings: s.wellsprings,
         });
       },
 
@@ -2137,6 +2163,209 @@ export const useScriptorium = create<ScriptoriumState>()(
         });
       },
 
+      addWellSpring(projectId, name = "Fonte sem título") {
+        const well: WellSpring = {
+          id: newId("well"),
+          projectId,
+          name,
+          nodes: [],
+          borders: [],
+          notes: "",
+        };
+        set((s) => ({
+          wellsprings: [...(s.wellsprings ?? []), well],
+          projects: touchProject(s.projects, projectId),
+        }));
+        return well;
+      },
+
+      renameWellSpring(id, name) {
+        const well = (get().wellsprings ?? []).find((w) => w.id === id);
+        if (!well) return;
+        set((st) => ({
+          wellsprings: (st.wellsprings ?? []).map((w) => (w.id === id ? { ...w, name } : w)),
+          projects: touchProject(st.projects, well.projectId),
+        }));
+      },
+
+      deleteWellSpring(id) {
+        const s = get();
+        const well = (s.wellsprings ?? []).find((w) => w.id === id);
+        if (!well) return;
+        const histories = { ...s.histories };
+        delete histories[wsKey(id)];
+        set({
+          wellsprings: (s.wellsprings ?? []).filter((w) => w.id !== id),
+          histories,
+          projects: touchProject(s.projects, well.projectId),
+        });
+      },
+
+      addWellNode(wellId, init) {
+        const well = (get().wellsprings ?? []).find((w) => w.id === wellId);
+        if (!well) return null;
+        WELL_KIND_LIST.includes(init.kind) || (() => { throw new Error("kinds inválido"); })();
+        get().pushWSHistory(wellId);
+        const node: WellNode = { id: newId("wn"), text: "", ...init };
+        set((s) => ({
+          wellsprings: (s.wellsprings ?? []).map((w) =>
+            w.id === wellId ? { ...w, nodes: [...w.nodes, node] } : w),
+          projects: touchProject(s.projects, well.projectId),
+        }));
+        return node;
+      },
+
+      updateWellNode(id, patch) {
+        const s = get();
+        const well = (s.wellsprings ?? []).find((w) => w.nodes.some((n) => n.id === id));
+        if (!well) return;
+        get().pushWSHistory(well.id);
+        set((st) => ({
+          wellsprings: (st.wellsprings ?? []).map((w) => w.id !== well.id ? w : {
+            ...w,
+            nodes: w.nodes.map((n) => (n.id === id ? { ...n, ...patch, id: n.id } : n)),
+          }),
+          projects: touchProject(st.projects, well.projectId),
+        }));
+      },
+
+      moveWellNode(id, x, y) {
+        const s = get();
+        const well = (s.wellsprings ?? []).find((w) => w.nodes.some((n) => n.id === id));
+        if (!well) return;
+        set((st) => ({
+          wellsprings: (st.wellsprings ?? []).map((w) => w.id !== well.id ? w : {
+            ...w,
+            nodes: w.nodes.map((n) => (n.id === id ? { ...n, x, y } : n)),
+          }),
+          projects: touchProject(st.projects, well.projectId),
+        }));
+      },
+
+      deleteWellNode(id) {
+        const s = get();
+        const well = (s.wellsprings ?? []).find((w) => w.nodes.some((n) => n.id === id));
+        if (!well) return;
+        get().pushWSHistory(well.id);
+        set((st) => ({
+          wellsprings: (st.wellsprings ?? []).map((w) => w.id !== well.id ? w : {
+            ...w,
+            nodes: w.nodes.filter((n) => n.id !== id),
+            borders: w.borders.filter((b) => b.fromId !== id && b.toId !== id),
+          }),
+          projects: touchProject(st.projects, well.projectId),
+        }));
+      },
+
+      addWellBorder(wellId, fromId, toId, label) {
+        const well = (get().wellsprings ?? []).find((w) => w.id === wellId);
+        if (!well) return null;
+        if (fromId === toId) return null;
+        if (!well.nodes.some((n) => n.id === fromId) || !well.nodes.some((n) => n.id === toId)) return null;
+        const dup = well.borders.some(
+          (b) => (b.fromId === fromId && b.toId === toId) || (b.fromId === toId && b.toId === fromId),
+        );
+        if (dup) return null;
+        get().pushWSHistory(wellId);
+        const border: WellBorder = { id: newId("wbd"), fromId, toId, label };
+        set((s) => ({
+          wellsprings: (s.wellsprings ?? []).map((w) =>
+            w.id === wellId ? { ...w, borders: [...w.borders, border] } : w),
+          projects: touchProject(s.projects, well.projectId),
+        }));
+        return border;
+      },
+
+      updateWellBorder(id, label) {
+        const s = get();
+        const well = (s.wellsprings ?? []).find((w) => w.borders.some((b) => b.id === id));
+        if (!well) return;
+        get().pushWSHistory(well.id);
+        set((st) => ({
+          wellsprings: (st.wellsprings ?? []).map((w) => w.id !== well.id ? w : {
+            ...w,
+            borders: w.borders.map((b) => (b.id === id ? { ...b, label } : b)),
+          }),
+          projects: touchProject(st.projects, well.projectId),
+        }));
+      },
+
+      removeWellBorder(id) {
+        const s = get();
+        const well = (s.wellsprings ?? []).find((w) => w.borders.some((b) => b.id === id));
+        if (!well) return;
+        get().pushWSHistory(well.id);
+        set((st) => ({
+          wellsprings: (st.wellsprings ?? []).map((w) => w.id !== well.id ? w : {
+            ...w,
+            borders: w.borders.filter((b) => b.id !== id),
+          }),
+          projects: touchProject(st.projects, well.projectId),
+        }));
+      },
+
+      setWellNotes(id, notes) {
+        const well = (get().wellsprings ?? []).find((w) => w.id === id);
+        if (!well) return;
+        set((st) => ({
+          wellsprings: (st.wellsprings ?? []).map((w) => (w.id === id ? { ...w, notes } : w)),
+          projects: touchProject(st.projects, well.projectId),
+        }));
+      },
+
+      pushWSHistory(wellId) {
+        set((st) => {
+          const well = (st.wellsprings ?? []).find((w) => w.id === wellId);
+          if (!well) return {};
+          const key = wsKey(wellId);
+          const h = (st.histories[key] as WellHistory | undefined) ?? { undo: [], redo: [] };
+          const undo = [...h.undo, cloneWLDSnapshot(well)];
+          if (undo.length > HISTORY_CAP) undo.shift();
+          const entry: WellHistory = { undo, redo: [] };
+          return { histories: { ...st.histories, [key]: entry } };
+        });
+      },
+
+      undoWS(wellId) {
+        set((st) => {
+          const key = wsKey(wellId);
+          const h = st.histories[key] as WellHistory | undefined;
+          const well = (st.wellsprings ?? []).find((w) => w.id === wellId);
+          if (!h || h.undo.length === 0 || !well) return {};
+          const snap = h.undo[h.undo.length - 1];
+          const entry: WellHistory = {
+            undo: h.undo.slice(0, -1),
+            redo: [...h.redo, cloneWLDSnapshot(well)],
+          };
+          return {
+            histories: { ...st.histories, [key]: entry },
+            wellsprings: (st.wellsprings ?? []).map((w) => w.id === wellId
+              ? { ...w, nodes: snap.nodes.map((n) => ({ ...n })), borders: snap.borders.map((b) => ({ ...b })) }
+              : w),
+          };
+        });
+      },
+
+      redoWS(wellId) {
+        set((st) => {
+          const key = wsKey(wellId);
+          const h = st.histories[key] as WellHistory | undefined;
+          const well = (st.wellsprings ?? []).find((w) => w.id === wellId);
+          if (!h || h.redo.length === 0 || !well) return {};
+          const snap = h.redo[h.redo.length - 1];
+          const entry: WellHistory = {
+            undo: [...h.undo, cloneWLDSnapshot(well)],
+            redo: h.redo.slice(0, -1),
+          };
+          return {
+            histories: { ...st.histories, [key]: entry },
+            wellsprings: (st.wellsprings ?? []).map((w) => w.id === wellId
+              ? { ...w, nodes: snap.nodes.map((n) => ({ ...n })), borders: snap.borders.map((b) => ({ ...b })) }
+              : w),
+          };
+        });
+      },
+
       pushCLHistory(id) {
         set((st) => {
           const cal = (st.calendars ?? []).find((c) => c.id === id);
@@ -2273,6 +2502,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           plotBoards: s.plotBoards,
           timelines: s.timelines,
           oathsCharts: s.oathsCharts,
+          wellsprings: s.wellsprings,
           seedFlag: s.seedFlag,
         };
       },

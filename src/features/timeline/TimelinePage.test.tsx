@@ -178,7 +178,7 @@ describe("TimelinePage", () => {
     const labels = Array.from(document.querySelectorAll(".rail-link .rail-label")).map(
       (el) => el.textContent,
     );
-    expect(labels).toEqual(["Visão Geral", "Atlas", "Códex", "Cronologia", "Linhagem", "Frações", "Calendário", "Planos", "Linha do Tempo", "Oaths", "Livro"]);
+    expect(labels).toEqual(["Visão Geral", "Atlas", "Códex", "Cronologia", "Linhagem", "Frações", "Calendário", "Planos", "Linha do Tempo", "Oaths", "Wellspring", "Livro"]);
     expect(screen.getByRole("link", { name: "Cronologia" }).getAttribute("class")).toContain("active");
   });
 });

@@ -6,6 +6,7 @@ import type {
   PlotBoard, PlotCard, PlotWire, PlotPart,
   TimelineWire, TimelineBead, TimelineSegment,
   OathsChart, OathMember, OathLink,
+  WellSpring, WellNode, WellBorder,
 } from "../domain/types";
 import { ENTRY_CATEGORIES, PIN_TYPES } from "../domain/types";
 
@@ -213,6 +214,27 @@ const isOathsChart = (v: unknown): boolean => {
     && isStr(c.notes);
 };
 
+const WELL_KINDS = ["character", "setting", "conflict", "question"];
+
+const isWellNode = (v: unknown): boolean => {
+  const n = v as WellNode;
+  return !!n && isStr(n.id) && (WELL_KINDS as string[]).includes(n.kind)
+    && isNum(n.x) && isNum(n.y) && isStr(n.text);
+};
+
+const isWellBorder = (v: unknown): boolean => {
+  const b = v as WellBorder;
+  return !!b && isStr(b.id) && isStr(b.fromId) && isStr(b.toId) && isStr(b.label);
+};
+
+const isWellSpring = (v: unknown): boolean => {
+  const w = v as WellSpring;
+  return !!w && isStr(w.id) && isStr(w.projectId) && isStr(w.name)
+    && isArr(w.nodes) && w.nodes.every(isWellNode)
+    && isArr(w.borders) && w.borders.every(isWellBorder)
+    && isStr(w.notes);
+};
+
 const isBloodline = (v: unknown): v is Bloodline => {
   const b = v as Bloodline;
   return !!b && isStr(b.id) && isStr(b.projectId) && isStr(b.name)
@@ -239,12 +261,14 @@ export function validateProjectData(v: unknown): boolean {
     && (d.timelines === undefined
       || (isArr(d.timelines) && d.timelines.every(isTimelineWire)))
     && (d.oathsCharts === undefined
-      || (isArr(d.oathsCharts) && d.oathsCharts.every(isOathsChart)));
+      || (isArr(d.oathsCharts) && d.oathsCharts.every(isOathsChart)))
+    && (d.wellsprings === undefined
+      || (isArr(d.wellsprings) && d.wellsprings.every(isWellSpring)));
 }
 
 /** Fresh shape: bloodlines is optional in the schema but a fresh state always carries []. */
 export function emptyProjectData(): ProjectData & { bloodlines: Bloodline[] } {
-  return { projects: [], entries: [], atlases: [], manuscripts: [], images: {}, bloodlines: [], factionWebs: [], calendars: [], plotBoards: [], timelines: [], oathsCharts: [] };
+  return { projects: [], entries: [], atlases: [], manuscripts: [], images: {}, bloodlines: [], factionWebs: [], calendars: [], plotBoards: [], timelines: [], oathsCharts: [], wellsprings: [] };
 }
 
 export function serialize(data: ProjectData): string {
@@ -274,5 +298,6 @@ export function parseExport(text: string): ProjectData {
     plotBoards: d.plotBoards ?? [],
     timelines: d.timelines ?? [],
     oathsCharts: d.oathsCharts ?? [],
+    wellsprings: d.wellsprings ?? [],
   };
 }

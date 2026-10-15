@@ -15,6 +15,7 @@ const SECTIONS = [
   { key: "plotboard", label: "Planos", to: "plotboard" },
   { key: "linewheel", label: "Linha do Tempo", to: "linewheel" },
   { key: "oaths", label: "Oaths", to: "oaths" },
+  { key: "wellspring", label: "Wellspring", to: "wellspring" },
   { key: "manuscript", label: "Livro", to: "manuscript" },
 ] as const;
 

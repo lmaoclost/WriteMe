@@ -259,6 +259,32 @@ export type OathsChart = {
   notes: string;
 };
 
+export type WellKind = "character" | "setting" | "conflict" | "question";
+
+export type WellNode = {
+  id: Id;
+  kind: WellKind;
+  x: number;
+  y: number;
+  text: string;
+};
+
+export type WellBorder = {
+  id: Id;
+  fromId: Id;
+  toId: Id;
+  label: string;
+};
+
+export type WellSpring = {
+  id: Id;
+  projectId: Id;
+  name: string;
+  nodes: WellNode[];
+  borders: WellBorder[];
+  notes: string;
+};
+
 export interface ProjectData {
   projects: Project[];
   entries: WorldEntry[];
@@ -271,6 +297,7 @@ export interface ProjectData {
   plotBoards?: PlotBoard[];
   timelines?: TimelineWire[];
   oathsCharts?: OathsChart[];
+  wellsprings?: WellSpring[];
 }
 
 export const ENTRY_CATEGORIES: readonly EntryCategory[] = [

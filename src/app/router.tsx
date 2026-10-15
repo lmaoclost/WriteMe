@@ -16,6 +16,8 @@ import { TimelineIndexPage } from "../features/timelinecanvas/TimelineIndexPage"
 import { TimelineCanvasPage } from "../features/timelinecanvas/TimelineCanvasPage";
 import { OathsIndexPage } from "../features/oaths/OathsIndexPage";
 import { OathsChartPage } from "../features/oaths/OathsChartPage";
+import { WellSpringIndexPage } from "../features/wellspring/WellSpringIndexPage";
+import { WellSpringPage } from "../features/wellspring/WellSpringPage";
 import { ManuscriptPage } from "../features/manuscript/ManuscriptPage";
 import { OverviewPage } from "../features/workspace/OverviewPage";
 import { WorkspaceLayout } from "../features/workspace/WorkspaceLayout";
@@ -100,6 +102,16 @@ function OathsChartRoute() {
   return <OathsChartPage chartId={chartId ?? ""} />;
 }
 
+function WellSpringIndexRoute() {
+  const { projectId } = useParams();
+  return <WellSpringIndexPage projectId={projectId ?? ""} />;
+}
+
+function WellSpringRoute() {
+  const { wellId } = useParams();
+  return <WellSpringPage wellId={wellId ?? ""} />;
+}
+
 export function AppRouter() {
   return (
     <Routes>
@@ -122,6 +134,8 @@ export function AppRouter() {
         <Route path="linewheel/:timelineId" element={<TimelineWheelRoute />} />
         <Route path="oaths" element={<OathsIndexRoute />} />
         <Route path="oaths/:chartId" element={<OathsChartRoute />} />
+        <Route path="wellspring" element={<WellSpringIndexRoute />} />
+        <Route path="wellspring/:wellId" element={<WellSpringRoute />} />
         <Route path="manuscript" element={<ManuscriptRoute />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
