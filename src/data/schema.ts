@@ -5,6 +5,7 @@ import type {
   CustomCalendar, CalendarEvent, EntrySection,
   PlotBoard, PlotCard, PlotWire, PlotPart,
   TimelineWire, TimelineBead, TimelineSegment,
+  OathsChart, OathMember, OathLink,
 } from "../domain/types";
 import { ENTRY_CATEGORIES, PIN_TYPES } from "../domain/types";
 
@@ -186,6 +187,32 @@ const isTimelineWire = (v: unknown): boolean => {
     && isStr(t.notes);
 };
 
+const OATH_SEAT_STATUS = ["held", "vacant", "disputed"];
+const OATH_LINK_STATUS = ["sworn", "strained", "broken"];
+const OATH_KINDS = ["primary", "joint"];
+
+const isOathMember = (v: unknown): boolean => {
+  const m = v as OathMember;
+  return !!m && isStr(m.id) && isStr(m.name) && isStr(m.color)
+    && (OATH_SEAT_STATUS as string[]).includes(m.seatStatus)
+    && optionalStr(m.title) && optionalStr(m.org) && optionalStr(m.notes);
+};
+
+const isOathLink = (v: unknown): boolean => {
+  const l = v as OathLink;
+  return !!l && isStr(l.id) && isStr(l.subordinateId) && isStr(l.superiorId)
+    && (OATH_KINDS as string[]).includes(l.kind)
+    && (OATH_LINK_STATUS as string[]).includes(l.status);
+};
+
+const isOathsChart = (v: unknown): boolean => {
+  const c = v as OathsChart;
+  return !!c && isStr(c.id) && isStr(c.projectId) && isStr(c.name)
+    && isArr(c.members) && c.members.every(isOathMember)
+    && isArr(c.oathLinks) && c.oathLinks.every(isOathLink)
+    && isStr(c.notes);
+};
+
 const isBloodline = (v: unknown): v is Bloodline => {
   const b = v as Bloodline;
   return !!b && isStr(b.id) && isStr(b.projectId) && isStr(b.name)
@@ -210,12 +237,14 @@ export function validateProjectData(v: unknown): boolean {
     && (d.plotBoards === undefined
       || (isArr(d.plotBoards) && d.plotBoards.every(isPlotBoard)))
     && (d.timelines === undefined
-      || (isArr(d.timelines) && d.timelines.every(isTimelineWire)));
+      || (isArr(d.timelines) && d.timelines.every(isTimelineWire)))
+    && (d.oathsCharts === undefined
+      || (isArr(d.oathsCharts) && d.oathsCharts.every(isOathsChart)));
 }
 
 /** Fresh shape: bloodlines is optional in the schema but a fresh state always carries []. */
 export function emptyProjectData(): ProjectData & { bloodlines: Bloodline[] } {
-  return { projects: [], entries: [], atlases: [], manuscripts: [], images: {}, bloodlines: [], factionWebs: [], calendars: [], plotBoards: [], timelines: [] };
+  return { projects: [], entries: [], atlases: [], manuscripts: [], images: {}, bloodlines: [], factionWebs: [], calendars: [], plotBoards: [], timelines: [], oathsCharts: [] };
 }
 
 export function serialize(data: ProjectData): string {
@@ -244,5 +273,6 @@ export function parseExport(text: string): ProjectData {
     calendars: d.calendars ?? [],
     plotBoards: d.plotBoards ?? [],
     timelines: d.timelines ?? [],
+    oathsCharts: d.oathsCharts ?? [],
   };
 }

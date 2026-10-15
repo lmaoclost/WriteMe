@@ -14,6 +14,8 @@ import { PlotBoardPage } from "../features/plotboard/PlotBoardPage";
 import { PlotBoardIndexPage } from "../features/plotboard/PlotBoardIndexPage";
 import { TimelineIndexPage } from "../features/timelinecanvas/TimelineIndexPage";
 import { TimelineCanvasPage } from "../features/timelinecanvas/TimelineCanvasPage";
+import { OathsIndexPage } from "../features/oaths/OathsIndexPage";
+import { OathsChartPage } from "../features/oaths/OathsChartPage";
 import { ManuscriptPage } from "../features/manuscript/ManuscriptPage";
 import { OverviewPage } from "../features/workspace/OverviewPage";
 import { WorkspaceLayout } from "../features/workspace/WorkspaceLayout";
@@ -88,6 +90,16 @@ function TimelineWheelRoute() {
   return <TimelineCanvasPage timelineId={timelineId ?? ""} />;
 }
 
+function OathsIndexRoute() {
+  const { projectId } = useParams();
+  return <OathsIndexPage projectId={projectId ?? ""} />;
+}
+
+function OathsChartRoute() {
+  const { chartId } = useParams();
+  return <OathsChartPage chartId={chartId ?? ""} />;
+}
+
 export function AppRouter() {
   return (
     <Routes>
@@ -108,6 +120,8 @@ export function AppRouter() {
         <Route path="plotboard/:boardId" element={<PlotBoardRoute />} />
         <Route path="linewheel" element={<TimelineIndexRoute />} />
         <Route path="linewheel/:timelineId" element={<TimelineWheelRoute />} />
+        <Route path="oaths" element={<OathsIndexRoute />} />
+        <Route path="oaths/:chartId" element={<OathsChartRoute />} />
         <Route path="manuscript" element={<ManuscriptRoute />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

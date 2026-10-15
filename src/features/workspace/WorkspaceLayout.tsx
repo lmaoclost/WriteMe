@@ -14,6 +14,7 @@ const SECTIONS = [
   { key: "calendar", label: "Calendário", to: "calendar" },
   { key: "plotboard", label: "Planos", to: "plotboard" },
   { key: "linewheel", label: "Linha do Tempo", to: "linewheel" },
+  { key: "oaths", label: "Oaths", to: "oaths" },
   { key: "manuscript", label: "Livro", to: "manuscript" },
 ] as const;
 

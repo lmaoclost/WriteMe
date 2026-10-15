@@ -7,6 +7,7 @@ import type {
   CustomCalendar, CalendarEvent,
   PlotBoard, PlotCard, PlotWire,
   TimelineWire, TimelineBead, TimelineSegment,
+  OathsChart, OathMember, OathLink,
 } from "../domain/types";
 import { newId } from "../domain/id";
 import type { Pt } from "../domain/geometry";
@@ -60,7 +61,9 @@ export interface PlotBoardSnapshot { acts: PlotBoard["acts"]; hasPrologue: boole
 export interface PlotBoardHistory { undo: PlotBoardSnapshot[]; redo: PlotBoardSnapshot[] }
 export interface TimelineSnapshot { beads: TimelineBead[]; segments: TimelineSegment[] }
 export interface TimelineHistory { undo: TimelineSnapshot[]; redo: TimelineSnapshot[] }
-export type AnyHistory = AtlasHistory | BloodlineHistory | FactionWebHistory | CalendarHistory | PlotBoardHistory | TimelineHistory;
+export interface OathsSnapshot { members: OathMember[]; oathLinks: OathLink[] }
+export interface OathsChartHistory { undo: OathsSnapshot[]; redo: OathsSnapshot[] }
+export type AnyHistory = AtlasHistory | BloodlineHistory | FactionWebHistory | CalendarHistory | PlotBoardHistory | TimelineHistory | OathsChartHistory;
 
 const clonePoints = (points: Pt[]): Pt[] => points.map((p) => ({ ...p }));
 const touchProject = (projects: readonly Project[], id: string): Project[] =>
@@ -83,11 +86,17 @@ const fwKey = (webId: string): string => `fw_${webId}`;
 const clKey = (calendarId: string): string => `cl_${calendarId}`;
 const pbKey = (boardId: string): string => `pb_${boardId}`;
 const tlKey = (timelineId: string): string => `tl_${timelineId}`;
+const oKey = (chartId: string): string => `oc_${chartId}`;
 
 const clonePerson = (p: BloodlinePerson): BloodlinePerson => ({
   ...p,
   additionalTitles: p.additionalTitles.map((t) => ({ ...t })),
   tenures: p.tenures.map((t) => ({ ...t })),
+});
+
+const cloneOCLSnapshot = (c: OathsChart): OathsSnapshot => ({
+  members: c.members.map((m) => ({ ...m })),
+  oathLinks: c.oathLinks.map((l) => ({ ...l })),
 });
 
 const cloneTLSnapshot = (t: TimelineWire): TimelineSnapshot => ({
@@ -261,6 +270,19 @@ interface ScriptoriumState extends ProjectData {
   pushTLHistory(id: string): void;
   undoTL(id: string): void;
   redoTL(id: string): void;
+
+  addOathsChart(projectId: string, name?: string): OathsChart;
+  renameOathsChart(id: string, name: string): void;
+  deleteOathsChart(id: string): void;
+  addOathMember(chartId: string, superiorId?: string, init?: { name?: string; kind?: "primary" | "joint" }): OathMember | null;
+  updateOathMember(id: string, patch: Partial<Omit<OathMember, "id">>): void;
+  deleteOathMember(id: string): void;
+  setOathStatus(linkId: string, status: OathLink["status"]): void;
+  setOathLinkKind(linkId: string, kind: OathLink["kind"]): void;
+  setOathsNotes(id: string, notes: string): void;
+  pushOCHistory(chartId: string): void;
+  undoOC(chartId: string): void;
+  redoOC(chartId: string): void;
 }
 
 export const useScriptorium = create<ScriptoriumState>()(
@@ -386,6 +408,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           calendars: s.calendars,
           plotBoards: s.plotBoards,
           timelines: s.timelines,
+          oathsCharts: s.oathsCharts,
         });
       },
 
@@ -1913,6 +1936,207 @@ export const useScriptorium = create<ScriptoriumState>()(
         });
       },
 
+      addOathsChart(projectId, name = "Hierarquia sem título") {
+        const chart: OathsChart = {
+          id: newId("oath"),
+          projectId,
+          name,
+          members: [],
+          oathLinks: [],
+          notes: "",
+        };
+        set((s) => ({
+          oathsCharts: [...(s.oathsCharts ?? []), chart],
+          projects: touchProject(s.projects, projectId),
+        }));
+        return chart;
+      },
+
+      renameOathsChart(id, name) {
+        const chart = (get().oathsCharts ?? []).find((c) => c.id === id);
+        if (!chart) return;
+        set((st) => ({
+          oathsCharts: (st.oathsCharts ?? []).map((c) => (c.id === id ? { ...c, name } : c)),
+          projects: touchProject(st.projects, chart.projectId),
+        }));
+      },
+
+      deleteOathsChart(id) {
+        const s = get();
+        const chart = (s.oathsCharts ?? []).find((c) => c.id === id);
+        if (!chart) return;
+        const histories = { ...s.histories };
+        delete histories[oKey(id)];
+        set({
+          oathsCharts: (s.oathsCharts ?? []).filter((c) => c.id !== id),
+          histories,
+          projects: touchProject(s.projects, chart.projectId),
+        });
+      },
+
+      /** superiorId undefined = fundador; com superior cria oath "sworn/primary". */
+      addOathMember(chartId, superiorId, init) {
+        const chart = (get().oathsCharts ?? []).find((c) => c.id === chartId);
+        if (!chart) return null;
+        if (superiorId && !chart.members.some((m) => m.id === superiorId)) return null;
+        get().pushOCHistory(chartId);
+        const member: OathMember = {
+          id: newId("mem"),
+          name: init?.name ?? "Sem nome",
+          seatStatus: "held",
+          color: "#7c5cbf",
+        };
+        set((s) => ({
+          oathsCharts: (s.oathsCharts ?? []).map((c) => {
+            if (c.id !== chartId) return c;
+            const oathLinks = superiorId
+              ? [...c.oathLinks, {
+                  id: `oath_${newId("")}`,
+                  subordinateId: member.id,
+                  superiorId,
+                  kind: (init?.kind ?? "primary"),
+                  status: "sworn",
+                } as OathLink]
+              : c.oathLinks;
+            return { ...c, members: [...c.members, member], oathLinks };
+          }),
+          projects: touchProject(s.projects, chart.projectId),
+        }));
+        return member;
+      },
+
+      updateOathMember(id, patch) {
+        const s = get();
+        const chart = (s.oathsCharts ?? []).find((c) => c.members.some((m) => m.id === id));
+        if (!chart) return;
+        get().pushOCHistory(chart.id);
+        set((st) => ({
+          oathsCharts: (st.oathsCharts ?? []).map((c) => c.id !== chart.id ? c : {
+            ...c,
+            members: c.members.map((m) => (m.id === id ? { ...m, ...patch, id: m.id } : m)),
+          }),
+          projects: touchProject(st.projects, chart.projectId),
+        }));
+      },
+
+      /** Removes the member AND the whole sworn subtree below it (an oath break
+       *  or death leaves no orphan chain). */
+      deleteOathMember(id) {
+        const s = get();
+        const chart = (s.oathsCharts ?? []).find((c) => c.members.some((m) => m.id === id));
+        if (!chart) return;
+        get().pushOCHistory(chart.id);
+        const doomed = new Set<string>([id]);
+        let grew = true;
+        while (grew) {
+          grew = false;
+          for (const l of chart.oathLinks) {
+            if (doomed.has(l.superiorId) && !doomed.has(l.subordinateId)) {
+              doomed.add(l.subordinateId);
+              grew = true;
+            }
+          }
+        }
+        set((st) => ({
+          oathsCharts: (st.oathsCharts ?? []).map((c) => c.id !== chart.id ? c : {
+            ...c,
+            members: c.members.filter((m) => !doomed.has(m.id)),
+            oathLinks: c.oathLinks.filter((l) => !doomed.has(l.subordinateId) && !doomed.has(l.superiorId)),
+          }),
+          projects: touchProject(st.projects, chart.projectId),
+        }));
+      },
+
+      setOathStatus(linkId, status) {
+        const s = get();
+        const chart = (s.oathsCharts ?? []).find((c) => c.oathLinks.some((l) => l.id === linkId));
+        if (!chart) return;
+        get().pushOCHistory(chart.id);
+        set((st) => ({
+          oathsCharts: (st.oathsCharts ?? []).map((c) => c.id !== chart.id ? c : {
+            ...c,
+            oathLinks: c.oathLinks.map((l) => (l.id === linkId ? { ...l, status } : l)),
+          }),
+          projects: touchProject(st.projects, chart.projectId),
+        }));
+      },
+
+      setOathLinkKind(linkId, kind) {
+        const s = get();
+        const chart = (s.oathsCharts ?? []).find((c) => c.oathLinks.some((l) => l.id === linkId));
+        if (!chart) return;
+        get().pushOCHistory(chart.id);
+        set((st) => ({
+          oathsCharts: (st.oathsCharts ?? []).map((c) => c.id !== chart.id ? c : {
+            ...c,
+            oathLinks: c.oathLinks.map((l) => (l.id === linkId ? { ...l, kind } : l)),
+          }),
+          projects: touchProject(st.projects, chart.projectId),
+        }));
+      },
+
+      setOathsNotes(id, notes) {
+        const chart = (get().oathsCharts ?? []).find((c) => c.id === id);
+        if (!chart) return;
+        set((st) => ({
+          oathsCharts: (st.oathsCharts ?? []).map((c) => (c.id === id ? { ...c, notes } : c)),
+          projects: touchProject(st.projects, chart.projectId),
+        }));
+      },
+
+      pushOCHistory(chartId) {
+        set((st) => {
+          const chart = (st.oathsCharts ?? []).find((c) => c.id === chartId);
+          if (!chart) return {};
+          const key = oKey(chartId);
+          const h = (st.histories[key] as OathsChartHistory | undefined) ?? { undo: [], redo: [] };
+          const undo = [...h.undo, cloneOCLSnapshot(chart)];
+          if (undo.length > HISTORY_CAP) undo.shift();
+          const entry: OathsChartHistory = { undo, redo: [] };
+          return { histories: { ...st.histories, [key]: entry } };
+        });
+      },
+
+      undoOC(chartId) {
+        set((st) => {
+          const key = oKey(chartId);
+          const h = st.histories[key] as OathsChartHistory | undefined;
+          const chart = (st.oathsCharts ?? []).find((c) => c.id === chartId);
+          if (!h || h.undo.length === 0 || !chart) return {};
+          const snap = h.undo[h.undo.length - 1];
+          const entry: OathsChartHistory = {
+            undo: h.undo.slice(0, -1),
+            redo: [...h.redo, cloneOCLSnapshot(chart)],
+          };
+          return {
+            histories: { ...st.histories, [key]: entry },
+            oathsCharts: (st.oathsCharts ?? []).map((c) => c.id === chartId
+              ? { ...c, members: snap.members.map((m) => ({ ...m })), oathLinks: snap.oathLinks.map((l) => ({ ...l })) }
+              : c),
+          };
+        });
+      },
+
+      redoOC(chartId) {
+        set((st) => {
+          const key = oKey(chartId);
+          const h = st.histories[key] as OathsChartHistory | undefined;
+          const chart = (st.oathsCharts ?? []).find((c) => c.id === chartId);
+          if (!h || h.redo.length === 0 || !chart) return {};
+          const snap = h.redo[h.redo.length - 1];
+          const entry: OathsChartHistory = {
+            undo: [...h.undo, cloneOCLSnapshot(chart)],
+            redo: h.redo.slice(0, -1),
+          };
+          return {
+            histories: { ...st.histories, [key]: entry },
+            oathsCharts: (st.oathsCharts ?? []).map((c) => c.id === chartId
+              ? { ...c, members: snap.members.map((m) => ({ ...m })), oathLinks: snap.oathLinks.map((l) => ({ ...l })) }
+              : c),
+          };
+        });
+      },
+
       pushCLHistory(id) {
         set((st) => {
           const cal = (st.calendars ?? []).find((c) => c.id === id);
@@ -2048,6 +2272,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           calendars: s.calendars,
           plotBoards: s.plotBoards,
           timelines: s.timelines,
+          oathsCharts: s.oathsCharts,
           seedFlag: s.seedFlag,
         };
       },

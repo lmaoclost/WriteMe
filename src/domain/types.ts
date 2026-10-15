@@ -232,6 +232,33 @@ export type TimelineWire = {
   notes: string;
 };
 
+export type OathMember = {
+  id: Id;
+  name: string;
+  title?: string;
+  org?: string;
+  notes?: string;
+  seatStatus: "held" | "vacant" | "disputed";
+  color: string;
+};
+
+export type OathLink = {
+  id: Id;
+  subordinateId: Id;
+  superiorId: Id;
+  kind: "primary" | "joint";
+  status: "sworn" | "strained" | "broken";
+};
+
+export type OathsChart = {
+  id: Id;
+  projectId: Id;
+  name: string;
+  members: OathMember[];
+  oathLinks: OathLink[];
+  notes: string;
+};
+
 export interface ProjectData {
   projects: Project[];
   entries: WorldEntry[];
@@ -243,6 +270,7 @@ export interface ProjectData {
   calendars?: CustomCalendar[];
   plotBoards?: PlotBoard[];
   timelines?: TimelineWire[];
+  oathsCharts?: OathsChart[];
 }
 
 export const ENTRY_CATEGORIES: readonly EntryCategory[] = [
