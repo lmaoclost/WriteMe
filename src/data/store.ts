@@ -16,6 +16,7 @@ import type { Pt } from "../domain/geometry";
 import { isMeaningful } from "../domain/geometry";
 import { emptyProjectData, serialize, parseExport } from "./schema";
 import { templateSections } from "../features/entries/categories";
+import { defaultBindery } from "./schema";
 import { seedDemoProject } from "./seed";
 import { claimRest, fitGap } from "./clip";
 import { getLastRegionColor } from "../features/atlas/panels/recentColors";
@@ -190,6 +191,7 @@ interface ScriptoriumState extends ProjectData {
   renameManuscript(id: string, title: string): void;
   setManuscriptAuthor(id: string, author: string): void;
   deleteManuscript(id: string): void;
+  setBindery(manuscriptId: string, patch: Partial<NonNullable<Manuscript["bindery"]>>): void;
   addChapter(manuscriptId: string, heading?: string): Chapter | null;
   updateChapter(chapterId: string, patch: Partial<Omit<Chapter, "id">>): void;
   deleteChapter(chapterId: string): void;
@@ -670,6 +672,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           title,
           author: "",
           chapters: [],
+          bindery: defaultBindery(),
         };
         set((s) => ({
           manuscripts: [...s.manuscripts, manuscript],
@@ -705,6 +708,18 @@ export const useScriptorium = create<ScriptoriumState>()(
         // Chapters hold no images — nothing to release.
         set((st) => ({
           manuscripts: st.manuscripts.filter((x) => x.id !== id),
+          projects: touchProject(st.projects, m.projectId),
+        }));
+      },
+
+      setBindery(manuscriptId, patch) {
+        const m = get().manuscripts.find((x) => x.id === manuscriptId);
+        if (!m) return;
+        set((st) => ({
+          manuscripts: st.manuscripts.map((x) => x.id !== manuscriptId ? x : {
+            ...x,
+            bindery: { ...defaultBindery(), ...(x.bindery ?? {}), ...patch },
+          }),
           projects: touchProject(st.projects, m.projectId),
         }));
       },

@@ -182,6 +182,7 @@ export function seedDemoProject() {
     projectId: project.id,
     title: "A Coroa e o Rio",
     author: "Renan",
+    bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: true, runningHead: true, titlePage: true, toc: true, glossary: false },
     chapters: [
       ch("Arco da Coroa", "Havia um ditado em Vellmora: a cidade se fecha quando o rio fala. Nessa manhã o rio falava baixo, e o vigia de turno esticou o pescoço para sobre as três pontes — nada vindo do sul, só a poeira comum do mercado...", 0),
       ch("O Tribunal do Selo", "A sala dos selos tinha cheiro de cera quente e papel velho. A juíza de cabelos brancos pôs o último documento sobre a mesa e disse: — Rompeu o selo, rompeu o nome. Ainda tem algo a dizer antes que a cera esfrie?...", 1),

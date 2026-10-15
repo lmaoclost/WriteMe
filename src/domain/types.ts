@@ -63,6 +63,17 @@ export interface Atlas {
   pins: Pin[];
 }
 
+export type BinderyConfig = {
+  font: string;           // stack do livro
+  trim: string;           // "6x9" etc.
+  dropCaps: boolean;
+  runningHead: boolean;
+  titlePage: boolean;
+  dedication?: string;
+  toc: boolean;
+  glossary: boolean;
+};
+
 export interface Chapter {
   id: Id;
   heading: string;
@@ -82,6 +93,7 @@ export interface Manuscript {
   title: string;
   author: string;
   chapters: Chapter[];
+  bindery?: BinderyConfig;
 }
 
 export interface BloodlineTitle { title: string }

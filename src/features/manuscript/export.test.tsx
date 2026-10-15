@@ -311,8 +311,10 @@ describe("PDF export", () => {
     // Portal regression: the print book must live on document.body, outside the app shell.
     expect(printBook.parentElement).toBe(document.body);
     expect(printBook.closest(".workspace")).toBeNull();
+    // TOC (front matter) renders its own h2 first; chapter h2s come after
     expect(printBook.querySelector("h1")?.textContent).toBe("Cantar de Vellmora");
-    expect(printBook.querySelector("h2")?.textContent).toBe("Prólogo");
+    expect(printBook.querySelector(".toc h2")?.textContent).toBe("Conteúdo");
+    expect(printBook.querySelector(".chapter h2")?.textContent).toBe("Prólogo");
     await waitFor(() => expect(printSpy).toHaveBeenCalled());
   });
 

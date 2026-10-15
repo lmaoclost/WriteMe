@@ -170,6 +170,13 @@ export function ExportTools({ manuscript }: ExportToolsProps) {
         >
           Exportar Word
         </button>
+        <a
+          className="book-export-btn bindery-link"
+          href={`../bindery/${manuscript.id}`}
+          aria-label="Abrir encadernação"
+        >
+          Encadernar ✦
+        </a>
       </div>
       {/* Portal to body keeps .print-book outside .workspace so print CSS can hide the shell. */}
       {printing

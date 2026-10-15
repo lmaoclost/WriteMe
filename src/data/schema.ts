@@ -62,10 +62,23 @@ const isChapter = (v: unknown): boolean => {
     && optionalStr(c.linkedCalendarId) && optionalStr(c.calendarDayKey);
 };
 
+export const BIND_TRIMS = ["6x9", "5x8", "5.5x8.5", "5.25x8", "6.14x9.21", "7x10"];
+export function defaultBindery() {
+  return { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: false };
+}
+const isBindery = (v: unknown): boolean => {
+  const b = v as Manuscript["bindery"];
+  return !!b && isStr(b.font) && isStr(b.trim) && (BIND_TRIMS as string[]).includes(b.trim)
+    && typeof b.dropCaps === "boolean" && typeof b.runningHead === "boolean"
+    && typeof b.titlePage === "boolean" && typeof b.toc === "boolean" && typeof b.glossary === "boolean"
+    && optionalStr(b.dedication);
+};
+
 const isManuscript = (v: unknown): v is Manuscript => {
   const m = v as Manuscript;
   return !!m && isStr(m.id) && isStr(m.projectId) && isStr(m.title) && isStr(m.author)
-    && isArr(m.chapters) && m.chapters.every(isChapter);
+    && isArr(m.chapters) && m.chapters.every(isChapter)
+    && (m.bindery === undefined || isBindery(m.bindery));
 };
 
 const isProject = (v: unknown): v is Project => {
