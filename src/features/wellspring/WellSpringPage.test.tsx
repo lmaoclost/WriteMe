@@ -102,8 +102,8 @@ describe("WellSpringIndexPage", () => {
     seed();
     render(<MemoryRouter><WellSpringIndexPage projectId="prj_1" /></MemoryRouter>);
     expect(screen.getByText("A Guerra do Selo")).toBeInTheDocument();
-    fireEvent.click(screen.getByTitle("Excluir fonte"));
-    fireEvent.click(screen.getByRole("button", { name: "Excluir" }));
+    fireEvent.click(screen.getByTitle("Delete wellspring"));
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     expect(store().wellsprings).toHaveLength(0);
   });
 });

@@ -117,8 +117,8 @@ describe("PlotBoardIndexPage", () => {
     seedBoard();
     render(<MemoryRouter><PlotBoardIndexPage projectId="prj_1" /></MemoryRouter>);
     expect(screen.getByText("A Guerra")).toBeInTheDocument();
-    fireEvent.click(screen.getByTitle("Excluir plano"));
-    fireEvent.click(screen.getByRole("button", { name: "Excluir" }));
+    fireEvent.click(screen.getByTitle("Delete plot board"));
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     expect(store().plotBoards).toHaveLength(0);
   });
 });

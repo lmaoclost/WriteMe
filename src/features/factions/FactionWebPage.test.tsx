@@ -119,10 +119,10 @@ describe("FactionWebPage", () => {
 describe("FactionWebServicePage (index)", () => {
   it("renders cards + creates via modal", () => {
     render(<MemoryRouter><FactionWebServicePage projectId="prj_1" /></MemoryRouter>);
-    expect(screen.getByText(/Nenhuma teia ainda/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Nova teia" }));
-    fireEvent.change(screen.getByLabelText("Nome"), { target: { value: "Selo" } });
-    fireEvent.click(screen.getByRole("button", { name: "Criar" }));
+    expect(screen.getByText(/No saved faction webs found. Create a new one first!/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Forge New Faction Web" }));
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Selo" } });
+    fireEvent.click(screen.getByRole("button", { name: "Forge" }));
     expect(store().factionWebs![0].name).toBe("Selo");
     expect(screen.getByText("Selo")).toBeInTheDocument();
   });
@@ -130,8 +130,8 @@ describe("FactionWebServicePage (index)", () => {
   it("delete two-step", () => {
     seedWeb();
     render(<MemoryRouter><FactionWebServicePage projectId="prj_1" /></MemoryRouter>);
-    fireEvent.click(screen.getByTitle("Excluir teia"));
-    fireEvent.click(screen.getByRole("button", { name: "Excluir" }));
+    fireEvent.click(screen.getByTitle("Delete faction web"));
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     expect(store().factionWebs).toHaveLength(0);
   });
 });

@@ -18,15 +18,15 @@ export function PlotBoardIndexPage({ projectId }: { projectId: string }) {
   return (
     <div className="bloodline-index">
       <header className="library-head">
-        <h1>Planos</h1>
-        <p className="library-sub">A história como cenas que se movem — atos, POV e beats.</p>
-        <Button onClick={() => setCreating(true)}>Novo plano</Button>
+        <h1>Plot board</h1>
+        <p className="library-sub">Plan your story as scenes you can move around.</p>
+        <Button onClick={() => setCreating(true)}>Forge New Plot Board</Button>
       </header>
 
       {mine.length === 0 ? (
         <div className="empty">
-          <p>Nenhum plano ainda.</p>
-          <p className="empty-hint">Escreva a primeira cena do plano.</p>
+          <p>No saved plot boards found. Create a new one first!</p>
+          <p className="empty-hint">Click anywhere to place your first scene.</p>
         </div>
       ) : (
         <div className="library-grid">
@@ -34,27 +34,27 @@ export function PlotBoardIndexPage({ projectId }: { projectId: string }) {
             <article key={b.id} className="project-card">
               <Link className="project-link" to={`/p/${projectId}/plotboard/${b.id}`}>
                 <h2 className="project-name">{b.name}</h2>
-                <p className="project-desc">{b.acts.length} atos · {b.cards.length} cenas · {b.wires.length} fios</p>
+                <p className="project-desc">{b.acts.length} acts · {b.cards.length} scenes · {b.wires.length} wires</p>
               </Link>
-              <button title="Excluir plano" className="project-delete" onClick={() => setToDelete(b.id)}>✕</button>
+              <button title="Delete plot board" className="project-delete" onClick={() => setToDelete(b.id)}>✕</button>
             </article>
           ))}
         </div>
       )}
 
       {creating ? (
-        <Modal title="Novo plano" onClose={() => setCreating(false)}>
+        <Modal title="Forge New Plot Board" onClose={() => setCreating(false)}>
           <div className="form-stack">
-            <Field label="Nome"><input aria-label="Nome" value={name} onChange={(e) => setName(e.target.value)} /></Field>
+            <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
             <div className="form-actions">
               <Button onClick={() => {
                 const n = name.trim();
-                if (!n) { pushToast("error", "Dê um nome ao plano."); return; }
+                if (!n) { pushToast("error", "Please enter a plot board name."); return; }
                 useScriptorium.getState().addPlotBoard(projectId, n);
                 setCreating(false);
                 setName("");
-              }}>Criar</Button>
-              <Button kind="ghost" onClick={() => setCreating(false)}>Cancelar</Button>
+              }}>Forge</Button>
+              <Button kind="ghost" onClick={() => setCreating(false)}>Cancel</Button>
             </div>
           </div>
         </Modal>
@@ -62,14 +62,14 @@ export function PlotBoardIndexPage({ projectId }: { projectId: string }) {
 
       {target ? (
         <Modal title={`Excluir "${target.name}"?`} onClose={() => setToDelete(null)}>
-          <p className="modal-warning">Remove atos, cenas e fios do plano. Sem voltar.</p>
+          <p className="modal-warning">Removes acts, scenes and wires. No undo.</p>
           <div className="form-actions">
             <Button kind="danger" onClick={() => {
               useScriptorium.getState().deletePlotBoard(target.id);
-              pushToast("success", "Plano excluído.");
+              pushToast("success", "Plot board deleted.");
               setToDelete(null);
-            }}>Excluir</Button>
-            <Button kind="ghost" onClick={() => setToDelete(null)}>Cancelar</Button>
+            }}>Delete</Button>
+            <Button kind="ghost" onClick={() => setToDelete(null)}>Cancel</Button>
           </div>
         </Modal>
       ) : null}

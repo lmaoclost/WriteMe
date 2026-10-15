@@ -85,7 +85,7 @@ describe("shell routes", () => {
   it("atlas route shows the atlas index (not a placeholder)", () => {
     const p = useScriptorium.getState().addProject("X");
     render(at(`/p/${p.id}/atlas`));
-    expect(screen.getByText("Crie o primeiro atlas do mundo.")).toBeInTheDocument();
+    expect(screen.getByText("No saved atlases found. Create a new one first!")).toBeInTheDocument();
     expect(screen.queryByText(/sub-projeto 2/i)).not.toBeInTheDocument();
   });
 

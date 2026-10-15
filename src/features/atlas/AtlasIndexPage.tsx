@@ -21,20 +21,20 @@ function AtlasCard({ atlas, confirm, onConfirmArm, onDelete }: {
     <article className="atlas-card">
       <Link className="atlas-card-link" to={atlas.id}>
         <div className="atlas-card-thumb">
-          {thumb ? <img src={thumb} alt={`Mapa de ${atlas.name}`} /> : <span aria-hidden="true">◇</span>}
+          {thumb ? <img src={thumb} alt={`Map of ${atlas.name}`} /> : <span aria-hidden="true">◇</span>}
         </div>
         <h2 className="atlas-card-name">{atlas.name}</h2>
         <p className="atlas-card-counts">
-          {atlas.regions.length} regiões · {atlas.pins.length} pinos
+          {atlas.regions.length} regions · {atlas.pins.length} pins
         </p>
       </Link>
       <button
         type="button"
         className={"atlas-card-delete" + (confirm ? " armed" : "")}
-        aria-label={`Excluir atlas ${atlas.name}`}
+        aria-label={`Delete atlas ${atlas.name}`}
         onClick={() => (confirm ? onDelete() : onConfirmArm())}
       >
-        {confirm ? "Confirmar?" : "✕"}
+        {confirm ? "Confirm?" : "✕"}
       </button>
     </article>
   );
@@ -61,7 +61,7 @@ export function AtlasIndexPage() {
 
   const remove = (atlasId: string) => {
     useScriptorium.getState().deleteAtlas(atlasId);
-    useScriptorium.getState().pushToast("success", "Atlas excluído.");
+    useScriptorium.getState().pushToast("success", "Atlas deleted.");
     setConfirmId(null);
   };
 
@@ -76,10 +76,10 @@ export function AtlasIndexPage() {
     <div className="atlas-index">
       <header className="atlas-index-head">
         <h1>Atlas</h1>
-        <Button onClick={() => setCreating(true)}>Criar atlas</Button>
+        <Button onClick={() => setCreating(true)}>Forge New Atlas</Button>
       </header>
       {projectAtlases.length === 0 ? (
-        <p className="atlas-index-empty">Crie o primeiro atlas do mundo.</p>
+        <p className="atlas-index-empty">No saved atlases found. Create a new one first!</p>
       ) : (
         <div className="atlas-card-grid">
           {projectAtlases.map((a) => (
@@ -94,20 +94,20 @@ export function AtlasIndexPage() {
         </div>
       )}
       {creating ? (
-        <Modal title="Criar atlas" onClose={() => setCreating(false)}>
+        <Modal title="Forge New Atlas" onClose={() => setCreating(false)}>
           <div className="atlas-create-form">
-            <Field label="Nome">
+            <Field label="Name">
               <input
                 type="text"
-                aria-label="Nome"
+                aria-label="Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 onKeyDown={createOnEnter}
               />
             </Field>
             <div className="atlas-create-actions">
-              <Button kind="ghost" onClick={() => setCreating(false)}>Cancelar</Button>
-              <Button onClick={create}>Criar</Button>
+              <Button kind="ghost" onClick={() => setCreating(false)}>Cancel</Button>
+              <Button onClick={create}>Forge</Button>
             </div>
           </div>
         </Modal>

@@ -19,15 +19,15 @@ export function BloodlineIndexPage({ projectId }: { projectId: string }) {
   return (
     <div className="bloodline-index">
       <header className="library-head">
-        <h1>Linhagens</h1>
-        <p className="library-sub">Genealogias do mundo — pessoas, casas e laços de sangue.</p>
-        <Button onClick={() => setCreating(true)}>Nova linhagem</Button>
+        <h1>Bloodline</h1>
+        <p className="library-sub">Family trees, lineages and the houses they belong to.</p>
+        <Button onClick={() => setCreating(true)}>Forge New Bloodline</Button>
       </header>
 
       {mine.length === 0 ? (
         <div className="empty">
-          <p>Nenhuma linhagem ainda.</p>
-          <p className="empty-hint">Comece pela linhagem — crie uma.</p>
+          <p>No saved bloodlines found. Create a new bloodline first!</p>
+          <p className="empty-hint">Create a new family tree from scratch.</p>
         </div>
       ) : (
         <div className="library-grid">
@@ -35,27 +35,27 @@ export function BloodlineIndexPage({ projectId }: { projectId: string }) {
             <article key={b.id} className="project-card">
               <Link className="project-link" to={`/p/${projectId}/bloodline/${b.id}`}>
                 <h2 className="project-name">{b.name}</h2>
-                <p className="project-desc">{b.persons.length} pessoa{b.persons.length === 1 ? "" : "s"} · {b.houses.length} casa{b.houses.length === 1 ? "" : "s"}</p>
+                <p className="project-desc">{b.persons.length} {b.persons.length === 1 ? "person" : "persons"} · {b.houses.length} {b.houses.length === 1 ? "house" : "houses"}</p>
               </Link>
-              <button title="Excluir linhagem" className="project-delete" onClick={() => setToDelete(b.id)}>✕</button>
+              <button title="Delete bloodline" className="project-delete" onClick={() => setToDelete(b.id)}>✕</button>
             </article>
           ))}
         </div>
       )}
 
       {creating ? (
-        <Modal title="Nova linhagem" onClose={() => setCreating(false)}>
+        <Modal title="Forge New Bloodline" onClose={() => setCreating(false)}>
           <div className="form-stack">
-            <Field label="Nome"><input aria-label="Nome" value={name} onChange={(e) => setName(e.target.value)} /></Field>
+            <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
             <div className="form-actions">
               <Button onClick={() => {
                 const n = name.trim();
-                if (!n) { pushToast("error", "Dê um nome à linhagem."); return; }
+                if (!n) { pushToast("error", "Please enter a family name."); return; }
                 useScriptorium.getState().addBloodline(projectId, n);
                 setCreating(false);
                 setName("");
-              }}>Criar</Button>
-              <Button kind="ghost" onClick={() => setCreating(false)}>Cancelar</Button>
+              }}>Forge</Button>
+              <Button kind="ghost" onClick={() => setCreating(false)}>Cancel</Button>
             </div>
           </div>
         </Modal>
@@ -63,14 +63,14 @@ export function BloodlineIndexPage({ projectId }: { projectId: string }) {
 
       {target ? (
         <Modal title={`Excluir "${target.name}"?`} onClose={() => setToDelete(null)}>
-          <p className="modal-warning">Isso remove pessoas, casas e notas da linhagem. Sem voltar.</p>
+          <p className="modal-warning">Removes persons, houses and notes. No undo.</p>
           <div className="form-actions">
             <Button kind="danger" onClick={() => {
               useScriptorium.getState().deleteBloodline(target.id);
-              pushToast("success", "Linhagem excluída.");
+              pushToast("success", "Bloodline deleted.");
               setToDelete(null);
-            }}>Excluir</Button>
-            <Button kind="ghost" onClick={() => setToDelete(null)}>Cancelar</Button>
+            }}>Delete</Button>
+            <Button kind="ghost" onClick={() => setToDelete(null)}>Cancel</Button>
           </div>
         </Modal>
       ) : null}

@@ -18,15 +18,15 @@ export function CalendarIndexPage({ projectId }: { projectId: string }) {
   return (
     <div className="bloodline-index">
       <header className="library-head">
-        <h1>Calendários</h1>
-        <p className="library-sub">O tempo do seu mundo — meses, dias e festas próprios.</p>
-        <Button onClick={() => setCreating(true)}>Novo calendário</Button>
+        <h1>Calendar</h1>
+        <p className="library-sub">Build the calendar your world actually runs on.</p>
+        <Button onClick={() => setCreating(true)}>Forge New Calendar</Button>
       </header>
 
       {mine.length === 0 ? (
         <div className="empty">
-          <p>Nenhum calendário ainda.</p>
-          <p className="empty-hint">Crie o tempo do seu mundo.</p>
+          <p>No saved calendars found. Create a new calendar first!</p>
+          <p className="empty-hint">Choose your own months, weekdays and year length.</p>
         </div>
       ) : (
         <div className="library-grid">
@@ -34,27 +34,27 @@ export function CalendarIndexPage({ projectId }: { projectId: string }) {
             <article key={c.id} className="project-card">
               <Link className="project-link" to={`/p/${projectId}/calendar/${c.id}`}>
                 <h2 className="project-name">{c.name}</h2>
-                <p className="project-desc">{c.months.length} meses · {Object.keys(c.events).length} dias com eventos</p>
+                <p className="project-desc">{c.months.length} months · {Object.keys(c.events).length} days with events</p>
               </Link>
-              <button title="Excluir calendário" className="project-delete" onClick={() => setToDelete(c.id)}>✕</button>
+              <button title="Delete calendar" className="project-delete" onClick={() => setToDelete(c.id)}>✕</button>
             </article>
           ))}
         </div>
       )}
 
       {creating ? (
-        <Modal title="Novo calendário" onClose={() => setCreating(false)}>
+        <Modal title="Forge New Calendar" onClose={() => setCreating(false)}>
           <div className="form-stack">
-            <Field label="Nome"><input aria-label="Nome" value={name} onChange={(e) => setName(e.target.value)} /></Field>
+            <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
             <div className="form-actions">
               <Button onClick={() => {
                 const n = name.trim();
-                if (!n) { pushToast("error", "Dê um nome ao calendário."); return; }
+                if (!n) { pushToast("error", "Please enter a calendar name."); return; }
                 useScriptorium.getState().addCalendar(projectId, n);
                 setCreating(false);
                 setName("");
-              }}>Criar</Button>
-              <Button kind="ghost" onClick={() => setCreating(false)}>Cancelar</Button>
+              }}>Forge</Button>
+              <Button kind="ghost" onClick={() => setCreating(false)}>Cancel</Button>
             </div>
           </div>
         </Modal>
@@ -62,14 +62,14 @@ export function CalendarIndexPage({ projectId }: { projectId: string }) {
 
       {target ? (
         <Modal title={`Excluir "${target.name}"?`} onClose={() => setToDelete(null)}>
-          <p className="modal-warning">Remove meses, dias e eventos. Sem voltar.</p>
+          <p className="modal-warning">Removes months, days and events. No undo.</p>
           <div className="form-actions">
             <Button kind="danger" onClick={() => {
               useScriptorium.getState().deleteCalendar(target.id);
-              pushToast("success", "Calendário excluído.");
+              pushToast("success", "Calendar deleted.");
               setToDelete(null);
-            }}>Excluir</Button>
-            <Button kind="ghost" onClick={() => setToDelete(null)}>Cancelar</Button>
+            }}>Delete</Button>
+            <Button kind="ghost" onClick={() => setToDelete(null)}>Cancel</Button>
           </div>
         </Modal>
       ) : null}

@@ -18,15 +18,15 @@ export function FactionWebServicePage({ projectId }: { projectId: string }) {
   return (
     <div className="bloodline-index">
       <header className="library-head">
-        <h1>Frações</h1>
-        <p className="library-sub">Teias de alianças, rivais e vassalagens.</p>
-        <Button onClick={() => setCreating(true)}>Nova teia</Button>
+        <h1>Faction Webs</h1>
+        <p className="library-sub">How the powers in your world regard one another.</p>
+        <Button onClick={() => setCreating(true)}>Forge New Faction Web</Button>
       </header>
 
       {mine.length === 0 ? (
         <div className="empty">
-          <p>Nenhuma teia ainda.</p>
-          <p className="empty-hint">Adicione a primeira fração da teia.</p>
+          <p>No saved faction webs found. Create a new one first!</p>
+          <p className="empty-hint">Add the first faction to the web.</p>
         </div>
       ) : (
         <div className="library-grid">
@@ -34,27 +34,27 @@ export function FactionWebServicePage({ projectId }: { projectId: string }) {
             <article key={w.id} className="project-card">
               <Link className="project-link" to={`/p/${projectId}/factions/${w.id}`}>
                 <h2 className="project-name">{w.name}</h2>
-                <p className="project-desc">{w.factions.length} frações · {w.connections.length} relações</p>
+                <p className="project-desc">{w.factions.length} factions · {w.connections.length} connections</p>
               </Link>
-              <button title="Excluir teia" className="project-delete" onClick={() => setToDelete(w.id)}>✕</button>
+              <button title="Delete faction web" className="project-delete" onClick={() => setToDelete(w.id)}>✕</button>
             </article>
           ))}
         </div>
       )}
 
       {creating ? (
-        <Modal title="Nova teia de frações" onClose={() => setCreating(false)}>
+        <Modal title="Forge New Faction Web" onClose={() => setCreating(false)}>
           <div className="form-stack">
-            <Field label="Nome"><input aria-label="Nome" value={name} onChange={(e) => setName(e.target.value)} /></Field>
+            <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
             <div className="form-actions">
               <Button onClick={() => {
                 const n = name.trim();
-                if (!n) { pushToast("error", "Dê um nome à teia."); return; }
+                if (!n) { pushToast("error", "Please enter a web name."); return; }
                 useScriptorium.getState().addFactionWeb(projectId, n);
                 setCreating(false);
                 setName("");
-              }}>Criar</Button>
-              <Button kind="ghost" onClick={() => setCreating(false)}>Cancelar</Button>
+              }}>Forge</Button>
+              <Button kind="ghost" onClick={() => setCreating(false)}>Cancel</Button>
             </div>
           </div>
         </Modal>
@@ -62,14 +62,14 @@ export function FactionWebServicePage({ projectId }: { projectId: string }) {
 
       {target ? (
         <Modal title={`Excluir "${target.name}"?`} onClose={() => setToDelete(null)}>
-          <p className="modal-warning">Remove frações e relações. Sem voltar.</p>
+          <p className="modal-warning">Removes factions and connections. No undo.</p>
           <div className="form-actions">
             <Button kind="danger" onClick={() => {
               useScriptorium.getState().deleteFactionWeb(target.id);
-              pushToast("success", "Teia excluída.");
+              pushToast("success", "Faction web deleted.");
               setToDelete(null);
-            }}>Excluir</Button>
-            <Button kind="ghost" onClick={() => setToDelete(null)}>Cancelar</Button>
+            }}>Delete</Button>
+            <Button kind="ghost" onClick={() => setToDelete(null)}>Cancel</Button>
           </div>
         </Modal>
       ) : null}

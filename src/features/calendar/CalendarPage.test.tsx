@@ -144,8 +144,8 @@ describe("CalendarIndexPage", () => {
   it("renders cards + creates + deletes", () => {
     seed();
     render(<MemoryRouter><CalendarIndexPage projectId="prj_1" /></MemoryRouter>);
-    fireEvent.click(screen.getByTitle("Excluir calendário"));
-    fireEvent.click(screen.getByRole("button", { name: "Excluir" }));
+    fireEvent.click(screen.getByTitle("Delete calendar"));
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     expect(store().calendars).toHaveLength(0);
   });
 });

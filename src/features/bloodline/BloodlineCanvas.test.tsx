@@ -30,14 +30,14 @@ function addPersonAt(bloodlineId: string, x: number, y: number, name = "Aldric")
 describe("BloodlineIndexPage", () => {
   it("empty state invites creating", () => {
     render(<MemoryRouter><BloodlineIndexPage projectId="prj_1" /></MemoryRouter>);
-    expect(screen.getByText(/Comece pela linhagem/i)).toBeInTheDocument();
+    expect(screen.getByText(/Create a new family tree from scratch/i)).toBeInTheDocument();
   });
 
   it("creates a bloodline via modal", async () => {
     render(<MemoryRouter><BloodlineIndexPage projectId="prj_1" /></MemoryRouter>);
-    fireEvent.click(screen.getByRole("button", { name: "Nova linhagem" }));
-    fireEvent.change(screen.getByLabelText("Nome"), { target: { value: "Vellmor" } });
-    fireEvent.click(screen.getByRole("button", { name: "Criar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Forge New Bloodline" }));
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Vellmor" } });
+    fireEvent.click(screen.getByRole("button", { name: "Forge" }));
     expect(store().bloodlines.map((b) => b.name)).toEqual(["Vellmor"]);
   });
 
@@ -46,7 +46,7 @@ describe("BloodlineIndexPage", () => {
     addPersonAt(b.id, 4000, 4000);
     render(<MemoryRouter><BloodlineIndexPage projectId="prj_1" /></MemoryRouter>);
     expect(screen.getByText("Vellmor")).toBeInTheDocument();
-    expect(screen.getByText(/1 pessoa/)).toBeInTheDocument();
+    expect(screen.getByText(/1 person/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Vellmor/ })).toHaveAttribute("href", `/p/prj_1/bloodline/${b.id}`);
   });
 
@@ -54,8 +54,8 @@ describe("BloodlineIndexPage", () => {
     const b = makeBloodline();
     void b;
     render(<MemoryRouter><BloodlineIndexPage projectId="prj_1" /></MemoryRouter>);
-    fireEvent.click(screen.getByTitle("Excluir linhagem"));
-    fireEvent.click(screen.getByRole("button", { name: "Excluir" }));
+    fireEvent.click(screen.getByTitle("Delete bloodline"));
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     expect(store().bloodlines).toHaveLength(0);
   });
 });

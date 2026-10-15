@@ -145,31 +145,31 @@ describe("AtlasIndexPage", () => {
     render(at(`/p/${pid}/atlas`));
     const card = screen.getByText("Terras do Véu").closest("article");
     expect(card).toBeTruthy();
-    expect(within(card as HTMLElement).getByText("3 regiões · 4 pinos")).toBeTruthy();
+    expect(within(card as HTMLElement).getByText("3 regions · 4 pins")).toBeTruthy();
     const thumb = within(card as HTMLElement).getByRole("img") as HTMLImageElement;
     expect(thumb.src).toBe(store().images[atlas.mapImageKey!]);
-    expect(screen.queryByText("Crie o primeiro atlas do mundo.")).toBeNull();
+    expect(screen.queryByText("No saved atlases found. Create a new one first!")).toBeNull();
   });
 
   it("shows the empty state when the project has no atlas", () => {
     const pid = seedProject();
     render(at(`/p/${pid}/atlas`));
-    expect(screen.getByText("Crie o primeiro atlas do mundo.")).toBeTruthy();
+    expect(screen.getByText("No saved atlases found. Create a new one first!")).toBeTruthy();
   });
 
   it("creates an atlas via the modal and navigates to its editor", () => {
     const pid = seedProject();
     render(at(`/p/${pid}/atlas`));
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Criar atlas" }));
+      fireEvent.click(screen.getByRole("button", { name: "Forge New Atlas" }));
     });
-    const dialog = screen.getByRole("dialog", { name: "Criar atlas" });
-    const input = within(dialog).getByRole("textbox", { name: "Nome" }) as HTMLInputElement;
+    const dialog = screen.getByRole("dialog", { name: "Forge New Atlas" });
+    const input = within(dialog).getByRole("textbox", { name: "Name" }) as HTMLInputElement;
     act(() => {
       fireEvent.change(input, { target: { value: "Novo Mundo" } });
     });
     act(() => {
-      fireEvent.click(within(dialog).getByRole("button", { name: "Criar" }));
+      fireEvent.click(within(dialog).getByRole("button", { name: "Forge" }));
     });
     const created = store().atlases.find((a) => a.projectId === pid && a.name === "Novo Mundo");
     expect(created).toBeTruthy();
@@ -181,15 +181,15 @@ describe("AtlasIndexPage", () => {
     const atlas = seedAtlas(pid, { withMap: true });
     render(at(`/p/${pid}/atlas`));
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: `Excluir atlas ${atlas.name}` }));
+      fireEvent.click(screen.getByRole("button", { name: `Delete atlas ${atlas.name}` }));
     });
-    const btn = screen.getByRole("button", { name: `Excluir atlas ${atlas.name}` });
-    expect(btn.textContent).toBe("Confirmar?");
+    const btn = screen.getByRole("button", { name: `Delete atlas ${atlas.name}` });
+    expect(btn.textContent).toBe("Confirm?");
     act(() => {
       fireEvent.click(btn);
     });
     expect(store().atlases).toHaveLength(0);
-    expect(store().toasts.some((t) => t.kind === "success" && /exclu/i.test(t.message))).toBe(true);
+    expect(store().toasts.some((t) => t.kind === "success" && /deleted/i.test(t.message))).toBe(true);
   });
 });
 
@@ -334,7 +334,7 @@ describe("atlas routes", () => {
     await waitFor(() => {
       expect(store().toasts.some((t) => t.kind === "error" && t.message === "Atlas não encontrado.")).toBe(true);
     });
-    expect(screen.getByText("Crie o primeiro atlas do mundo.")).toBeTruthy();
+    expect(screen.getByText("No saved atlases found. Create a new one first!")).toBeTruthy();
   });
 });
 
@@ -449,6 +449,6 @@ describe("editor header", () => {
       expect(store().atlases).toHaveLength(0);
     });
     expect(store().toasts.some((t) => t.message === "Atlas excluído.")).toBe(true);
-    expect(screen.getByText("Crie o primeiro atlas do mundo.")).toBeTruthy();
+    expect(screen.getByText("No saved atlases found. Create a new one first!")).toBeTruthy();
   });
 });

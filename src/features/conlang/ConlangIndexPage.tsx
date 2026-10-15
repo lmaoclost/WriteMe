@@ -18,15 +18,15 @@ export function ConlangIndexPage({ projectId }: { projectId: string }) {
   return (
     <div className="bloodline-index">
       <header className="library-head">
-        <h1>Conlangs</h1>
-        <p className="library-sub">Línguas inventadas — glifos, alfabeto e léxico.</p>
-        <Button onClick={() => setCreating(true)}>Novo conlang</Button>
+        <h1>Conlang & Lexicon</h1>
+        <p className="library-sub">Build a language with its own script and lexicon.</p>
+        <Button onClick={() => setCreating(true)}>Forge Conlang</Button>
       </header>
 
       {mine.length === 0 ? (
         <div className="empty">
-          <p>Nenhum conlang ainda.</p>
-          <p className="empty-hint">Uma língua inventada, até as formas das letras.</p>
+          <p>No saved conlangs found. Create a new one first!</p>
+          <p className="empty-hint">Invented letters, too.</p>
         </div>
       ) : (
         <div className="library-grid">
@@ -34,27 +34,27 @@ export function ConlangIndexPage({ projectId }: { projectId: string }) {
             <article key={c.id} className="project-card">
               <Link className="project-link" to={`/p/${projectId}/conlang/${c.id}`}>
                 <h2 className="project-name">{c.name}</h2>
-                <p className="project-desc">{c.glyphs.length} glifos · {c.words.length} palavras</p>
+                <p className="project-desc">{c.glyphs.length} glyphs · {c.words.length} words</p>
               </Link>
-              <button title="Excluir conlang" className="project-delete" onClick={() => setToDelete(c.id)}>✕</button>
+              <button title="Delete conlang" className="project-delete" onClick={() => setToDelete(c.id)}>✕</button>
             </article>
           ))}
         </div>
       )}
 
       {creating ? (
-        <Modal title="Novo conlang" onClose={() => setCreating(false)}>
+        <Modal title="Forge Conlang" onClose={() => setCreating(false)}>
           <div className="form-stack">
-            <Field label="Nome"><input aria-label="Nome" value={name} onChange={(e) => setName(e.target.value)} /></Field>
+            <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
             <div className="form-actions">
               <Button onClick={() => {
                 const n = name.trim();
-                if (!n) { pushToast("error", "Dê um nome ao conlang."); return; }
+                if (!n) { pushToast("error", "Please enter a conlang name."); return; }
                 useScriptorium.getState().addConlang(projectId, n);
                 setCreating(false);
                 setName("");
-              }}>Criar</Button>
-              <Button kind="ghost" onClick={() => setCreating(false)}>Cancelar</Button>
+              }}>Forge</Button>
+              <Button kind="ghost" onClick={() => setCreating(false)}>Cancel</Button>
             </div>
           </div>
         </Modal>
@@ -62,14 +62,14 @@ export function ConlangIndexPage({ projectId }: { projectId: string }) {
 
       {target ? (
         <Modal title={`Excluir "${target.name}"?`} onClose={() => setToDelete(null)}>
-          <p className="modal-warning">Remove glifos e palavras. Sem voltar.</p>
+          <p className="modal-warning">Removes glyphs and words. No undo.</p>
           <div className="form-actions">
             <Button kind="danger" onClick={() => {
               useScriptorium.getState().deleteConlang(target.id);
-              pushToast("success", "Conlang excluído.");
+              pushToast("success", "Conlang deleted.");
               setToDelete(null);
-            }}>Excluir</Button>
-            <Button kind="ghost" onClick={() => setToDelete(null)}>Cancelar</Button>
+            }}>Delete</Button>
+            <Button kind="ghost" onClick={() => setToDelete(null)}>Cancel</Button>
           </div>
         </Modal>
       ) : null}

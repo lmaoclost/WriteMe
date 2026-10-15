@@ -18,15 +18,15 @@ export function TimelineIndexPage({ projectId }: { projectId: string }) {
   return (
     <div className="bloodline-index">
       <header className="library-head">
-        <h1>Linhas do Tempo</h1>
-        <p className="library-sub">O fio da história: eventos e eras pendurados numa linha andável.</p>
-        <Button onClick={() => setCreating(true)}>Nova linha</Button>
+        <h1>Calendar</h1>
+        <p className="library-sub">Lay your world's history out on a line you can walk.</p>
+        <Button onClick={() => setCreating(true)}>Forge New Timeline</Button>
       </header>
 
       {mine.length === 0 ? (
         <div className="empty">
-          <p>Nenhuma linha ainda.</p>
-          <p className="empty-hint">Coloque o primeiro evento no fio.</p>
+          <p>No saved timelines found. Create a new timeline first!</p>
+          <p className="empty-hint">Place the first event on the wire.</p>
         </div>
       ) : (
         <div className="library-grid">
@@ -34,42 +34,42 @@ export function TimelineIndexPage({ projectId }: { projectId: string }) {
             <article key={t.id} className="project-card">
               <Link className="project-link" to={`/p/${projectId}/linewheel/${t.id}`}>
                 <h2 className="project-name">{t.name}</h2>
-                <p className="project-desc">{t.beads.length} eventos · {t.segments.length} eras</p>
+                <p className="project-desc">{t.beads.length} events · {t.segments.length} eras</p>
               </Link>
-              <button title="Excluir linha" className="project-delete" onClick={() => setToDelete(t.id)}>✕</button>
+              <button title="Delete timeline" className="project-delete" onClick={() => setToDelete(t.id)}>✕</button>
             </article>
           ))}
         </div>
       )}
 
       {creating ? (
-        <Modal title="Nova linha do tempo" onClose={() => setCreating(false)}>
+        <Modal title="Forge New Timeline" onClose={() => setCreating(false)}>
           <div className="form-stack">
-            <Field label="Nome"><input aria-label="Nome" value={name} onChange={(e) => setName(e.target.value)} /></Field>
+            <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
             <div className="form-actions">
               <Button onClick={() => {
                 const n = name.trim();
-                if (!n) { pushToast("error", "Dê um nome à linha."); return; }
+                if (!n) { pushToast("error", "Please enter a timeline name."); return; }
                 useScriptorium.getState().addTimeline(projectId, n);
                 setCreating(false);
                 setName("");
-              }}>Criar</Button>
-              <Button kind="ghost" onClick={() => setCreating(false)}>Cancelar</Button>
+              }}>Forge</Button>
+              <Button kind="ghost" onClick={() => setCreating(false)}>Cancel</Button>
             </div>
           </div>
         </Modal>
       ) : null}
 
       {target ? (
-        <Modal title={`Excluir "${target.name}"?`} onClose={() => setToDelete(null)}>
-          <p className="modal-warning">Remove eventos e eras da linha. Sem voltar.</p>
+        <Modal title={`Delete "${target.name}"?`} onClose={() => setToDelete(null)}>
+          <p className="modal-warning">Removes events and eras from the timeline. No undo.</p>
           <div className="form-actions">
             <Button kind="danger" onClick={() => {
               useScriptorium.getState().deleteTimeline(target.id);
-              pushToast("success", "Linha excluída.");
+              pushToast("success", "Timeline deleted.");
               setToDelete(null);
-            }}>Excluir</Button>
-            <Button kind="ghost" onClick={() => setToDelete(null)}>Cancelar</Button>
+            }}>Delete</Button>
+            <Button kind="ghost" onClick={() => setToDelete(null)}>Cancel</Button>
           </div>
         </Modal>
       ) : null}

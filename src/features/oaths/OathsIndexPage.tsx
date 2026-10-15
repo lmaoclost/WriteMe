@@ -18,15 +18,15 @@ export function OathsIndexPage({ projectId }: { projectId: string }) {
   return (
     <div className="bloodline-index">
       <header className="library-head">
-        <h1>Oaths</h1>
-        <p className="library-sub">Cadeias de comando — quem jura a quem.</p>
-        <Button onClick={() => setCreating(true)}>Nova hierarquia</Button>
+        <h1>Oaths Hierarchy</h1>
+        <p className="library-sub">Chart who answers to whom — courts, orders, armies and guilds.</p>
+        <Button onClick={() => setCreating(true)}>Forge New Oaths Hierarchy</Button>
       </header>
 
       {mine.length === 0 ? (
         <div className="empty">
-          <p>Nenhuma hierarquia ainda.</p>
-          <p className="empty-hint">Coloque o fundador — todos os oaths descem dele.</p>
+          <p>No saved chains of command found. Create a new one first!</p>
+          <p className="empty-hint">A primary chain sets the rank.</p>
         </div>
       ) : (
         <div className="library-grid">
@@ -34,27 +34,27 @@ export function OathsIndexPage({ projectId }: { projectId: string }) {
             <article key={c.id} className="project-card">
               <Link className="project-link" to={`/p/${projectId}/oaths/${c.id}`}>
                 <h2 className="project-name">{c.name}</h2>
-                <p className="project-desc">{c.members.length} membros · {c.oathLinks.length} oaths</p>
+                <p className="project-desc">{c.members.length} members · {c.oathLinks.length} oaths</p>
               </Link>
-              <button title="Excluir hierarquia" className="project-delete" onClick={() => setToDelete(c.id)}>✕</button>
+              <button title="Delete oaths hierarchy" className="project-delete" onClick={() => setToDelete(c.id)}>✕</button>
             </article>
           ))}
         </div>
       )}
 
       {creating ? (
-        <Modal title="Nova hierarquia" onClose={() => setCreating(false)}>
+        <Modal title="Forge New Oaths Hierarchy" onClose={() => setCreating(false)}>
           <div className="form-stack">
-            <Field label="Nome"><input aria-label="Nome" value={name} onChange={(e) => setName(e.target.value)} /></Field>
+            <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
             <div className="form-actions">
               <Button onClick={() => {
                 const n = name.trim();
-                if (!n) { pushToast("error", "Dê um nome à hierarquia."); return; }
+                if (!n) { pushToast("error", "Please enter a chain name."); return; }
                 useScriptorium.getState().addOathsChart(projectId, n);
                 setCreating(false);
                 setName("");
-              }}>Criar</Button>
-              <Button kind="ghost" onClick={() => setCreating(false)}>Cancelar</Button>
+              }}>Forge</Button>
+              <Button kind="ghost" onClick={() => setCreating(false)}>Cancel</Button>
             </div>
           </div>
         </Modal>
@@ -62,14 +62,14 @@ export function OathsIndexPage({ projectId }: { projectId: string }) {
 
       {target ? (
         <Modal title={`Excluir "${target.name}"?`} onClose={() => setToDelete(null)}>
-          <p className="modal-warning">Remove membros e oaths. Sem voltar.</p>
+          <p className="modal-warning">Removes members and oaths. No undo.</p>
           <div className="form-actions">
             <Button kind="danger" onClick={() => {
               useScriptorium.getState().deleteOathsChart(target.id);
-              pushToast("success", "Hierarquia excluída.");
+              pushToast("success", "Hierarchy deleted.");
               setToDelete(null);
-            }}>Excluir</Button>
-            <Button kind="ghost" onClick={() => setToDelete(null)}>Cancelar</Button>
+            }}>Delete</Button>
+            <Button kind="ghost" onClick={() => setToDelete(null)}>Cancel</Button>
           </div>
         </Modal>
       ) : null}
