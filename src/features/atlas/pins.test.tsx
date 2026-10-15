@@ -387,9 +387,9 @@ describe("LinkPicker", () => {
         <LinkPicker entries={ENTRIES} currentEntryId="ent_sol" onPick={onPick} onClear={onClear} />
       </MemoryRouter>,
     );
-    expect(screen.getByLabelText("Unlink Herdeiros do Fim")).toBeTruthy();
+    expect(screen.getByLabelText("Unlink Reinos do Sol")).toBeTruthy();
     act(() => {
-      fireEvent.click(screen.getByLabelText("Unlink Herdeiros do Fim"));
+      fireEvent.click(screen.getByLabelText("Unlink Reinos do Sol"));
     });
     expect(onClear).toHaveBeenCalledTimes(1);
     act(() => {
