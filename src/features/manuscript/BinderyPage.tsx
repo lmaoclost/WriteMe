@@ -12,7 +12,7 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
   const [printing, setPrinting] = useState(false);
 
   useEffect(() => {
-    if (!manuscript) pushToast("error", "Manuscrito não encontrado. Comece um no Manuscript.");
+    if (!manuscript) pushToast("error", "Load a manuscript first.");
   }, [manuscript, pushToast]);
 
   // print pass: fires once the preview style is committed
@@ -36,13 +36,13 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
       <header className="bl-header">
         <div className="bl-name-noneditable">{manuscript.title}</div>
         <div className="bl-actions">
-          <button type="button" disabled={manuscript.chapters.length === 0} title={manuscript.chapters.length === 0 ? "Adicione capítulos primeiro" : undefined}
-            onClick={() => setPrinting(true)}>Prévia impressa</button>
+          <button type="button" disabled={manuscript.chapters.length === 0} title={manuscript.chapters.length === 0 ? "Add chapters first" : undefined}
+            onClick={() => setPrinting(true)}>Print preview</button>
         </div>
       </header>
       <div className="bl-body bindery-body">
         <aside className="bl-panel bindery-panel">
-          <h2>Encadernação</h2>
+          <h2>Bindery</h2>
           <div className="field">
             <span className="field-label">Tipografia</span>
             <select aria-label="Tipografia" value={b.font} onChange={(e) => set({ font: e.target.value })}>
@@ -60,24 +60,24 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
             <span>Capitulares (drop caps)</span>
           </label>
           <label className="check-row">
-            <input type="checkbox" aria-label="Cabeçalhos corridos" checked={b.runningHead} onChange={(e) => set({ runningHead: e.target.checked })} />
-            <span>Cabeçalhos corridos</span>
+            <input type="checkbox" aria-label="Running headers" checked={b.runningHead} onChange={(e) => set({ runningHead: e.target.checked })} />
+            <span>Running headers</span>
           </label>
           <label className="check-row">
-            <input type="checkbox" aria-label="Página de título" checked={b.titlePage} onChange={(e) => set({ titlePage: e.target.checked })} />
-            <span>Página de título</span>
+            <input type="checkbox" aria-label="Title page" checked={b.titlePage} onChange={(e) => set({ titlePage: e.target.checked })} />
+            <span>Title page</span>
           </label>
           <label className="check-row">
-            <input type="checkbox" aria-label="Sumário" checked={b.toc} onChange={(e) => set({ toc: e.target.checked })} />
-            <span>Sumário</span>
+            <input type="checkbox" aria-label="Table of contents" checked={b.toc} onChange={(e) => set({ toc: e.target.checked })} />
+            <span>Table of contents</span>
           </label>
           <label className="check-row">
-            <input type="checkbox" aria-label="Glossário do códex" checked={b.glossary} onChange={(e) => set({ glossary: e.target.checked })} />
-            <span>Glossário (do códex)</span>
+            <input type="checkbox" aria-label="Glossary from the codex" checked={b.glossary} onChange={(e) => set({ glossary: e.target.checked })} />
+            <span>Glossary (from the codex)</span>
           </label>
           <label className="field">
-            <span className="field-label">Dedicatória</span>
-            <textarea aria-label="Dedicatória" rows={3} defaultValue={b.dedication ?? ""} onBlur={(e) => set({ dedication: e.target.value.trim() || undefined })} />
+            <span className="field-label">Dedication</span>
+            <textarea aria-label="Dedication" rows={3} defaultValue={b.dedication ?? ""} onBlur={(e) => set({ dedication: e.target.value.trim() || undefined })} />
           </label>
           <p className="bl-panel-note">Impressão: {trimToPage(b.trim)} — confira no diálogo.</p>
         </aside>

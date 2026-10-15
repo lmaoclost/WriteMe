@@ -54,7 +54,7 @@ export function OverviewPage() {
       if (oldKey && oldKey !== key) removeImage(oldKey);
       pushToast("success", "Capa atualizada.");
     } catch {
-      pushToast("error", "Não foi possível carregar a capa.");
+      pushToast("error", "Couldn't load the cover.");
     }
   };
 
@@ -105,12 +105,12 @@ export function OverviewPage() {
         <Stat label="Entradas" value={counts.entries} />
         <Stat label="Atlas" value={counts.atlases} />
         <Stat label="Livros" value={counts.manuscripts} />
-        <Stat label="Capítulos" value={counts.chapters} />
+        <Stat label="Chapters" value={counts.chapters} />
       </div>
       <div className="overview-links">
-        <Link className="overview-link" to={`/p/${projectId}/atlas`}>Abrir Atlas</Link>
-        <Link className="overview-link" to={`/p/${projectId}/entries`}>Abrir Códex</Link>
-        <Link className="overview-link" to={`/p/${projectId}/manuscript`}>Abrir Livro</Link>
+        <Link className="overview-link" to={`/p/${projectId}/atlas`}>Open Atlas</Link>
+        <Link className="overview-link" to={`/p/${projectId}/entries`}>Open Codex</Link>
+        <Link className="overview-link" to={`/p/${projectId}/manuscript`}>Open Manuscript</Link>
       </div>
     </div>
   );

@@ -79,15 +79,15 @@ function RegionChooser({ options, position, onPick, onClear, onClose }: {
       <div
         className="region-chooser"
         role="dialog"
-        aria-label="Escolher região"
+        aria-label="Pick region"
         style={{ left: position.x, top: position.y }}
       >
         {options.map((r) => (
           <button type="button" key={r.id} onClick={() => onPick(r.id)}>
-            {r.label || "Região"}
+            {r.label || "Region"}
           </button>
         ))}
-        <button type="button" onClick={onClear}>Nenhuma</button>
+        <button type="button" onClick={onClear}>None</button>
       </div>
     </>
   );
@@ -186,7 +186,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
   useEffect(() => {
     if (!atlas && !deletedRef.current) {
       deletedRef.current = true;
-      useScriptorium.getState().pushToast("error", "Atlas não encontrado.");
+      useScriptorium.getState().pushToast("error", "Atlas not found.");
     }
   }, [atlas]);
 
@@ -263,7 +263,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
     }
     deletedRef.current = true;
     useScriptorium.getState().deleteAtlas(atlasId);
-    pushToast("success", "Atlas excluído.");
+    pushToast("success", "Atlas deleted.");
   };
 
   const onReplaceFile = (e: ChangeEvent<HTMLInputElement>) => {
@@ -273,9 +273,9 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
   };
 
   const tools: Array<{ name: string; label: string; value: AtlasTool }> = [
-    { name: "Ferramenta mover", label: "Mover", value: "select" },
-    { name: "Ferramenta pino", label: "Pino", value: "pin" },
-    { name: "Ferramenta região", label: "Região", value: "region" },
+    { name: "Move tool", label: "Select / move", value: "select" },
+    { name: "Pin tool", label: "Add pin", value: "pin" },
+    { name: "Draw region", label: "Region", value: "region" },
   ];
 
   return (
@@ -295,7 +295,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
           }}
           onBlur={commitName}
         />
-        <div className="editor-toolbar" role="toolbar" aria-label="Ferramentas do atlas">
+        <div className="editor-toolbar" role="toolbar" aria-label="Atlas tools">
           {tools.map((t) => (
             <button
               type="button"
@@ -328,11 +328,11 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
         </div>
         <div className="editor-zoom" role="toolbar" aria-label="Zoom do mapa">
           <button type="button" aria-label="Reduzir" onClick={() => apiRef.current?.zoomBy(ZOOM_OUT)}>−</button>
-          <output className="zoom-label" aria-label="Nível de zoom">{Math.round(zoom * 100)}%</output>
+          <output className="zoom-label" aria-label="Zoom level">{Math.round(zoom * 100)}%</output>
           <button type="button" aria-label="Ampliar" onClick={() => apiRef.current?.zoomBy(ZOOM_IN)}>+</button>
           <button type="button" onClick={() => apiRef.current?.fitToContainer()}>Ajustar</button>
         </div>
-        <div className="editor-actions" role="toolbar" aria-label="Ações do atlas">
+        <div className="editor-actions" role="toolbar" aria-label="Atlas actions">
           <button
             type="button"
             className="icon-btn"
@@ -353,8 +353,8 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
           >
             ↷
           </button>
-          <button type="button" onClick={() => replaceInputRef.current?.click()}>Substituir mapa</button>
-          <button type="button" onClick={() => setPickerOpen(true)}>Imagem do códex</button>
+          <button type="button" onClick={() => replaceInputRef.current?.click()}>Replace map</button>
+          <button type="button" onClick={() => setPickerOpen(true)}>Entry image</button>
           <button
             type="button"
             className="danger-btn"
@@ -438,7 +438,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
           </Stage>
           {!atlas.mapImageKey ? <MapDropzone atlasId={atlasId} /> : null}
         </div>
-        <aside className="atlas-panels" aria-label="Painéis do atlas">
+        <aside className="atlas-panels" aria-label="Atlas panels">
           {selectedPin ? (
             <PinPanel
               pin={selectedPin}
@@ -459,7 +459,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
               }}
             />
           ) : (
-            <p className="panel-placeholder">Selecione ou crie um pino ou região.</p>
+            <p className="panel-placeholder">Select or create a pin or region.</p>
           )}
         </aside>
       </div>
@@ -472,7 +472,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
         />
       ) : null}
       {draw.carvePreview ? (
-        <div className="mode-actions" role="toolbar" aria-label="Ações de recorte">
+        <div className="mode-actions" role="toolbar" aria-label="Carve actions">
           <button type="button" onClick={draw.flipCarvePreview}>Outro lado</button>
           <button type="button" onClick={confirmPreview}>Aplicar recorte</button>
           <button type="button" onClick={cancelDraw}>Cancelar</button>

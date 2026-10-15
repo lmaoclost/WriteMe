@@ -129,7 +129,7 @@ function clickStage(stageEl: HTMLElement, x: number, y: number, pointerId = 1) {
 }
 
 function drawTestRegion(stageEl: HTMLElement) {
-  pickTool("Ferramenta região");
+  pickTool("Draw region");
   clickStage(stageEl, 100, 60, 41);
   clickStage(stageEl, 300, 120, 42);
   clickStage(stageEl, 260, 220, 43);
@@ -224,7 +224,7 @@ describe("MapDropzone", () => {
       fireEvent.drop(zone, { dataTransfer: { files: [file] } });
     });
     await waitFor(() => {
-      expect(store().toasts.some((t) => t.kind === "error" && t.message === "Não foi possível carregar o mapa.")).toBe(true);
+      expect(store().toasts.some((t) => t.kind === "error" && t.message === "Upload failed. Please try again.")).toBe(true);
     });
     expect(store().atlases.find((a) => a.id === atlas.id)!.mapImageKey).toBeUndefined();
   });
@@ -235,7 +235,7 @@ describe("MapDropzone", () => {
     const { container } = mountEditor(pid, atlas.id);
     const prevKey = atlas.mapImageKey!;
     expect(container.querySelector(".map-dropzone")).toBeNull();
-    expect(screen.getByRole("button", { name: "Substituir mapa" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Replace map" })).toBeTruthy();
     const input = container.querySelector('input[aria-label="Arquivo do mapa"]') as HTMLInputElement;
     expect(input).toBeTruthy();
     const file = new File(["y"], "map2.png", { type: "image/png" });
@@ -262,9 +262,9 @@ describe("EntryImagePicker", () => {
     mountEditor(pid, atlas.id);
     const before = store().atlases.find((a) => a.id === atlas.id)!.mapImageKey!;
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Imagem do códex" }));
+      fireEvent.click(screen.getByRole("button", { name: "Entry image" }));
     });
-    const dialog = screen.getByRole("dialog", { name: "Imagem do códex" });
+    const dialog = screen.getByRole("dialog", { name: "Entry image" });
     expect(within(dialog).getByText("Cidadela")).toBeTruthy();
     expect(within(dialog).getByText("Ponte dos Ossos")).toBeTruthy();
     expect(within(dialog).queryByText("Registro vazio")).toBeNull();
@@ -272,7 +272,7 @@ describe("EntryImagePicker", () => {
       fireEvent.click(within(dialog).getByText("Cidadela"));
     });
     await waitFor(() => {
-      expect(screen.queryByRole("dialog", { name: "Imagem do códex" })).toBeNull();
+      expect(screen.queryByRole("dialog", { name: "Entry image" })).toBeNull();
     });
     const after = store().atlases.find((a) => a.id === atlas.id)!.mapImageKey!;
     expect(after).not.toBe(before);
@@ -285,9 +285,9 @@ describe("EntryImagePicker", () => {
     const atlas = seedAtlas(pid, { withMap: true });
     mountEditor(pid, atlas.id);
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Imagem do códex" }));
+      fireEvent.click(screen.getByRole("button", { name: "Entry image" }));
     });
-    const dialog = screen.getByRole("dialog", { name: "Imagem do códex" });
+    const dialog = screen.getByRole("dialog", { name: "Entry image" });
     expect(within(dialog).getByText("Nenhuma entrada com imagem.")).toBeTruthy();
   });
 
@@ -303,16 +303,16 @@ describe("EntryImagePicker", () => {
     };
     try {
       act(() => {
-        fireEvent.click(screen.getByRole("button", { name: "Imagem do códex" }));
+        fireEvent.click(screen.getByRole("button", { name: "Entry image" }));
       });
-      const dialog = screen.getByRole("dialog", { name: "Imagem do códex" });
+      const dialog = screen.getByRole("dialog", { name: "Entry image" });
       act(() => {
         fireEvent.click(within(dialog).getByText("Cidadela"));
       });
       await waitFor(() => {
-        expect(screen.queryByRole("dialog", { name: "Imagem do códex" })).toBeNull();
+        expect(screen.queryByRole("dialog", { name: "Entry image" })).toBeNull();
       });
-      expect(store().toasts.some((t) => t.kind === "error" && t.message === "Não foi possível vincular a imagem.")).toBe(true);
+      expect(store().toasts.some((t) => t.kind === "error" && t.message === "Couldn't link the image.")).toBe(true);
     } finally {
       Storage.prototype.setItem = orig;
     }
@@ -332,7 +332,7 @@ describe("atlas routes", () => {
     const pid = seedProject();
     render(at(`/p/${pid}/atlas/atl_missing`));
     await waitFor(() => {
-      expect(store().toasts.some((t) => t.kind === "error" && t.message === "Atlas não encontrado.")).toBe(true);
+      expect(store().toasts.some((t) => t.kind === "error" && t.message === "Atlas not found.")).toBe(true);
     });
     expect(screen.getByText("No saved atlases found. Create a new one first!")).toBeTruthy();
   });
@@ -448,7 +448,7 @@ describe("editor header", () => {
     await waitFor(() => {
       expect(store().atlases).toHaveLength(0);
     });
-    expect(store().toasts.some((t) => t.message === "Atlas excluído.")).toBe(true);
+    expect(store().toasts.some((t) => t.message === "Atlas deleted.")).toBe(true);
     expect(screen.getByText("No saved atlases found. Create a new one first!")).toBeTruthy();
   });
 });

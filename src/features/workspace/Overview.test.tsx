@@ -66,7 +66,7 @@ describe("shell routes", () => {
   it("unknown project redirects to library with a toast", async () => {
     render(at("/p/does-not-exist"));
     await waitFor(() => {
-      expect(useScriptorium.getState().toasts.some((t) => /não existe/i.test(t.message))).toBe(true);
+      expect(useScriptorium.getState().toasts.some((t) => /removed/i.test(t.message))).toBe(true);
     });
     expect(screen.getByText(/Scriptorium/)).toBeInTheDocument();
   });
@@ -75,11 +75,11 @@ describe("shell routes", () => {
     const p = useScriptorium.getState().addProject("Shimradis");
     render(at(`/p/${p.id}`));
     expect(screen.getAllByText(/Shimradis/).length).toBeGreaterThan(0);
-    const rail = within(screen.getByRole("navigation", { name: /Seções do mundo/i }));
-    expect(rail.getByRole("link", { name: /Visão Geral/i })).toHaveAttribute("href", `/p/${p.id}`);
+    const rail = within(screen.getByRole("navigation", { name: /World sections/i }));
+    expect(rail.getByRole("link", { name: /Overview/i })).toHaveAttribute("href", `/p/${p.id}`);
     expect(rail.getByRole("link", { name: /Atlas/i })).toHaveAttribute("href", `/p/${p.id}/atlas`);
-    expect(rail.getByRole("link", { name: /Códex/i })).toHaveAttribute("href", `/p/${p.id}/entries`);
-    expect(rail.getByRole("link", { name: /Livro/i })).toHaveAttribute("href", `/p/${p.id}/manuscript`);
+    expect(rail.getByRole("link", { name: /Codex/i })).toHaveAttribute("href", `/p/${p.id}/entries`);
+    expect(rail.getByRole("link", { name: /Manuscript/i })).toHaveAttribute("href", `/p/${p.id}/manuscript`);
   });
 
   it("atlas route shows the atlas index (not a placeholder)", () => {

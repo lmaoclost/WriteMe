@@ -48,7 +48,7 @@ function manuscriptRoute(projectId: string) {
 }
 
 function rowHeadings() {
-  const list = screen.getByRole("list", { name: "Capítulos" });
+  const list = screen.getByRole("list", { name: "Chapters" });
   return within(list)
     .getAllByRole("button", { name: /palavra/ })
     .map((row) => row.querySelector(".book-ch-heading")?.textContent);
@@ -82,7 +82,7 @@ describe("ManuscriptPage books", () => {
     expect(books).toHaveLength(1);
     expect(books[0].title).toBe("Untitled Manuscript");
     expect(books[0].author).toBe("");
-    expect(screen.getByLabelText("Título do livro")).toHaveValue("Untitled Manuscript");
+    expect(screen.getByLabelText("Manuscript title")).toHaveValue("Untitled Manuscript");
   });
 
   it("auto-selects the single book, shows its title as a heading and opens its first chapter", () => {
@@ -94,9 +94,9 @@ describe("ManuscriptPage books", () => {
     render(manuscriptRoute(projectId));
     expect(screen.queryByLabelText("Livro")).toBeNull();
     expect(screen.getByRole("heading", { name: "Cantar de Vellmora" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Título do livro")).toHaveValue("Cantar de Vellmora");
+    expect(screen.getByLabelText("Manuscript title")).toHaveValue("Cantar de Vellmora");
     expect(screen.getByLabelText("Autor")).toHaveValue("");
-    expect(screen.getByLabelText("Título do capítulo")).toHaveValue("Prólogo");
+    expect(screen.getByLabelText("Chapter title")).toHaveValue("Prólogo");
     expect(screen.getByRole("button", { name: /Prólogo/ })).toHaveClass("active");
   });
 
@@ -117,8 +117,8 @@ describe("ManuscriptPage books", () => {
     expect(select).toHaveValue(first.id);
     fireEvent.change(select, { target: { value: bookOf("Segundo Livro").id } });
     expect(screen.queryByRole("heading", { name: "Cantar de Vellmora" })).toBeNull();
-    expect(screen.getByLabelText("Título do livro")).toHaveValue("Segundo Livro");
-    expect(screen.getByLabelText("Título do capítulo")).toHaveValue("Capítulo A");
+    expect(screen.getByLabelText("Manuscript title")).toHaveValue("Segundo Livro");
+    expect(screen.getByLabelText("Chapter title")).toHaveValue("Capítulo A");
   });
 
   it("commits book title and author edits debounced and on blur, updating the heading", () => {
@@ -126,7 +126,7 @@ describe("ManuscriptPage books", () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "Cantar", author: "Renan" });
     render(manuscriptRoute(projectId));
-    fireEvent.change(screen.getByLabelText("Título do livro"), { target: { value: "Cantar Completo" } });
+    fireEvent.change(screen.getByLabelText("Manuscript title"), { target: { value: "Cantar Completo" } });
     fireEvent.change(screen.getByLabelText("Autor"), { target: { value: "Outro" } });
     expect(projectBooks(projectId)[0].title).toBe("Cantar");
     expect(projectBooks(projectId)[0].author).toBe("Renan");
@@ -148,9 +148,9 @@ describe("ManuscriptPage books", () => {
     seedBook(projectId, { title: "A" });
     seedBook(projectId, { title: "B" });
     render(manuscriptRoute(projectId));
-    fireEvent.change(screen.getByLabelText("Título do livro"), { target: { value: "A editado" } });
+    fireEvent.change(screen.getByLabelText("Manuscript title"), { target: { value: "A editado" } });
     fireEvent.change(screen.getByLabelText("Livro"), { target: { value: bookOf("B").id } });
-    expect(screen.getByLabelText("Título do livro")).toHaveValue("B");
+    expect(screen.getByLabelText("Manuscript title")).toHaveValue("B");
     expect(projectBooks(projectId).find((m) => m.title === "A editado")).toBeTruthy();
     act(() => {
       vi.advanceTimersByTime(300);
@@ -169,7 +169,7 @@ describe("ManuscriptPage books", () => {
     expect(screen.getByRole("button", { name: "Confirmar?" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Confirmar?" }));
     expect(projectBooks(projectId).map((m) => m.title)).toEqual(["A"]);
-    expect(screen.getByLabelText("Título do livro")).toHaveValue("A");
+    expect(screen.getByLabelText("Manuscript title")).toHaveValue("A");
     fireEvent.click(screen.getByRole("button", { name: "Excluir livro" }));
     fireEvent.click(screen.getByRole("button", { name: "Confirmar?" }));
     expect(projectBooks(projectId)).toHaveLength(0);
@@ -196,15 +196,15 @@ describe("ManuscriptPage chapters", () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A" });
     render(manuscriptRoute(projectId));
-    expect(screen.getByText("Adicione o primeiro capítulo.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Novo capítulo" }));
+    expect(screen.getByText("Add the first chapter.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "New chapter" }));
     const chapters = bookOf("A").chapters;
     expect(chapters).toHaveLength(1);
     expect(chapters[0].heading).toBe("Untitled Chapter");
     expect(chapters[0].order).toBe(0);
-    expect(screen.getByLabelText("Título do capítulo")).toHaveFocus();
+    expect(screen.getByLabelText("Chapter title")).toHaveFocus();
     expect(screen.getByRole("button", { name: /Untitled Chapter/ })).toHaveClass("active");
-    expect(screen.queryByText("Adicione o primeiro capítulo.")).toBeNull();
+    expect(screen.queryByText("Add the first chapter.")).toBeNull();
   });
 
   it("lists chapters in order, disables edge arrows and swaps orders on move", () => {
@@ -219,9 +219,9 @@ describe("ManuscriptPage chapters", () => {
     });
     render(manuscriptRoute(projectId));
     expect(rowHeadings()).toEqual(["Início", "Meio", "Fim"]);
-    const list = screen.getByRole("list", { name: "Capítulos" });
-    const upButtons = within(list).getAllByRole("button", { name: "Reordenar capítulo acima" });
-    const downButtons = within(list).getAllByRole("button", { name: "Reordenar capítulo abaixo" });
+    const list = screen.getByRole("list", { name: "Chapters" });
+    const upButtons = within(list).getAllByRole("button", { name: "Move chapter up" });
+    const downButtons = within(list).getAllByRole("button", { name: "Move chapter down" });
     expect(upButtons[0]).toBeDisabled();
     expect(downButtons[2]).toBeDisabled();
     expect(upButtons[1]).toBeEnabled();
@@ -259,7 +259,7 @@ describe("ManuscriptPage chapters", () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A", chapters: [{ heading: "Início", content: "" }] });
     render(manuscriptRoute(projectId));
-    fireEvent.change(screen.getByLabelText("Título do capítulo"), { target: { value: "Chegada" } });
+    fireEvent.change(screen.getByLabelText("Chapter title"), { target: { value: "Chegada" } });
     const richBody = document.querySelector('[data-testid="rich-body"]') as HTMLElement;
     richBody.textContent = "Torres de pedra.";
     fireEvent.input(richBody);
@@ -268,8 +268,8 @@ describe("ManuscriptPage chapters", () => {
       vi.advanceTimersByTime(300);
     });
     expect(bookOf("A").chapters[0]).toMatchObject({ heading: "Chegada", content: "Torres de pedra." });
-    fireEvent.change(screen.getByLabelText("Título do capítulo"), { target: { value: "Partida" } });
-    fireEvent.blur(screen.getByLabelText("Título do capítulo"));
+    fireEvent.change(screen.getByLabelText("Chapter title"), { target: { value: "Partida" } });
+    fireEvent.blur(screen.getByLabelText("Chapter title"));
     expect(bookOf("A").chapters[0].heading).toBe("Partida");
     vi.useRealTimers();
   });
@@ -280,7 +280,7 @@ describe("ManuscriptPage chapters", () => {
     seedBook(projectId, { title: "A", chapters: [{ heading: "Início", content: "" }] });
     render(manuscriptRoute(projectId));
     expect(screen.getByRole("button", { name: "Escrever" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: "Prévia" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "Preview" })).toHaveAttribute("aria-pressed", "false");
     // rich editor: blur commits whatever the body holds (markdown text survives
     // as text until the user applies rich formatting)
     const richBody = document.querySelector('[data-testid="rich-body"]') as HTMLElement;
@@ -288,8 +288,8 @@ describe("ManuscriptPage chapters", () => {
     fireEvent.input(richBody);
     fireEvent.blur(richBody);
     expect(bookOf("A").chapters[0].content).toBe("*itálico* e **negrito**");
-    fireEvent.click(screen.getByRole("button", { name: "Prévia" }));
-    expect(screen.getByRole("button", { name: "Prévia" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+    expect(screen.getByRole("button", { name: "Preview" })).toHaveAttribute("aria-pressed", "true");
     expect(document.querySelector(".md-view")).not.toBeNull();
     expect(document.querySelector(".md-view")?.textContent).toContain("itálico");
     fireEvent.click(screen.getByRole("button", { name: "Escrever" }));
@@ -302,8 +302,8 @@ describe("ManuscriptPage chapters", () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A", chapters: [{ heading: "Início", content: "" }] });
     render(manuscriptRoute(projectId));
-    fireEvent.click(screen.getByRole("button", { name: "Prévia" }));
-    expect(screen.getByText("Sem conteúdo ainda.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+    expect(screen.getByText("No content yet.")).toBeInTheDocument();
     expect(document.querySelector(".md-view")).toBeNull();
   });
 
@@ -323,13 +323,13 @@ describe("ManuscriptPage chapters", () => {
     const chapterByHeading = (heading: string) => bookOf("A").chapters.find((c) => c.heading === heading);
     expect(chapterByHeading("Um")?.content).toBe("rascunho");
     expect(chapterByHeading("Dois")?.content).toBe("");
-    expect(screen.getByLabelText("Título do capítulo")).toHaveValue("Dois");
+    expect(screen.getByLabelText("Chapter title")).toHaveValue("Dois");
     expect(screen.getByRole("button", { name: /Dois/ })).toHaveClass("active");
     act(() => {
       vi.advanceTimersByTime(300);
     });
     expect(chapterByHeading("Dois")?.content).toBe("");
-    const list = screen.getByRole("list", { name: "Capítulos" });
+    const list = screen.getByRole("list", { name: "Chapters" });
     expect(within(list).getAllByRole("button", { name: /palavra/ })
       .some((row) => row.textContent?.includes("1 palavra"))).toBe(true);
     vi.useRealTimers();
@@ -339,18 +339,18 @@ describe("ManuscriptPage chapters", () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A", chapters: [{ heading: "Um" }, { heading: "Dois" }] });
     render(manuscriptRoute(projectId));
-    fireEvent.click(screen.getByRole("button", { name: "Excluir capítulo" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete chapter" }));
     expect(screen.getByRole("button", { name: "Confirmar?" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Confirmar?" }));
     const chapters = bookOf("A").chapters;
     expect(chapters).toHaveLength(1);
     expect(chapters[0].heading).toBe("Dois");
-    expect(screen.getByLabelText("Título do capítulo")).toHaveValue("Dois");
-    fireEvent.click(screen.getByRole("button", { name: "Excluir capítulo" }));
+    expect(screen.getByLabelText("Chapter title")).toHaveValue("Dois");
+    fireEvent.click(screen.getByRole("button", { name: "Delete chapter" }));
     fireEvent.click(screen.getByRole("button", { name: "Confirmar?" }));
     expect(bookOf("A").chapters).toHaveLength(0);
-    expect(screen.getByText("Adicione o primeiro capítulo.")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Conteúdo")).toBeNull();
+    expect(screen.getByText("Add the first chapter.")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Content")).toBeNull();
   });
 });
 
@@ -363,9 +363,9 @@ describe("ExportTools slot", () => {
     const pdf = screen.getByRole("button", { name: "Exportar PDF" });
     expect(epub).toBeDisabled();
     expect(pdf).toBeDisabled();
-    expect(epub).toHaveAttribute("title", "Adicione capítulos primeiro");
-    expect(pdf).toHaveAttribute("title", "Adicione capítulos primeiro");
-    fireEvent.click(screen.getByRole("button", { name: "Novo capítulo" }));
+    expect(epub).toHaveAttribute("title", "Add chapters first");
+    expect(pdf).toHaveAttribute("title", "Add chapters first");
+    fireEvent.click(screen.getByRole("button", { name: "New chapter" }));
     expect(epub).toBeEnabled();
     expect(pdf).toBeEnabled();
     expect(epub).not.toHaveAttribute("title");

@@ -27,14 +27,14 @@ export function EntryImagePicker({ atlasId, entries, images, onClose }: EntryIma
   const apply = (entryId: Id) => {
     const ok = useScriptorium.getState().setAtlasMapFromEntry(atlasId, entryId);
     if (ok) pushToast("success", "Mapa vinculado ao codex.");
-    else pushToast("error", "Não foi possível vincular a imagem.");
+    else pushToast("error", "Couldn't link the image.");
     onClose();
   };
 
   return (
     <>
       <div className="chooser-backdrop" onPointerDown={onClose} aria-hidden="true" />
-      <div className="entry-image-picker" role="dialog" aria-label="Imagem do códex">
+      <div className="entry-image-picker" role="dialog" aria-label="Entry image">
         {candidates.length === 0 ? (
           <p className="entry-picker-empty">Nenhuma entrada com imagem.</p>
         ) : (

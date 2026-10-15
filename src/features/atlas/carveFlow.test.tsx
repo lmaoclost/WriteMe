@@ -141,7 +141,7 @@ function parentPoly(container: HTMLElement): SVGPolygonElement {
 function setupCarve(modeName: string, atlas?: Atlas, natural?: { w: number; h: number }) {
   const a = atlas ?? makeAtlas([{ points: PARENT, color: PARENT_COLOR, label: "Estado" }]);
   const mounted = mountEditor(a, natural);
-  pickButton("Ferramenta região");
+  pickButton("Draw region");
   pickButton(modeName);
   clickStage(mounted.stageEl, 166, 120, 11); // near vertex A → snap
   clickStage(mounted.stageEl, 320, 210, 12); // middle (0.4,0.35)
@@ -225,7 +225,7 @@ describe("carve mode", () => {
   it("S2: armed entry with no snapped exit → Enter toasts the border hint and commits nothing", () => {
     const atlas = makeAtlas([{ points: PARENT, color: PARENT_COLOR, label: "Estado" }]);
     const { container, stageEl } = mountEditor(atlas);
-    pickButton("Ferramenta região");
+    pickButton("Draw region");
     pickButton("Carve");
     clickStage(stageEl, 166, 120, 11); // near vertex A → entry arms, parent detected
     expect(parentPoly(container).classList.contains("carve-parent")).toBe(true);
@@ -250,7 +250,7 @@ describe("carve mode", () => {
     const atlas = makeAtlas([{ points: HEX, color: PARENT_COLOR, label: "Hexagão" }]);
     const { container, stageEl } = mountEditor(atlas);
     expect(pointInPolygon({ x: 0.85, y: 0.5 }, HEX)).toBe(false);
-    pickButton("Ferramenta região");
+    pickButton("Draw region");
     pickButton("Carve");
     clickStage(stageEl, 680, 300, 11); // (0.85,0.5): exactly on the right edge
     expect(parentPoly(container).classList.contains("carve-parent")).toBe(true);
@@ -336,7 +336,7 @@ describe("fit mode", () => {
       { points: RIGHT, color: "#654321", label: "Leste" },
     ]);
     const { container, stageEl } = mountEditor(atlas);
-    pickButton("Ferramenta região");
+    pickButton("Draw region");
     pickButton("Encaixe");
     clickStage(stageEl, 376, 120, 11); // (0.47,0.2)
     clickStage(stageEl, 424, 120, 12); // (0.53,0.2)
@@ -360,7 +360,7 @@ describe("fit mode", () => {
       { points: RIGHT, color: "#654321", label: "Leste" },
     ]);
     const { stageEl } = mountEditor(atlas);
-    pickButton("Ferramenta região");
+    pickButton("Draw region");
     pickButton("Encaixe");
     clickStage(stageEl, 80, 120, 11); // (0.1,0.2)
     clickStage(stageEl, 240, 120, 12); // (0.3,0.2)
@@ -379,7 +379,7 @@ describe("mode toggles", () => {
     const atlas = makeAtlas([{ points: PARENT, color: PARENT_COLOR, label: "Estado" }]);
     mountEditor(atlas);
     expect(screen.queryByRole("button", { name: "Carve" })).toBeNull();
-    pickButton("Ferramenta região");
+    pickButton("Draw region");
     expect(screen.getByRole("button", { name: "Carve" })).toBeTruthy();
     pickButton("Vizinho");
     expect(pressed("Vizinho")).toBe(true);
@@ -412,7 +412,7 @@ describe("carve px convention (imgW × scale)", () => {
   it("flow: the wide-image fixture snaps through the editor with pxPerUnit = imgW", () => {
     const atlas = makeAtlas([{ points: WIDE_PARENT, color: PARENT_COLOR, label: "Estado" }]);
     const { container, stageEl } = mountEditor(atlas, { w: 1600, h: 600 });
-    pickButton("Ferramenta região");
+    pickButton("Draw region");
     pickButton("Carve");
     // S1: the fit-on-load view is scale 0.5 (800/1600), panY 150 → pxPerUnit = imgW·scale = 800.
     // A 0.02 vertex offset = 16 px > 14 → no snap → free draw fallback

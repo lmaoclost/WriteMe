@@ -5,19 +5,19 @@ import { Seal } from "../../ui/Seal";
 import "./workspace.css";
 
 const SECTIONS = [
-  { key: "overview", label: "Visão Geral", to: "" },
+  { key: "overview", label: "Overview", to: "" },
   { key: "atlas", label: "Atlas", to: "atlas" },
-  { key: "entries", label: "Códex", to: "entries" },
-  { key: "timeline", label: "Cronologia", to: "timeline" },
-  { key: "bloodline", label: "Linhagem", to: "bloodline" },
-  { key: "factions", label: "Frações", to: "factions" },
-  { key: "calendar", label: "Calendário", to: "calendar" },
-  { key: "plotboard", label: "Planos", to: "plotboard" },
-  { key: "linewheel", label: "Linha do Tempo", to: "linewheel" },
+  { key: "entries", label: "Codex", to: "entries" },
+  { key: "timeline", label: "Timeline", to: "timeline" },
+  { key: "bloodline", label: "Bloodline", to: "bloodline" },
+  { key: "factions", label: "Factions", to: "factions" },
+  { key: "calendar", label: "Calendar", to: "calendar" },
+  { key: "plotboard", label: "Plot board", to: "plotboard" },
+  { key: "linewheel", label: "Timeline canvas", to: "linewheel" },
   { key: "oaths", label: "Oaths", to: "oaths" },
   { key: "wellspring", label: "Wellspring", to: "wellspring" },
   { key: "conlang", label: "Conlang", to: "conlang" },
-  { key: "manuscript", label: "Livro", to: "manuscript" },
+  { key: "manuscript", label: "Manuscript", to: "manuscript" },
 ] as const;
 
 export function WorkspaceLayout() {
@@ -29,7 +29,7 @@ export function WorkspaceLayout() {
   useEffect(() => {
     if (!project && !warnedRef.current) {
       warnedRef.current = true;
-      pushToast("error", "Este mundo não existe ou foi removido.");
+      pushToast("error", "This world doesn't exist or was removed.");
     }
   }, [project, pushToast]);
 
@@ -37,7 +37,7 @@ export function WorkspaceLayout() {
 
   return (
     <div className="workspace">
-      <nav className="rail" aria-label="Seções do mundo">
+      <nav className="rail" aria-label="World sections">
         <div className="rail-seal">
           <Seal letter="S" />
         </div>

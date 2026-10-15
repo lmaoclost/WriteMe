@@ -138,7 +138,7 @@ describe("pin layer", () => {
   it("pin tool: a stage click places a pin at normalized coords with the legacy pinStyle offset", () => {
     const atlas = makeAtlas();
     const { container, stageEl } = mountEditor(atlas);
-    pickButton("Ferramenta pino");
+    pickButton("Pin tool");
     clickStage(stageEl, 208, 150, 11); // (0.26, 0.25)
     const pins = store().atlases[0].pins;
     expect(pins).toHaveLength(1);
@@ -274,7 +274,7 @@ describe("Delete key", () => {
       fireEvent.keyDown(document, { key: "Delete" });
     });
     expect(store().atlases[0].pins).toHaveLength(0);
-    expect(screen.getByText("Selecione ou crie um pino ou região.")).toBeTruthy();
+    expect(screen.getByText("Select or create a pin or region.")).toBeTruthy();
     act(() => {
       store().undo(atlas.id);
     });
@@ -496,7 +496,7 @@ describe("RegionPanel", () => {
       fireEvent.click(screen.getByRole("button", { name: "Confirm?" }));
     });
     expect(store().atlases[0].regions).toHaveLength(1);
-    expect(screen.getByText("Selecione ou crie um pino ou região.")).toBeTruthy();
+    expect(screen.getByText("Select or create a pin or region.")).toBeTruthy();
     void container;
   });
 

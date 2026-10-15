@@ -96,7 +96,7 @@ describe("TimelinePage", () => {
     render(timelineRoute(projectId));
     fireEvent.click(screen.getByRole("button", { name: "Tratado das Três Pontes — 1200 · Maio" }));
     expect(screen.getByLabelText("Title")).toHaveValue("Tratado das Três Pontes");
-    expect(screen.getByRole("link", { name: "Códex" }).getAttribute("class")).toContain("active");
+    expect(screen.getByRole("link", { name: "Codex" }).getAttribute("class")).toContain("active");
   });
 
   it("uses Só eventos as the default chip and Tudo reveals dated non-events", () => {
@@ -106,7 +106,7 @@ describe("TimelinePage", () => {
       { title: "Rio Sarnen", category: "place" },
     ]);
     render(timelineRoute(projectId));
-    const so = screen.getByRole("button", { name: "Só eventos" });
+    const so = screen.getByRole("button", { name: "Events only" });
     const tudo = screen.getByRole("button", { name: "Tudo" });
     expect(so.getAttribute("aria-pressed")).toBe("true");
     expect(tudo.getAttribute("aria-pressed")).toBe("false");
@@ -178,7 +178,7 @@ describe("TimelinePage", () => {
     const labels = Array.from(document.querySelectorAll(".rail-link .rail-label")).map(
       (el) => el.textContent,
     );
-    expect(labels).toEqual(["Visão Geral", "Atlas", "Códex", "Cronologia", "Linhagem", "Frações", "Calendário", "Planos", "Linha do Tempo", "Oaths", "Wellspring", "Conlang", "Livro"]);
-    expect(screen.getByRole("link", { name: "Cronologia" }).getAttribute("class")).toContain("active");
+    expect(labels).toEqual(["Overview", "Atlas", "Codex", "Timeline", "Bloodline", "Factions", "Calendar", "Plot board", "Timeline canvas", "Oaths", "Wellspring", "Conlang", "Manuscript"]);
+    expect(screen.getByRole("link", { name: "Timeline" }).getAttribute("class")).toContain("active");
   });
 });

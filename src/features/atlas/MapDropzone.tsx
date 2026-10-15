@@ -11,9 +11,9 @@ export async function loadMapIntoAtlas(atlasId: string, file: File, pushToast: P
     const { dataUrl } = await fileToDataUrl(file);
     const ok = useScriptorium.getState().putMapImage(atlasId, dataUrl);
     if (ok) pushToast("success", "Mapa carregado.");
-    else pushToast("error", "Não foi possível carregar o mapa.");
+    else pushToast("error", "Upload failed. Please try again.");
   } catch {
-    pushToast("error", "Não foi possível carregar o mapa.");
+    pushToast("error", "Upload failed. Please try again.");
   }
 }
 

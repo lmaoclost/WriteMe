@@ -41,7 +41,7 @@ describe("DocxReplaceButton", () => {
     act(() => { store().addManuscript(store().projects[0].id, "Livro"); });
     act(() => { store().addChapter(store().manuscripts[0].id, "Cap"); });
     render(<DocxReplaceButton chapterId={store().manuscripts[0].chapters[0].id} />);
-    const input = screen.getByLabelText("Trocar conteúdo (.docx)") as HTMLInputElement;
+    const input = screen.getByLabelText("Replace with .docx") as HTMLInputElement;
     const file = new File(["docx-bytes"], "ch.docx", { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
     fireEvent.change(input, { target: { files: [file] } });
     await vi.waitFor(() => expect(store().manuscripts[0].chapters[0].content).toBe("<p>Importado do Word.</p>"), { timeout: 3000 });

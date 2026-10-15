@@ -36,7 +36,7 @@ export async function importDocxToHtml(file: File): Promise<string> {
   const mammoth = await import("mammoth");
   const buffer = await fileToArrayBuffer(file);
   const result = await (mammoth.default ?? mammoth).convertToHtml({ arrayBuffer: buffer });
-  if (!result?.value) throw new Error("sem conteúdo");
+  if (!result?.value) throw new Error("no content");
   return result.value;
 }
 

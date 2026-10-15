@@ -30,7 +30,7 @@ export function ExportTools({ manuscript }: ExportToolsProps) {
   const [printing, setPrinting] = useState(false);
 
   const disabled = manuscript.chapters.length === 0 || busy;
-  const title = manuscript.chapters.length === 0 ? "Adicione capítulos primeiro" : undefined;
+  const title = manuscript.chapters.length === 0 ? "Add chapters first" : undefined;
 
   // The print dialog must run AFTER the print-book markup reaches the DOM.
   useEffect(() => {
@@ -66,7 +66,7 @@ export function ExportTools({ manuscript }: ExportToolsProps) {
         children.push(new Paragraph({ children: [new TextRun({ text: ch.heading, bold: true })], heading: HeadingLevel.HEADING_2 }));
         if (ch.noteTop) children.push(new Paragraph({ children: [new TextRun({ text: ch.noteTop, italics: true, color: "7A7A99" })] }));
         const blocks = htmlToBlocks(ch.content || "");
-        if (!blocks.length) children.push(new Paragraph({ children: [new TextRun({ text: "Sem conteúdo ainda.", italics: true })] }));
+        if (!blocks.length) children.push(new Paragraph({ children: [new TextRun({ text: "No content yet.", italics: true })] }));
         for (const block of blocks) {
           if (block.kind === "li") {
             children.push(new Paragraph({ children: [new TextRun({ text: block.text })], bullet: { level: 0 } }));
@@ -173,7 +173,7 @@ export function ExportTools({ manuscript }: ExportToolsProps) {
         <a
           className="book-export-btn bindery-link"
           href={`../bindery/${manuscript.id}`}
-          aria-label="Abrir encadernação"
+          aria-label="Open Bindery"
         >
           Encadernar ✦
         </a>

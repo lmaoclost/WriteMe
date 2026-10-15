@@ -22,9 +22,9 @@ export function ChapterList({ chapters, selectedId, onSelect, onMove, onCreate }
   return (
     <aside className="book-chapters">
       {chapters.length === 0 ? (
-        <p className="book-empty-copy">Adicione o primeiro capítulo.</p>
+        <p className="book-empty-copy">Add the first chapter.</p>
       ) : (
-        <ul className="book-ch-rows" aria-label="Capítulos">
+        <ul className="book-ch-rows" aria-label="Chapters">
           {chapters.map((chapter, index) => {
             const words = countWords(chapter.content);
             return (
@@ -32,7 +32,7 @@ export function ChapterList({ chapters, selectedId, onSelect, onMove, onCreate }
                 <button
                   type="button"
                   className="book-ch-move"
-                  aria-label="Reordenar capítulo acima"
+                  aria-label="Move chapter up"
                   disabled={index === 0}
                   onClick={() => onMove(chapter.id, -1)}
                 >
@@ -41,7 +41,7 @@ export function ChapterList({ chapters, selectedId, onSelect, onMove, onCreate }
                 <button
                   type="button"
                   className="book-ch-move"
-                  aria-label="Reordenar capítulo abaixo"
+                  aria-label="Move chapter down"
                   disabled={index === chapters.length - 1}
                   onClick={() => onMove(chapter.id, 1)}
                 >
@@ -61,7 +61,7 @@ export function ChapterList({ chapters, selectedId, onSelect, onMove, onCreate }
         </ul>
       )}
       <button type="button" className="btn-primary book-ch-new" onClick={onCreate}>
-        Novo capítulo
+        New chapter
       </button>
     </aside>
   );
@@ -77,14 +77,14 @@ export function DocxReplaceButton({ chapterId }: { chapterId: string }) {
       const { importDocxToHtml } = await import("./docx");
       const html = await importDocxToHtml(file);
       useScriptorium.getState().updateChapter(chapterId, { content: html });
-      pushToast("success", "Capítulo substituído pelo .docx.");
+      pushToast("success", "Chapter replaced by the .docx.");
     } catch {
-      pushToast("error", "Não foi possível ler o .docx.");
+      pushToast("error", "Import failed. Check that all files are valid .docx.");
     }
   };
   return (
     <label className="book-mode book-docx-btn" title="Replace this chapter's body from a .docx">
-      Trocar conteúdo (.docx)
+      Replace with .docx
       <input type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="visually-hidden" onChange={(e) => void onChange(e)} />
     </label>
   );

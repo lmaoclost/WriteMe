@@ -144,7 +144,7 @@ describe("AtlasEditor — draw flow (region tool)", () => {
   it("3 clicks + Enter adds the region with the exact normalized points and selects it", () => {
     const atlas = makeAtlas([]);
     const { stageEl, container } = mountEditor(atlas);
-    pickTool("Ferramenta região");
+    pickTool("Draw region");
     clickStage(stageEl, 100, 60, 11);
     clickStage(stageEl, 300, 120, 12);
     clickStage(stageEl, 260, 220, 13);
@@ -169,7 +169,7 @@ describe("AtlasEditor — draw flow (region tool)", () => {
   it("Escape during draw clears the vertices and adds nothing", () => {
     const atlas = makeAtlas([]);
     const { stageEl, container } = mountEditor(atlas);
-    pickTool("Ferramenta região");
+    pickTool("Draw region");
     clickStage(stageEl, 100, 60, 11);
     clickStage(stageEl, 300, 120, 12);
     expect(container.querySelector("polygon.draw-preview")).not.toBeNull();
@@ -188,7 +188,7 @@ describe("AtlasEditor — draw flow (region tool)", () => {
   it("click right after the first vertex closes the region (Enter not needed)", () => {
     const atlas = makeAtlas([{ points: BIG, color: "#123456", label: "Grande" }]);
     const { stageEl } = mountEditor(atlas);
-    pickTool("Ferramenta região");
+    pickTool("Draw region");
     clickStage(stageEl, 100, 60, 11);
     clickStage(stageEl, 300, 120, 12);
     clickStage(stageEl, 260, 220, 13);
@@ -216,13 +216,13 @@ describe("AtlasEditor — select tool", () => {
     expect(polyByFill(container, "#654321").getAttribute("fill-opacity")).toBe("0.28");
   });
 
-  it("dblclick opens the chooser (options desc by area + Nenhuma); pick selects, Nenhuma clears; outside closes", () => {
+  it("dblclick opens the chooser (options desc by area + None); pick selects, None clears; outside closes", () => {
     const atlas = makeAtlas([
       { points: BIG, color: "#123456", label: "Grande" },
       { points: SMALL, color: "#654321", label: "Pequeno" },
     ]);
     const { stageEl, container } = mountEditor(atlas);
-    const chooserQuery = () => screen.queryByRole("dialog", { name: "Escolher região" });
+    const chooserQuery = () => screen.queryByRole("dialog", { name: "Pick region" });
 
     act(() => {
       fireEvent.dblClick(stageEl, { clientX: 200, clientY: 150 });
@@ -230,10 +230,10 @@ describe("AtlasEditor — select tool", () => {
     const chooser = chooserQuery();
     expect(chooser).toBeTruthy();
     const labels = Array.from(chooser!.querySelectorAll("button")).map((b) => b.textContent);
-    expect(labels).toEqual(["Grande", "Pequeno", "Nenhuma"]);
+    expect(labels).toEqual(["Grande", "Pequeno", "None"]);
 
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Nenhuma" }));
+      fireEvent.click(screen.getByRole("button", { name: "None" }));
     });
     expect(chooserQuery()).toBeNull();
     expect(polyByFill(container, "#123456").getAttribute("fill-opacity")).toBe("0.28");

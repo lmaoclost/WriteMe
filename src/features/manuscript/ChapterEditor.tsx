@@ -16,7 +16,7 @@ export interface ChapterEditorProps {
 export function useChapter(chapterId: string): Chapter {
   const chapter = useScriptorium((s) =>
     s.manuscripts.flatMap((m) => m.chapters).find((c) => c.id === chapterId));
-  if (!chapter) throw new Error("capítulo não encontrado");
+  if (!chapter) throw new Error("chapter not found");
   return chapter;
 }
 
@@ -149,7 +149,7 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
         ref={headingRef}
         type="text"
         className="book-ch-heading-input"
-        aria-label="Título do capítulo"
+        aria-label="Chapter title"
         value={headingDraft.draft}
         onChange={(e) => headingDraft.setDraft(e.target.value)}
         onBlur={flush}
@@ -169,7 +169,7 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
           aria-pressed={!writing}
           onClick={() => setMode(false)}
         >
-          Prévia
+          Preview
         </button>
       </div>
       {writing ? (
@@ -182,14 +182,14 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
             suppressContentEditableWarning
             role="textbox"
             aria-multiline="true"
-            aria-label="Conteúdo"
+            aria-label="Content"
             data-testid="rich-body"
             onInput={onRichInput}
             onBlur={onRichBlur}
           />
         </>
       ) : chapter.content.trim() === "" ? (
-        <p className="book-md-empty">Sem conteúdo ainda.</p>
+        <p className="book-md-empty">No content yet.</p>
       ) : (
         <div className="md-view" dangerouslySetInnerHTML={{ __html: renderMarkdown(chapter.content) }} />
       )}
@@ -201,7 +201,7 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
           className={"book-delete" + (armed ? " armed" : "")}
           onClick={confirmOrDelete}
         >
-          {armed ? "Confirmar?" : "Excluir capítulo"}
+          {armed ? "Confirmar?" : "Delete chapter"}
         </button>
       </footer>
     </div>
@@ -213,21 +213,21 @@ function RichToolbar({ onExec }: { onExec(cmd: string, value?: string): void }) 
   return (
     <div className="rich-toolbar">
       <button type="button" aria-label="Negrito" onClick={() => onExec("bold")}><b>B</b></button>
-      <button type="button" aria-label="Itálico" onClick={() => onExec("italic")}><i>I</i></button>
+      <button type="button" aria-label="Italic" onClick={() => onExec("italic")}><i>I</i></button>
       <button type="button" aria-label="Sublinhado" onClick={() => onExec("underline")}><u>U</u></button>
       <button type="button" aria-label="Lista com marcadores" onClick={() => onExec("insertUnorderedList")}>•</button>
       <button type="button" aria-label="Lista numerada" onClick={() => onExec("insertOrderedList")}>1.</button>
-      <button type="button" aria-label="Alinhar à esquerda" onClick={() => onExec("justifyLeft")}>⇤</button>
+      <button type="button" aria-label="Align left" onClick={() => onExec("justifyLeft")}>⇤</button>
       <button type="button" aria-label="Alinhar ao centro" onClick={() => onExec("justifyCenter")}>↔</button>
-      <button type="button" aria-label="Alinhar à direita" onClick={() => onExec("justifyRight")}>⇥</button>
+      <button type="button" aria-label="Align right" onClick={() => onExec("justifyRight")}>⇥</button>
       <button type="button" aria-label="Justificar" onClick={() => onExec("justifyFull")}>≡</button>
       <button type="button" className="rich-blocks" aria-expanded={blocksOpen} onClick={() => setBlocksOpen((v) => !v)}>Blocos ▾</button>
       {blocksOpen ? (
         <div className="rich-blocks-pop" role="menu">
           {[
-            ["Título 1 (H1)", "h1"],
-            ["Título 2 (H2)", "h2"],
-            ["Título 3 (H3)", "h3"],
+            ["Heading 1 (H1)", "h1"],
+            ["Heading 2 (H2)", "h2"],
+            ["Heading 3 (H3)", "h3"],
             ["Parágrafo", "p"],
             ["Citação", "blockquote"],
           ].map(([label, tag]) => (
@@ -265,10 +265,10 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
   return (
     <>
       <label className="book-note-field">
-        <span className="field-label">Nota do autor — início</span>
+        <span className="field-label">Author's note (top)</span>
         <input
-          aria-label="Nota do autor — início"
-          placeholder="Optional: contexto, content note, dedicação…"
+          aria-label="Author's note (top)"
+          placeholder="Optional: context, content note, dedication..."
           value={noteTop.draft}
           onChange={(e) => noteTop.setDraft(e.target.value)}
           onBlur={() => noteTop.flush()}
@@ -278,7 +278,7 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
         <span className="field-label">Nota do autor — fim</span>
         <input
           aria-label="Nota do autor — fim"
-          placeholder="Optional: agradecimento, tease do próximo…"
+          placeholder="Optional: acknowledgements, next-chapter teaser..."
           value={noteEnd.draft}
           onChange={(e) => noteEnd.setDraft(e.target.value)}
           onBlur={() => noteEnd.flush()}
@@ -288,8 +288,8 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
         <div className="book-end-marker">
           <span aria-hidden="true">✦</span>
           <input
-            aria-label="Marcador do fim do capítulo"
-            placeholder={chapter.endMarker || `Fim do ${chapter.heading.replace(/^Cap/i, "Capítulo")} — editável`}
+            aria-label="End-of-chapter marker"
+            placeholder={chapter.endMarker || `End of ${chapter.heading} — editable`}
             value={endMarker.draft}
             onChange={(e) => endMarker.setDraft(e.target.value)}
             onBlur={() => endMarker.flush()}
@@ -304,7 +304,7 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
             type="button"
             className="book-mode"
             aria-label="Adicionar marcador do fim"
-            onClick={() => store().updateChapter(chapter.id, { endMarker: `Fim do ${chapter.heading || "capítulo"}` })}
+            onClick={() => store().updateChapter(chapter.id, { endMarker: `Fim do ${chapter.heading || "chapter"}` })}
           >+ marcador do fim</button>
         </div>
       )}
@@ -313,13 +313,13 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
         {chapter.linkedCalendarId && cal ? (
           <>
             <span className="book-cal-label">Data: {labelDay(chapter.calendarDayKey, cal)}</span>
-            <button type="button" className="book-mode" aria-label="Desvincular calendário"
+            <button type="button" className="book-mode" aria-label="Unlink calendar"
               onClick={() => { setCalId(""); store().setChapterCalendar(chapter.id, undefined); }}>desvincular</button>
           </>
         ) : (
           <button type="button" className="book-mode" aria-expanded={calendarPickOpen}
             onClick={() => setCalendarPickOpen((v) => !v)}>
-            {calendars.length ? "Vincular calendário" : "Sem calendários no mundo"}
+            {calendars.length ? "Link calendar" : "Sem calendários no mundo"}
           </button>
         )}
         {calendarPickOpen && calendars.length ? (
@@ -328,7 +328,7 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
               <option value="">Escolha…</option>
               {calendars.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
-            <select aria-label="Mês" value={mm} disabled={!cal} onChange={(e) => setMm(e.target.value)}>
+            <select aria-label="Month" value={mm} disabled={!cal} onChange={(e) => setMm(e.target.value)}>
               {(cal?.months ?? []).map((m, i) => <option key={i} value={i}>{m.name}</option>)}
             </select>
             <label className="field"><span className="field-label">Ano do evento</span>

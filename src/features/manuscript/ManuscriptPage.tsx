@@ -26,7 +26,7 @@ function BookInputs({ manuscript }: { manuscript: Manuscript }) {
       <input
         type="text"
         className="book-title-input"
-        aria-label="Título do livro"
+        aria-label="Manuscript title"
         value={titleDraft.draft}
         onChange={(e) => titleDraft.setDraft(e.target.value)}
         onBlur={titleDraft.flush}

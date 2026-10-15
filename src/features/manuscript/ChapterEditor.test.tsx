@@ -47,7 +47,7 @@ describe("ChapterEditor rich", () => {
     const exec = vi.mocked(document.execCommand);
     render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
     fireEvent.click(screen.getByRole("button", { name: /Blocos/ }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "Título 1 (H1)" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Heading 1 (H1)" }));
     expect(exec).toHaveBeenCalledWith("formatBlock", false, "h1");
   });
 
@@ -90,8 +90,8 @@ describe("ChapterEditor rich", () => {
   it("notes top/end + endMarker persist", () => {
     seedMS();
     render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
-    fireEvent.change(screen.getByLabelText("Nota do autor — início"), { target: { value: "Dedico ao rio." } });
-    fireEvent.blur(screen.getByLabelText("Nota do autor — início"));
+    fireEvent.change(screen.getByLabelText("Author's note (top)"), { target: { value: "Dedico ao rio." } });
+    fireEvent.blur(screen.getByLabelText("Author's note (top)"));
     fireEvent.change(screen.getByLabelText("Nota do autor — fim"), { target: { value: "Continua no fim do inverno." } });
     fireEvent.blur(screen.getByLabelText("Nota do autor — fim"));
     const ch = store().manuscripts[0].chapters[0];
@@ -104,7 +104,7 @@ describe("ChapterEditor rich", () => {
     seedMS();
     act(() => { store().updateChapter(store().manuscripts[0].chapters[0].id, { endMarker: "Fim do cap." }); });
     render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
-    const marker = screen.getByLabelText("Marcador do fim do capítulo");
+    const marker = screen.getByLabelText("End-of-chapter marker");
     fireEvent.change(marker, { target: { value: "Fim do Livro I" } });
     fireEvent.blur(marker);
     expect(store().manuscripts[0].chapters[0].endMarker).toBe("Fim do Livro I");
@@ -114,10 +114,10 @@ describe("ChapterEditor rich", () => {
     seedMS();
     const cal = store().addCalendar("prj_1", "Selo Anual");
     render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
-    fireEvent.click(screen.getByRole("button", { name: /Vincular calendário/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Link calendar" }));
     fireEvent.change(screen.getByLabelText("Calendário"), { target: { value: cal.id } });
     fireEvent.change(screen.getByLabelText("Ano do evento"), { target: { value: "0" } });
-    fireEvent.change(screen.getByLabelText("Mês"), { target: { value: "2" } });
+    fireEvent.change(screen.getByLabelText("Month"), { target: { value: "2" } });
     fireEvent.change(screen.getByLabelText("Dia"), { target: { value: "5" } });
     fireEvent.click(screen.getByRole("button", { name: "Vincular dia" }));
     const ch = store().manuscripts[0].chapters[0];

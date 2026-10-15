@@ -61,7 +61,7 @@ describe("BinderyPage", () => {
       store().updateEntry(store().entries[0].id, { title: "Coroa de Sarnen", summary: "Coroa perdida no rio." });
     });
     render(<BinderyPage manuscriptId={id} />);
-    const ded = screen.getByLabelText("Dedicatória");
+    const ded = screen.getByLabelText("Dedication");
     fireEvent.change(ded, { target: { value: "Ao rio." } });
     fireEvent.blur(ded);
     expect(store().manuscripts[0].bindery!.dedication).toBe("Ao rio.");
@@ -76,7 +76,7 @@ describe("BinderyPage", () => {
     const printSpy = vi.fn();
     Object.defineProperty(window, "print", { value: printSpy, configurable: true });
     render(<BinderyPage manuscriptId={id} />);
-    fireEvent.click(screen.getByRole("button", { name: "Prévia impressa" }));
+    fireEvent.click(screen.getByRole("button", { name: "Print preview" }));
     await waitFor(() => expect(printSpy).toHaveBeenCalledTimes(1), { timeout: 2000 });
   });
 });

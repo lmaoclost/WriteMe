@@ -61,7 +61,7 @@ export function TimelinePage({ projectId }: { projectId: string }) {
     <div className="timeline-page">
       <div className="timeline-chips">
         <button type="button" aria-pressed={onlyEvents} onClick={() => setOnlyEvents(true)}>
-          Só eventos
+          Events only
         </button>
         <button type="button" aria-pressed={!onlyEvents} onClick={() => setOnlyEvents(false)}>
           Tudo
