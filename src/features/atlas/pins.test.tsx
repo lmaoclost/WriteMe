@@ -387,9 +387,9 @@ describe("LinkPicker", () => {
         <LinkPicker entries={ENTRIES} currentEntryId="ent_sol" onPick={onPick} onClear={onClear} />
       </MemoryRouter>,
     );
-    expect(screen.getByLabelText("Unlink")).toBeTruthy();
+    expect(screen.getByLabelText(/Unlink Reinos/)).toBeTruthy();
     act(() => {
-      fireEvent.click(screen.getByLabelText("Unlink"));
+      fireEvent.click(screen.getByLabelText(/Unlink Reinos/));
     });
     expect(onClear).toHaveBeenCalledTimes(1);
     act(() => {
@@ -411,7 +411,7 @@ describe("pin link through the panel", () => {
     expect(store().atlases[0].pins[0].entryId).toBe("ent_herd");
     pickButton("Link entry");
     act(() => {
-      fireEvent.click(screen.getByLabelText("Unlink"));
+      fireEvent.click(screen.getByLabelText(/Unlink Reinos/));
     });
     expect(store().atlases[0].pins[0].entryId).toBeUndefined();
   });
