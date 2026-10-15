@@ -80,9 +80,9 @@ describe("ManuscriptPage books", () => {
     fireEvent.click(screen.getByRole("button", { name: "Novo livro" }));
     const books = projectBooks(projectId);
     expect(books).toHaveLength(1);
-    expect(books[0].title).toBe("Livro sem título");
+    expect(books[0].title).toBe("Untitled Manuscript");
     expect(books[0].author).toBe("");
-    expect(screen.getByLabelText("Título do livro")).toHaveValue("Livro sem título");
+    expect(screen.getByLabelText("Título do livro")).toHaveValue("Untitled Manuscript");
   });
 
   it("auto-selects the single book, shows its title as a heading and opens its first chapter", () => {
@@ -200,10 +200,10 @@ describe("ManuscriptPage chapters", () => {
     fireEvent.click(screen.getByRole("button", { name: "Novo capítulo" }));
     const chapters = bookOf("A").chapters;
     expect(chapters).toHaveLength(1);
-    expect(chapters[0].heading).toBe("Capítulo sem título");
+    expect(chapters[0].heading).toBe("Untitled Chapter");
     expect(chapters[0].order).toBe(0);
     expect(screen.getByLabelText("Título do capítulo")).toHaveFocus();
-    expect(screen.getByRole("button", { name: /Capítulo sem título/ })).toHaveClass("active");
+    expect(screen.getByRole("button", { name: /Untitled Chapter/ })).toHaveClass("active");
     expect(screen.queryByText("Adicione o primeiro capítulo.")).toBeNull();
   });
 

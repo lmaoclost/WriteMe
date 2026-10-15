@@ -33,7 +33,7 @@ describe("addEntry", () => {
     act(() => { entry = store().addEntry(project.id); });
     expect(entry.id).toMatch(/^ent_/);
     expect(entry.projectId).toBe(project.id);
-    expect(entry.title).toBe("Sem título");
+    expect(entry.title).toBe("Untitled entry");
     expect(entry.category).toBe("lore");
     expect(entry.body).toBe("");
     expect(entry.links).toEqual([]);

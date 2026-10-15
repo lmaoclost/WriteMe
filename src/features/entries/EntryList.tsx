@@ -23,18 +23,18 @@ export function EntryList({ entries, selectedId, onSelect, onCreate }: EntryList
     <aside className="codex-list">
       <div className="codex-top">
         <button type="button" className="btn-primary codex-new" onClick={onCreate}>
-          Nova entrada
+          New entry
         </button>
         <input
           type="text"
           className="codex-search"
-          aria-label="Buscar entrada…"
-          placeholder="Buscar entrada…"
+          aria-label="Search entries"
+          placeholder="Search entries..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
-      <div className="codex-chips codex-chips-codex" role="group" aria-label="Filtrar por categoria">
+      <div className="codex-chips codex-chips-codex" role="group" aria-label="Filter by category">
         {CODEX_CATEGORY_CHIPS.map((c) => (
           <button
             type="button"
@@ -49,7 +49,7 @@ export function EntryList({ entries, selectedId, onSelect, onCreate }: EntryList
         ))}
       </div>
       {entries.length === 0 ? (
-        <p className="codex-empty">O códex está vazio — registre a primeira entrada.</p>
+        <p className="codex-empty">The codex is empty — register the first entry.</p>
       ) : filtered.length === 0 ? (
         <p className="codex-empty">Nenhum resultado.</p>
       ) : (

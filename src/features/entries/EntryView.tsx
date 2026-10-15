@@ -128,9 +128,9 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
     try {
       const { dataUrl } = await fileToDataUrl(file);
       const ok = useScriptorium.getState().putEntryImage(entry.id, dataUrl);
-      pushToast(ok ? "success" : "error", ok ? "Capa atualizada." : "Não foi possível atualizar a capa.");
+      pushToast(ok ? "success" : "error", ok ? "Cover updated." : "Couldn't update the cover.");
     } catch {
-      pushToast("error", "Não foi possível carregar a capa.");
+      pushToast("error", "Couldn't load the cover.");
     }
   };
 
@@ -153,7 +153,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
   return (
     <div className="codex-view">
       {cover ? (
-        <img className="codex-cover" src={cover} alt={`Capa de ${entry.title}`} />
+        <img className="codex-cover" src={cover} alt={`Cover of ${entry.title}`} />
       ) : null}
       {entryDate ? <span className="codex-eyebrow">{formatDate(entryDate)}</span> : null}
       <div className="codex-view-head">
@@ -161,14 +161,14 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           ref={titleRef}
           type="text"
           className="codex-title-input"
-          aria-label="Título"
+          aria-label="Title"
           value={titleDraft.draft}
           onChange={(e) => titleDraft.setDraft(e.target.value)}
           onBlur={flush}
         />
         <select
           className="codex-category"
-          aria-label="Categoria"
+          aria-label="Category"
           value={entry.category}
           onChange={(e) => {
             useScriptorium.getState().updateEntry(
@@ -189,14 +189,14 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
         onClick={() => { flush(); setSummaryOpen((v) => !v); }}
       >
         <span>Summary</span>
-        <span className="codex-summary-hint">{summaryDraft.draft.trim() || "Add a short blurb…"}</span>
+        <span className="codex-summary-hint">{summaryDraft.draft.trim() || "Add a short blurb..."}</span>
         <span aria-hidden="true">{summaryOpen ? "▾" : "▸"}</span>
       </button>
       {summaryOpen ? (
         <textarea
           className="codex-summary-input"
           aria-label="Summary"
-          placeholder="Add a short blurb…"
+          placeholder="Add a short blurb..."
           value={summaryDraft.draft}
           onChange={(e) => summaryDraft.setDraft(e.target.value)}
           onBlur={flush}
@@ -207,13 +207,13 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
         <input
           type="text"
           className="codex-date-input"
-          aria-label="Data"
+          aria-label="Date"
           placeholder="1200 · 1200-05 · 1200-05-10"
           value={dateDraft.draft}
           onChange={(e) => dateDraft.setDraft(e.target.value)}
           onBlur={dateDraft.flush}
         />
-        {dateInvalid ? <p className="date-hint error">Data inválida.</p> : null}
+        {dateInvalid ? <p className="date-hint error">Invalid date.</p> : null}
       </div>
       <div className="codex-view-actions">
         <button
@@ -222,7 +222,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           aria-pressed={writing}
           onClick={() => setMode(true)}
         >
-          Escrever
+          Write
         </button>
         <button
           type="button"
@@ -230,10 +230,10 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           aria-pressed={!writing}
           onClick={() => setMode(false)}
         >
-          Prévia
+          Preview
         </button>
         <label className="codex-action">
-          Trocar capa
+          Change cover
           <input
             type="file"
             accept="image/*"
@@ -247,11 +247,11 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           aria-pressed={imagePickerOpen}
           onClick={() => setImagePickerOpen((open) => !open)}
         >
-          Imagem do códex
+          Entry image
         </button>
         {entry.imageKey ? (
           <button type="button" className="codex-action" onClick={clearCover}>
-            Remover capa
+            Remove cover
           </button>
         ) : null}
       </div>
@@ -264,7 +264,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           entries={coveredSiblings}
           onPick={(dataUrl) => {
             const ok = useScriptorium.getState().putEntryImage(entry.id, dataUrl);
-            pushToast(ok ? "success" : "error", ok ? "Capa atualizada." : "Não foi possível atualizar a capa.");
+            pushToast(ok ? "success" : "error", ok ? "Cover updated." : "Couldn't update the cover.");
             setImagePickerOpen(false);
           }}
         />
@@ -283,7 +283,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
               }}
               onAddField={() => {
                 const sections = (entry.sections ?? []).map((s, j) => j === si
-                  ? { ...s, fields: [...s.fields, { label: "Novo campo", content: "" }] }
+                  ? { ...s, fields: [...s.fields, { label: "New Field", content: "" }] }
                   : s);
                 useScriptorium.getState().updateEntry(entry.id, { sections });
               }}
@@ -302,32 +302,32 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           <button
             type="button"
             className="codex-section-add"
-            aria-label="Nova seção"
+            aria-label="New section"
             onClick={() => {
-              const sections = [...(entry.sections ?? []), { name: "Nova seção", fields: [] } satisfies EntrySection];
+              const sections = [...(entry.sections ?? []), { name: "New section", fields: [] } satisfies EntrySection];
               useScriptorium.getState().updateEntry(entry.id, { sections });
             }}
           >
-            + Seção
+            + Section
           </button>
         </div>
       ) : null}
       {writing ? (
         <textarea
           className="codex-body"
-          aria-label="Conteúdo"
-          placeholder="Sem conteúdo ainda."
+          aria-label="Content"
+          placeholder="No content yet."
           value={bodyDraft.draft}
           onChange={(e) => bodyDraft.setDraft(e.target.value)}
           onBlur={flush}
         />
       ) : bodyDraft.draft.trim() === "" ? (
-        <p className="codex-md-empty">Sem conteúdo ainda.</p>
+        <p className="codex-md-empty">No content yet.</p>
       ) : (
         <MarkdownView body={bodyDraft.draft} />
       )}
-      <section className="codex-links" aria-label="Vínculos">
-        <span className="codex-links-title">Vínculos</span>
+      <section className="codex-links" aria-label="Links">
+        <span className="codex-links-title">Links</span>
         {entry.links.map((id) => {
           const other = siblings.find((e) => e.id === id);
           if (!other) return null;
@@ -348,7 +348,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
               <button
                 type="button"
                 className="codex-link-unlink"
-                aria-label={`Remover vínculo com ${other.title}`}
+                aria-label={`Unlink ${other.title}`}
                 onClick={() => useScriptorium.getState().unlinkEntries(entry.id, id)}
               >
                 ✕
@@ -362,7 +362,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           aria-pressed={linkPickerOpen}
           onClick={() => setLinkPickerOpen((open) => !open)}
         >
-          + Vínculo
+          + Link
         </button>
         {linkPickerOpen ? (
           <LinkPicker
@@ -381,7 +381,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           className={"codex-delete" + (armed ? " armed" : "")}
           onClick={confirmOrDelete}
         >
-          {armed ? "Confirmar?" : "Excluir"}
+          {armed ? "Confirm?" : "Delete"}
         </button>
       </div>
     </div>
@@ -400,13 +400,13 @@ function SectionBlock({ sec, onField, onAddField, onRemoveField, onRename }: {
       <header className="codex-section-head">
         <input
           className="codex-section-name"
-          aria-label={`Nome da seção ${sec.name}`}
+          aria-label={`Section ${sec.name}`}
           value={sec.name}
           onChange={(e) => onRename(e.target.value)}
         />
-        <button type="button" className="codex-field-add" aria-label={`Adicionar campo em ${sec.name}`} onClick={onAddField}>+ campo</button>
+        <button type="button" className="codex-field-add" aria-label={`Add field to ${sec.name}`} onClick={onAddField}>+ field</button>
       </header>
-      {sec.fields.length === 0 ? <p className="codex-field-empty">Sem campos.</p> : null}
+      {sec.fields.length === 0 ? <p className="codex-field-empty">No fields.</p> : null}
       {sec.fields.map((f, fi) => (
         <div className="codex-field" key={fi}>
           <div className="codex-field-label-row">
@@ -414,7 +414,7 @@ function SectionBlock({ sec, onField, onAddField, onRemoveField, onRename }: {
             <button
               type="button"
               className="codex-field-remove"
-              aria-label={`Remover campo ${f.label}`}
+              aria-label={`Remove field ${f.label}`}
               onClick={() => onRemoveField(fi)}
             >✕</button>
           </div>

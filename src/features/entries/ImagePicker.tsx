@@ -8,7 +8,7 @@ export interface ImagePickerProps {
 
 export function ImagePicker({ images, entries, onPick }: ImagePickerProps) {
   return (
-    <div className="codex-imagelist" role="group" aria-label="Imagens do códex">
+    <div className="codex-imagelist" role="group" aria-label="Entry images">
       {entries.length === 0 ? (
         <p className="codex-picker-empty">Nenhuma imagem no códex.</p>
       ) : (

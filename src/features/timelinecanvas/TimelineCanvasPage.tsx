@@ -30,7 +30,7 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
   const pan = useRef<{ x: number; basePanX: number; y: number; basePanY: number } | null>(null);
 
   useEffect(() => {
-    if (!timeline) pushToast("error", "Linha não encontrada.");
+    if (!timeline) pushToast("error", "Timeline not found.");
   }, [timeline, pushToast]);
 
   if (!timeline) return null;
@@ -42,15 +42,15 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
       <header className="bl-header">
         <input
           className="bl-name"
-          aria-label="Nome da linha"
+          aria-label="Timeline name"
           value={timeline.name}
           onChange={(e) => useScriptorium.getState().renameTimeline(timelineId, e.target.value)}
         />
         <div className="bl-actions">
-          <button type="button" aria-label="Desfazer" disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoTL(timelineId)}>↶</button>
-          <button type="button" aria-label="Refazer" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoTL(timelineId)}>↷</button>
-          <button type="button" onClick={() => { pushTLHistory(timelineId); useScriptorium.getState().addBead(timelineId, { x: 4000, y: WIRE_Y === 200 ? -60 : -60 }); }}>Novo evento</button>
-          <button type="button" onClick={() => { pushTLHistory(timelineId); useScriptorium.getState().addSegment(timelineId, 1000, 3000, "Nova era"); }}>Nova era</button>
+          <button type="button" aria-label="Undo" disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoTL(timelineId)}>↶</button>
+          <button type="button" aria-label="Redo" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoTL(timelineId)}>↷</button>
+          <button type="button" onClick={() => { pushTLHistory(timelineId); useScriptorium.getState().addBead(timelineId, { x: 4000, y: WIRE_Y === 200 ? -60 : -60 }); }}>Add Event Circle</button>
+          <button type="button" onClick={() => { pushTLHistory(timelineId); useScriptorium.getState().addSegment(timelineId, 1000, 3000, "New era"); }}>Add Timeline Segment</button>
           <button type="button" onClick={() => setNotesOpen((v) => !v)}>Notas</button>
         </div>
       </header>
@@ -168,8 +168,8 @@ function BeadPanel({ timeline, selectedId, onSelect }: {
 
   const remove = () => {
     if (!armDelete) { setArmDelete(true); return; }
-    if (bead) { store().deleteBead(bead.id); pushToast("success", "Evento removido."); }
-    if (seg) { store().deleteSegment(seg.id); pushToast("success", "Era removida."); }
+    if (bead) { store().deleteBead(bead.id); pushToast("success", "Event deleted."); }
+    if (seg) { store().deleteSegment(seg.id); pushToast("success", "Segment deleted."); }
     onSelect(null);
   };
 
@@ -178,30 +178,30 @@ function BeadPanel({ timeline, selectedId, onSelect }: {
       <header className="bl-panel-head">
         <h2>{bead?.label ?? seg?.label}</h2>
         <button type="button" className={armDelete ? "btn-danger" : ""} onClick={remove}
-          aria-label={armDelete ? "Confirmar exclusão" : "Excluir"}>
+          aria-label={armDelete ? "Confirm delete" : "Excluir"}>
           {armDelete ? "Confirmar?" : "Excluir"}
         </button>
       </header>
       {bead ? (
         <>
           <div className="field">
-            <span className="field-label">Rótulo</span>
-            <input aria-label="Rótulo do evento" defaultValue={bead.label}
+            <span className="field-label">Label</span>
+            <input aria-label="Event label" defaultValue={bead.label}
               onBlur={(e) => store().updateBead(bead.id, { label: e.target.value })} />
           </div>
           <div className="field">
-            <span className="field-label">Data no fio</span>
-            <input aria-label="Data do evento" defaultValue={bead.dateText ?? ""}
+            <span className="field-label">Date</span>
+            <input aria-label="Event date" defaultValue={bead.dateText ?? ""}
               onBlur={(e) => store().updateBead(bead.id, { dateText: e.target.value.trim() || undefined })} />
           </div>
           <label className="field">
-            <span className="field-label">Resumo</span>
-            <textarea aria-label="Resumo do evento" rows={3} defaultValue={bead.summary ?? ""}
+            <span className="field-label">Summary</span>
+            <textarea aria-label="Event summary" rows={3} defaultValue={bead.summary ?? ""}
               onBlur={(e) => store().updateBead(bead.id, { summary: e.target.value.trim() || undefined })} />
           </label>
           <div className="field">
-            <span className="field-label">Cor</span>
-            <div className="color-row" role="listbox" aria-label="Cor do evento">
+            <span className="field-label">Color</span>
+            <div className="color-row" role="listbox" aria-label="Event color">
               {BEAD_PRESET_COLORS.map((c) => (
                 <button key={c} type="button" role="option" aria-selected={bead.color === c}
                   className={`color-swatch${bead.color === c ? " current" : ""}`} style={{ background: c }}
@@ -214,13 +214,13 @@ function BeadPanel({ timeline, selectedId, onSelect }: {
       {seg ? (
         <>
           <div className="field">
-            <span className="field-label">Nome da era</span>
-            <input aria-label="Nome da era" defaultValue={seg.label}
+            <span className="field-label">Segment name</span>
+            <input aria-label="Segment name" defaultValue={seg.label}
               onBlur={(e) => store().updateSegment(seg.id, { label: e.target.value })} />
           </div>
           <div className="field">
-            <span className="field-label">Cor da linha</span>
-            <input type="color" aria-label="Cor da era" defaultValue={seg.lineColor}
+            <span className="field-label">Line color</span>
+            <input type="color" aria-label="Segment line color" defaultValue={seg.lineColor}
               onBlur={(e) => store().updateSegment(seg.id, { lineColor: e.target.value })} />
           </div>
         </>

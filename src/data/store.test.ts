@@ -96,7 +96,7 @@ describe("corrupt recovery toast (spec §6)", () => {
     const toasts = useScriptorium.getState().toasts;
     expect(toasts).toHaveLength(1);
     expect(toasts[0].kind).toBe("info");
-    expect(toasts[0].message).toBe("Dados corrompidos foram preservados em backup; a app abriu vazia.");
+    expect(toasts[0].message).toBe("Corrupted data was preserved in a backup; the app opened empty.");
   });
   it("does not toast on hydrate with clean storage", () => {
     localStorage.removeItem(STORE_KEY);

@@ -15,10 +15,10 @@ export function TLNotepad({ notes, onNotes, onClose }: { notes: string; onNotes(
         onPointerDown={(e) => { if (e.button === 0) setDrag({ dx: e.clientX, dy: e.clientY }); }}
         onPointerMove={(e) => { if (drag) setPos({ x: e.clientX - drag.dx, y: e.clientY - drag.dy }); }}
         onPointerUp={() => setDrag(null)}>
-        <span>Notas</span>
-        <button type="button" aria-label="Fechar notas" onClick={onClose}>✕</button>
+        <span>Notes</span>
+        <button type="button" aria-label="Close notes" onClick={onClose}>✕</button>
       </header>
-      <textarea aria-label="Notas da linha" value={draft} onChange={(e) => setDraft(e.target.value)} rows={5} />
+      <textarea aria-label="Timeline notes" value={draft} onChange={(e) => setDraft(e.target.value)} rows={5} />
     </div>
   );
 }

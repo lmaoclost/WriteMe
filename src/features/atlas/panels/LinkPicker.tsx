@@ -11,7 +11,7 @@ function LinkTarget({ entry }: { entry: WorldEntry }) {
     <button
       type="button"
       className="link-current"
-      title="Abrir no códex"
+      title="Open in codex"
       onClick={() => navigate("../entries", { state: { select: entry.id } })}
     >
       {entry.title}
@@ -37,9 +37,9 @@ export function LinkPicker({ entries, currentEntryId, onPick, onClear }: LinkPic
   return (
     <div className="link-picker">
       <div className="link-picker-head">
-        <span className="link-picker-title">Vincular entrada</span>
+        <span className="link-picker-title">Link entry</span>
         {current ? (
-          <button type="button" className="link-unlink" aria-label="Remover vínculo" onClick={onClear}>
+          <button type="button" className="link-unlink" aria-label="Unlink " onClick={onClear}>
             ✕
           </button>
         ) : null}
@@ -48,13 +48,13 @@ export function LinkPicker({ entries, currentEntryId, onPick, onClear }: LinkPic
       <input
         className="link-search"
         type="text"
-        aria-label="Buscar entrada"
+        aria-label="Search entries"
         placeholder="Buscar entrada…"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
       {matches.length === 0 ? (
-        <p className="link-empty">Nenhum resultado</p>
+        <p className="link-empty">No matching entries.</p>
       ) : (
         <ul className="link-list">
           {matches.map((entry) => (

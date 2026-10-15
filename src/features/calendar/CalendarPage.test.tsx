@@ -28,7 +28,7 @@ describe("store — calendars", () => {
 
   it("addEvent + update + remove com dayKeys", () => {
     const c = seed();
-    const ev = store().addCalendarEvent(c.id, "0:2:5", { text: "Festa do Rio", category: "Festas", color: "#2ecc71" })!;
+    const ev = store().addCalendarEvent(c.id, "0:2:5", { text: "Festa do Rio", category: "Festivals", color: "#2ecc71" })!;
     expect(ev.text).toBe("Festa do Rio");
     act(() => store().updateCalendarEvent(c.id, "0:2:5", ev.id, { color: "#e74c3c" }));
     expect((store().calendars ?? [])[0].events["0:2:5"][0].color).toBe("#e74c3c");
@@ -49,7 +49,7 @@ describe("store — calendars", () => {
   it("history: setEra + addEvent undo/redo", () => {
     const c = seed();
     act(() => { store().setEra(c.id, "Ida do Selo"); });
-    act(() => { store().addCalendarEvent(c.id, "0:0:1", { text: "Eclipse", category: "Eventos" }); });
+    act(() => { store().addCalendarEvent(c.id, "0:0:1", { text: "Eclipse", category: "Events" }); });
     expect(store().calendars![0].era).toBe("Ida do Selo");
     act(() => { store().undoCL(c.id); });
     expect(store().calendars![0]!.events["0:0:1"]).toBeUndefined();
@@ -66,7 +66,7 @@ describe("store — calendars", () => {
 
   it("round-trips through export", () => {
     const c = seed();
-    act(() => { store().addCalendarEvent(c.id, "1:3:9", { text: "Coroação", category: "Notas" }); });
+    act(() => { store().addCalendarEvent(c.id, "1:3:9", { text: "Coroação", category: "Notes" }); });
     const json = store().exportData();
     localStorage.clear();
     act(() => { store().importData(json); });
@@ -91,11 +91,11 @@ describe("CalendarPage", () => {
   it("year navigation shifts event dayKeys", () => {
     const c = seed();
     mount(c);
-    fireEvent.click(screen.getByRole("button", { name: "Ano seguinte" }));
-    expect(screen.getByLabelText("Ano corrente").textContent).toBe("Ano 2");
+    fireEvent.click(screen.getByRole("button", { name: "Next year" }));
+    expect(screen.getByLabelText("Current year").textContent).toBe("Year 2");
     fireDay(5, 0);
-    fireEvent.change(screen.getByLabelText("Novo evento"), { target: { value: "Colheita do 2º ano" } });
-    fireEvent.click(screen.getByRole("button", { name: "Adicionar" }));
+    fireEvent.change(screen.getByLabelText("New event"), { target: { value: "Colheita do 2º ano" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
     const events = store().calendars![0].events;
     expect(Object.keys(events).every((k) => k.startsWith("1:"))).toBe(true);
   });
@@ -104,13 +104,13 @@ describe("CalendarPage", () => {
     const c = seed();
     mount(c);
     fireDay(2, 3);
-    expect(screen.getByTestId("cal-panel").textContent).toContain("4 de Mês 3");
-    fireEvent.change(screen.getByLabelText("Novo evento"), { target: { value: "Colheita" } });
-    fireEvent.click(screen.getByRole("button", { name: "Adicionar" }));
+    expect(screen.getByTestId("cal-panel").textContent).toContain("4 of Month 3");
+    fireEvent.change(screen.getByLabelText("New event"), { target: { value: "Colheita" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
     const events = store().calendars![0].events;
     const key = Object.keys(events)[0];
     expect(events[key][0].text).toBe("Colheita");
-    expect(events[key][0].category).toBe("Eventos");
+    expect(events[key][0].category).toBe("Events");
   });
 
   it("weekend cells get weekend class", () => {
@@ -123,12 +123,12 @@ describe("CalendarPage", () => {
   it("config popover renames a month and sets era", () => {
     const c = seed();
     mount(c);
-    fireEvent.click(screen.getByRole("button", { name: "Configurar" }));
-    const nameInp = screen.getByLabelText("Nome do mês 1") as HTMLInputElement;
+    fireEvent.click(screen.getByRole("button", { name: "Edit Calendar Settings" }));
+    const nameInp = screen.getByLabelText("Month name 1") as HTMLInputElement;
     fireEvent.change(nameInp, { target: { value: "Primeiro Inverno" } });
     fireEvent.blur(nameInp);
     expect(store().calendars![0].months[0].name).toBe("Primeiro Inverno");
-    const eraInp = screen.getByLabelText("Era do calendário") as HTMLInputElement;
+    const eraInp = screen.getByLabelText("Era") as HTMLInputElement;
     fireEvent.change(eraInp, { target: { value: "Depois do Selo" } });
     fireEvent.blur(eraInp);
     expect(store().calendars![0].era).toBe("Depois do Selo");

@@ -360,7 +360,7 @@ describe("fix wave: clip failure guard (F5)", () => {
     expect(fitted).toBeNull();
     expect(store().atlases[0].regions).toHaveLength(1);
     expect(selectHistoryFlags(a.id)(store())).toEqual(flagsBefore);
-    expect(store().toasts.some((t) => t.kind === "error" && t.message === "Não consegui calcular os encaixes.")).toBe(true);
+    expect(store().toasts.some((t) => t.kind === "error" && t.message === "Couldn't compute the cuts.")).toBe(true);
   });
   it("claimRemainingArea → clip throw toasts and returns 0 with state untouched", () => {
     const a = addAtlas();
@@ -374,7 +374,7 @@ describe("fix wave: clip failure guard (F5)", () => {
     expect(count).toBe(0);
     expect(store().atlases[0].regions).toHaveLength(2);
     expect(selectHistoryFlags(a.id)(store())).toEqual(flagsBefore);
-    expect(store().toasts.some((t) => t.kind === "error" && t.message === "Não consegui calcular os encaixes.")).toBe(true);
+    expect(store().toasts.some((t) => t.kind === "error" && t.message === "Couldn't compute the cuts.")).toBe(true);
   });
 });
 

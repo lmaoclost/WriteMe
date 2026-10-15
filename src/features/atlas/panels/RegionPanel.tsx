@@ -35,21 +35,21 @@ export function RegionPanel({ atlasId, region, entries, onDelete }: RegionPanelP
     if (count > 0) {
       s.pushToast(
         "success",
-        `${count} ${count === 1 ? "área reivindicada" : "áreas reivindicadas"} — nomeie.`,
+        `${count} ${count === 1 ? "area claimed" : "areas claimed"} — name it.`,
       );
     } else {
-      s.pushToast("error", "Não há área restante a reivindicar.");
+      s.pushToast("error", "No un-regioned area left in this State.");
     }
   };
 
   return (
     <div className="panel region-panel">
-      <div className="panel-title">Região</div>
+      <div className="panel-title">Region</div>
       <div className="field">
-        <label className="field-label" htmlFor="region-label-input">Rótulo</label>
+        <label className="field-label" htmlFor="region-label-input">Label</label>
         <input
           id="region-label-input"
-          aria-label="Rótulo da região"
+          aria-label="Region label"
           type="text"
           value={label}
           onChange={(e) => {
@@ -59,14 +59,14 @@ export function RegionPanel({ atlasId, region, entries, onDelete }: RegionPanelP
         />
       </div>
       <div className="field">
-        <span className="field-label">Cor</span>
+        <span className="field-label">Color</span>
         <ColorSwatches
           currentColor={region.color}
           onPickColor={(color) => patch({ color })}
         />
       </div>
       <div className="field">
-        <span className="field-label">Preenchimento</span>
+        <span className="field-label">Fill</span>
         <div className="range-row">
           <input
             type="range"
@@ -74,20 +74,20 @@ export function RegionPanel({ atlasId, region, entries, onDelete }: RegionPanelP
             max={1}
             step={0.05}
             value={region.fillOpacity}
-            aria-label="Opacidade do preenchimento"
+            aria-label="Fill opacity"
             onChange={(e) => patch({ fillOpacity: Number(e.target.value) })}
           />
           <output data-testid="opacity-value">{Math.round(region.fillOpacity * 100)}%</output>
         </div>
       </div>
       <div className="field">
-        <span className="field-label">Vínculo</span>
+        <span className="field-label">Tome entry</span>
         <button
           type="button"
           aria-pressed={pickerOpen}
           onClick={() => setPickerOpen((open) => !open)}
         >
-          Vincular entrada
+          Link entry
         </button>
         {pickerOpen ? (
           <LinkPicker
@@ -102,17 +102,17 @@ export function RegionPanel({ atlasId, region, entries, onDelete }: RegionPanelP
         ) : null}
       </div>
       <div className="panel-meta">
-        <span data-testid="vertex-count">Vértices: {region.points.length}</span>
+        <span data-testid="vertex-count">Vertices: {region.points.length}</span>
       </div>
       <div className="field">
-        <button type="button" onClick={claimRemaining}>Reivindicar área restante</button>
+        <button type="button" onClick={claimRemaining}>Claim remaining area</button>
       </div>
       <button
         type="button"
         className="btn-danger panel-delete"
         onClick={() => (confirming ? onDelete(region.id) : setConfirming(true))}
       >
-        {confirming ? "Confirmar?" : "Excluir região"}
+        {confirming ? "Confirm?" : "Delete region"}
       </button>
     </div>
   );

@@ -71,7 +71,7 @@ describe("Atlas → codex navigation", () => {
     act(() => {
       fireEvent.click(titleButton);
     });
-    expect(screen.getByLabelText("Título")).toHaveValue("Rio Sarnen");
+    expect(screen.getByLabelText("Title")).toHaveValue("Rio Sarnen");
     expect(screen.getByRole("button", { name: "Rio Sarnen" })).toHaveClass("active");
   });
 
@@ -86,7 +86,7 @@ describe("Atlas → codex navigation", () => {
     act(() => {
       fireEvent.click(titleButton);
     });
-    expect(screen.getByLabelText("Título")).toHaveValue("Aldric");
+    expect(screen.getByLabelText("Title")).toHaveValue("Aldric");
   });
 
   it("keeps the picker open behavior: pick and unlink still work", () => {
@@ -106,7 +106,7 @@ describe("Atlas → codex navigation", () => {
       fireEvent.click(screen.getByRole("button", { name: "Vincular entrada" }));
     });
     act(() => {
-      fireEvent.click(screen.getByLabelText("Remover vínculo"));
+      fireEvent.click(screen.getByLabelText("Unlink Rio Sarnen"));
     });
     expect(store().atlases[0].pins[0].entryId).toBeUndefined();
     expect(screen.getByRole("button", { name: "Vincular entrada" })).toBeInTheDocument();

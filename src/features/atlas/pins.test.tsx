@@ -150,7 +150,7 @@ describe("pin layer", () => {
     expect(parseFloat(div.style.top)).toBeCloseTo(0.25 * 600 - 9, 6);
     expect(div.querySelector(".pin-dot svg")).toBeTruthy();
     // the new pin is auto-selected → PinPanel replaces the placeholder
-    expect(screen.getByLabelText("Rótulo do pino")).toBeTruthy();
+    expect(screen.getByLabelText("Pin label")).toBeTruthy();
   });
 
   it("dragging a selected pin 40px right moves it by 40/(imgW·scale) and undo restores the origin", () => {
@@ -286,7 +286,7 @@ describe("Delete key", () => {
     const { container } = mountEditor(atlas);
     const btn = selectPinByClick(container);
     expect(btn.getAttribute("aria-pressed")).toBe("true");
-    const input = screen.getByLabelText("Rótulo do pino") as HTMLInputElement;
+    const input = screen.getByLabelText("Pin label") as HTMLInputElement;
     act(() => {
       input.focus();
     });
@@ -307,7 +307,7 @@ describe("PinPanel", () => {
     const atlas = makeAtlas({ pins: [{ x: 0.25, y: 0.25, label: "Cidade" }] });
     const { container } = mountEditor(atlas);
     selectPinByClick(container);
-    const input = screen.getByLabelText("Rótulo do pino") as HTMLInputElement;
+    const input = screen.getByLabelText("Pin label") as HTMLInputElement;
     expect(input).toHaveValue("Cidade");
     act(() => {
       fireEvent.change(input, { target: { value: "Nova Capital" } });
@@ -319,13 +319,13 @@ describe("PinPanel", () => {
     const atlas = makeAtlas({ pins: [{ x: 0.25, y: 0.25, label: "Cidade" }] });
     const { container } = mountEditor(atlas);
     selectPinByClick(container);
-    pickButton("Vincular entrada");
-    expect(screen.getByLabelText("Buscar entrada")).toBeTruthy();
+    pickButton("Link entry");
+    expect(screen.getByLabelText("Search entries")).toBeTruthy();
     act(() => {
-      const input = screen.getByLabelText("Rótulo do pino") as HTMLInputElement;
+      const input = screen.getByLabelText("Pin label") as HTMLInputElement;
       fireEvent.change(input, { target: { value: "Nova Capital" } });
     });
-    expect(screen.getByLabelText("Buscar entrada")).toBeTruthy(); // closed on typing before the rekey
+    expect(screen.getByLabelText("Search entries")).toBeTruthy(); // closed on typing before the rekey
   });
 
   it("type segmented control switches the pin type", () => {
@@ -351,7 +351,7 @@ describe("PinPanel", () => {
 });
 
 describe("LinkPicker", () => {
-  it("filters case-insensitively by title substring, caps the list at 8 and shows Nenhum resultado", () => {
+  it("filters case-insensitively by title substring, caps the list at 8 and shows No matching entries", () => {
     const many = ENTRIES.concat(
       Array.from({ length: 7 }, (_, i) => ({
         id: `ent_x${i}`,
@@ -366,7 +366,7 @@ describe("LinkPicker", () => {
     const onClear = vi.fn();
     const { container } = render(<LinkPicker entries={many} onPick={onPick} onClear={onClear} />);
     expect(container.querySelectorAll(".link-list button")).toHaveLength(8); // max 8
-    const search = screen.getByLabelText("Buscar entrada") as HTMLInputElement;
+    const search = screen.getByLabelText("Search entries") as HTMLInputElement;
     act(() => {
       fireEvent.change(search, { target: { value: "herd" } }); // lowercase substring
     });
@@ -376,7 +376,7 @@ describe("LinkPicker", () => {
     act(() => {
       fireEvent.change(search, { target: { value: "zzz-nada" } });
     });
-    expect(screen.getByText("Nenhum resultado")).toBeTruthy();
+    expect(screen.getByText("No matching entries.")).toBeTruthy();
   });
 
   it("pick forwards the entry id; unlink is offered for the current entry", () => {
@@ -387,9 +387,9 @@ describe("LinkPicker", () => {
         <LinkPicker entries={ENTRIES} currentEntryId="ent_sol" onPick={onPick} onClear={onClear} />
       </MemoryRouter>,
     );
-    expect(screen.getByLabelText("Remover vínculo")).toBeTruthy();
+    expect(screen.getByLabelText("Unlink")).toBeTruthy();
     act(() => {
-      fireEvent.click(screen.getByLabelText("Remover vínculo"));
+      fireEvent.click(screen.getByLabelText("Unlink"));
     });
     expect(onClear).toHaveBeenCalledTimes(1);
     act(() => {
@@ -400,18 +400,18 @@ describe("LinkPicker", () => {
 });
 
 describe("pin link through the panel", () => {
-  it("Vincular entrada opens the picker; picking writes entryId; unlink clears it", () => {
+  it("Link entry opens the picker; picking writes entryId; unlink clears it", () => {
     const atlas = makeAtlas({ pins: [{ x: 0.25, y: 0.25, label: "Cidade" }] });
     const { container } = mountEditor(atlas);
     selectPinByClick(container);
-    pickButton("Vincular entrada");
+    pickButton("Link entry");
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: "Herdeiros do Fim" }));
     });
     expect(store().atlases[0].pins[0].entryId).toBe("ent_herd");
-    pickButton("Vincular entrada");
+    pickButton("Link entry");
     act(() => {
-      fireEvent.click(screen.getByLabelText("Remover vínculo"));
+      fireEvent.click(screen.getByLabelText("Unlink"));
     });
     expect(store().atlases[0].pins[0].entryId).toBeUndefined();
   });
@@ -435,8 +435,8 @@ function mountClaimAtlas() {
 describe("RegionPanel", () => {
   it("opacity slider writes fillOpacity and the label shows the %; label input commits too", () => {
     const { container, atlas } = mountClaimAtlas();
-    expect(screen.queryByLabelText("Rótulo do pino")).toBeNull();
-    const slider = screen.getByLabelText("Opacidade do preenchimento") as HTMLInputElement;
+    expect(screen.queryByLabelText("Pin label")).toBeNull();
+    const slider = screen.getByLabelText("Fill opacity") as HTMLInputElement;
     expect(screen.getByTestId("opacity-value").textContent).toBe("28%");
     act(() => {
       fireEvent.change(slider, { target: { value: "0.5" } });
@@ -444,8 +444,8 @@ describe("RegionPanel", () => {
     const region = store().atlases.find((a) => a.id === atlas.id)!.regions[0];
     expect(region.fillOpacity).toBe(0.5);
     expect(screen.getByTestId("opacity-value").textContent).toBe("50%");
-    expect(screen.getByTestId("vertex-count").textContent).toBe("Vértices: 4");
-    const input = screen.getByLabelText("Rótulo da região") as HTMLInputElement;
+    expect(screen.getByTestId("vertex-count").textContent).toBe("Vertices: 4");
+    const input = screen.getByLabelText("Region label") as HTMLInputElement;
     act(() => {
       fireEvent.change(input, { target: { value: "Terras Altas" } });
     });
@@ -453,17 +453,17 @@ describe("RegionPanel", () => {
     void container;
   });
 
-  it("Reivindicar área restante creates the L-shaped remainder with the legacy color and toasts", () => {
+  it("Claim remaining area creates the L-shaped remainder with the legacy color and toasts", () => {
     const { atlas } = mountClaimAtlas();
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Reivindicar área restante" }));
+      fireEvent.click(screen.getByRole("button", { name: "Claim remaining area" }));
     });
     const regions = store().atlases.find((a) => a.id === atlas.id)!.regions;
     expect(regions).toHaveLength(3);
     const claimed = regions[2];
     expect(polygonArea(claimed.points)).toBeCloseTo(0.75, 3);
     expect(claimed.color).toBe("#2ecc71");
-    expect(store().toasts[store().toasts.length - 1].message).toBe("1 área reivindicada — nomeie.");
+    expect(store().toasts[store().toasts.length - 1].message).toBe("1 area claimed — name it.");
   });
 
   it("claim with nothing left toasts the error and creates nothing", () => {
@@ -479,21 +479,21 @@ describe("RegionPanel", () => {
     const { stageEl } = mountEditor(atlas);
     clickStage(stageEl, 600, 150); // smallest containing = first frame
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Reivindicar área restante" }));
+      fireEvent.click(screen.getByRole("button", { name: "Claim remaining area" }));
     });
     expect(store().atlases.find((x) => x.id === atlas.id)!.regions).toHaveLength(2);
-    expect(store().toasts[store().toasts.length - 1].message).toBe("Não há área restante a reivindicar.");
+    expect(store().toasts[store().toasts.length - 1].message).toBe("No un-regioned area left in this State.");
   });
 
-  it("region delete is a two-step confirm (Excluir região → Confirmar?) and clears the selection", () => {
+  it("region delete is a two-step confirm (Delete region → Confirm?) and clears the selection", () => {
     const { container } = mountClaimAtlas();
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Excluir região" }));
+      fireEvent.click(screen.getByRole("button", { name: "Delete region" }));
     });
-    expect(screen.getByRole("button", { name: "Confirmar?" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Confirm?" })).toBeTruthy();
     expect(store().atlases[0].regions).toHaveLength(2); // nothing deleted yet
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Confirmar?" }));
+      fireEvent.click(screen.getByRole("button", { name: "Confirm?" }));
     });
     expect(store().atlases[0].regions).toHaveLength(1);
     expect(screen.getByText("Selecione ou crie um pino ou região.")).toBeTruthy();
@@ -507,13 +507,13 @@ describe("RegionPanel", () => {
     });
     const { container, stageEl } = mountEditor(atlas);
     clickStage(stageEl, 700, 500); // select region
-    expect(screen.getByLabelText("Rótulo da região")).toBeTruthy();
+    expect(screen.getByLabelText("Region label")).toBeTruthy();
     act(() => {
       const btn = pinDot(container);
       firePointer(btn, "pointerdown", { pointerId: 31, clientX: 200, clientY: 150 });
       firePointer(btn, "pointerup", { pointerId: 31, clientX: 200, clientY: 150 });
     });
-    expect(screen.getByLabelText("Rótulo do pino")).toBeTruthy();
-    expect(screen.queryByLabelText("Rótulo da região")).toBeNull();
+    expect(screen.getByLabelText("Pin label")).toBeTruthy();
+    expect(screen.queryByLabelText("Region label")).toBeNull();
   });
 });

@@ -56,7 +56,7 @@ export function CodexPage({ projectId }: { projectId: string }) {
     const remaining = useScriptorium.getState().entries
       .filter((e) => e.projectId === projectId && e.id !== id);
     useScriptorium.getState().deleteEntry(id);
-    useScriptorium.getState().pushToast("success", "Entrada excluída.");
+    useScriptorium.getState().pushToast("success", "Entry deleted.");
     setSelectedId(remaining[0]?.id ?? null);
   };
 

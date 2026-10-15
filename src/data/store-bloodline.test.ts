@@ -49,10 +49,10 @@ beforeEach(() => {
 });
 
 describe("bloodline CRUD (case 1)", () => {
-  it("addBloodline defaults name 'Linhagem sem título' with empty persons/houses/notes", () => {
+  it("addBloodline defaults name 'Untitled Bloodline' with empty persons/houses/notes", () => {
     let bl!: Bloodline;
     act(() => { bl = store().addBloodline(freshProject().id); });
-    expect(bl.name).toBe("Linhagem sem título");
+    expect(bl.name).toBe("Untitled Bloodline");
     expect(bl.projectId).toBe(freshProject().id);
     expect(bl.persons).toEqual([]);
     expect(bl.houses).toEqual([]);

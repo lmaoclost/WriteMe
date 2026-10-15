@@ -28,12 +28,12 @@ export function PinPanel({ pin, entries, onDelete }: PinPanelProps) {
 
   return (
     <div className="panel pin-panel">
-      <div className="panel-title">Pino</div>
+      <div className="panel-title">Pin</div>
       <div className="field">
-        <label className="field-label" htmlFor="pin-label-input">Rótulo</label>
+        <label className="field-label" htmlFor="pin-label-input">Label</label>
         <input
           id="pin-label-input"
-          aria-label="Rótulo do pino"
+          aria-label="Pin label"
           type="text"
           value={label}
           onChange={(e) => {
@@ -43,8 +43,8 @@ export function PinPanel({ pin, entries, onDelete }: PinPanelProps) {
         />
       </div>
       <div className="field">
-        <span className="field-label">Tipo</span>
-        <div className="seg" role="group" aria-label="Tipo do pino">
+        <span className="field-label">Type</span>
+        <div className="seg" role="group" aria-label="Pin type">
           {(Object.keys(PIN_TYPE_META) as PinType[]).map((t) => (
             <button
               type="button"
@@ -59,20 +59,20 @@ export function PinPanel({ pin, entries, onDelete }: PinPanelProps) {
         </div>
       </div>
       <div className="field">
-        <span className="field-label">Cor</span>
+        <span className="field-label">Color</span>
         <ColorSwatches
           currentColor={pin.color}
           onPickColor={(color) => patch({ color })}
         />
       </div>
       <div className="field">
-        <span className="field-label">Vínculo</span>
+        <span className="field-label">Tome entry</span>
         <button
           type="button"
           aria-pressed={pickerOpen}
           onClick={() => setPickerOpen((open) => !open)}
         >
-          Vincular entrada
+          Link entry
         </button>
         {pickerOpen ? (
           <LinkPicker
@@ -89,7 +89,7 @@ export function PinPanel({ pin, entries, onDelete }: PinPanelProps) {
       <button
         type="button"
         className="btn-danger panel-delete"
-        aria-label="Excluir pino"
+        aria-label="Delete pin"
         onClick={() => onDelete(pin.id)}
       >
         Excluir pino

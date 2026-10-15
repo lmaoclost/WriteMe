@@ -4,7 +4,7 @@ import { useScriptorium } from "../../data/store";
 import type { CustomCalendar } from "../../domain/types";
 import "./calendar.css";
 
-export const EVENT_CATEGORIES = ["Eventos", "Festas", "Notas"] as const;
+export const EVENT_CATEGORIES = ["Events", "Festivals", "Notes"] as const;
 export const EVENT_PRESET_COLORS = ["#e74c3c", "#e67e22", "#f1c40f", "#2ecc71", "#3498db", "#9b59b6", "#1abc9c", "#e84393", "#636e72", "#b2bec3"];
 
 export function CalendarPage({ calendarId }: { calendarId: string }) {
@@ -20,7 +20,7 @@ export function CalendarPage({ calendarId }: { calendarId: string }) {
   const [notesOpen, setNotesOpen] = useState(false);
 
   useEffect(() => {
-    if (!cal) pushToast("error", "Calendário não encontrado.");
+    if (!cal) pushToast("error", "Calendar not found.");
   }, [cal, pushToast]);
 
   if (!cal) return null;
@@ -35,18 +35,18 @@ export function CalendarPage({ calendarId }: { calendarId: string }) {
       <header className="bl-header">
         <input
           className="bl-name"
-          aria-label="Nome do calendário"
+          aria-label="Calendar name"
           value={cal.name}
           onChange={(e) => store().renameCalendar(calendarId, e.target.value)}
         />
         <span className="cal-era">{cal.era ?? ""}</span>
         <div className="bl-actions">
-          <button type="button" aria-label="Ano anterior" onClick={() => setYearIndex((y) => Math.max(0, y - 1))} disabled={yearIndex === 0}>‹</button>
-          <output aria-label="Ano corrente" className="cal-year">Ano {yearIndex + 1}</output>
-          <button type="button" aria-label="Ano seguinte" onClick={() => setYearIndex((y) => y + 1)}>›</button>
+          <button type="button" aria-label="Previous year" onClick={() => setYearIndex((y) => Math.max(0, y - 1))} disabled={yearIndex === 0}>‹</button>
+          <output aria-label="Current year" className="cal-year">Year {yearIndex + 1}</output>
+          <button type="button" aria-label="Next year" onClick={() => setYearIndex((y) => y + 1)}>›</button>
           <button type="button" aria-label="Desfazer" disabled={!flags.canUndo} onClick={() => store().undoCL(calendarId)}>↶</button>
           <button type="button" aria-label="Refazer" disabled={!flags.canRedo} onClick={() => store().redoCL(calendarId)}>↷</button>
-          <button type="button" onClick={() => setConfigOpen(true)}>Configurar</button>
+          <button type="button" onClick={() => setConfigOpen(true)}>Edit Calendar Settings</button>
           <button type="button" onClick={() => setNotesOpen((v) => !v)}>Notas</button>
         </div>
       </header>
@@ -113,7 +113,7 @@ function DayPanel({ cal, dayKey, onClose }: {
   const dayLabel = useMemo(() => {
     if (!dayKey) return "";
     const [y, m, d] = dayKey.split(":").map(Number);
-    return `${d + 1} de ${cal.months[m]?.name ?? "?"} · Ano ${y + 1}`;
+    return `${d + 1} of ${cal.months[m]?.name ?? "?"} · Year ${y + 1}`;
   }, [dayKey, cal]);
 
   if (!dayKey) {
@@ -127,7 +127,7 @@ function DayPanel({ cal, dayKey, onClose }: {
     <aside className="bl-panel" data-testid="cal-panel">
       <header className="bl-panel-head">
         <h2>{dayLabel}</h2>
-        <button type="button" aria-label="Fechar dia" onClick={onClose}>✕</button>
+        <button type="button" aria-label="Close day" onClick={onClose}>✕</button>
       </header>
       <ul className="cal-event-list">
         {events.map((e) => (
@@ -135,7 +135,7 @@ function DayPanel({ cal, dayKey, onClose }: {
             <span className="cal-event-dot" style={{ background: e.color ?? "#636e72" }} />
             {editingId === e.id ? (
               <input
-                aria-label="Texto do evento"
+                aria-label="Event text"
                 value={e.text}
                 autoFocus
                 onChange={(ev) => store().updateCalendarEvent(cal.id, dayKey, e.id, { text: ev.target.value })}
@@ -171,11 +171,11 @@ function DayPanel({ cal, dayKey, onClose }: {
           if (ev) { setText(""); setColor(EVENT_PRESET_COLORS[0]); }
         }}
       >
-        <input aria-label="Novo evento" placeholder="Novo evento…" value={text} onChange={(e) => setText(e.target.value)} />
-        <select aria-label="Categoria do novo evento" value={category} onChange={(e) => setCategory(e.target.value)}>
+        <input aria-label="New event" placeholder="New event..." value={text} onChange={(e) => setText(e.target.value)} />
+        <select aria-label="Event category" value={category} onChange={(e) => setCategory(e.target.value)}>
           {EVENT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
-        <button type="submit">Adicionar</button>
+        <button type="submit">Add</button>
       </form>
     </aside>
   );
@@ -189,15 +189,15 @@ function ConfigPopover({ cal, onClose }: { cal: CustomCalendar; onClose(): void 
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
   return (
-    <div className="cal-config" data-testid="cal-config" role="dialog" aria-label="Configurar calendário">
+    <div className="cal-config" data-testid="cal-config" role="dialog" aria-label="Edit Calendar Settings">
       <header className="bl-panel-head">
         <h2>Era</h2>
-        <button type="button" aria-label="Fechar config" onClick={onClose}>✕</button>
+        <button type="button" aria-label="Close settings" onClick={onClose}>✕</button>
       </header>
       <label className="field">
         <span className="field-label">Era (sufixo do ano)</span>
         <input
-          aria-label="Era do calendário"
+          aria-label="Era"
           defaultValue={cal.era ?? ""}
           onBlur={(e) => store().setEra(cal.id, e.target.value.trim() || undefined)}
         />
@@ -205,7 +205,7 @@ function ConfigPopover({ cal, onClose }: { cal: CustomCalendar; onClose(): void 
       <label className="field">
         <span className="field-label">Dia da semana do 1º dia</span>
         <select
-          aria-label="Dia inicial"
+          aria-label="First day"
           defaultValue={String(cal.startingWeekday)}
           onChange={(e) => store().setStartingWeekday(cal.id, Number(e.target.value))}
         >
@@ -213,19 +213,20 @@ function ConfigPopover({ cal, onClose }: { cal: CustomCalendar; onClose(): void 
         </select>
       </label>
       <section>
-        <h3 style={{ fontSize: 13, color: "var(--slate)" }}>Meses</h3>
+        <h3 style={{ fontSize: 13, color: "var(--text-muted)" }}>Months</h3>
         <ul className="cal-months-config">
           {cal.months.map((m, i) => (
             <li key={i}>
               <input
-                aria-label={`Nome do mês ${i + 1}`}
+                aria-label={`Month name ${i + 1}`}
+                placeholder="Month name..."
                 defaultValue={m.name}
                 onBlur={(e) => store().setMonth(cal.id, i, { name: e.target.value })}
               />
               <input
                 type="number"
                 min={1}
-                aria-label={`Dias do mês ${i + 1}`}
+                aria-label={`Days of ${i + 1}`}
                 defaultValue={m.days}
                 onBlur={(e) => store().setMonth(cal.id, i, { days: Number(e.target.value) })}
               />
@@ -247,9 +248,9 @@ function CalNotepad({ notes, onNotes, onClose }: { notes: string; onNotes(v: str
     <div className="bl-notepad" data-testid="cal-notepad">
       <header className="bl-notepad-head">
         <span>Notas</span>
-        <button type="button" aria-label="Fechar notas" onClick={onClose}>✕</button>
+        <button type="button" aria-label="Close notes" onClick={onClose}>✕</button>
       </header>
-      <textarea aria-label="Notas do calendário" value={draft} onChange={(e) => setDraft(e.target.value)} rows={5} />
+      <textarea aria-label="Calendar notes" value={draft} onChange={(e) => setDraft(e.target.value)} rows={5} />
     </div>
   );
 }

@@ -74,8 +74,8 @@ describe("EntryView — debounced commits", () => {
     const { entries } = seed([{ title: "Aldric", body: "Velho corpo" }]);
     const [entry] = entries;
     renderView(entry);
-    fireEvent.change(screen.getByLabelText("Título"), { target: { value: "Aldric II" } });
-    fireEvent.change(screen.getByLabelText("Conteúdo"), { target: { value: "Novo corpo" } });
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Aldric II" } });
+    fireEvent.change(screen.getByLabelText("Content"), { target: { value: "Novo corpo" } });
     act(() => {
       vi.advanceTimersByTime(299);
     });
@@ -92,7 +92,7 @@ describe("EntryView — debounced commits", () => {
     const { entries } = seed([{ title: "Aldric", body: "" }]);
     const [entry] = entries;
     renderView(entry);
-    const body = screen.getByLabelText("Conteúdo");
+    const body = screen.getByLabelText("Content");
     fireEvent.change(body, { target: { value: "Rascunho no blur" } });
     expect(entryById(entry.id).body).toBe("");
     fireEvent.blur(body);
@@ -103,7 +103,7 @@ describe("EntryView — debounced commits", () => {
     const { entries } = seed([{ title: "Aldric", body: "" }]);
     const [entry] = entries;
     const { unmount } = renderView(entry);
-    fireEvent.change(screen.getByLabelText("Conteúdo"), { target: { value: "Rascunho perdido?" } });
+    fireEvent.change(screen.getByLabelText("Content"), { target: { value: "Rascunho perdido?" } });
     unmount();
     expect(entryById(entry.id).body).toBe("Rascunho perdido?");
   });
@@ -119,46 +119,46 @@ describe("EntryView — debounced commits", () => {
         <EntryView entry={aldric} onDeleted={vi.fn()} />
       </MemoryRouter>,
     );
-    fireEvent.change(screen.getByLabelText("Conteúdo"), { target: { value: "Corpo do Aldric" } });
+    fireEvent.change(screen.getByLabelText("Content"), { target: { value: "Corpo do Aldric" } });
     rerender(
       <MemoryRouter>
         <EntryView entry={rio} onDeleted={vi.fn()} />
       </MemoryRouter>,
     );
     expect(entryById(aldric.id).body).toBe("Corpo do Aldric");
-    expect(screen.getByLabelText("Título")).toHaveValue("Rio Sarnen");
+    expect(screen.getByLabelText("Title")).toHaveValue("Rio Sarnen");
   });
 });
 
-describe("EntryView — Escrever/Prévia", () => {
+describe("EntryView — Write/Preview", () => {
   it("toggles between textarea and markdown preview (aria-pressed pair)", () => {
     const { entries } = seed([{ title: "Aldric", body: "# Capítulo\n**força** e `código`" }]);
     const [entry] = entries;
     renderView(entry);
-    const escrever = screen.getByRole("button", { name: "Escrever" });
-    const previa = screen.getByRole("button", { name: "Prévia" });
+    const escrever = screen.getByRole("button", { name: "Write" });
+    const previa = screen.getByRole("button", { name: "Preview" });
     expect(escrever).toHaveAttribute("aria-pressed", "true");
     expect(previa).toHaveAttribute("aria-pressed", "false");
-    expect(screen.getByLabelText("Conteúdo").tagName).toBe("TEXTAREA");
+    expect(screen.getByLabelText("Content").tagName).toBe("TEXTAREA");
     fireEvent.click(previa);
     expect(previa).toHaveAttribute("aria-pressed", "true");
     expect(escrever).toHaveAttribute("aria-pressed", "false");
-    expect(screen.queryByLabelText("Conteúdo")).toBeNull();
+    expect(screen.queryByLabelText("Content")).toBeNull();
     const view = document.querySelector(".md-view");
     expect(view).not.toBeNull();
     expect(view?.querySelector("h1")?.textContent).toBe("Capítulo");
     expect(view?.querySelector("strong")?.textContent).toBe("força");
     expect(view?.querySelector("code")?.textContent).toBe("código");
     fireEvent.click(escrever);
-    expect(screen.getByLabelText("Conteúdo")).toHaveValue("# Capítulo\n**força** e `código`");
+    expect(screen.getByLabelText("Content")).toHaveValue("# Capítulo\n**força** e `código`");
   });
 
   it("renders the preview from the flushed draft", () => {
     const { entries } = seed([{ title: "Aldric", body: "" }]);
     const [entry] = entries;
     renderView(entry);
-    fireEvent.change(screen.getByLabelText("Conteúdo"), { target: { value: "# Novo rascunho" } });
-    fireEvent.click(screen.getByRole("button", { name: "Prévia" }));
+    fireEvent.change(screen.getByLabelText("Content"), { target: { value: "# Novo rascunho" } });
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
     expect(entryById(entry.id).body).toBe("# Novo rascunho");
     expect(document.querySelector(".md-view")?.querySelector("h1")?.textContent).toBe("Novo rascunho");
   });
@@ -167,8 +167,8 @@ describe("EntryView — Escrever/Prévia", () => {
     const { entries } = seed([{ title: "Aldric", body: "" }]);
     const [entry] = entries;
     renderView(entry);
-    fireEvent.click(screen.getByRole("button", { name: "Prévia" }));
-    expect(screen.getByText("Sem conteúdo ainda.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+    expect(screen.getByText("No content yet.")).toBeInTheDocument();
   });
 });
 
@@ -177,9 +177,9 @@ describe("EntryView — category + cover", () => {
     const { entries } = seed([{ title: "Aldric", category: "person" }]);
     const [entry] = entries;
     renderView(entry);
-    fireEvent.change(screen.getByLabelText("Categoria"), { target: { value: "faction" } });
+    fireEvent.change(screen.getByLabelText("Category"), { target: { value: "faction" } });
     expect(entryById(entry.id).category).toBe("faction");
-    expect(screen.getByLabelText("Categoria")).toHaveValue("faction");
+    expect(screen.getByLabelText("Category")).toHaveValue("faction");
   });
 
   it("uploads a cover via hidden file input, swaps and releases the old key", async () => {
@@ -199,7 +199,7 @@ describe("EntryView — category + cover", () => {
     const newKey = entryById(entry.id).imageKey as string;
     expect(useScriptorium.getState().images[newKey]).toBe("data:image/png;base64,NOVA");
     expect(useScriptorium.getState().images[oldKey]).toBeUndefined();
-    expect(toasts().some((t) => t.kind === "success" && t.message === "Capa atualizada.")).toBe(true);
+    expect(toasts().some((t) => t.kind === "success" && t.message === "Cover updated.")).toBe(true);
     expect(vi.mocked(fileToDataUrl)).toHaveBeenCalledTimes(1);
   });
 
@@ -213,7 +213,7 @@ describe("EntryView — category + cover", () => {
       fireEvent.change(input, { target: { files: [new File(["x"], "capa.png", { type: "image/png" })] } });
     });
     await waitFor(() => {
-      expect(toasts().some((t) => t.kind === "error" && t.message === "Não foi possível carregar a capa.")).toBe(true);
+      expect(toasts().some((t) => t.kind === "error" && t.message === "Couldn't load the cover.")).toBe(true);
     });
     expect(entryById(entry.id).imageKey).toBeUndefined();
   });
@@ -223,12 +223,12 @@ describe("EntryView — category + cover", () => {
     const [entry] = entries;
     const key = entryById(entry.id).imageKey as string;
     renderView(entry);
-    fireEvent.click(screen.getByRole("button", { name: "Remover capa" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove cover" }));
     expect(entryById(entry.id).imageKey).toBeUndefined();
     expect(useScriptorium.getState().images[key]).toBeUndefined();
   });
 
-  it("copies another entry's image as this cover via 'Imagem do códex'", () => {
+  it("copies another entry's image as this cover via 'Entry image'", () => {
     const { entries } = seed([
       { title: "Aldric", image: "data:image/jpeg;base64,VELHA" },
       { title: "Rio Sarnen", image: "data:image/jpeg;base64,OUTRO" },
@@ -238,8 +238,8 @@ describe("EntryView — category + cover", () => {
     const rioKey = entryById(rio.id).imageKey as string;
     const oldKey = entryById(aldric.id).imageKey as string;
     renderView(aldric);
-    fireEvent.click(screen.getByRole("button", { name: "Imagem do códex" }));
-    const picker = screen.getByRole("group", { name: "Imagens do códex" });
+    fireEvent.click(screen.getByRole("button", { name: "Entry image" }));
+    const picker = screen.getByRole("group", { name: "Entry images" });
     expect(picker.querySelectorAll(".codex-thumbgrid button")).toHaveLength(1);
     const thumb = picker.querySelector(".codex-thumbgrid img");
     expect(thumb).not.toBeNull();
@@ -265,7 +265,7 @@ describe("EntryView — links", () => {
     ]);
     const [aldric, rio] = entries;
     renderView(aldric);
-    fireEvent.click(screen.getByRole("button", { name: "+ Vínculo" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Link" }));
     const search = screen.getByLabelText("Buscar entrada");
     fireEvent.change(search, { target: { value: "zzz" } });
     expect(screen.getByText("Nenhum resultado")).toBeInTheDocument();
@@ -274,14 +274,14 @@ describe("EntryView — links", () => {
     fireEvent.click(screen.getByRole("button", { name: "Rio Sarnen" }));
     expect(entryById(aldric.id).links).toEqual([rio.id]);
     expect(screen.queryByLabelText("Buscar entrada")).toBeNull();
-    expect(screen.queryByRole("button", { name: "+ Vínculo" })).not.toBeNull();
+    expect(screen.queryByRole("button", { name: "+ Link" })).not.toBeNull();
   });
 
   it("does not offer the current entry as its own link target", () => {
     const { entries } = seed([{ title: "Aldric" }]);
     const [aldric] = entries;
     renderView(aldric);
-    fireEvent.click(screen.getByRole("button", { name: "+ Vínculo" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Link" }));
     expect(screen.queryByRole("button", { name: "Aldric" })).toBeNull();
     expect(entryById(aldric.id).links).toEqual([]);
   });
@@ -298,7 +298,7 @@ describe("EntryView — links", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "Rio Sarnen" })[0]);
     expect(onSelectEntry).toHaveBeenCalledWith(rio.id);
     expect(entryById(aldric.id).links).toEqual([rio.id]);
-    fireEvent.click(screen.getByLabelText("Remover vínculo com Rio Sarnen"));
+    fireEvent.click(screen.getByLabelText("Unlink Rio Sarnen"));
     expect(entryById(aldric.id).links).toEqual([]);
     expect(document.querySelector(".codex-link-chip")).toBeNull();
   });
@@ -309,8 +309,8 @@ describe("EntryView — links", () => {
     store().linkEntries(aldric.id, rio.id);
     const onDeleted = vi.fn((id: string) => store().deleteEntry(id));
     renderView(aldric, { onDeleted });
-    fireEvent.click(screen.getByRole("button", { name: "Excluir" }));
-    fireEvent.click(screen.getByRole("button", { name: "Confirmar?" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm?" }));
     expect(onDeleted).toHaveBeenCalledWith(aldric.id);
     expect(entryById(rio.id).links).toEqual([]);
   });
@@ -321,9 +321,9 @@ describe("EntryView — campo Data", () => {
     const { entries } = seed([{ title: "Batalha de Sarnen", category: "event" }]);
     const [entry] = entries;
     renderView(entry);
-    const input = screen.getByLabelText("Data");
-    expect(input.compareDocumentPosition(screen.getByLabelText("Categoria")) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
-    expect(input.compareDocumentPosition(screen.getByLabelText("Conteúdo")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const input = screen.getByLabelText("Date");
+    expect(input.compareDocumentPosition(screen.getByLabelText("Category")) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+    expect(input.compareDocumentPosition(screen.getByLabelText("Content")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(entryById(entry.id).date).toBeUndefined();
   });
 
@@ -332,7 +332,7 @@ describe("EntryView — campo Data", () => {
     const { entries } = seed([{ title: "Batalha de Sarnen", category: "event" }]);
     const [entry] = entries;
     renderView(entry);
-    fireEvent.change(screen.getByLabelText("Data"), { target: { value: "1200-05" } });
+    fireEvent.change(screen.getByLabelText("Date"), { target: { value: "1200-05" } });
     act(() => {
       vi.advanceTimersByTime(299);
     });
@@ -348,19 +348,19 @@ describe("EntryView — campo Data", () => {
     const { entries } = seed([{ title: "Batalha de Sarnen", category: "event" }]);
     const [entry] = entries;
     renderView(entry);
-    const input = screen.getByLabelText("Data");
+    const input = screen.getByLabelText("Date");
     fireEvent.change(input, { target: { value: "1200-13" } });
     act(() => {
       vi.advanceTimersByTime(300);
     });
     expect(entryById(entry.id).date).toBeUndefined();
-    expect(screen.getByText("Data inválida.")).toBeTruthy();
+    expect(screen.getByText("Invalid date.")).toBeTruthy();
     fireEvent.change(input, { target: { value: "1200" } });
     act(() => {
       vi.advanceTimersByTime(300);
     });
     expect(entryById(entry.id).date).toBe("1200");
-    expect(screen.queryByText("Data inválida.")).toBeNull();
+    expect(screen.queryByText("Invalid date.")).toBeNull();
   });
 
   it("clears the date when the field is emptied", () => {
@@ -368,7 +368,7 @@ describe("EntryView — campo Data", () => {
     const { entries } = seed([{ title: "Batalha de Sarnen", category: "event", date: "1200-05" }]);
     const [entry] = entries;
     renderView(entry);
-    fireEvent.change(screen.getByLabelText("Data"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Date"), { target: { value: "" } });
     act(() => {
       vi.advanceTimersByTime(300);
     });
@@ -398,14 +398,14 @@ describe("EntryView — campo Data", () => {
         <EntryView key={batalha.id} entry={batalha} onDeleted={vi.fn()} />
       </MemoryRouter>,
     );
-    fireEvent.change(screen.getByLabelText("Data"), { target: { value: "1200-05" } });
+    fireEvent.change(screen.getByLabelText("Date"), { target: { value: "1200-05" } });
     rerender(
       <MemoryRouter>
         <EntryView key={rio.id} entry={rio} onDeleted={vi.fn()} />
       </MemoryRouter>,
     );
     expect(entryById(batalha.id).date).toBe("1200-05");
-    expect(screen.getByLabelText("Data")).toHaveValue("");
+    expect(screen.getByLabelText("Date")).toHaveValue("");
   });
 });
 
@@ -414,45 +414,45 @@ describe("EntryView — pickers close (Escape + outside click)", () => {
     const { entries } = seed([{ title: "Aldric", image: "data:image/jpeg;base64,VELHA" }]);
     const [aldric] = entries;
     renderView(aldric);
-    fireEvent.click(screen.getByRole("button", { name: "Imagem do códex" }));
-    expect(screen.getByRole("group", { name: "Imagens do códex" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Entry image" }));
+    expect(screen.getByRole("group", { name: "Entry images" })).toBeInTheDocument();
     fireEvent.keyDown(document, { key: "Escape" });
-    expect(screen.queryByRole("group", { name: "Imagens do códex" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Imagem do códex" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.queryByRole("group", { name: "Entry images" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Entry image" })).toHaveAttribute("aria-pressed", "false");
   });
 
   it("closes the link chooser on Escape (document keydown)", () => {
     const { entries } = seed([{ title: "Aldric" }, { title: "Rio Sarnen" }]);
     const [aldric] = entries;
     renderView(aldric);
-    fireEvent.click(screen.getByRole("button", { name: "+ Vínculo" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Link" }));
     expect(screen.getByLabelText("Buscar entrada")).toBeInTheDocument();
     fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByLabelText("Buscar entrada")).toBeNull();
-    expect(screen.getByRole("button", { name: "+ Vínculo" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "+ Link" })).toHaveAttribute("aria-pressed", "false");
   });
 
   it("closes the codex image picker on outside click (backdrop pointerdown)", () => {
     const { entries } = seed([{ title: "Aldric", image: "data:image/jpeg;base64,VELHA" }]);
     const [aldric] = entries;
     renderView(aldric);
-    fireEvent.click(screen.getByRole("button", { name: "Imagem do códex" }));
+    fireEvent.click(screen.getByRole("button", { name: "Entry image" }));
     const backdrop = document.querySelector(".chooser-backdrop") as Element;
     expect(backdrop).not.toBeNull();
     fireEvent.pointerDown(backdrop);
-    expect(screen.queryByRole("group", { name: "Imagens do códex" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Imagem do códex" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.queryByRole("group", { name: "Entry images" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Entry image" })).toHaveAttribute("aria-pressed", "false");
   });
 
   it("closes the link chooser on outside click (backdrop pointerdown)", () => {
     const { entries } = seed([{ title: "Aldric" }, { title: "Rio Sarnen" }]);
     const [aldric] = entries;
     renderView(aldric);
-    fireEvent.click(screen.getByRole("button", { name: "+ Vínculo" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Link" }));
     const backdrop = document.querySelector(".chooser-backdrop") as Element;
     expect(backdrop).not.toBeNull();
     fireEvent.pointerDown(backdrop);
     expect(screen.queryByLabelText("Buscar entrada")).toBeNull();
-    expect(screen.getByRole("button", { name: "+ Vínculo" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "+ Link" })).toHaveAttribute("aria-pressed", "false");
   });
 });

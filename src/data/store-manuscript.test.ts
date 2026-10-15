@@ -42,7 +42,7 @@ describe("addManuscript", () => {
     act(() => { m = store().addManuscript(project.id); });
     expect(m.id).toMatch(/^man_/);
     expect(m.projectId).toBe(project.id);
-    expect(m.title).toBe("Livro sem título");
+    expect(m.title).toBe("Untitled Manuscript");
     expect(m.author).toBe("");
     expect(m.chapters).toEqual([]);
     expect(store().manuscripts).toHaveLength(1);
@@ -119,7 +119,7 @@ describe("addChapter", () => {
     const m = makeManuscript();
     const c = makeChapter(m.id);
     expect(c.id).toMatch(/^ch_/);
-    expect(c.heading).toBe("Capítulo sem título");
+    expect(c.heading).toBe("Untitled Chapter");
     expect(c.content).toBe("");
     expect(c.order).toBe(0);
     expect(chaptersOf(m.id)).toHaveLength(1);

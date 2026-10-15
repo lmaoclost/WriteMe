@@ -27,13 +27,13 @@ export function ColorSwatches({ currentColor, onPickColor, recentLabel }: {
   );
   return (
     <>
-      <div className="swatch-row" role="group" aria-label="Cores">
+      <div className="swatch-row" role="group" aria-label="Colors">
         {PIN_PALETTE.map(swatch)}
       </div>
       {recent.length > 0 ? (
         <>
           <div className="swatch-caption">{recentLabel ?? "Recentes"}</div>
-          <div className="swatch-row" role="group" aria-label="Cores recentes">
+          <div className="swatch-row" role="group" aria-label="Recent colors">
             {recent.map(swatch)}
           </div>
         </>

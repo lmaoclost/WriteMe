@@ -59,7 +59,7 @@ export function FactionForm({ web, faction, onSelect }: {
         <input aria-label="Name" placeholder="e.g. House Valoris" value={nameDraft.draft} onChange={(e) => nameDraft.setDraft(e.target.value)} onBlur={() => nameDraft.flush()} />
       </div>
       <TextDebounced label="Leader" value={faction.leader ?? ""} onCommit={(v) => update({ leader: v.trim() || undefined })} />
-      <TextDebounced label="Territory" value={faction.territory ?? ""} placeholder="e.g. Central Highlands" onCommit={(v) => update({ territory: v.trim() || undefined })} />
+      <TextDebounced label="Territory" value={faction.territory ?? ""} onCommit={(v) => update({ territory: v.trim() || undefined })} />
       <TextDebounced label="Objetivos" value={faction.goals ?? ""} onCommit={(v) => update({ goals: v.trim() || undefined })} />
       <label className="field">
         <span className="field-label">Description</span>

@@ -27,7 +27,7 @@ export interface Toast { id: string; kind: ToastKind; message: string; }
 
 export type ImageKind = "cover" | "entry" | "map" | "person";
 
-export const CORRUPTION_TOAST = "Dados corrompidos foram preservados em backup; a app abriu vazia.";
+export const CORRUPTION_TOAST = "Corrupted data was preserved in a backup; the app opened empty.";
 export const CORRUPTION_TOAST_KIND: ToastKind = "info";
 
 export const REGION_DEFAULT_COLOR = "#3498db";
@@ -81,7 +81,7 @@ const nextChapterOrder = (chapters: readonly Chapter[]): number =>
     ? 0
     : chapters.reduce((max, c) => (c.order > max ? c.order : max), 0) + 1;
 /** Spec §7: polygon-clipping failure surfaces once, state untouched. */
-const CLIP_FAILURE_TOAST = "Não consegui calcular os encaixes.";
+const CLIP_FAILURE_TOAST = "Couldn't compute the cuts.";
 const cloneSnapshot = (a: Atlas): AtlasSnapshot => ({
   regions: a.regions.map((r) => ({ ...r, points: clonePoints(r.points) })),
   pins: a.pins.map((p) => ({ ...p })),
@@ -554,7 +554,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         const entry: WorldEntry = {
           id: newId("ent"),
           projectId,
-          title: "Sem título",
+          title: "Untitled entry",
           category,
           body: "",
           links: [],
@@ -665,7 +665,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         return s.putMapImage(atlasId, src);
       },
 
-      addManuscript(projectId, title = "Livro sem título") {
+      addManuscript(projectId, title = "Untitled Manuscript") {
         const manuscript: Manuscript = {
           id: newId("man"),
           projectId,
@@ -724,7 +724,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         }));
       },
 
-      addChapter(manuscriptId, heading = "Capítulo sem título") {
+      addChapter(manuscriptId, heading = "Untitled Chapter") {
         const m = get().manuscripts.find((x) => x.id === manuscriptId);
         if (!m) return null;
         const chapter: Chapter = {
@@ -1009,7 +1009,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         });
       },
 
-      addBloodline(projectId, name = "Linhagem sem título") {
+      addBloodline(projectId, name = "Untitled Bloodline") {
         const bloodline: Bloodline = {
           id: newId("bl"),
           projectId,
@@ -1217,7 +1217,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         }));
       },
 
-      addFactionWeb(projectId, name = "Frações sem título") {
+      addFactionWeb(projectId, name = "Untitled Faction Web") {
         const web: FactionWeb = {
           id: newId("fw"),
           projectId,
@@ -1265,7 +1265,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           id: newId("fac"),
           x: init?.x ?? 4000,
           y: init?.y ?? 4000,
-          name: init?.name ?? "Fração sem nome",
+          name: init?.name ?? "Untitled Faction",
           color: init?.color ?? "#7a7a99",
         };
         set((s) => ({
@@ -1455,13 +1455,13 @@ export const useScriptorium = create<ScriptoriumState>()(
         });
       },
 
-      addCalendar(projectId, name = "Calendário sem título") {
+      addCalendar(projectId, name = "Untitled Calendar") {
         const calendar: CustomCalendar = {
           id: newId("cal"),
           projectId,
           name,
-          months: Array.from({ length: 12 }, (_, i) => ({ name: `Mês ${i + 1}`, days: 30 })),
-          weekdays: ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"],
+          months: Array.from({ length: 12 }, (_, i) => ({ name: `Month ${i + 1}`, days: 30 })),
+          weekdays: ["Day 1", "Day 2", "Day 3", "Day 4", "Day 5", "Day 6", "Day 7"],
           weekendDays: [0, 6],
           events: {},
           startingWeekday: 0,
@@ -1570,7 +1570,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         }));
       },
 
-      addPlotBoard(projectId, name = "Plano sem título") {
+      addPlotBoard(projectId, name = "Untitled Plot Board") {
         const board: PlotBoard = {
           id: newId("pb"),
           projectId,
@@ -1798,7 +1798,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         });
       },
 
-      addTimeline(projectId, name = "Linha sem título") {
+      addTimeline(projectId, name = "Untitled Timeline") {
         const timeline: TimelineWire = {
           id: newId("tl"),
           projectId,
@@ -1844,7 +1844,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           id: newId("bead"),
           x: init?.x ?? 4000,
           y: init?.y ?? -60,
-          label: init?.label ?? "Evento",
+          label: init?.label ?? "Event",
           color: init?.color ?? "#e67e22",
           ...(init?.dateText ? { dateText: init.dateText } : {}),
         };
@@ -2001,7 +2001,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         });
       },
 
-      addOathsChart(projectId, name = "Hierarquia sem título") {
+      addOathsChart(projectId, name = "Untitled Oaths Hierarchy") {
         const chart: OathsChart = {
           id: newId("oath"),
           projectId,
@@ -2202,7 +2202,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         });
       },
 
-      addWellSpring(projectId, name = "Fonte sem título") {
+      addWellSpring(projectId, name = "Untitled Wellspring") {
         const well: WellSpring = {
           id: newId("well"),
           projectId,
@@ -2405,7 +2405,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         });
       },
 
-      addConlang(projectId, name = "Conlang sem título") {
+      addConlang(projectId, name = "Untitled Conlang") {
         const conlang: Conlang = { id: newId("clg"), projectId, name, glyphs: [], words: [], notes: "" };
         set((s) => ({
           conlangs: [...(s.conlangs ?? []), conlang],
@@ -2695,12 +2695,25 @@ export const useScriptorium = create<ScriptoriumState>()(
       name: STORE_KEY,
       version: 2,
       storage: localStoragePersistence,
-      /** v1 persisted docs lack bloodlines; migrate attaches the default empty
-       *  array so every loaded state has the field. */
+      /** Normalizes default PT copy (Mês/Domingo, event categories) on load. */
       migrate: (persisted, from) => {
-        if (from !== 1) return persisted as PersistedState;
+        const norm = (s: PersistedState): PersistedState => {
+          for (const cal of s.calendars ?? []) {
+            cal.months = cal.months.map((m) => ({ ...m, name: m.name.replace(/^Mês (\d+)$/, (_x, n) => `Month ${n}`) }));
+            const dayMap: Record<string, string> = { "Domingo": "Day 1", "Segunda": "Day 2", "Terça": "Day 3", "Quarta": "Day 4", "Quinta": "Day 5", "Sexta": "Day 6", "Sábado": "Day 7" };
+            cal.weekdays = cal.weekdays.map((w) => dayMap[w] ?? w);
+            for (const dayKey of Object.keys(cal.events)) {
+              cal.events[dayKey] = cal.events[dayKey].map((ev) => ({
+                ...ev,
+                category: ev.category === "Eventos" ? "Events" : ev.category === "Festas" ? "Festivals" : ev.category === "Notas" ? "Notes" : ev.category,
+              }));
+            }
+          }
+          return s;
+        };
+        if (from !== 1) return norm(persisted as PersistedState);
         const p = persisted as Partial<PersistedState>;
-        return { ...p, bloodlines: p.bloodlines ?? [] } as PersistedState;
+        return { ...norm(persisted as PersistedState), bloodlines: p.bloodlines ?? [] } as PersistedState;
       },
       partialize: ({ histories: _h, ...s }): PersistedState => {
         void _h; // ephemeral histories are never persisted
