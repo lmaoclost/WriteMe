@@ -16,6 +16,7 @@ const SECTIONS = [
   { key: "linewheel", label: "Linha do Tempo", to: "linewheel" },
   { key: "oaths", label: "Oaths", to: "oaths" },
   { key: "wellspring", label: "Wellspring", to: "wellspring" },
+  { key: "conlang", label: "Conlang", to: "conlang" },
   { key: "manuscript", label: "Livro", to: "manuscript" },
 ] as const;
 

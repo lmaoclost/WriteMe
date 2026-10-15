@@ -9,6 +9,7 @@ import type {
   TimelineWire, TimelineBead, TimelineSegment,
   OathsChart, OathMember, OathLink,
   WellSpring, WellNode, WellBorder, WellKind,
+  Conlang, ConlangGlyph, ConlangWord,
 } from "../domain/types";
 import { newId } from "../domain/id";
 import type { Pt } from "../domain/geometry";
@@ -66,7 +67,9 @@ export interface OathsSnapshot { members: OathMember[]; oathLinks: OathLink[] }
 export interface OathsChartHistory { undo: OathsSnapshot[]; redo: OathsSnapshot[] }
 export interface WellSnapshot { nodes: WellNode[]; borders: WellBorder[] }
 export interface WellHistory { undo: WellSnapshot[]; redo: WellSnapshot[] }
-export type AnyHistory = AtlasHistory | BloodlineHistory | FactionWebHistory | CalendarHistory | PlotBoardHistory | TimelineHistory | OathsChartHistory | WellHistory;
+export interface ConlangSnapshot { glyphs: ConlangGlyph[]; words: ConlangWord[] }
+export interface ConlangHistory { undo: ConlangSnapshot[]; redo: ConlangSnapshot[] }
+export type AnyHistory = AtlasHistory | BloodlineHistory | FactionWebHistory | CalendarHistory | PlotBoardHistory | TimelineHistory | OathsChartHistory | WellHistory | ConlangHistory;
 
 const clonePoints = (points: Pt[]): Pt[] => points.map((p) => ({ ...p }));
 const touchProject = (projects: readonly Project[], id: string): Project[] =>
@@ -91,12 +94,18 @@ const pbKey = (boardId: string): string => `pb_${boardId}`;
 const tlKey = (timelineId: string): string => `tl_${timelineId}`;
 const oKey = (chartId: string): string => `oc_${chartId}`;
 const wsKey = (wellId: string): string => `ws_${wellId}`;
+const cnKey = (conlangId: string): string => `cn_${conlangId}`;
 const WELL_KIND_LIST = ["character", "setting", "conflict", "question"];
 
 const clonePerson = (p: BloodlinePerson): BloodlinePerson => ({
   ...p,
   additionalTitles: p.additionalTitles.map((t) => ({ ...t })),
   tenures: p.tenures.map((t) => ({ ...t })),
+});
+
+const cloneCLDSnapshot = (c: Conlang): ConlangSnapshot => ({
+  glyphs: c.glyphs.map((g) => ({ ...g })),
+  words: c.words.map((w) => ({ ...w })),
 });
 
 const cloneWLDSnapshot = (w: WellSpring): WellSnapshot => ({
@@ -308,6 +317,20 @@ interface ScriptoriumState extends ProjectData {
   pushWSHistory(wellId: string): void;
   undoWS(wellId: string): void;
   redoWS(wellId: string): void;
+
+  addConlang(projectId: string, name?: string): Conlang;
+  renameConlang(id: string, name: string): void;
+  deleteConlang(id: string): void;
+  addGlyph(conlangId: string, char: string): ConlangGlyph | null;
+  updateGlyph(id: string, patch: Partial<Omit<ConlangGlyph, "id">>): void;
+  deleteGlyph(id: string): void;
+  addWord(conlangId: string, init?: { word?: string; meaning?: string; pos?: string; theme?: string }): ConlangWord | null;
+  updateWord(id: string, patch: Partial<Omit<ConlangWord, "id">>): void;
+  deleteWord(id: string): void;
+  setConlangNotes(id: string, notes: string): void;
+  pushCNHistory(id: string): void;
+  undoCN(id: string): void;
+  redoCN(id: string): void;
 }
 
 export const useScriptorium = create<ScriptoriumState>()(
@@ -435,6 +458,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           timelines: s.timelines,
           oathsCharts: s.oathsCharts,
           wellsprings: s.wellsprings,
+          conlangs: s.conlangs,
         });
       },
 
@@ -2366,6 +2390,181 @@ export const useScriptorium = create<ScriptoriumState>()(
         });
       },
 
+      addConlang(projectId, name = "Conlang sem título") {
+        const conlang: Conlang = { id: newId("clg"), projectId, name, glyphs: [], words: [], notes: "" };
+        set((s) => ({
+          conlangs: [...(s.conlangs ?? []), conlang],
+          projects: touchProject(s.projects, projectId),
+        }));
+        return conlang;
+      },
+
+      renameConlang(id, name) {
+        const c = (get().conlangs ?? []).find((x) => x.id === id);
+        if (!c) return;
+        set((st) => ({
+          conlangs: (st.conlangs ?? []).map((x) => (x.id === id ? { ...x, name } : x)),
+          projects: touchProject(st.projects, c.projectId),
+        }));
+      },
+
+      deleteConlang(id) {
+        const s = get();
+        const c = (s.conlangs ?? []).find((x) => x.id === id);
+        if (!c) return;
+        const histories = { ...s.histories };
+        delete histories[cnKey(id)];
+        set({
+          conlangs: (s.conlangs ?? []).filter((x) => x.id !== id),
+          histories,
+          projects: touchProject(s.projects, c.projectId),
+        });
+      },
+
+      addGlyph(conlangId, char) {
+        const c = (get().conlangs ?? []).find((x) => x.id === conlangId);
+        if (!c || !char) return null;
+        if (c.glyphs.some((g) => g.char === char)) return null;
+        get().pushCNHistory(conlangId);
+        const glyph: ConlangGlyph = { id: newId("gl"), char, svgPath: "" };
+        set((s) => ({
+          conlangs: (s.conlangs ?? []).map((x) => x.id === conlangId ? { ...x, glyphs: [...x.glyphs, glyph] } : x),
+          projects: touchProject(s.projects, c.projectId),
+        }));
+        return glyph;
+      },
+
+      updateGlyph(id, patch) {
+        const s = get();
+        const c = (s.conlangs ?? []).find((x) => x.glyphs.some((g) => g.id === id));
+        if (!c) return;
+        get().pushCNHistory(c.id);
+        set((st) => ({
+          conlangs: (st.conlangs ?? []).map((x) => x.id !== c.id ? x : {
+            ...x,
+            glyphs: x.glyphs.map((g) => (g.id === id ? { ...g, ...patch, id: g.id } : g)),
+          }),
+          projects: touchProject(st.projects, c.projectId),
+        }));
+      },
+
+      deleteGlyph(id) {
+        const s = get();
+        const c = (s.conlangs ?? []).find((x) => x.glyphs.some((g) => g.id === id));
+        if (!c) return;
+        get().pushCNHistory(c.id);
+        set((st) => ({
+          conlangs: (st.conlangs ?? []).map((x) => (x.id === c.id ? { ...x, glyphs: x.glyphs.filter((g) => g.id !== id) } : x)),
+          projects: touchProject(st.projects, c.projectId),
+        }));
+      },
+
+      addWord(conlangId, init) {
+        const c = (get().conlangs ?? []).find((x) => x.id === conlangId);
+        if (!c) return null;
+        if (!(init?.word ?? "").trim()) return null;
+        get().pushCNHistory(conlangId);
+        const word: ConlangWord = {
+          id: newId("wd"),
+          word: init?.word?.trim() ?? "",
+          meaning: init?.meaning?.trim() ?? "",
+          pos: init?.pos ?? "substantivo",
+          theme: init?.theme?.trim() ?? "",
+        };
+        set((s) => ({
+          conlangs: (s.conlangs ?? []).map((x) => x.id === conlangId ? { ...x, words: [...x.words, word] } : x),
+          projects: touchProject(s.projects, c.projectId),
+        }));
+        return word;
+      },
+
+      updateWord(id, patch) {
+        const s = get();
+        const c = (s.conlangs ?? []).find((x) => x.words.some((w) => w.id === id));
+        if (!c) return;
+        get().pushCNHistory(c.id);
+        set((st) => ({
+          conlangs: (st.conlangs ?? []).map((x) => x.id !== c.id ? x : {
+            ...x,
+            words: x.words.map((w) => (w.id === id ? { ...w, ...patch, id: w.id } : w)),
+          }),
+          projects: touchProject(st.projects, c.projectId),
+        }));
+      },
+
+      deleteWord(id) {
+        const s = get();
+        const c = (s.conlangs ?? []).find((x) => x.words.some((w) => w.id === id));
+        if (!c) return;
+        get().pushCNHistory(c.id);
+        set((st) => ({
+          conlangs: (st.conlangs ?? []).map((x) => (x.id === c.id ? { ...x, words: x.words.filter((w) => w.id !== id) } : x)),
+          projects: touchProject(st.projects, c.projectId),
+        }));
+      },
+
+      setConlangNotes(id, notes) {
+        const c = (get().conlangs ?? []).find((x) => x.id === id);
+        if (!c) return;
+        set((st) => ({
+          conlangs: (st.conlangs ?? []).map((x) => (x.id === id ? { ...x, notes } : x)),
+          projects: touchProject(st.projects, c.projectId),
+        }));
+      },
+
+      pushCNHistory(id) {
+        set((st) => {
+          const c = (st.conlangs ?? []).find((x) => x.id === id);
+          if (!c) return {};
+          const key = cnKey(id);
+          const h = (st.histories[key] as ConlangHistory | undefined) ?? { undo: [], redo: [] };
+          const undo = [...h.undo, cloneCLDSnapshot(c)];
+          if (undo.length > HISTORY_CAP) undo.shift();
+          const entry: ConlangHistory = { undo, redo: [] };
+          return { histories: { ...st.histories, [key]: entry } };
+        });
+      },
+
+      undoCN(id) {
+        set((st) => {
+          const key = cnKey(id);
+          const h = st.histories[key] as ConlangHistory | undefined;
+          const c = (st.conlangs ?? []).find((x) => x.id === id);
+          if (!h || h.undo.length === 0 || !c) return {};
+          const snap = h.undo[h.undo.length - 1];
+          const entry: ConlangHistory = {
+            undo: h.undo.slice(0, -1),
+            redo: [...h.redo, cloneCLDSnapshot(c)],
+          };
+          return {
+            histories: { ...st.histories, [key]: entry },
+            conlangs: (st.conlangs ?? []).map((x) => x.id === id
+              ? { ...x, glyphs: snap.glyphs.map((g) => ({ ...g })), words: snap.words.map((w) => ({ ...w })) }
+              : x),
+          };
+        });
+      },
+
+      redoCN(id) {
+        set((st) => {
+          const key = cnKey(id);
+          const h = st.histories[key] as ConlangHistory | undefined;
+          const c = (st.conlangs ?? []).find((x) => x.id === id);
+          if (!h || h.redo.length === 0 || !c) return {};
+          const snap = h.redo[h.redo.length - 1];
+          const entry: ConlangHistory = {
+            undo: [...h.undo, cloneCLDSnapshot(c)],
+            redo: h.redo.slice(0, -1),
+          };
+          return {
+            histories: { ...st.histories, [key]: entry },
+            conlangs: (st.conlangs ?? []).map((x) => x.id === id
+              ? { ...x, glyphs: snap.glyphs.map((g) => ({ ...g })), words: snap.words.map((w) => ({ ...w })) }
+              : x),
+          };
+        });
+      },
+
       pushCLHistory(id) {
         set((st) => {
           const cal = (st.calendars ?? []).find((c) => c.id === id);
@@ -2503,6 +2702,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           timelines: s.timelines,
           oathsCharts: s.oathsCharts,
           wellsprings: s.wellsprings,
+          conlangs: s.conlangs,
           seedFlag: s.seedFlag,
         };
       },

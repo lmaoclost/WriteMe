@@ -285,6 +285,18 @@ export type WellSpring = {
   notes: string;
 };
 
+export type ConlangGlyph = { id: Id; char: string; svgPath: string };
+export type ConlangWord = { id: Id; word: string; meaning: string; pos: string; theme: string };
+
+export type Conlang = {
+  id: Id;
+  projectId: Id;
+  name: string;
+  glyphs: ConlangGlyph[];
+  words: ConlangWord[];
+  notes: string;
+};
+
 export interface ProjectData {
   projects: Project[];
   entries: WorldEntry[];
@@ -298,6 +310,7 @@ export interface ProjectData {
   timelines?: TimelineWire[];
   oathsCharts?: OathsChart[];
   wellsprings?: WellSpring[];
+  conlangs?: Conlang[];
 }
 
 export const ENTRY_CATEGORIES: readonly EntryCategory[] = [

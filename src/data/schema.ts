@@ -7,6 +7,7 @@ import type {
   TimelineWire, TimelineBead, TimelineSegment,
   OathsChart, OathMember, OathLink,
   WellSpring, WellNode, WellBorder,
+  Conlang, ConlangGlyph, ConlangWord,
 } from "../domain/types";
 import { ENTRY_CATEGORIES, PIN_TYPES } from "../domain/types";
 
@@ -235,6 +236,24 @@ const isWellSpring = (v: unknown): boolean => {
     && isStr(w.notes);
 };
 
+const isConlangGlyph = (v: unknown): boolean => {
+  const g = v as ConlangGlyph;
+  return !!g && isStr(g.id) && isStr(g.char) && (g.char as string).length <= 3 && isStr(g.svgPath);
+};
+
+const isConlangWord = (v: unknown): boolean => {
+  const w = v as ConlangWord;
+  return !!w && isStr(w.id) && isStr(w.word) && isStr(w.meaning) && isStr(w.pos) && isStr(w.theme);
+};
+
+const isConlang = (v: unknown): boolean => {
+  const c = v as Conlang;
+  return !!c && isStr(c.id) && isStr(c.projectId) && isStr(c.name)
+    && isArr(c.glyphs) && c.glyphs.every(isConlangGlyph)
+    && isArr(c.words) && c.words.every(isConlangWord)
+    && isStr(c.notes);
+};
+
 const isBloodline = (v: unknown): v is Bloodline => {
   const b = v as Bloodline;
   return !!b && isStr(b.id) && isStr(b.projectId) && isStr(b.name)
@@ -263,12 +282,14 @@ export function validateProjectData(v: unknown): boolean {
     && (d.oathsCharts === undefined
       || (isArr(d.oathsCharts) && d.oathsCharts.every(isOathsChart)))
     && (d.wellsprings === undefined
-      || (isArr(d.wellsprings) && d.wellsprings.every(isWellSpring)));
+      || (isArr(d.wellsprings) && d.wellsprings.every(isWellSpring)))
+    && (d.conlangs === undefined
+      || (isArr(d.conlangs) && d.conlangs.every(isConlang)));
 }
 
 /** Fresh shape: bloodlines is optional in the schema but a fresh state always carries []. */
 export function emptyProjectData(): ProjectData & { bloodlines: Bloodline[] } {
-  return { projects: [], entries: [], atlases: [], manuscripts: [], images: {}, bloodlines: [], factionWebs: [], calendars: [], plotBoards: [], timelines: [], oathsCharts: [], wellsprings: [] };
+  return { projects: [], entries: [], atlases: [], manuscripts: [], images: {}, bloodlines: [], factionWebs: [], calendars: [], plotBoards: [], timelines: [], oathsCharts: [], wellsprings: [], conlangs: [] };
 }
 
 export function serialize(data: ProjectData): string {
@@ -299,5 +320,6 @@ export function parseExport(text: string): ProjectData {
     timelines: d.timelines ?? [],
     oathsCharts: d.oathsCharts ?? [],
     wellsprings: d.wellsprings ?? [],
+    conlangs: d.conlangs ?? [],
   };
 }

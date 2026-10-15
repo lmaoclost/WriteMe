@@ -18,6 +18,8 @@ import { OathsIndexPage } from "../features/oaths/OathsIndexPage";
 import { OathsChartPage } from "../features/oaths/OathsChartPage";
 import { WellSpringIndexPage } from "../features/wellspring/WellSpringIndexPage";
 import { WellSpringPage } from "../features/wellspring/WellSpringPage";
+import { ConlangIndexPage } from "../features/conlang/ConlangIndexPage";
+import { ConlangPage } from "../features/conlang/ConlangPage";
 import { ManuscriptPage } from "../features/manuscript/ManuscriptPage";
 import { OverviewPage } from "../features/workspace/OverviewPage";
 import { WorkspaceLayout } from "../features/workspace/WorkspaceLayout";
@@ -112,6 +114,16 @@ function WellSpringRoute() {
   return <WellSpringPage wellId={wellId ?? ""} />;
 }
 
+function ConlangIndexRoute() {
+  const { projectId } = useParams();
+  return <ConlangIndexPage projectId={projectId ?? ""} />;
+}
+
+function ConlangRoute() {
+  const { conlangId } = useParams();
+  return <ConlangPage conlangId={conlangId ?? ""} />;
+}
+
 export function AppRouter() {
   return (
     <Routes>
@@ -136,6 +148,8 @@ export function AppRouter() {
         <Route path="oaths/:chartId" element={<OathsChartRoute />} />
         <Route path="wellspring" element={<WellSpringIndexRoute />} />
         <Route path="wellspring/:wellId" element={<WellSpringRoute />} />
+        <Route path="conlang" element={<ConlangIndexRoute />} />
+        <Route path="conlang/:conlangId" element={<ConlangRoute />} />
         <Route path="manuscript" element={<ManuscriptRoute />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
