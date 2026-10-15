@@ -45,7 +45,7 @@ describe("FactionWebPage", () => {
     render(<FactionWebPage webId={w.id} />);
     const handle = screen.getByRole("button", { name: /Conectar Casa Vellmor/ });
     firePointer(handle, "pointerdown", { clientX: 100, clientY: 100 });
-    expect(screen.getByText(/Escolha a fração destino/)).toBeInTheDocument();
+    expect(screen.getByText(/faction to connect/i)).toBeInTheDocument();
     // click destination
     const dest = screen.getAllByTestId("fac-node").find((n) => n.getAttribute("data-fac-id") === b)!;
     fireEvent.click(dest);
@@ -53,7 +53,7 @@ describe("FactionWebPage", () => {
     const conn = store().factionWebs![0].connections.find((c) => c.fromId === a && c.toId === b)!;
     expect(conn.type).toBe("neutral");
     // pick type: ally
-    fireEvent.click(screen.getByRole("button", { name: "Aliada" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ally" }));
     expect(store().factionWebs![0].connections.find((c) => c.id === conn.id)!.type).toBe("ally");
     expect(screen.getByTestId("edge-ally")).toBeInTheDocument();
     void handle;
@@ -108,8 +108,8 @@ describe("FactionWebPage", () => {
     vi.useFakeTimers();
     const { w } = seedWeb();
     render(<FactionWebPage webId={w.id} />);
-    fireEvent.click(screen.getByRole("button", { name: "Notas" }));
-    fireEvent.change(screen.getByLabelText("Notas da teia"), { target: { value: "A paz durou até o inverno." } });
+    fireEvent.click(screen.getByRole("button", { name: "Notes" }));
+    fireEvent.change(screen.getByLabelText("Web notes"), { target: { value: "A paz durou até o inverno." } });
     act(() => vi.advanceTimersByTime(320));
     expect(store().factionWebs![0].notes).toBe("A paz durou até o inverno.");
     vi.useRealTimers();

@@ -22,7 +22,7 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
   const [notesOpen, setNotesOpen] = useState(false);
 
   useEffect(() => {
-    if (!chart) pushToast("error", "Hierarquia não encontrada.");
+    if (!chart) pushToast("error", "Chain of command not found.");
   }, [chart, pushToast]);
 
   if (!chart) return null;
@@ -34,20 +34,20 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
       <header className="bl-header">
         <input
           className="bl-name"
-          aria-label="Nome da hierarquia"
+          aria-label="Chart name"
           value={chart.name}
           onChange={(e) => useScriptorium.getState().renameOathsChart(chartId, e.target.value)}
         />
         <div className="bl-actions">
-          <button type="button" aria-label="Desfazer" disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoOC(chartId)}>↶</button>
-          <button type="button" aria-label="Refazer" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoOC(chartId)}>↷</button>
+          <button type="button" aria-label="Undo" disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoOC(chartId)}>↶</button>
+          <button type="button" aria-label="Redo" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoOC(chartId)}>↷</button>
           <button type="button" onClick={() => {
             const rect = document.querySelector('[data-testid="oaths-plane"]')?.getBoundingClientRect();
             useScriptorium.getState().pushOCHistory(chartId);
             const m = useScriptorium.getState().addOathMember(chartId, undefined, { name: "Fundador" });
             void m; void rect;
           }}>Fundador</button>
-          <button type="button" onClick={() => setNotesOpen((v) => !v)}>Notas</button>
+          <button type="button" onClick={() => setNotesOpen((v) => !v)}>Notes</button>
         </div>
       </header>
       <div className="bl-body">
@@ -101,7 +101,7 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
                   {m.title ? <span className="oath-card-title">{m.title}</span> : null}
                   {m.org ? <span className="oath-card-org">{m.org}</span> : null}
                   <span className={"oath-seat-badge seat-" + m.seatStatus}>
-                    {m.seatStatus === "held" ? "Assento mantido" : m.seatStatus === "vacant" ? "Assento vago" : "Disputado"}
+                    {m.seatStatus === "held" ? "Held" : m.seatStatus === "vacant" ? "Vacant seat" : "Contested seat"}
                   </span>
                 </div>
               );
@@ -127,7 +127,7 @@ function OathsPanel({ chart, selectedId, onSelect }: {
   if (!member) {
     return (
       <aside className="bl-panel" data-testid="oaths-panel">
-        <p className="bl-panel-hint">Escolha um membro da hierarquia.</p>
+        <p className="bl-panel-hint">Pick a member on the chart.</p>
       </aside>
     );
   }
@@ -147,7 +147,7 @@ function MemberForm({ chart, member, onSelect }: {
   const remove = () => {
     if (!armDelete) { setArmDelete(true); return; }
     store().deleteOathMember(member.id);
-    pushToast("success", "Membro e descendência removidos.");
+    pushToast("success", "Member removed.");
     onSelect(null);
   };
 
@@ -160,37 +160,37 @@ function MemberForm({ chart, member, onSelect }: {
       <header className="bl-panel-head">
         <h2>{member.name}</h2>
         <button type="button" className={armDelete ? "btn-danger" : ""} onClick={remove}
-          aria-label={armDelete ? "Confirmar exclusão do membro" : "Excluir membro"}>
-          {armDelete ? "Confirmar?" : "Excluir"}
+          aria-label={armDelete ? "Confirm delete member" : "Delete member"}>
+          {armDelete ? "Confirm?" : "Delete"}
         </button>
       </header>
       <div className="field">
-        <span className="field-label">Nome</span>
-        <input aria-label="Nome do membro" defaultValue={member.name} onBlur={(e) => update({ name: e.target.value.trim() || member.name })} />
+        <span className="field-label">Name</span>
+        <input aria-label="Member name" defaultValue={member.name} onBlur={(e) => update({ name: e.target.value.trim() || member.name })} />
       </div>
       <div className="field">
-        <span className="field-label">Título</span>
-        <input aria-label="Título do membro" defaultValue={member.title ?? ""} onBlur={(e) => update({ title: e.target.value.trim() || undefined })} />
+        <span className="field-label">Title / Office</span>
+        <input aria-label="Title / Office" defaultValue={member.title ?? ""} onBlur={(e) => update({ title: e.target.value.trim() || undefined })} />
       </div>
       <div className="field">
-        <span className="field-label">Organização</span>
-        <input aria-label="Organização" defaultValue={member.org ?? ""} onBlur={(e) => update({ org: e.target.value.trim() || undefined })} />
+        <span className="field-label">Order / Branch</span>
+        <input aria-label="Order / Branch" defaultValue={member.org ?? ""} onBlur={(e) => update({ org: e.target.value.trim() || undefined })} />
       </div>
       <label className="field">
-        <span className="field-label">Notas</span>
-        <textarea aria-label="Notas do membro" rows={3} defaultValue={member.notes ?? ""} onBlur={(e) => update({ notes: e.target.value.trim() || undefined })} />
+        <span className="field-label">Notes</span>
+        <textarea aria-label="Member notes" rows={3} defaultValue={member.notes ?? ""} onBlur={(e) => update({ notes: e.target.value.trim() || undefined })} />
       </label>
       <div className="field">
         <span className="field-label">Assento</span>
-        <select aria-label="Status do assento" value={member.seatStatus} onChange={(e) => update({ seatStatus: e.target.value as unknown as OathsChart["members"][number]["seatStatus"] })}>
-          <option value="held">Assento mantido</option>
-          <option value="vacant">Assento vago</option>
-          <option value="disputed">Assento disputado</option>
+        <select aria-label="Seat status" value={member.seatStatus} onChange={(e) => update({ seatStatus: e.target.value as unknown as OathsChart["members"][number]["seatStatus"] })}>
+          <option value="held">Held</option>
+          <option value="vacant">Vacant seat</option>
+          <option value="disputed">Contested seat</option>
         </select>
       </div>
       <div className="field">
-        <span className="field-label">Cor</span>
-        <div className="color-row" role="listbox" aria-label="Cor do membro">
+        <span className="field-label">Color</span>
+        <div className="color-row" role="listbox" aria-label="Member color">
           {["#c0392b", "#e74c3c", "#e67e22", "#f1c40f", "#27ae60", "#2ecc71", "#2980b9", "#3498db", "#7c5cbf", "#8e44ad", "#2c3e50", "#34495e"].map((c) => (
             <button key={c} type="button" role="option" aria-selected={member.color === c}
               className={`color-swatch${member.color === c ? " current" : ""}`} style={{ background: c }}
@@ -199,18 +199,18 @@ function MemberForm({ chart, member, onSelect }: {
         </div>
       </div>
       <section className="bl-subsection">
-        <h3>Vassalos diretos</h3>
+        <h3>Direct reports</h3>
         <button
           type="button"
-          aria-label="Adicionar vassalo direto"
+          aria-label="Add direct report"
           onClick={() => {
             store().addOathMember(chart.id, member.id, { name: "Novo vassalo" });
           }}
-        >+ Vassalo swore</button>
+        >+ Swear an oath</button>
       </section>
       <section className="bl-subsection">
-        <h3>Oaths deste membro</h3>
-        {links.length === 0 ? <p className="dim">Nenhum vínculo.</p> : null}
+        <h3>Their oaths</h3>
+        {links.length === 0 ? <p className="dim">No oaths.</p> : null}
         {superiors.map((l) => (
           <div key={l.id} className="oath-edit-row" data-testid="oath-edit-row">
             <span className="dim">Para {memberByIdName(chart, l.superiorId) ?? "?"}:</span>
@@ -228,15 +228,15 @@ function MemberForm({ chart, member, onSelect }: {
               value={l.kind}
               onChange={(e) => store().setOathLinkKind(l.id, e.target.value as unknown as OathLink["kind"])}
             >
-              <option value="primary">Primário</option>
-              <option value="joint">Conjunto</option>
+              <option value="primary">Primary chain</option>
+              <option value="joint">Joint report</option>
             </select>
           </div>
         ))}
         <details className="oath-new-details">
           <summary>Reconhecer superior</summary>
           <select
-            aria-label="Escolher superior"
+            aria-label="Pick a superior"
             defaultValue=""
             onChange={(e) => { if (e.target.value) store().addOathMember(chart.id, e.target.value, { name: "Sem nome" }); e.target.value = ""; }}
           >

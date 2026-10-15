@@ -11,10 +11,10 @@ export function OathsNotepad({ notes, onNotes, onClose }: { notes: string; onNot
   return (
     <div className="bl-notepad" data-testid="oaths-notepad">
       <header className="bl-notepad-head">
-        <span>Notas</span>
-        <button type="button" aria-label="Fechar notas" onClick={onClose}>✕</button>
+        <span>Notes</span>
+        <button type="button" aria-label="Close notes" onClick={onClose}>✕</button>
       </header>
-      <textarea aria-label="Notas da hierarquia" value={draft} onChange={(e) => setDraft(e.target.value)} rows={5} />
+      <textarea aria-label="Chart notes" value={draft} onChange={(e) => setDraft(e.target.value)} rows={5} />
     </div>
   );
 }

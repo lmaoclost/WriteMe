@@ -15,7 +15,7 @@ export function FactionPanel({ web, selectedId, selectedConnectionId, onSelect }
   if (!faction && !selectedConnectionId) {
     return (
       <aside className="bl-panel" data-testid="fac-panel">
-        <p className="bl-panel-hint">Selecione uma fração ou relação no canvas.</p>
+        <p className="bl-panel-hint">Select a faction or connection.</p>
       </aside>
     );
   }
@@ -41,7 +41,7 @@ export function FactionForm({ web, faction, onSelect }: {
   const remove = () => {
     if (!armDelete) { setArmDelete(true); return; }
     store().deleteFaction(faction.id);
-    pushToast("success", "Fração removida.");
+    pushToast("success", "Faction removed.");
     onSelect(null);
   };
 
@@ -50,24 +50,24 @@ export function FactionForm({ web, faction, onSelect }: {
       <header className="bl-panel-head">
         <h2>{faction.name}</h2>
         <button type="button" className={armDelete ? "btn-danger" : ""} onClick={remove}
-          aria-label={armDelete ? "Confirmar exclusão da fração" : "Excluir fração"}>
-          {armDelete ? "Confirmar?" : "Excluir"}
+          aria-label={armDelete ? "Confirm delete faction" : "Delete faction"}>
+          {armDelete ? "Confirm?" : "Delete"}
         </button>
       </header>
       <div className="field">
-        <span className="field-label">Nome</span>
-        <input aria-label="Nome" value={nameDraft.draft} onChange={(e) => nameDraft.setDraft(e.target.value)} onBlur={() => nameDraft.flush()} />
+        <span className="field-label">Name</span>
+        <input aria-label="Name" placeholder="e.g. House Valoris" value={nameDraft.draft} onChange={(e) => nameDraft.setDraft(e.target.value)} onBlur={() => nameDraft.flush()} />
       </div>
-      <TextDebounced label="Líder" value={faction.leader ?? ""} onCommit={(v) => update({ leader: v.trim() || undefined })} />
-      <TextDebounced label="Território" value={faction.territory ?? ""} onCommit={(v) => update({ territory: v.trim() || undefined })} />
+      <TextDebounced label="Leader" value={faction.leader ?? ""} onCommit={(v) => update({ leader: v.trim() || undefined })} />
+      <TextDebounced label="Territory" value={faction.territory ?? ""} placeholder="e.g. Central Highlands" onCommit={(v) => update({ territory: v.trim() || undefined })} />
       <TextDebounced label="Objetivos" value={faction.goals ?? ""} onCommit={(v) => update({ goals: v.trim() || undefined })} />
       <label className="field">
-        <span className="field-label">Descrição</span>
-        <textarea aria-label="Descrição" rows={4} value={faction.description ?? ""} onChange={(e) => update({ description: e.target.value })} />
+        <span className="field-label">Description</span>
+        <textarea aria-label="Description" placeholder="Background, history, culture..." rows={4} value={faction.description ?? ""} onChange={(e) => update({ description: e.target.value })} />
       </label>
       <div className="field">
-        <span className="field-label">Cor</span>
-        <div className="color-row" role="listbox" aria-label="Cor da fração">
+        <span className="field-label">Color</span>
+        <div className="color-row" role="listbox" aria-label="Faction color">
           {FACTION_PRESET_COLORS.map((c) => (
             <button
               key={c}
@@ -82,7 +82,7 @@ export function FactionForm({ web, faction, onSelect }: {
           ))}
         </div>
       </div>
-      <p className="bl-panel-note">{web.factions.length} frações · {web.connections.length} relações</p>
+      <p className="bl-panel-note">{web.factions.length} factions · {web.connections.length} connections</p>
     </div>
   );
 }
@@ -122,9 +122,9 @@ function ConnectionForm({ connectionId, web, onSelect }: {
   return (
     <div className="bl-house-panel" data-testid="connection-form">
       <header className="bl-panel-head">
-        <h2>Relação</h2>
-        <button type="button" className="btn-danger" aria-label="Remover relação"
-          onClick={() => { store().removeConnection(conn.id); onSelect(null); }}>Excluir</button>
+        <h2>Relationship</h2>
+        <button type="button" className="btn-danger" aria-label="Remove connection"
+          onClick={() => { store().removeConnection(conn.id); onSelect(null); }}>Delete</button>
       </header>
       <p className="bl-panel-note">{a?.name} ⇄ {b?.name}</p>
       <p className="bl-panel-note">Tipo atual: {conn.type}</p>

@@ -32,7 +32,7 @@ export function FactionWebPage({ webId }: { webId: string }) {
   const drag = useRef<{ id: string; startX: number; startY: number; baseX: number; baseY: number; pushed: boolean } | null>(null);
 
   useEffect(() => {
-    if (!web) pushToast("error", "Teia não encontrada.");
+    if (!web) pushToast("error", "Faction web not found.");
   }, [web, pushToast]);
 
   const planeSize = useMemo(() => {
@@ -111,17 +111,17 @@ export function FactionWebPage({ webId }: { webId: string }) {
       <header className="bl-header">
         <input
           className="bl-name"
-          aria-label="Nome da teia"
+          aria-label="Faction web name"
           value={web.name}
           onChange={(e) => useScriptorium.getState().renameFactionWeb(webId, e.target.value)}
         />
         <div className="bl-actions">
-          <button type="button" aria-label="Desfazer" disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoFW(webId)}>↶</button>
-          <button type="button" aria-label="Refazer" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoFW(webId)}>↷</button>
+          <button type="button" aria-label="Undo" disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoFW(webId)}>↶</button>
+          <button type="button" aria-label="Redo" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoFW(webId)}>↷</button>
           <button type="button" onClick={() => { pushFWHistory(webId); const el = stageRef.current; const f = addFaction(webId, { x: el ? (el.clientWidth / 2 - scaleRef.current.panX) / scaleRef.current.s : 4000, y: el ? (el.clientHeight / 2 - scaleRef.current.panY) / scaleRef.current.s : 4000 }); if (f) setSelectedId(f.id); }}>
-            Nova fração
+            New Faction
           </button>
-          <button type="button" onClick={() => setNotesOpen((v) => !v)}>Notas</button>
+          <button type="button" onClick={() => setNotesOpen((v) => !v)}>Notes</button>
         </div>
       </header>
       <div className="bl-body">
@@ -200,7 +200,7 @@ export function FactionWebPage({ webId }: { webId: string }) {
                   if (pendingFrom) onNodeClick(f);
                 }}
                 role="button"
-                aria-label={`Fração ${f.name}`}
+                aria-label={`Faction ${f.name}`}
                 tabIndex={0}
               >
                 <span className="fac-dot" style={{ background: f.color }} />
@@ -226,10 +226,10 @@ export function FactionWebPage({ webId }: { webId: string }) {
             ))}
           </div>
           {web.factions.length === 0 ? (
-            <div className="bl-empty">Adicione a primeira fração à teia.</div>
+            <div className="bl-empty">Add the first faction to the web.</div>
           ) : null}
           {pendingFrom ? (
-            <div className="fac-hint">Escolha a fração destino para criar a relação.</div>
+            <div className="fac-hint">Choose a faction to connect.</div>
           ) : null}
         </div>
         <FactionPanel
@@ -252,7 +252,7 @@ export function FactionWebPage({ webId }: { webId: string }) {
                 {style.label}
               </button>
             ))}
-            <button type="button" className="conn-type-option" onClick={() => { useScriptorium.getState().removeConnection(typePicker.connId); setTypePicker(null); }}>Remover</button>
+            <button type="button" className="conn-type-option" onClick={() => { useScriptorium.getState().removeConnection(typePicker.connId); setTypePicker(null); }}>Remove connection</button>
           </div>
         ) : null}
       </div>
