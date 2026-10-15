@@ -2760,3 +2760,7 @@ export const selectBLHistoryFlags = (bloodlineId: string) => (s: ScriptoriumStat
   const h = s.histories[blKey(bloodlineId)];
   return { canUndo: (h?.undo.length ?? 0) > 0, canRedo: (h?.redo.length ?? 0) > 0 };
 };
+
+
+
+
