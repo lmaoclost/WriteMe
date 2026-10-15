@@ -24,7 +24,7 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
   const pan = useRef<{ x: number; basePanX: number; y: number; basePanY: number } | null>(null);
 
   useEffect(() => {
-    if (!board) pushToast("error", "Plano não encontrado.");
+    if (!board) pushToast("error", "Plot board not found.");
   }, [board, pushToast]);
 
   if (!board) return null;
@@ -36,20 +36,20 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
       <header className="bl-header">
         <input
           className="bl-name"
-          aria-label="Nome do plano"
+          aria-label="Plot board name"
           value={board.name}
           onChange={(e) => useScriptorium.getState().renamePlotBoard(boardId, e.target.value)}
         />
         <div className="bl-actions">
-          <button type="button" aria-label="Desfazer" disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoPB(boardId)}>↶</button>
-          <button type="button" aria-label="Refazer" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoPB(boardId)}>↷</button>
+          <button type="button" aria-label="Undo" disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoPB(boardId)}>↶</button>
+          <button type="button" aria-label="Redo" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoPB(boardId)}>↷</button>
           {!board.hasPrologue ? (
-            <button type="button" onClick={() => { pushPBHistory(boardId); useScriptorium.getState().setBoardFlags(boardId, { hasPrologue: true }); }}>+ Prólogo</button>
+            <button type="button" onClick={() => { pushPBHistory(boardId); useScriptorium.getState().setBoardFlags(boardId, { hasPrologue: true }); }}>Prologue</button>
           ) : null}
           {!board.hasEpilogue ? (
-            <button type="button" onClick={() => { pushPBHistory(boardId); useScriptorium.getState().setBoardFlags(boardId, { hasEpilogue: true }); }}>+ Epílogo</button>
+            <button type="button" onClick={() => { pushPBHistory(boardId); useScriptorium.getState().setBoardFlags(boardId, { hasEpilogue: true }); }}>Epilogue</button>
           ) : null}
-          <button type="button" onClick={() => setNotesOpen((v) => !v)}>Notas</button>
+          <button type="button" onClick={() => setNotesOpen((v) => !v)}>Notes</button>
         </div>
       </header>
       <div className="bl-body">
@@ -138,7 +138,7 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
                 data-card-id={c.id}
                 style={{ left: c.x - 80, top: c.y - 20, borderTopColor: c.color }}
                 role="button"
-                aria-label={`Cena ${c.title || "sem título"}`}
+                aria-label={`Scene ${c.title || "untitled"}`}
                 tabIndex={0}
                 onPointerDown={(e) => {
                   if (e.button !== 0) return;
@@ -156,13 +156,13 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
                 onMouseEnter={() => void 0}
               >
                 <span className="fac-dot" style={{ background: c.color }} />
-                <span className="board-card-title">{c.title || "Cena sem título"}</span>
+                <span className="board-card-title">{c.title || "Untitled Scene"}</span>
                 {c.pov ? <span className="fac-leader">POV: {c.pov}</span> : null}
                 {c.location ? <span className="fac-leader">{c.location}</span> : null}
                 <button
                   type="button"
                   className="conn-btn"
-                  aria-label={`Conectar cena ${c.title || ""}`}
+                  aria-label={`Connect scene ${c.title || ""}`}
                   onPointerDown={(e) => { e.stopPropagation(); setConnecting(c.id); setGhost(null); }}
                   onClick={(e) => e.stopPropagation()}
                 >●</button>
@@ -170,9 +170,9 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
             ))}
           </div>
           {board.cards.length === 0 ? (
-            <div className="bl-empty">Escreva a primeira cena — clique no quadro para colocá-la.</div>
+            <div className="bl-empty">Click anywhere to place your first scene card</div>
           ) : connecting ? (
-            <div className="fac-hint">Escolha a cena destino para aramar o fio.</div>
+            <div className="fac-hint">Choose a scene card to connect.</div>
           ) : null}
           <PlotBoardPanel board={board} selectedId={selectedCardId} onSelect={setSelectedCardId} />
           {notesOpen ? <BoardNotepad notes={board.notes} onNotes={(v) => useScriptorium.getState().setBoardNotes(boardId, v)} onClose={() => setNotesOpen(false)} /> : null}

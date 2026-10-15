@@ -26,7 +26,7 @@ describe("PlotBoardPage", () => {
   it("empty state invites the first scene", () => {
     const b = seedBoard();
     render(<PlotBoardPage boardId={b.id} />);
-    expect(screen.getByText(/primeira cena/)).toBeInTheDocument();
+    expect(screen.getByText(/first scene card/i)).toBeInTheDocument();
   });
 
   it("placing a card by canvas click + selecting by node pointerdown", () => {
@@ -65,7 +65,7 @@ describe("PlotBoardPage", () => {
     render(<PlotBoardPage boardId={b.id} />);
     const nodeA = screen.getAllByTestId("board-card").find((n) => n.getAttribute("data-card-id") === a.id)!;
     firePointer(nodeA.querySelector(".conn-btn") as HTMLElement, "pointerdown", { clientX: 0, clientY: 0 });
-    expect(screen.getByText(/cena destino/)).toBeInTheDocument();
+    expect(screen.getByText(/scene card to connect/i)).toBeInTheDocument();
     const nodeB = screen.getAllByTestId("board-card").find((n) => n.getAttribute("data-card-id") === c.id)!;
     firePointer(nodeB, "pointerdown", { clientX: 0, clientY: 0 });
     expect(store().plotBoards![0].wires).toHaveLength(1);
@@ -80,11 +80,11 @@ describe("PlotBoardPage", () => {
     render(<PlotBoardPage boardId={b.id} />);
     const node = screen.getByTestId("board-card");
     firePointer(node, "pointerdown", { clientX: 0, clientY: 0 });
-    const title = screen.getByLabelText("Título da cena") as HTMLInputElement;
+    const title = screen.getByLabelText("Scene title") as HTMLInputElement;
     fireEvent.change(title, { target: { value: "A chegada" } });
     fireEvent.blur(title);
     expect(store().plotBoards![0].cards.find((x) => x.id === c.id)!.title).toBe("A chegada");
-    fireEvent.click(screen.getByRole("button", { name: "Adicionar beat" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add beat" }));
     const beat = screen.getByLabelText("Beat 1") as HTMLInputElement;
     fireEvent.change(beat, { target: { value: "o rio avisa" } });
     fireEvent.blur(beat);
@@ -95,8 +95,8 @@ describe("PlotBoardPage", () => {
     vi.useFakeTimers();
     const b = seedBoard();
     render(<PlotBoardPage boardId={b.id} />);
-    fireEvent.click(screen.getByRole("button", { name: "Notas" }));
-    fireEvent.change(screen.getByLabelText("Notas do plano"), { target: { value: "O fio do selo quebra no ato 2." } });
+    fireEvent.click(screen.getByRole("button", { name: "Notes" }));
+    fireEvent.change(screen.getByLabelText("Board notes"), { target: { value: "O fio do selo quebra no ato 2." } });
     act(() => vi.advanceTimersByTime(320));
     expect(store().plotBoards![0].notes).toBe("O fio do selo quebra no ato 2.");
     vi.useRealTimers();
@@ -106,9 +106,9 @@ describe("PlotBoardPage", () => {
     const b = seedBoard();
     act(() => { store().addCard(b.id); });
     render(<PlotBoardPage boardId={b.id} />);
-    expect((screen.getByRole("button", { name: "Desfazer" }) as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByRole("button", { name: "Undo" }) as HTMLButtonElement).disabled).toBe(false);
     act(() => { store().undoPB(b.id); });
-    expect((screen.getByRole("button", { name: "Desfazer" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: "Undo" }) as HTMLButtonElement).disabled).toBe(true);
   });
 });
 

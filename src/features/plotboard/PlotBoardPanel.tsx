@@ -18,7 +18,7 @@ export function PlotBoardPanel({ board, selectedId, onSelect }: {
   if (!card) {
     return (
       <aside className="bl-panel" data-testid="pb-panel">
-        <p className="bl-panel-hint">Selecione uma cena no quadro.</p>
+        <p className="bl-panel-hint">Select a card on the board.</p>
       </aside>
     );
   }
@@ -39,26 +39,26 @@ function CardForm({ board, card, onSelect }: {
   const remove = () => {
     if (!armDelete) { setArmDelete(true); return; }
     store().deleteCard(card.id);
-    pushToast("success", "Cena removida.");
+    pushToast("success", "Scene card deleted.");
     onSelect(null);
   };
 
   return (
     <aside className="bl-panel" data-testid="pb-panel">
       <header className="bl-panel-head">
-        <h2>{card.title || "Cena sem título"}</h2>
+        <h2>{card.title || "Untitled Scene"}</h2>
         <button type="button" className={armDelete ? "btn-danger" : ""} onClick={remove}
-          aria-label={armDelete ? "Confirmar exclusão da cena" : "Excluir cena"}>
-          {armDelete ? "Confirmar?" : "Excluir"}
+          aria-label={armDelete ? "Confirm delete card" : "Delete card"}>
+          {armDelete ? "Confirm?" : "Delete"}
         </button>
       </header>
       <div className="field">
-        <span className="field-label">Título</span>
-        <input aria-label="Título da cena" defaultValue={card.title} onBlur={(e) => update({ title: e.target.value })} />
+        <span className="field-label">Title</span>
+        <input aria-label="Scene title" defaultValue={card.title} onBlur={(e) => update({ title: e.target.value })} />
       </div>
       <div className="field">
-        <span className="field-label">Ato</span>
-        <select aria-label="Ato da cena" value={card.actId} onChange={(e) => update({ actId: e.target.value })}>
+        <span className="field-label">Act</span>
+        <select aria-label="Card act" value={card.actId} onChange={(e) => update({ actId: e.target.value })}>
           {board.acts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
         </select>
       </div>
@@ -67,12 +67,12 @@ function CardForm({ board, card, onSelect }: {
         <input aria-label="POV" defaultValue={card.pov} onBlur={(e) => update({ pov: e.target.value })} />
       </div>
       <div className="field">
-        <span className="field-label">Local</span>
+        <span className="field-label">Location</span>
         <input aria-label="Local" defaultValue={card.location} onBlur={(e) => update({ location: e.target.value })} />
       </div>
       <div className="field">
-        <span className="field-label">Cor</span>
-        <div className="color-row" role="listbox" aria-label="Cor da cena">
+        <span className="field-label">Color</span>
+        <div className="color-row" role="listbox" aria-label="Card color">
           {BOARD_PRESET_COLORS.map((c) => (
             <button key={c} type="button" role="option" aria-selected={card.color === c}
               className={`color-swatch${card.color === c ? " current" : ""}`} style={{ background: c }}
@@ -81,7 +81,7 @@ function CardForm({ board, card, onSelect }: {
         </div>
       </div>
       <section className="bl-subsection">
-        <h3>Beats da cena</h3>
+        <h3>Beats</h3>
         <ul className="titles-list">
           {card.parts.map((p, i) => (
             <li key={p.id}>
@@ -90,18 +90,18 @@ function CardForm({ board, card, onSelect }: {
                 defaultValue={p.text}
                 onBlur={(e) => update({ parts: card.parts.map((pp, j) => (j === i ? { ...pp, text: e.target.value } : pp)) })}
               />
-              <button type="button" aria-label={`Remover beat ${i + 1}`}
+              <button type="button" aria-label={`Remove beat ${i + 1}`}
                 onClick={() => update({ parts: card.parts.filter((_, j) => j !== i) })}>✕</button>
             </li>
           ))}
         </ul>
         <button
           type="button"
-          aria-label="Adicionar beat"
+          aria-label="Add beat"
           onClick={() => update({ parts: [...card.parts, { id: `part_${Math.random().toString(36).slice(2, 8)}`, text: "" }] })}
         >+ Beat</button>
       </section>
-      <p className="bl-panel-note">Ato: {act?.name ?? "—"}</p>
+      <p className="bl-panel-note">Act: {act?.name ?? "—"}</p>
     </aside>
   );
 }
