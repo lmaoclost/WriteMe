@@ -1,6 +1,16 @@
 import { useEffect, type ReactNode } from "react";
 
-export function Modal({ title, onClose, children }: { title: ReactNode; onClose: () => void; children?: ReactNode | undefined }) {
+export function Modal({
+  title,
+  onClose,
+  children,
+  closeLabel = "Close",
+}: {
+  title: ReactNode;
+  onClose: () => void;
+  children?: ReactNode | undefined;
+  closeLabel?: string;
+}) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -14,12 +24,12 @@ export function Modal({ title, onClose, children }: { title: ReactNode; onClose:
         className="modal"
         role="dialog"
         aria-modal="true"
-        aria-label={typeof title === "string" ? title : "Diálogo"}
+        aria-label={typeof title === "string" ? title : closeLabel}
         onClick={(e) => e.stopPropagation()}
       >
         <header className="modal-head">
           <h2 className="modal-title">{title}</h2>
-          <button className="modal-close" onClick={onClose} aria-label="Fechar">✕</button>
+          <button className="modal-close" onClick={onClose} aria-label={closeLabel}>✕</button>
         </header>
         <div className="modal-body">{children}</div>
       </div>
