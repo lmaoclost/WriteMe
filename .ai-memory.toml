@@ -1,0 +1,5 @@
+# ai-memory routing marker for the Scriptorium repo.
+# Sessões abrindo dentro deste diretório gravam/leem code/scriptorium.
+workspace = "code"
+project = "scriptorium"
+inject_on_session_start = true
