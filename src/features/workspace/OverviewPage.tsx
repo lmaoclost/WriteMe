@@ -4,8 +4,11 @@ import { selectCounts, selectProject, useScriptorium } from "../../data/store";
 import type { ProjectCounts } from "../../data/store";
 import { fileToDataUrl } from "../../data/image";
 import { Seal } from "../../ui/Seal";
-import type { WorkspaceContext } from "./WorkspaceLayout";
 import "./overview.css";
+
+export interface WorkspaceContext {
+  projectId: string;
+}
 
 interface LedgerDef {
   letter: string;
@@ -17,7 +20,7 @@ interface LedgerDef {
 
 const LEDGER: LedgerDef[] = [
   { letter: "T", name: "Codex", path: "entries", counter: "Codex entries", read: (c) => c.entries > 0 ? String(c.entries) : "\u2014" },
-  { letter: "A", name: "Atlas", path: "atlas", counter: "Atlas pins", read: (c) => c.atlasPins > 0 ? `${c.atlasRegions} regions · ${c.atlasPins} pins` : "—" },
+  { letter: "A", name: "Atlas", path: "atlas", counter: "Atlas pins", read: (c) => c.atlasPins > 0 ? `${c.atlasRegions} regions · ${c.atlasPins} pins` : "\u2014" },
   { letter: "B", name: "Bloodline", path: "bloodline", counter: "Bloodline persons", read: (c) => c.bloodlinePersons > 0 ? String(c.bloodlinePersons) : "\u2014" },
   { letter: "O", name: "Oaths", path: "oaths", counter: "Oaths members", read: (c) => c.oathMembers > 0 ? String(c.oathMembers) : "\u2014" },
   { letter: "F", name: "Factions", path: "factions", counter: "Factions", read: (c) => c.factions > 0 ? String(c.factions) : "\u2014" },

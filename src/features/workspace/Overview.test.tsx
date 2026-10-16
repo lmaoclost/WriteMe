@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppRouter } from "../../app/router";
 import { fileToDataUrl } from "../../data/image";
 import { useScriptorium } from "../../data/store";
-import type { Project } from "../../domain/types";
 
 vi.mock("../../data/image", () => ({
   fileToDataUrl: vi.fn(async () => ({ dataUrl: "data:image/png;base64,COVER", keptPng: true })),
@@ -21,40 +20,6 @@ function at(path: string) {
 beforeEach(() => {
   localStorage.clear();
   useScriptorium.setState(useScriptorium.getInitialState());
-});
-
-let anchorHref = "";
-let anchorDownload = "";
-let restoreAnchor = () => {};
-
-function stubAnchorDownload() {
-  const orig = document.createElement.bind(document);
-  document.createElement = ((tag: string) => {
-    const el = orig(tag) as HTMLAnchorElement;
-    if (tag === "a") {
-      el.click = () => {
-        anchorHref = el.href;
-        anchorDownload = el.download;
-      };
-    }
-    return el as never;
-  }) as typeof document.createElement;
-  const origCreateObjectUrl = URL.createObjectURL;
-  const origRevokeObjectUrl = URL.revokeObjectURL;
-  URL.createObjectURL = vi.fn(() => "blob:mock-url");
-  URL.revokeObjectURL = vi.fn();
-  restoreAnchor = () => {
-    document.createElement = orig;
-    URL.createObjectURL = origCreateObjectUrl;
-    URL.revokeObjectURL = origRevokeObjectUrl;
-  };
-}
-
-afterEach(() => {
-  restoreAnchor();
-  restoreAnchor = () => {};
-  anchorHref = "";
-  anchorDownload = "";
 });
 
 describe("shell routes", () => {
