@@ -147,8 +147,17 @@ describe("seedDemoProject", () => {
     expect(cl.words.length).toBeGreaterThanOrEqual(10);
     cl.words.forEach((w) => {
       expect(w.meaning.length).toBeGreaterThan(2);
-      expect(["n", "v", "adj", "prep"]).toContain(w.pos);
+      expect(["noun", "verb", "adjective", "adverb", "pronoun", "particle"]).toContain(w.pos);
       expect(w.theme.length).toBeGreaterThan(0);
     });
+  });
+  it("calendar events and conlang pos use UI vocabularies", () => {
+    const EVENT_CATEGORIES = ["Events", "Festivals", "Notes"];
+    const POS_OPTIONS = ["noun", "verb", "adjective", "adverb", "pronoun", "particle"];
+    data.calendars![0].events;
+    for (const list of Object.values(data.calendars![0].events)) {
+      list.forEach((e) => expect(EVENT_CATEGORIES).toContain(e.category));
+    }
+    data.conlangs![0].words.forEach((w) => expect(POS_OPTIONS).toContain(w.pos));
   });
 });

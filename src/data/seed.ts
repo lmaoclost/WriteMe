@@ -254,15 +254,15 @@ export function seedDemoProject() {
     weekendDays: [5, 6],
     startingWeekday: 1,
     events: {
-      "1:0:1": [{ id: newId("ce"), text: "Abertura da Ceira", category: "tradition", color: "#c9a227" }],
-      "1:2:5": [{ id: newId("ce"), text: "Dia da Fundação", category: "holiday", color: "#c9a227" }],
-      "1:3:1": [{ id: newId("ce"), text: "Juramento das Três Pontes", category: "oath", color: "#4d6f8f" }],
-      "1:3:22": [{ id: newId("ce"), text: "Feira das Ceras", category: "market", color: "#4d6f8f" }],
-      "1:5:9": [{ id: newId("ce"), text: "Noite da Fala (o rio murmura)", category: "omen", color: "#8f4d6f" }],
-      "1:8:3": [{ id: newId("ce"), text: "Ressada do Heron-da-Prata", category: "tradition", color: "#4d8f5f" }],
-      "1:10:30": [{ id: newId("ce"), text: "Fecho dos celeiros", category: "tradition", color: "#c9a227" }],
-      "1:11:16": [{ id: newId("ce"), text: "Aniversário do cerco rompido", category: "history", color: "#4d8f5f" }],
-      "1:11:31": [{ id: newId("ce"), text: "Véspera do Arco", category: "holiday", color: "#c9a227" }],
+      "1:0:1": [{ id: newId("ce"), text: "Abertura da Ceira", category: "Festivals", color: "#c9a227" }],
+      "1:2:5": [{ id: newId("ce"), text: "Dia da Fundação", category: "Festivals", color: "#c9a227" }],
+      "1:3:1": [{ id: newId("ce"), text: "Juramento das Três Pontes", category: "Events", color: "#4d6f8f" }],
+      "1:3:22": [{ id: newId("ce"), text: "Feira das Ceras", category: "Events", color: "#4d6f8f" }],
+      "1:5:9": [{ id: newId("ce"), text: "Noite da Fala (o rio murmura)", category: "Notes", color: "#8f4d6f" }],
+      "1:8:3": [{ id: newId("ce"), text: "Rezeda do Heron-da-Prata", category: "Festivals", color: "#4d8f5f" }],
+      "1:10:30": [{ id: newId("ce"), text: "Fecho dos celeiros", category: "Festivals", color: "#c9a227" }],
+      "1:11:16": [{ id: newId("ce"), text: "Aniversário do cerco rompido", category: "Notes", color: "#4d8f5f" }],
+      "1:11:31": [{ id: newId("ce"), text: "Véspera do Arco", category: "Festivals", color: "#c9a227" }],
     },
     notes: "Doze luas de 30 dias; Arco fecha o ano com 31. A Fala é o mês mais temido.",
   }];
@@ -282,8 +282,8 @@ export function seedDemoProject() {
     return pc.length - 1;
   };
   const i1 = mkCard(0, 80, 120, "O rio fala", "Kellen", "Vellmora", eCap, ["Vigia vê poeira sem mercado", "Boato: a Coroa anda no rio", "Gota de cera no Arco"], "#4d6f8f");
-  const i2 = mkCard(0, 380, 300, "Sindicância do selo", "Mirren Vellmor", "Tribunal do Selo", eLaw, ["Selo de Roval quebrado", "A Guilde pressiona por preços", "Pistola: cera impura"], "#c9a227");
-  const i3 = mkCard(0, 720, 180, "O convite de Orvean", "Ora Sarnen", "Terras Altas", eNat, ["Bode real ao vale", "Proposta: casar o herdeiro", "Recusa educada"], "#4d8f5f");
+  const i2 = mkCard(0, 380, 300, "Sindicância do selo", "Mirren Vellmor", "Tribunal do Selo", eLaw, ["Selo de Roval quebrado", "A Guilde pressiona por preços", "Pista: cera impura"], "#c9a227");
+  const i3 = mkCard(0, 720, 180, "O convite de Orvean", "Ora Sarnen", "Terras Altas", eNat, ["Missiva real ao vale", "Proposta: casar o herdeiro", "Recusa educada"], "#4d8f5f");
   const i4 = mkCard(1, 80, 520, "A fumaça dos anos difíceis", "Kellen", "Fundo do Sarnen", eRelic, ["Mergulho no braço central", "A Coroa não está onde caiu", "Marcas de cordas novas"], "#8f4d6f");
   const i5 = mkCard(1, 380, 620, "O cerco de dentro", "Talan Vellmor", "Muralha sul", eWar, ["Celeiros cantando vazio", "Cera racionada", "Véspera na torre"], "#c9a227");
   const i6 = mkCard(2, 720, 520, "Rompimento de nome", "Roval Orvean", "Portão do Arco", eWar, ["Selo rasgado em público", "A cidade fecha", "Juíza responde com nome"], "#4d8f5f");
@@ -298,7 +298,7 @@ export function seedDemoProject() {
     hasEpilogue: true,
     cards: pc,
     wires: wireRefs.map(({ from, to }) => ({ id: newId("pw"), fromCardId: pc[from].id, toCardId: pc[to].id })),
-    notes: "Estrutura: o rio fala → a cera acusa → o nome decide. Cards em três atos com pórtico pró/epí-logo.",
+    notes: "Estrutura: o rio fala → a cera acusa → o nome decide. Cards em três atos com prólogo/epílogo aberto.",
   }];
 
   // Timeline
@@ -389,18 +389,18 @@ export function seedDemoProject() {
   ];
   const word = (wOr: string, meaning: string, pos: string, theme: string) => ({ id: newId("cw"), word: wOr, meaning, pos, theme });
   const words = [
-    word("sarnen", "o rio que fala", "n", "geografia"),
-    word("vell", "guardar; manter sob selo", "v", "ritual"),
-    word("oram", "ponte do fundo", "n", "geografia"),
-    word("keth", "cera de pacto", "n", "ritual"),
-    word("brân", "voz; quem canta pelo outro", "n", "povo"),
-    word("heron", "ave que ouve juramento", "n", "povo"),
-    word("selar", "romper o selo de casa", "v", "ritual"),
-    word("orma", "calmo antes de falar", "adj", "clima"),
-    word("vau", "passagem estreita de água", "n", "geografia"),
-    word("torun", "jurado sem cera (verbal)", "adj", "ritual"),
-    word("anvel", "sem guardião", "adj", "clima"),
-    word("kethram", "sindicância do selo", "n", "tribunal"),
+    word("sarnen", "o rio que fala", "noun", "geografia"),
+    word("vell", "guardar; manter sob selo", "verb", "ritual"),
+    word("oram", "ponte do fundo", "noun", "geografia"),
+    word("keth", "cera de pacto", "noun", "ritual"),
+    word("brân", "voz; quem canta pelo outro", "noun", "povo"),
+    word("heron", "ave que ouve juramento", "noun", "povo"),
+    word("selar", "romper o selo de casa", "verb", "ritual"),
+    word("orma", "calmo antes de falar", "adjective", "clima"),
+    word("vau", "passagem estreita de água", "noun", "geografia"),
+    word("torun", "jurado sem cera (verbal)", "adjective", "ritual"),
+    word("anvel", "sem guardião", "adjective", "clima"),
+    word("kethram", "sindicância do selo", "noun", "tribunal"),
   ];
   const conlangs: Conlang[] = [{
     id: newId("cl"),
