@@ -153,11 +153,11 @@
 .plan-upgrade-hint { color: var(--text-muted); font-size: 0.92rem; margin: 8px 0 10px; }
 .billing-toggle { display: flex; gap: 8px; flex-wrap: wrap; }
 .billing-toggle .toggle-btn {
-  background: var(--card);
-  color: var(--text-muted);
+  background: rgb(42, 42, 68);
+  color: rgb(160, 160, 184);
   border: 2px solid #444;
   border-radius: 6px;
-  padding: 8px 14px;
+  padding: 6px 12px;
   font-size: 0.9rem;
 }
 .billing-toggle .toggle-btn.active {
@@ -171,7 +171,8 @@
   color: #fff;
   border: none;
   border-radius: 6px;
-  padding: 8px 14px;
+  padding: 6px 10px;
+  font-size: 0.8333rem;
   font-weight: 600;
 }
 .bindery-pass-head { color: var(--text); font-weight: 700; margin: 12px 0 4px; }
