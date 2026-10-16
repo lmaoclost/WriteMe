@@ -279,7 +279,7 @@ export function SettingsPage() {
                 className="visually-hidden"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
-                  if (f) { void doImport(f).then(() => { e.target.value = ""; }); }
+                  if (f) { doImport(f); e.target.value = ""; }
                 }}
               />
             </label>
