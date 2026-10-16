@@ -135,8 +135,6 @@
 .info-row { display: flex; gap: 8px; padding: 4px 0; }
 .info-row .label { color: var(--text-muted); }
 .info-row .value { color: var(--text); }
-.support-message { color: var(--text-muted); font-size: 0.92rem; line-height: 1.5; }
-.support-link { color: var(--lilac); }
 .plan-badge {
   display: inline-flex;
   align-items: center;

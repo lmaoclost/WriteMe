@@ -209,15 +209,6 @@ export function SettingsPage() {
           </form>
         </div>
         <div className="settings-section">
-          <h3>Change Email</h3>
-          <p className="support-message">
-            Email changes are temporarily unavailable while we sort out an issue. For any account concerns, please
-            contact us at{" "}
-            <a href="mailto:support@scriptorium.invalid" className="support-link">support@scriptorium.invalid</a> and we'll
-            help you out.
-          </p>
-        </div>
-        <div className="settings-section">
           <h3>Change Password</h3>
           {passwordSuccess && <p className="success-message">{passwordSuccess}</p>}
           {passwordError && <p className="error-message">{passwordError}</p>}
@@ -255,17 +246,7 @@ export function SettingsPage() {
             <button type="submit" className="save-btn">Update Password</button>
           </form>
         </div>
-        {!mythic && (
-          <div className="settings-section support-section">
-            <h3>Support Scriptorium</h3>
-            <p className="support-message">
-              Scriptorium is built and maintained by a solo developer. If you enjoy using it, consider upgrading to
-              Mythic — it helps fund new features, server costs, and keeps the project alive. Every subscription makes
-              a difference. If you have any concerns, please send an email to support@scriptorium.invalid.
-            </p>
-          </div>
-        )}
-        <div className="settings-section backup-section">
+        <div className="settings-section">
           <h3>Data &amp; backup</h3>
           <p className="backup-note">Your worlds live only in this browser. Export regularly to keep them safe.</p>
           <div className="backup-actions">

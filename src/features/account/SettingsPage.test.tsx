@@ -28,9 +28,8 @@ describe("SettingsPage", () => {
       "Public Profile",
       "Account Information",
       "Change Username",
-      "Change Email",
       "Change Password",
-      "Support Scriptorium",
+      "Data & backup",
       "Community",
     ]) {
       expect(screen.getByRole("heading", { name: h })).toBeTruthy();
@@ -90,12 +89,6 @@ describe("SettingsPage", () => {
     vi.restoreAllMocks();
   });
 
-  it("email section shows unavailable notice with mailto support link", () => {
-    renderPage();
-    expect(screen.getByText(/Email changes are temporarily unavailable/)).toBeTruthy();
-    const mail = screen.getByRole("link", { name: "support@scriptorium.invalid" });
-    expect(mail.getAttribute("href")).toBe("mailto:support@scriptorium.invalid");
-  });
 
   it("change username: empty, short, invalid chars, success", () => {
     renderPage();
@@ -154,11 +147,6 @@ describe("SettingsPage", () => {
     expect(screen.queryByText("Not set")).toBeNull();
   });
 
-  it("support section hides for mythic plan", () => {
-    useAccount.getState().upgrade("mythic", "active", "monthly");
-    renderPage();
-    expect(screen.queryByRole("heading", { name: "Support Scriptorium" })).toBeNull();
-  });
 
   it("bindery pass flips to owned after purchase", () => {
     renderPage();
@@ -225,5 +213,28 @@ describe("SettingsPage backup", () => {
   it("states the local-first note", () => {
     renderPage();
     expect(screen.getByText(/your worlds live only in this browser/i)).toBeInTheDocument();
+  });
+});
+
+describe("SettingsPage deupsell", () => {
+  it("has no Support Scriptorium section on any plan", () => {
+    renderPage();
+    expect(screen.queryByRole("heading", { name: "Support Scriptorium" })).toBeNull();
+    expect(screen.queryByText(/support@scriptorium.invalid/i)).toBeNull();
+  });
+
+  it("has no Change Email section; Account Information keeps the stored email", () => {
+    renderPage();
+    expect(screen.queryByRole("heading", { name: "Change Email" })).toBeNull();
+    expect(screen.getByRole("heading", { name: "Account Information" })).toBeInTheDocument();
+    expect(screen.queryByText(/temporarily unavailable/i)).toBeNull();
+    expect(screen.queryByRole("link", { name: /mailto/i })).toBeNull();
+  });
+
+  it("keeps the Data & backup section and Community", () => {
+    renderPage();
+    expect(screen.getByRole("heading", { name: "Data & backup" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Community" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /export all data/i })).toBeInTheDocument();
   });
 });
