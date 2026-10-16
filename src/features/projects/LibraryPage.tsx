@@ -152,11 +152,12 @@ export function LibraryPage() {
             if (f.double) {
               return <div className="forge-card" key={f.name}>{inner}</div>;
             }
+            const wide = f.name === "Bindery Scriptorium";
             return (
               <Link
                 key={f.name}
                 to={activeWorld ? f.path(activeWorld.id) : "#"}
-                className="forge-card forge-link"
+                className={"forge-card forge-link" + (wide ? " forge-wide" : "")}
                 aria-label={f.name}
               >
                 {inner}
@@ -190,6 +191,7 @@ export function LibraryPage() {
               </select>
             </div>
           )}
+          <Button className="worlds-new" onClick={() => setCreating(true)}>New world</Button>
         </div>
 
         {projects.length === 0 ? (
@@ -218,10 +220,6 @@ export function LibraryPage() {
             ))}
           </div>
         )}
-
-        <div className="hub-create-row">
-          <Button onClick={() => setCreating(true)}>New world</Button>
-        </div>
       </section>
 
       {creating && (

@@ -35,11 +35,26 @@ typography:
     fontSize: "1rem"
     fontWeight: 600
     lineHeight: 1.4
+  worldTitle:
+    fontFamily: "'Fraunces Variable', Georgia, serif"
+    fontSize: "1.25rem"
+    fontWeight: 600
+    lineHeight: 1.35
   body:
     fontFamily: "'Inter Variable', system-ui, sans-serif"
     fontSize: "0.9375rem"
     fontWeight: 400
     lineHeight: 1.6
+  small:
+    fontFamily: "'Inter Variable', system-ui, sans-serif"
+    fontSize: "0.875rem"
+    fontWeight: 400
+    lineHeight: 1.5
+  micro:
+    fontFamily: "'Inter Variable', system-ui, sans-serif"
+    fontSize: "0.8125rem"
+    fontWeight: 400
+    lineHeight: 1.5
   label:
     fontFamily: "'Inter Variable', system-ui, sans-serif"
     fontSize: "0.75rem"
