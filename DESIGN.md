@@ -40,6 +40,11 @@ typography:
     fontSize: "1.25rem"
     fontWeight: 600
     lineHeight: 1.35
+  ledgerTitle:
+    fontFamily: "'Fraunces Variable', Georgia, serif"
+    fontSize: "1.125rem"
+    fontWeight: 600
+    lineHeight: 1.3
   body:
     fontFamily: "'Inter Variable', system-ui, sans-serif"
     fontSize: "0.9375rem"

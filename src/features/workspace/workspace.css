@@ -7,7 +7,8 @@
 .rail-seal { margin-bottom: 18px; }
 .rail-link {
   color: var(--slate); text-decoration: none; padding: 9px 12px; border-radius: 4px;
-  font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase;
+  font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+  white-space: nowrap; text-overflow: ellipsis; overflow: hidden;
 }
 .rail-link:hover { color: var(--parchment); }
 .rail-link.active {
@@ -15,9 +16,6 @@
   box-shadow: inset 2px 0 0 var(--gold);
 }
 .workspace-main { padding: 40px 48px; }
-.overview-head h1 { font-size: 34px; }
-.overview-desc { color: var(--slate); }
-.overview-actions { display: flex; gap: 10px; margin: 22px 0 6px; flex-wrap: wrap; }
 .overview-note { color: var(--slate); font-size: 13px; }
 .visually-hidden {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
@@ -41,6 +39,8 @@
 .cover-upload:hover .cover-hint { color: var(--gold); }
 @media (max-width: 720px) {
   .workspace { grid-template-columns: 1fr; }
-  .rail { position: static; height: auto; flex-direction: row; align-items: center; overflow-x: auto; }
+  .rail { position: static; height: auto; flex-direction: row; align-items: center; overflow-x: auto; scroll-padding-right: 16px; scrollbar-width: none; }
+  .rail::-webkit-scrollbar { display: none; }
+  .rail-link { flex: none; overflow: visible; text-overflow: unset; }
   .workspace-main { padding: 20px; }
 }
