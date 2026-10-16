@@ -45,4 +45,29 @@ describe("seedDemoProject", () => {
     expect(m.chapters.map((c) => c.order)).toEqual([0, 1, 2]);
     m.chapters.forEach((c) => expect(c.content.length).toBeGreaterThan(50));
   });
+  it("one bloodline with linked persons and houses", () => {
+    expect(data.bloodlines).toHaveLength(1);
+    const bl = data.bloodlines![0];
+    expect(bl.persons.length).toBeGreaterThanOrEqual(6);
+    expect(bl.houses.length).toBeGreaterThanOrEqual(2);
+    const ids = new Set(bl.persons.map((p) => p.id));
+    bl.persons.forEach((p) => {
+      for (const l of [p.connectedTo, p.siblingId, p.partnerId]) {
+        if (l) expect(ids.has(l)).toBe(true);
+      }
+    });
+    expect(bl.persons.some((p) => p.tenures.length > 0)).toBe(true);
+  });
+
+  it("one faction web with 4 factions and typed connections", () => {
+    expect(data.factionWebs).toHaveLength(1);
+    const fw = data.factionWebs![0];
+    expect(fw.factions.length).toBeGreaterThanOrEqual(4);
+    const fids = new Set(fw.factions.map((f) => f.id));
+    fw.connections.forEach((c) => {
+      expect(fids.has(c.fromId)).toBe(true);
+      expect(fids.has(c.toId)).toBe(true);
+      expect(c.fromId).not.toBe(c.toId);
+    });
+  });
 });
