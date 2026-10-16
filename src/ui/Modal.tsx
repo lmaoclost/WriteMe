@@ -4,7 +4,7 @@ export function Modal({
   title,
   onClose,
   children,
-  closeLabel = "Close",
+  closeLabel = "Fechar",
 }: {
   title: ReactNode;
   onClose: () => void;

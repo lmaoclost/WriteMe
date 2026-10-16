@@ -223,7 +223,7 @@ export function LibraryPage() {
       </section>
 
       {creating && (
-        <Modal title="New world" onClose={() => setCreating(false)}>
+        <Modal title="New world" onClose={() => setCreating(false)} closeLabel="Close">
           <div className="form-stack">
             <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
             <Field label="Description"><textarea aria-label="Description" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} /></Field>
@@ -236,7 +236,7 @@ export function LibraryPage() {
       )}
 
       {target && (
-        <Modal title={`Delete "${target.name}"?`} onClose={() => setToDelete(null)}>
+        <Modal title={`Delete "${target.name}"?`} onClose={() => setToDelete(null)} closeLabel="Close">
           <p className="modal-warning">
             This removes the world, its entries, atlas and manuscripts. No going back.
           </p>
