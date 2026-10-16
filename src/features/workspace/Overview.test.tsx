@@ -89,38 +89,13 @@ describe("shell routes", () => {
     expect(screen.queryByText(/sub-projeto 2/i)).not.toBeInTheDocument();
   });
 
-  it("export downloads a JSON file", () => {
-    const p = useScriptorium.getState().addProject("Exported");
-    stubAnchorDownload();
-    render(at(`/p/${p.id}`));
-    fireEvent.click(screen.getByRole("button", { name: /exportar/i }));
-    expect(anchorHref).toContain("blob:");
-    expect(anchorDownload).toBe("Exported.scriptorium.json");
-  });
 });
 
-describe("overview seed and cover", () => {
-  it("re-loads the demo from overview when requested", async () => {
-    let p!: Project;
-    act(() => { p = useScriptorium.getState().addProject("Base"); });
-    act(() => { useScriptorium.setState({ seedFlag: true }); });
-    render(at(`/p/${p.id}`));
-    fireEvent.click(screen.getByRole("button", { name: /recriar exemplo/i }));
-    await waitFor(() => expect(useScriptorium.getState().entries.length).toBeGreaterThan(0));
-    expect(useScriptorium.getState().projects).toHaveLength(2);
-    expect(useScriptorium.getState().toasts.some((t) => t.message === "Projeto de exemplo carregado.")).toBe(true);
-  });
-
-  it("no seed button while seed not yet used", () => {
-    const p = useScriptorium.getState().addProject("Base");
-    render(at(`/p/${p.id}`));
-    expect(screen.queryByRole("button", { name: /exemplo/i })).toBeNull();
-  });
-
+describe("overview cover", () => {
   it("uploads a cover from file and records image key", async () => {
     const p = useScriptorium.getState().addProject("Coberto");
     render(at(`/p/${p.id}`));
-    fireEvent.change(screen.getByLabelText(/trocar capa/i), {
+    fireEvent.change(screen.getByLabelText("Change cover"), {
       target: { files: [new File(["c"], "capa.png", { type: "image/png" })] },
     });
     await waitFor(() =>
@@ -139,7 +114,7 @@ describe("overview seed and cover", () => {
     act(() => { oldKey = useScriptorium.getState().putImage("data:image/png;base64,OLD", "cover"); });
     act(() => { useScriptorium.getState().updateProject(p.id, { coverImageKey: oldKey }); });
     render(at(`/p/${p.id}`));
-    fireEvent.change(screen.getByLabelText(/trocar capa/i), {
+    fireEvent.change(screen.getByLabelText("Change cover"), {
       target: { files: [new File(["c"], "capa.png", { type: "image/png" })] },
     });
     await waitFor(() => {
@@ -157,11 +132,73 @@ describe("overview seed and cover", () => {
     vi.mocked(fileToDataUrl).mockRejectedValueOnce(new Error("boom"));
     const p = useScriptorium.getState().addProject("Falha");
     render(at(`/p/${p.id}`));
-    fireEvent.change(screen.getByLabelText(/trocar capa/i), {
+    fireEvent.change(screen.getByLabelText("Change cover"), {
       target: { files: [new File(["c"], "capa.png", { type: "image/png" })] },
     });
     await waitFor(() =>
       expect(useScriptorium.getState().toasts.some((t) => t.kind === "error")).toBe(true));
     expect(useScriptorium.getState().projects.find((q) => q.id === p.id)?.coverImageKey).toBeFalsy();
+  });
+});
+
+describe("overview dashboard", () => {
+  function seeded() {
+    act(() => { useScriptorium.getState().seedDemo(); });
+    const id = useScriptorium.getState().projects[0].id;
+    return id;
+  }
+
+  it("ledger lists all 11 forge rows with counters after seeding", () => {
+    const pid = seeded();
+    render(at(`/p/${pid}`));
+    const ledger = within(screen.getByRole("region", { name: "Forge ledger" }));
+    expect(ledger.getAllByRole("listitem")).toHaveLength(11);
+    ["Codex", "Atlas", "Bloodline", "Oaths", "Factions", "Calendar",
+     "Plot board", "Timeline wheel", "Wellspring", "Conlang", "Manuscript"]
+      .forEach((n) => expect(ledger.getByText(n)).toBeInTheDocument());
+  });
+
+  it("counter numbers match the world state", () => {
+    const pid = seeded();
+    render(at(`/p/${pid}`));
+    const ledger = within(screen.getByRole("region", { name: "Forge ledger" }));
+    expect(ledger.getByLabelText("Codex entries")).toHaveTextContent("16");
+    expect(ledger.getByLabelText("Bloodline persons")).toHaveTextContent("6");
+    expect(ledger.getByLabelText("Calendar events")).toHaveTextContent("9");
+    expect(ledger.getByLabelText("Conlang words")).toHaveTextContent("12");
+    expect(ledger.getByLabelText("Plot board cards")).toHaveTextContent("7");
+  });
+
+  it("rows link to each forge page", () => {
+    const pid = seeded();
+    render(at(`/p/${pid}`));
+    const ledger = within(screen.getByRole("region", { name: "Forge ledger" }));
+    expect(ledger.getByRole("link", { name: /Plot board/i })).toHaveAttribute("href", `/p/${pid}/plotboard`);
+    expect(ledger.getByRole("link", { name: /Wellspring/i })).toHaveAttribute("href", `/p/${pid}/wellspring`);
+    expect(ledger.getByRole("link", { name: /Oaths/i })).toHaveAttribute("href", `/p/${pid}/oaths`);
+    expect(ledger.getByRole("link", { name: /Codex/i })).toHaveAttribute("href", `/p/${pid}/entries`);
+  });
+
+  it("portability actions are gone from the overview", () => {
+    const pid = seeded();
+    render(at(`/p/${pid}`));
+    expect(screen.queryByRole("button", { name: /export/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /import/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /example/i })).toBeNull();
+  });
+
+  it("hero shows the world name in EN with a cover control", () => {
+    const pid = seeded();
+    render(at(`/p/${pid}`));
+    expect(screen.getByRole("heading", { level: 1, name: /Vellmora/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/change cover/i)).toBeInTheDocument();
+  });
+
+  it("empty counters render an em dash when the forge has no data", () => {
+    const pid = useScriptorium.getState().addProject("Blank world").id;
+    render(at(`/p/${pid}`));
+    const ledger = within(screen.getByRole("region", { name: "Forge ledger" }));
+    expect(ledger.getByLabelText("Bloodline persons")).toHaveTextContent("—");
+    expect(ledger.getByLabelText("Conlang words")).toHaveTextContent("—");
   });
 });
