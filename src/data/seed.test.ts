@@ -154,7 +154,6 @@ describe("seedDemoProject", () => {
   it("calendar events and conlang pos use UI vocabularies", () => {
     const EVENT_CATEGORIES = ["Events", "Festivals", "Notes"];
     const POS_OPTIONS = ["noun", "verb", "adjective", "adverb", "pronoun", "particle"];
-    data.calendars![0].events;
     for (const list of Object.values(data.calendars![0].events)) {
       list.forEach((e) => expect(EVENT_CATEGORIES).toContain(e.category));
     }
