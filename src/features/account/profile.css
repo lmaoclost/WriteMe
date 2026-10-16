@@ -1,0 +1,61 @@
+.pub-profile { max-width: 880px; margin: 0 auto; padding: 36px 24px 72px; }
+
+.pub-back { display: flex; align-items: center; gap: 10px; }
+.pub-back .seal { width: 26px; height: 26px; font-size: 13px; }
+.pub-wordmark {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--parchment);
+}
+.ghost-link { color: var(--lilac); text-decoration: none; font-size: 0.875rem; }
+.ghost-link:hover { color: var(--parchment-strong); }
+.pub-back-link { margin-left: auto; }
+
+.pub-hero { display: flex; align-items: center; gap: 22px; margin-top: 34px; }
+.pub-avatar {
+  width: 88px; height: 88px; border-radius: 50%;
+  overflow: hidden; flex: none;
+  border: 1px solid var(--line-strong);
+  background: var(--night-2);
+  display: grid; place-items: center;
+}
+.pub-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.pub-avatar-initial { font-family: var(--font-display); font-size: 2rem; font-weight: 600; color: var(--gold); }
+.pub-ident { display: grid; gap: 6px; }
+.pub-name {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 2.6rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--parchment-strong);
+}
+.pub-roles { margin: 0; color: var(--slate); font-size: 0.875rem; display: flex; flex-wrap: wrap; }
+.pub-role .pub-role + .pub-role { margin-left: 6px; }
+
+.pub-bio-section { border-top: 1px solid var(--line); margin-top: 30px; padding-top: 18px; }
+.pub-bio-title {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 0 0 10px;
+}
+.pub-bio-text { margin: 0; color: var(--parchment); line-height: 1.65; max-width: 68ch; }
+
+.pub-worlds { border-top: 1px solid var(--line); margin-top: 30px; padding-top: 18px; }
+.pub-section-title {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--parchment-strong);
+  margin: 0 0 16px;
+}
+.pub-world-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.pub-noworlds { color: var(--slate); font-size: 0.9rem; }
+
+.pub-notfound { color: var(--slate); margin-top: 40px; font-size: 1rem; }

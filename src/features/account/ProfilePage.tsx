@@ -83,12 +83,7 @@ export function ProfilePage() {
             </Link>
           )}
           <button type="button" className="back-btn" onClick={() => window.history.back()}>Back to Feed</button>
-          <a href="https://discord.gg/b9vrfR8rYC" target="_blank" rel="noopener" className="discord-btn" title="Join our Discord">
-            <svg width="20" height="15" viewBox="0 0 71 55" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M60.1 4.9A58.5 58.5 0 0 0 45.4.2a.2.2 0 0 0-.2.1 40.8 40.8 0 0 0-1.8 3.7 54 54 0 0 0-16.2 0A37.4 37.4 0 0 0 25.4.3a.2.2 0 0 0-.2-.1A58.4 58.4 0 0 0 10.5 4.9a.2.2 0 0 0-.2.1 51.4 51.4 0 0 0-9 43.6.2.2 0 0 0 .1.2 58.9 58.9 0 0 0 17.8 9 .2.2 0 0 0 .3-.1 42 42 0 0 0 3.2-5.2.2.2 0 0 0-.1-.2 38.9 38.9 0 0 1-5.6-2.7.2.2 0 0 1 0-.3l1.2-.9a.2.2 0 0 1 .2 0 42 42 0 0 0 35.8 0h.2l1.2.9a.2.2 0 0 1 0 .3 36.5 36.5 0 0 1-5.6 2.7.2.2 0 0 0-.1.2 42 42 0 0 0 3.2 5.2.2.2 0 0 0 .3.1 58.7 58.7 0 0 0 17.8-9 .2.2 0 0 0 .1-.2 51.4 51.4 0 0 0-9-43.6.2.2 0 0 0-.2-.1ZM28.5 39.4c-3.4 0-6.2-3.2-6.2-7.1s2.8-7.1 6.2-7.1 6.3 3.2 6.2 7.1c0 3.9-2.8 7.1-6.2 7.1Zm18.2 0c-3.4 0-6.2-3.2-6.2-7.1s2.8-7.1 6.2-7.1 6.3 3.2 6.2 7.1c0 3.9-2.7 7.1-6.2 7.1Z" />
-            </svg>
-          </a>
-        </div>
+                  </div>
       </header>
       <main className="profile-content">
         <h2>Profile Settings</h2>

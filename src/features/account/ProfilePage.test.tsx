@@ -2,7 +2,9 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ProfilePage } from "./ProfilePage";
+import { AppRouter } from "../../app/router";
 import { fileToDataUrl } from "../../data/image";
+import { useScriptorium } from "../../data/store";
 import { useAccount } from "../../data/account";
 
 vi.mock("../../data/image", () => ({
@@ -20,6 +22,7 @@ function renderPage() {
 beforeEach(() => {
   localStorage.clear();
   useAccount.setState(useAccount.getInitialState());
+  useScriptorium.setState(useScriptorium.getInitialState());
 });
 
 afterEach(() => {
@@ -33,9 +36,7 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("heading", { level: 3, name: "Public Profile" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Back to Feed" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Scriptorium" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Join our Discord" }).getAttribute("href")).toBe(
-      "https://discord.gg/b9vrfR8rYC",
-    );
+    expect(screen.queryByRole("link", { name: "Join our Discord" })).toBeNull();
   });
 
   it("shows reader bio + both role bios with counters and placeholder", () => {
@@ -124,5 +125,57 @@ describe("ProfilePage", () => {
     fireEvent.change(reInput, { target: { files: [ok] } });
     await waitFor(() => expect(fileToDataUrl).toHaveBeenCalledTimes(2));
     expect(screen.getAllByText("Avatar updated.")).toHaveLength(1);
+  });
+});
+
+describe("public profile /u/:username", () => {
+  it("identity, roles that have bios, and worlds list", () => {
+    useAccount.setState({ username: "renan", readerBio: "Loves rivers.", worldbuilderBio: "", authorBio: "" });
+    const p1 = useScriptorium.getState().addProject("Vellmora", "The sealed kingdom.");
+    render(
+      <MemoryRouter initialEntries={["/u/renan"]}>
+        <AppRouter />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("heading", { name: "renan" })).toBeInTheDocument();
+    expect(screen.getByText("✦ Reader")).toBeInTheDocument();
+    expect(screen.queryByText("✦ Worldbuilder")).toBeNull();
+    expect(screen.getByText(/Loves rivers/i)).toBeInTheDocument();
+    expect(screen.getByText("Vellmora")).toBeInTheDocument();
+    void p1;
+  });
+
+  it("omits bios that are empty, in Reader-Worldbuilder-Author order", () => {
+    useAccount.setState({ username: "renan", readerBio: "", worldbuilderBio: "Builds worlds.", authorBio: "Tells stories." });
+    render(
+      <MemoryRouter initialEntries={["/u/renan"]}>
+        <AppRouter />
+      </MemoryRouter>,
+    );
+    const wb = screen.getByText("Worldbuilder bio");
+    const au = screen.getByText("Author bio");
+    const readerSection = screen.queryByText("About you");
+    expect(readerSection).toBeNull();
+    expect(wb.compareDocumentPosition(au) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("unknown username renders not-found", () => {
+    useAccount.setState({ username: "renan" });
+    render(
+      <MemoryRouter initialEntries={["/u/other"]}>
+        <AppRouter />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText(/No profile named/i)).toBeInTheDocument();
+  });
+
+  it("View public profile button on profile page reaches /u/:username", () => {
+    useAccount.setState({ username: "renan" });
+    render(
+      <MemoryRouter initialEntries={["/profile"]}>
+        <AppRouter />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("link", { name: "View public profile" }).getAttribute("href")).toBe("/u/renan");
   });
 });
