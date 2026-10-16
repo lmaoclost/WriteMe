@@ -31,6 +31,7 @@ describe("ChroniclesPage", () => {
 
   it("shows all 6 sample cards with chapters pluralization", () => {
     renderPage();
+    expect(document.querySelector(".chronicles-grid")).toBeTruthy();
     expect(screen.getAllByRole("article").length).toBe(6);
     expect(screen.getByText("The Amber Seal")).toBeTruthy();
     expect(screen.getByText("41 chapters")).toBeTruthy();

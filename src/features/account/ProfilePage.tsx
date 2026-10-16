@@ -49,10 +49,18 @@ export function ProfilePage() {
     if (!f.type.startsWith("image/")) { setAvatarError("Please select an image file."); return; }
     if (f.size > MAX_AVATAR_BYTES) { setAvatarError("Image must be under 10MB."); return; }
     setUploading(true);
-    const res = await fileToDataUrl(f);
-    setAvatar(res.dataUrl);
-    setAvatarMsg("Avatar updated.");
-    setUploading(false);
+    try {
+      const res = await fileToDataUrl(f);
+      setAvatar(res.dataUrl);
+      setAvatarMsg("Avatar updated.");
+      setAvatarTick((t) => t + 1);
+    } catch {
+      setAvatarMsg("");
+      setAvatarError("Failed to upload avatar. Please try again.");
+      setAvatarTick((t) => t + 1);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const removeAvatar = () => {

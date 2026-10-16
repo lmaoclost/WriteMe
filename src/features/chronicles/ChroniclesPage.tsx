@@ -206,7 +206,7 @@ export function ChroniclesPage() {
           </div>
         </div>
         {filtered.length === 0 && <p className="library-empty">No stories match the current filters.</p>}
-        <div className="library-grid">
+        <div className="chronicles-grid">
           {filtered.map((m) => {
             const warnTitle = `Heads up: ${m.contentWarnings.map(warningLabelOf).join(", ")}`;
             return (

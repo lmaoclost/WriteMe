@@ -99,4 +99,30 @@ describe("ProfilePage", () => {
     const input: HTMLInputElement = document.querySelector('input[type="file"]')!;
     expect(input.getAttribute("accept")).toBe("image/*");
   });
+
+  it("avatar decoding failure surfaces exact error and clears uploading", async () => {
+    vi.mocked(fileToDataUrl).mockRejectedValueOnce(new Error("boom"));
+    renderPage();
+    const input = document.querySelector<HTMLInputElement>('input[type="file"]')!;
+    const ok = new File(["x"], "ok.png", { type: "image/png", lastModified: 0 });
+    Object.defineProperty(ok, "size", { value: 100 });
+    fireEvent.change(input, { target: { files: [ok] } });
+    expect(await screen.findByText("Failed to upload avatar. Please try again.")).toBeTruthy();
+    expect(screen.queryByText("Uploading...")).toBeNull();
+    expect(screen.queryByTitle("Click to change avatar")).toBeNull();
+  });
+
+  it("picking the same file twice re-uploads both times", async () => {
+    renderPage();
+    const input = document.querySelector<HTMLInputElement>('input[type="file"]')!;
+    const ok = new File(["x"], "same.png", { type: "image/png", lastModified: 0 });
+    Object.defineProperty(ok, "size", { value: 100 });
+    fireEvent.change(input, { target: { files: [ok] } });
+    await waitFor(() => expect(screen.getByText("Avatar updated.")).toBeTruthy());
+    Object.defineProperty(ok, "size", { value: 100 });
+    const reInput = document.querySelector<HTMLInputElement>('input[type="file"]')!;
+    fireEvent.change(reInput, { target: { files: [ok] } });
+    await waitFor(() => expect(fileToDataUrl).toHaveBeenCalledTimes(2));
+    expect(screen.getAllByText("Avatar updated.")).toHaveLength(1);
+  });
 });
