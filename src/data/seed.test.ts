@@ -70,4 +70,41 @@ describe("seedDemoProject", () => {
       expect(c.fromId).not.toBe(c.toId);
     });
   });
+  it("one calendar with themed months and events", () => {
+    expect(data.calendars).toHaveLength(1);
+    const cal = data.calendars![0];
+    expect(cal.months).toHaveLength(12);
+    expect(cal.weekdays).toHaveLength(7);
+    const nEvents = Object.values(cal.events).reduce((n, l) => n + l.length, 0);
+    expect(nEvents).toBeGreaterThanOrEqual(8);
+    Object.keys(cal.events).forEach((k) => {
+      const [, m, d] = k.split(":").map(Number);
+      expect(m).toBeLessThan(cal.months.length);
+      expect(d).toBeLessThanOrEqual(cal.months[m].days);
+    });
+  });
+
+  it("one plot board with acts, cards and wires", () => {
+    expect(data.plotBoards).toHaveLength(1);
+    const pb = data.plotBoards![0];
+    expect(pb.acts.length).toBeGreaterThanOrEqual(3);
+    expect(pb.hasPrologue).toBe(true);
+    expect(pb.hasEpilogue).toBe(true);
+    expect(pb.cards.length).toBeGreaterThanOrEqual(6);
+    expect(pb.cards.every((c) => c.parts.length > 0)).toBe(true);
+    const cids = new Set(pb.cards.map((c) => c.id));
+    pb.wires.forEach((w) => {
+      expect(cids.has(w.fromCardId)).toBe(true);
+      expect(cids.has(w.toCardId)).toBe(true);
+      expect(w.fromCardId).not.toBe(w.toCardId);
+    });
+  });
+
+  it("one timeline with beads and segments", () => {
+    expect(data.timelines).toHaveLength(1);
+    const t = data.timelines![0];
+    expect(t.beads.length).toBeGreaterThanOrEqual(5);
+    expect(t.segments.length).toBeGreaterThanOrEqual(1);
+    t.segments.forEach((s) => expect(s.toX).toBeGreaterThan(s.fromX));
+  });
 });

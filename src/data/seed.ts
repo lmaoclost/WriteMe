@@ -1,4 +1,4 @@
-import type { Atlas, Chapter, Manuscript, Project, WorldEntry, Pin, Bloodline, FactionWeb } from "../domain/types";
+import type { Atlas, Chapter, Manuscript, Project, WorldEntry, Pin, Bloodline, FactionWeb, CustomCalendar, PlotBoard, TimelineWire } from "../domain/types";
 import { newId } from "../domain/id";
 import { buildDemoMapSvg } from "./seedMap";
 
@@ -238,5 +238,88 @@ export function seedDemoProject() {
     ],
   };
 
-  return { projects: [project], entries, atlases, manuscripts, images, bloodlines: [bloodline], factionWebs: [factionWeb] };
+  // Calendário do Selo
+  const calendars: CustomCalendar[] = [{
+    id: newId("cal"),
+    projectId: project.id,
+    name: "Calendário do Selo",
+    era: "Contagem do Arco",
+    months: [
+      { name: "Ceira", days: 30 }, { name: "Bruma", days: 30 }, { name: "Calor", days: 30 },
+      { name: "Sela", days: 30 }, { name: "Ponte", days: 30 }, { name: "Fala", days: 30 },
+      { name: "Vela", days: 30 }, { name: "Vau", days: 30 }, { name: "Heron", days: 30 },
+      { name: "Ninar", days: 30 }, { name: "Inverno", days: 30 }, { name: "Arco", days: 31 },
+    ],
+    weekdays: ["Sela", "Ponte", "Cera", "Fala", "Vela", "Vau", "Arco"],
+    weekendDays: [5, 6],
+    startingWeekday: 1,
+    events: {
+      "1:0:1": [{ id: newId("ce"), text: "Abertura da Ceira", category: "tradition", color: "#c9a227" }],
+      "1:2:5": [{ id: newId("ce"), text: "Dia da Fundação", category: "holiday", color: "#c9a227" }],
+      "1:3:1": [{ id: newId("ce"), text: "Juramento das Três Pontes", category: "oath", color: "#4d6f8f" }],
+      "1:3:22": [{ id: newId("ce"), text: "Feira das Ceras", category: "market", color: "#4d6f8f" }],
+      "1:5:9": [{ id: newId("ce"), text: "Noite da Fala (o rio murmura)", category: "omen", color: "#8f4d6f" }],
+      "1:8:3": [{ id: newId("ce"), text: "Ressada do Heron-da-Prata", category: "tradition", color: "#4d8f5f" }],
+      "1:10:30": [{ id: newId("ce"), text: "Fecho dos celeiros", category: "tradition", color: "#c9a227" }],
+      "1:11:16": [{ id: newId("ce"), text: "Aniversário do cerco rompido", category: "history", color: "#4d8f5f" }],
+      "1:11:31": [{ id: newId("ce"), text: "Véspera do Arco", category: "holiday", color: "#c9a227" }],
+    },
+    notes: "Doze luas de 30 dias; Arco fecha o ano com 31. A Fala é o mês mais temido.",
+  }];
+
+  // Plot board
+  const pbActs = [newId("act"), newId("act"), newId("act")];
+  const pc: PlotBoard["cards"] = [];
+  let wireRefs: { from: number; to: number }[] = [];
+  const mkCard = (actIdx: number, x: number, y: number, title: string, pov: string, location: string, locationEntryId: string | undefined, parts: string[], color: string) => {
+    const c: PlotBoard["cards"][number] = {
+      id: newId("pc"), actId: pbActs[actIdx], x, y, title, pov, location,
+      locationEntryId,
+      parts: parts.map((text) => ({ id: newId("pp"), text })),
+      color,
+    };
+    pc.push(c);
+    return pc.length - 1;
+  };
+  const i1 = mkCard(0, 80, 120, "O rio fala", "Kellen", "Vellmora", eCap, ["Vigia vê poeira sem mercado", "Boato: a Coroa anda no rio", "Gota de cera no Arco"], "#4d6f8f");
+  const i2 = mkCard(0, 380, 300, "Sindicância do selo", "Mirren Vellmor", "Tribunal do Selo", eLaw, ["Selo de Roval quebrado", "A Guilde pressiona por preços", "Pistola: cera impura"], "#c9a227");
+  const i3 = mkCard(0, 720, 180, "O convite de Orvean", "Ora Sarnen", "Terras Altas", eNat, ["Bode real ao vale", "Proposta: casar o herdeiro", "Recusa educada"], "#4d8f5f");
+  const i4 = mkCard(1, 80, 520, "A fumaça dos anos difíceis", "Kellen", "Fundo do Sarnen", eRelic, ["Mergulho no braço central", "A Coroa não está onde caiu", "Marcas de cordas novas"], "#8f4d6f");
+  const i5 = mkCard(1, 380, 620, "O cerco de dentro", "Talan Vellmor", "Muralha sul", eWar, ["Celeiros cantando vazio", "Cera racionada", "Véspera na torre"], "#c9a227");
+  const i6 = mkCard(2, 720, 520, "Rompimento de nome", "Roval Orvean", "Portão do Arco", eWar, ["Selo rasgado em público", "A cidade fecha", "Juíza responde com nome"], "#4d8f5f");
+  const i7 = mkCard(2, 420, 720, "Coroa entregue", "Aldric (memória)", "Torre do sino", eFounder, ["Paralelo do nono inverno", "Escolha de Vesper", "Fecho no Arco"], "#c9a227");
+  wireRefs = [{ from: i1, to: i4 }, { from: i2, to: i6 }, { from: i3, to: i6 }, { from: i4, to: i7 }, { from: i5, to: i7 }, { from: i6, to: i7 }];
+  const plotBoards: PlotBoard[] = [{
+    id: newId("pb"),
+    projectId: project.id,
+    name: "Plot Board — A Coroa e o Rio",
+    acts: [{ id: pbActs[0], name: "Ato I — A Fala" }, { id: pbActs[1], name: "Ato II — A Cera" }, { id: pbActs[2], name: "Ato III — O Nome" }],
+    hasPrologue: true,
+    hasEpilogue: true,
+    cards: pc,
+    wires: wireRefs.map(({ from, to }) => ({ id: newId("pw"), fromCardId: pc[from].id, toCardId: pc[to].id })),
+    notes: "Estrutura: o rio fala → a cera acusa → o nome decide. Cards em três atos com pórtico pró/epí-logo.",
+  }];
+
+  // Timeline
+  const timelines: TimelineWire[] = [{
+    id: newId("tw"),
+    projectId: project.id,
+    name: "Fio dos Selos",
+    beads: [
+      { id: newId("tb"), x: 700, y: -40, label: "Sarn nasce em Sarnen", dateText: "1148", summary: "Ramo cadete da costa.", color: "#4d6f8f" },
+      { id: newId("tb"), x: 900, y: 40, label: "Coroação de Aldric no Arco", dateText: "1160", summary: "Fundação da Casa Vellmor.", color: "#c9a227" },
+      { id: newId("tb"), x: 1120, y: -40, label: "Guerra dos Cinco Invernos", dateText: "1200-05-10", summary: "O rio ficou vermelho; a capital resistiu.", color: "#8f4d6f" },
+      { id: newId("tb"), x: 1310, y: 40, label: "Aldric entrega a Coroa e some", dateText: "1200", summary: "Nono mês do cerco.", color: "#8f4d6f" },
+      { id: newId("tb"), x: 1500, y: -40, label: "Mirren assume o Tribunal", dateText: "1204", summary: "Lei do Selo endurecida.", color: "#4d8f5f" },
+      { id: newId("tb"), x: 1700, y: 40, label: "Nascimento de Talan", dateText: "1210-03-12", summary: "Herdeiro do ramo real.", color: "#c9a227" },
+    ],
+    segments: [
+      { id: newId("ts"), fromX: 1080, toX: 1350, label: "Guerra (1200-1204)", lineColor: "#8f4d6f" },
+      { id: newId("ts"), fromX: 1350, toX: 1760, label: "Paz do Selo", lineColor: "#4d8f5f" },
+    ],
+    notes: "Do nascimento de Sarn ao nascimento de Talan; segmentos marcam guerra e paz.",
+  }];
+
+  return { projects: [project], entries, atlases, manuscripts, images, bloodlines: [bloodline], factionWebs: [factionWeb], calendars, plotBoards, timelines };
 }
