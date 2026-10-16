@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import { UpdatesPage, SAMPLE_UPDATES } from "./UpdatesPage";
@@ -21,17 +21,36 @@ describe("UpdatesPage", () => {
     expect(back.getAttribute("href")).toBe("/");
   });
 
-  it("renders the static update cards with title, date and Read more", () => {
+  it("renders the real changelog as a hairline ledger", () => {
     render(at("/updates"));
-    expect(screen.getAllByRole("article")).toHaveLength(SAMPLE_UPDATES.length);
-    const cards = screen.getAllByRole("article");
-    for (const card of cards) {
-      expect(card.className).toBe("update-card");
+    const ledger = screen.getByRole("region", { name: "Release ledger" });
+    expect(within(ledger).getAllByRole("article")).toHaveLength(SAMPLE_UPDATES.length);
+    for (const row of within(ledger).getAllByRole("article")) {
+      expect(row.className).toBe("update-row");
     }
-    expect(screen.getAllByText("by Scriptorium")).toHaveLength(SAMPLE_UPDATES.length);
-    expect(screen.getAllByText("Read more →")).toHaveLength(SAMPLE_UPDATES.length);
-    expect(screen.getByText("Scriptorium Update — A NEW HOMEPAGE")).toBeTruthy();
+    expect(within(ledger).getAllByText("by Scriptorium")).toHaveLength(SAMPLE_UPDATES.length);
+    expect(within(ledger).getAllByText("Read more →")).toHaveLength(SAMPLE_UPDATES.length);
+    // real release, legacy sample gone
+    expect(screen.queryByText("Scriptorium Update — A NEW HOMEPAGE")).toBeNull();
+    expect(screen.getByText("Public profiles")).toBeTruthy();
+    expect(screen.getByText("Settings backups")).toBeTruthy();
+    expect(screen.getByText("The hub")).toBeTruthy();
   });
+
+  it("formats dates as uppercase long months, EN", () => {
+    render(at("/updates"));
+    const dates = screen.getAllByLabelText(/release date/i);
+    expect(dates.length).toBe(SAMPLE_UPDATES.length);
+    expect(dates[0].textContent).toMatch(/^(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER) \d{1,2}, \d{4}$/u);
+  });
+
+  it("newest release comes first", () => {
+    render(at("/updates"));
+    const titles = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent ?? "");
+    expect(titles.indexOf("Public profiles")).toBe(0);
+    expect(titles.lastIndexOf("Visual pass")).toBe(titles.length - 1);
+  });
+
 
   it("route /updates renders through AppRouter", () => {
     render(

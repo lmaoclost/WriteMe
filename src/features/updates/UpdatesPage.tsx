@@ -7,27 +7,28 @@ export interface SampleUpdate {
   date: Date;
 }
 
-const TITLES = [
-  "Scriptorium Update — A NEW HOMEPAGE",
-  "Scriptorium Update — OATHS HIERARCHY",
-  "Scriptorium Update — ATLAS",
-  "Scriptorium Update — PLOT BOARD MINOR",
-  "Scriptorium Update — BINDERY UPDATE",
-  "Scriptorium Update — CONNECTIONS UPDATE",
-  "Scriptorium Update — MANUSCRIPT",
-  "Scriptorium Update — CHRONICLES UP",
-  "Scriptorium Update — CONLANG & LEXICON U",
-  "Scriptorium Update — MANUSCRIPTS & TOMES",
+interface Release {
+  id: string;
+  title: string;
+  date: Date;
+}
+
+const day = (iso: string) => new Date(`${iso}T12:00:00Z`);
+
+const RELEASES: Release[] = [
+  { id: "rel-public-profiles", title: "Public profiles", date: day("2026-10-16") },
+  { id: "rel-settings-backups", title: "Settings backups", date: day("2026-10-16") },
+  { id: "rel-world-dashboard", title: "Overview: world dashboard", date: day("2026-10-16") },
+  { id: "rel-the-hub", title: "The hub", date: day("2026-10-16") },
+  { id: "rel-full-demo-world", title: "Full demo world", date: day("2026-10-15") },
+  { id: "rel-visual-pass", title: "Visual pass", date: day("2026-10-14") },
 ];
 
-const BASE = Date.parse("2026-10-15T12:00:00Z");
-const DAY = 86400000;
+export const SAMPLE_UPDATES: SampleUpdate[] = RELEASES.map(({ id, title, date }) => ({ id, title, date }));
 
-export const SAMPLE_UPDATES: SampleUpdate[] = TITLES.map((title, i) => ({
-  id: `update-${i}`,
-  title,
-  date: new Date(BASE - i * 3 * DAY),
-}));
+function releaseDate(d: Date): string {
+  return d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }).toUpperCase();
+}
 
 export function UpdatesPage() {
   return (
@@ -38,19 +39,19 @@ export function UpdatesPage() {
         </h1>
         <div className="header-center">
           <h2 className="page-title">Updates</h2>
-          <p className="page-subtitle">News, changes, and what we're forging next</p>
+          <p className="page-subtitle">News, changes, and what we&apos;re forging next</p>
         </div>
         <div className="header-right">
           <Link to="/" className="back-btn">Feed</Link>
         </div>
       </header>
       <main className="updates-content">
-        <div className="updates-list">
+        <section className="updates-ledger" aria-label="Release ledger">
           {SAMPLE_UPDATES.map((u) => (
-            <article key={u.id} className="update-card">
+            <article key={u.id} className="update-row">
               <p className="update-meta">
-                <span className="update-date">
-                  {u.date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                <span className="update-date" aria-label={`release date: ${releaseDate(u.date)}`}>
+                  {releaseDate(u.date)}
                 </span>
                 <span className="update-author">by Scriptorium</span>
               </p>
@@ -58,7 +59,7 @@ export function UpdatesPage() {
               <span className="update-readmore">Read more →</span>
             </article>
           ))}
-        </div>
+        </section>
       </main>
     </div>
   );
