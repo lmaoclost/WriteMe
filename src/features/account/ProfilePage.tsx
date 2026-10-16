@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { Seal } from "../../ui/Seal";
 import { fileToDataUrl } from "../../data/image";
 import { useAccount } from "../../data/account";
 import "./account.css";
@@ -75,7 +76,12 @@ export function ProfilePage() {
   return (
     <div className="profile-settings">
       <header>
-        <h1><Link to="/">Scriptorium</Link></h1>
+        <h1 className="brand-lockup">
+          <Link to="/" className="brand-lockup-link">
+            <Seal letter="S" />
+            <span className="brand-lockup-wordmark">Scriptorium</span>
+          </Link>
+        </h1>
         <div className="header-actions">
           {showViewPublic && (
             <Link to={`/u/${user.username}`} className="view-public-btn" title="See how others see your profile">

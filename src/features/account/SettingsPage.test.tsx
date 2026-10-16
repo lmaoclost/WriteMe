@@ -34,9 +34,11 @@ describe("SettingsPage", () => {
     ]) {
       expect(screen.getByRole("heading", { name: h })).toBeTruthy();
     }
+    expect(screen.getByRole("link", { name: "Scriptorium" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Scriptorium" })).toBeNull();
     expect(screen.getByText("Manage your account information")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Back to Feed" }).getAttribute("href")).toBe("/");
-    expect(screen.getAllByRole("link", { name: "Join our Discord" }).length).toBe(2);
+    expect(screen.getAllByRole("link", { name: "Join our Discord" }).length).toBe(1);
   });
 
   it("free plan: badge, upgrade hint, cycle toggle, upgrade and bindery buttons", () => {
@@ -48,7 +50,7 @@ describe("SettingsPage", () => {
     expect(screen.getByRole("button", { name: "Monthly — $8/mo" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Yearly — $65/yr Save 32%" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Upgrade to Mythic" })).toBeTruthy();
-    expect(screen.getByText("Scriptorium Bindery — Lifetime")).toBeTruthy();
+    expect(screen.getByText("Bindery Scriptorium — Lifetime")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Get Bindery — $100 once" })).toBeTruthy();
   });
 
@@ -153,8 +155,8 @@ describe("SettingsPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Get Bindery — $100 once" }));
     expect(useAccount.getState().binderyLifetime).toBe(true);
     expect(screen.getByText("✓ You own the")).toBeTruthy();
-    expect(screen.getByText("Scriptorium Bindery")).toBeTruthy();
-    expect(screen.queryByText("Scriptorium Bindery — Lifetime")).toBeNull();
+    expect(screen.getByText("Bindery Scriptorium")).toBeTruthy();
+    expect(screen.queryByText("Bindery Scriptorium — Lifetime")).toBeNull();
   });
 });
 describe("SettingsPage backup", () => {
@@ -236,5 +238,14 @@ describe("SettingsPage deupsell", () => {
     expect(screen.getByRole("heading", { name: "Data & backup" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Community" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /export all data/i })).toBeInTheDocument();
+  });
+});
+
+describe("SettingsPage archivist brand", () => {
+  it("uses the Scriptorium lockup with seal and no header Discord", () => {
+    renderPage();
+    expect(document.querySelector("header .seal")).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Scriptorium" })).toBeNull();
+    expect(screen.getByRole("heading", { name: "Scriptorium" })).toBeInTheDocument();
   });
 });

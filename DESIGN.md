@@ -14,6 +14,7 @@ colors:
   lilac: "#b89eef"
   gold: "#e0c264"
   gold-deep: "#b39642"
+  wax-ink: "#17131f"
   teal: "#6cc5be"
   rose: "#e08a96"
   ember: "#f44336"
@@ -130,6 +131,7 @@ A nocturne archive: cool dark blues for space, parchment for reading, gold only 
 ### Primary
 - **Wax Gold** (#e0c264): seals, primary buttons, hover borders. Never a background wash.
 - **Wax Gold, dim** (#b39642): hover/active borders; quieter gold for lines.
+- **Wax Ink** (#17131f): text set on gold — primary buttons and seals.
 
 ### Secondary
 - **Reading Lilac** (#b89eef): links and inline emphasis in dim text.
