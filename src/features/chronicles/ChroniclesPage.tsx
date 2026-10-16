@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   GENRE_GROUPS,
   TAG_GROUPS,
@@ -73,18 +74,26 @@ export function ChroniclesPage() {
   return (
     <div className="chronicles-library">
       <header className="library-header">
-        <h1 className="library-brand"><span className="library-brand-logo">Chronicles</span></h1>
-        <div className="header-right">
-          <input
-            className="search-input"
-            placeholder="Search stories, authors, synopses..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+        <nav className="chronicles-pills" aria-label="Site sections">
+          <h1 className="chronicles-pill active">Chronicles</h1>
+          <Link to="/" className="chronicles-pill">Scriptorium</Link>
+          <Link to="/" className="chronicles-pill">Codex</Link>
+        </nav>
+        <div className="header-right" />
       </header>
+      <div className="library-hero">
+        <span className="library-brand-logo">Chronicles</span>
+      </div>
       <main className="library-box">
         <div className="library-toolbar">
+          <div className="search-box">
+            <input
+              className="search-input"
+              placeholder="Search stories, authors, synopses..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
           <div className="filter-row">
             <div className="filter-group">
               {STATUS_OPTIONS.map((o) => (
@@ -229,7 +238,13 @@ export function ChroniclesPage() {
                       <span className="manuscript-rating-count">({m.reviewCount})</span>
                     </p>
                   )}
-                  {m.genres.length > 0 && <p className="manuscript-genres">{m.genres.join(" · ")}</p>}
+                  {m.genres.length > 0 && (
+                    <p className="manuscript-genres">
+                      {m.genres.map((g) => (
+                        <span key={g} className="manuscript-genre-tag">{g}</span>
+                      ))}
+                    </p>
+                  )}
                   {m.synopsis && <p className="manuscript-synopsis">{m.synopsis}</p>}
                   <p className="manuscript-chapter-count">
                     {m.chapterCount} {m.chapterCount === 1 ? "chapter" : "chapters"}

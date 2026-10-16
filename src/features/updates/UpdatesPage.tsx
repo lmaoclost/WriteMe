@@ -50,7 +50,7 @@ export function UpdatesPage() {
             <article key={u.id} className="update-card">
               <p className="update-meta">
                 <span className="update-date">
-                  {u.date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  {u.date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                 </span>
                 <span className="update-author">by Scriptorium</span>
               </p>
