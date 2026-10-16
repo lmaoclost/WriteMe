@@ -107,4 +107,48 @@ describe("seedDemoProject", () => {
     expect(t.segments.length).toBeGreaterThanOrEqual(1);
     t.segments.forEach((s) => expect(s.toX).toBeGreaterThan(s.fromX));
   });
+  it("one oaths chart with mixed seats and link statuses", () => {
+    expect(data.oathsCharts).toHaveLength(1);
+    const oc = data.oathsCharts![0];
+    expect(oc.members.length).toBeGreaterThanOrEqual(6);
+    expect(new Set(oc.members.map((m) => m.seatStatus)).size).toBe(3);
+    expect(new Set(oc.oathLinks.map((l) => l.status)).size).toBe(3);
+    const mids = new Set(oc.members.map((m) => m.id));
+    oc.oathLinks.forEach((l) => {
+      expect(mids.has(l.subordinateId)).toBe(true);
+      expect(mids.has(l.superiorId)).toBe(true);
+      expect(l.subordinateId).not.toBe(l.superiorId);
+    });
+  });
+
+  it("one wellspring with all four kinds and labeled borders", () => {
+    expect(data.wellsprings).toHaveLength(1);
+    const w = data.wellsprings![0];
+    expect(w.nodes.length).toBeGreaterThanOrEqual(8);
+    expect(new Set(w.nodes.map((n) => n.kind)).size).toBe(4);
+    const nids = new Set(w.nodes.map((n) => n.id));
+    w.borders.forEach((b) => {
+      expect(nids.has(b.fromId)).toBe(true);
+      expect(nids.has(b.toId)).toBe(true);
+      expect(b.fromId).not.toBe(b.toId);
+      expect(b.label.length).toBeGreaterThan(0);
+    });
+  });
+
+  it("one conlang with glyphs and vocabulary", () => {
+    expect(data.conlangs).toHaveLength(1);
+    const cl = data.conlangs![0];
+    expect(cl.glyphs.length).toBeGreaterThanOrEqual(8);
+    cl.glyphs.forEach((g) => {
+      expect(g.char.length).toBeGreaterThan(0);
+      expect(g.svgPath).toContain("M ");
+      expect(g.svgPath.length).toBeGreaterThan(10);
+    });
+    expect(cl.words.length).toBeGreaterThanOrEqual(10);
+    cl.words.forEach((w) => {
+      expect(w.meaning.length).toBeGreaterThan(2);
+      expect(["n", "v", "adj", "prep"]).toContain(w.pos);
+      expect(w.theme.length).toBeGreaterThan(0);
+    });
+  });
 });

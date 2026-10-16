@@ -1,4 +1,4 @@
-import type { Atlas, Chapter, Manuscript, Project, WorldEntry, Pin, Bloodline, FactionWeb, CustomCalendar, PlotBoard, TimelineWire } from "../domain/types";
+import type { Atlas, Chapter, Manuscript, Project, WorldEntry, Pin, Bloodline, FactionWeb, CustomCalendar, PlotBoard, TimelineWire, OathsChart, WellSpring, Conlang } from "../domain/types";
 import { newId } from "../domain/id";
 import { buildDemoMapSvg } from "./seedMap";
 
@@ -321,5 +321,95 @@ export function seedDemoProject() {
     notes: "Do nascimento de Sarn ao nascimento de Talan; segmentos marcam guerra e paz.",
   }];
 
-  return { projects: [project], entries, atlases, manuscripts, images, bloodlines: [bloodline], factionWebs: [factionWeb], calendars, plotBoards, timelines };
+  // Juramentos
+  const oSela = newId("om"), oOrvean = newId("om"), oGuilde = newId("om"), oHeron = newId("om"),
+    oHerdeiro = newId("om"), oVau = newId("om");
+  const oathsCharts: OathsChart[] = [{
+    id: newId("oc"),
+    projectId: project.id,
+    name: "Anel de Lealdade — Vellmora",
+    members: [
+      { id: oSela, name: "Mirren Vellmor", title: "Juíza do Selo", org: "Coroa", notes: "Titular do Anel.", seatStatus: "held", color: "#c9a227" },
+      { id: oOrvean, name: "Roval Orvean", title: "Duque das Altas", org: "Casa Orvean", seatStatus: "disputed", color: "#4d8f5f" },
+      { id: oGuilde, name: "Sela-Cinco", title: "Colégio da Guilde", org: "Guilde das Ceras", notes: "Uma cadeira por mestre, rotação anual.", seatStatus: "disputed", color: "#4d6f8f" },
+      { id: oHeron, name: "a Canta-Brân", title: "Voz da Congregação", org: "Congregação do Heron", seatStatus: "held", color: "#8f4d6f" },
+      { id: oHerdeiro, name: "Talan Vellmor", title: "Herdeiro", org: "Coroa", notes: "Assente até a maioridade.", seatStatus: "vacant", color: "#c9a227" },
+      { id: oVau, name: "Vau de Baixo", title: "Custódia do Vau", org: "Ramo de Sarnen", notes: "Posto de fronteira do vau.", seatStatus: "vacant", color: "#4d6f8f" },
+    ],
+    oathLinks: [
+      { id: newId("ol"), subordinateId: oOrvean, superiorId: oSela, kind: "primary", status: "strained" },
+      { id: newId("ol"), subordinateId: oGuilde, superiorId: oSela, kind: "primary", status: "sworn" },
+      { id: newId("ol"), subordinateId: oHeron, superiorId: oSela, kind: "primary", status: "sworn" },
+      { id: newId("ol"), subordinateId: oHerdeiro, superiorId: oSela, kind: "joint", status: "broken" },
+      { id: newId("ol"), subordinateId: oVau, superiorId: oOrvean, kind: "primary", status: "broken" },
+    ],
+    notes: "Dois juramentos rompidos desde a guerra; o Anel só fecha quando a Coroa recupera o vau.",
+  }];
+
+  // WellSpring
+  const wq = newId("wn"), wTalan = newId("wn"), wOra = newId("wn"), wMirren = newId("wn"),
+    wTribunal = newId("wn"), wTorre = newId("wn"), wC1 = newId("wn"), wC2 = newId("wn");
+  const wellsprings: WellSpring[] = [{
+    id: newId("ws"),
+    projectId: project.id,
+    name: "Poço do Cerco",
+    nodes: [
+      { id: wq, kind: "question", x: 360, y: 140, text: "Quem recebe a Coroa quando ela volta do rio?" },
+      { id: wTalan, kind: "character", x: 200, y: 320, text: "Talan Vellmor — herdeiro que nunca jurou" },
+      { id: wOra, kind: "character", x: 520, y: 320, text: "Ora Sarnen — lady da costa de outro nome" },
+      { id: wMirren, kind: "character", x: 360, y: 500, text: "Mirren Vellmor — juíza do nome" },
+      { id: wTribunal, kind: "setting", x: 140, y: 620, text: "Tribunal do Selo — cera quente e papel velho" },
+      { id: wTorre, kind: "setting", x: 580, y: 620, text: "Torre do sino — onde se fecha um cerco" },
+      { id: wC1, kind: "conflict", x: 140, y: 220, text: "A Guilde quer o vau; a Coroa não solta o nome" },
+      { id: wC2, kind: "conflict", x: 580, y: 220, text: "O nome de casa ou o contrato de cera" },
+    ],
+    borders: [
+      { id: newId("wb"), fromId: wq, toId: wTalan, label: "a Coroa decide" },
+      { id: newId("wb"), fromId: wq, toId: wOra, label: "a Coroa decide" },
+      { id: newId("wb"), fromId: wTalan, toId: wMirren, label: "sangue" },
+      { id: newId("wb"), fromId: wOra, toId: wC2, label: "contrato" },
+      { id: newId("wb"), fromId: wTribunal, toId: wMirren, label: "tribunal do nome" },
+      { id: newId("wb"), fromId: wTorre, toId: wC1, label: "vigia" },
+    ],
+    notes: "Núcleo do Ato III: o poço do cerco gira em volta de quem carrega a Coroa com nome limpo.",
+  }];
+
+  // Conlang
+  const glyph = (char: string, svgPath: string) => ({ id: newId("g"), char, svgPath });
+  const glyphs = [
+    glyph("s", "M 30 80 Q 50 20 70 80"),
+    glyph("a", "M 20 80 L 50 20 L 80 80"),
+    glyph("r", "M 50 20 Q 50 60 30 80"),
+    glyph("n", "M 20 20 Q 50 80 80 20"),
+    glyph("e", "M 25 25 Q 75 50 25 75"),
+    glyph("v", "M 20 30 L 80 70"),
+    glyph("l", "M 40 15 L 60 85"),
+    glyph("o", "M 50 20 Q 90 50 50 80 Q 10 50 50 20"),
+    glyph("k", "M 60 20 Q 30 50 70 75"),
+  ];
+  const word = (wOr: string, meaning: string, pos: string, theme: string) => ({ id: newId("cw"), word: wOr, meaning, pos, theme });
+  const words = [
+    word("sarnen", "o rio que fala", "n", "geografia"),
+    word("vell", "guardar; manter sob selo", "v", "ritual"),
+    word("oram", "ponte do fundo", "n", "geografia"),
+    word("keth", "cera de pacto", "n", "ritual"),
+    word("brân", "voz; quem canta pelo outro", "n", "povo"),
+    word("heron", "ave que ouve juramento", "n", "povo"),
+    word("selar", "romper o selo de casa", "v", "ritual"),
+    word("orma", "calmo antes de falar", "adj", "clima"),
+    word("vau", "passagem estreita de água", "n", "geografia"),
+    word("torun", "jurado sem cera (verbal)", "adj", "ritual"),
+    word("anvel", "sem guardião", "adj", "clima"),
+    word("kethram", "sindicância do selo", "n", "tribunal"),
+  ];
+  const conlangs: Conlang[] = [{
+    id: newId("cl"),
+    projectId: project.id,
+    name: "Fala do Sarnen",
+    glyphs,
+    words,
+    notes: "Consoantes curtas, curvas de quem escreveu com cera morna; s é a mais antiga.",
+  }];
+
+  return { projects: [project], entries, atlases, manuscripts, images, bloodlines: [bloodline], factionWebs: [factionWeb], calendars, plotBoards, timelines, oathsCharts, wellsprings, conlangs };
 }

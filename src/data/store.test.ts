@@ -220,3 +220,29 @@ describe("toasts and images", () => {
     expect(useScriptorium.getState().images[key]).toBeUndefined();
   });
 });
+describe("seedDemo full subsystems", () => {
+  it("persists every subsystem from the demo seed", () => {
+    act(() => { useScriptorium.getState().seedDemo(); });
+    const s = useScriptorium.getState();
+    expect(s.bloodlines).toHaveLength(1);
+    expect(s.factionWebs).toHaveLength(1);
+    expect(s.calendars).toHaveLength(1);
+    expect(s.plotBoards).toHaveLength(1);
+    expect(s.timelines).toHaveLength(1);
+    expect(s.oathsCharts).toHaveLength(1);
+    expect(s.wellsprings).toHaveLength(1);
+    expect(s.conlangs).toHaveLength(1);
+    const pid = s.projects[0].id;
+    expect(s.bloodlines[0].projectId).toBe(pid);
+    expect(s.calendars![0].projectId).toBe(pid);
+  });
+  it("does not duplicate existing project data across a second seed", () => {
+    act(() => {
+      useScriptorium.getState().seedDemo();
+      useScriptorium.getState().seedDemo();
+    });
+    const s = useScriptorium.getState();
+    expect(s.bloodlines).toHaveLength(2);
+    expect(s.calendars).toHaveLength(2);
+  });
+});
