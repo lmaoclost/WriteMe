@@ -2,6 +2,10 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import { ChroniclesPage } from "./ChroniclesPage";
+import { AppRouter } from "../../app/router";
+import { useAccount } from "../../data/account";
+import { useScriptorium } from "../../data/store";
+import { beforeEach } from "vitest";
 import { tagLabelOf, warningLabelOf } from "./catalog";
 
 function renderPage() {
@@ -9,6 +13,14 @@ function renderPage() {
     <MemoryRouter initialEntries={["/chronicles"]}>
       <ChroniclesPage />
     </MemoryRouter>,
+  );
+}
+
+function at(path: string) {
+  return (
+    <MemoryRouter initialEntries={[path]}>
+      <AppRouter />
+    </MemoryRouter>
   );
 }
 
@@ -90,5 +102,50 @@ describe("ChroniclesPage", () => {
   it("catalog helpers map ids exact", () => {
     expect(tagLabelOf("morally-grey-lead")).toBe("Morally Grey Lead");
     expect(warningLabelOf("ai-imagery")).toBe("AI-Generated Cover");
+  });
+});
+
+describe("Chronicles Archivist", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    useAccount.setState(useAccount.getInitialState());
+    useScriptorium.setState(useScriptorium.getInitialState());
+  });
+
+  it("hero shows wax seal + wordmark lockup", () => {
+    render(at("/chronicles"));
+    expect(document.querySelector(".library-hero .seal")).toBeTruthy();
+    expect(document.querySelector(".library-hero .library-brand-logo")?.textContent).toBe("Chronicles");
+  });
+
+  it("user cluster appears when a username exists and links to the profile", () => {
+    useAccount.setState({ username: "renan", avatarUrl: "data:image/png;base64,AV" });
+    render(at("/chronicles"));
+    const cluster = screen.getByRole("link", { name: /renan/i });
+    expect(cluster.getAttribute("href")).toBe("/profile");
+    expect(cluster.querySelector("img")).toBeTruthy();
+  });
+
+  it("no cluster without a username", () => {
+    render(at("/chronicles"));
+    expect(screen.queryByRole("link", { name: /renan/i })).toBeNull();
+  });
+
+  it("filter row has small-caps group labels STATUS, GENRES, TAGS", () => {
+    render(at("/chronicles"));
+    expect(screen.getByText("STATUS")).toBeInTheDocument();
+    expect(screen.getByText("GENRES")).toBeInTheDocument();
+    expect(screen.getByText("TAGS")).toBeInTheDocument();
+  });
+
+  it("warning toggle says HIDE WARNINGS uppercase", () => {
+    render(at("/chronicles"));
+    expect(screen.getByRole("button", { name: "HIDE WARNINGS" })).toBeInTheDocument();
+  });
+
+  it("search input has a leading magnifier", () => {
+    render(at("/chronicles"));
+    const box = screen.getByPlaceholderText("Search stories, authors, synopses...");
+    expect(box.parentElement!.querySelector(".search-icon")).toBeTruthy();
   });
 });

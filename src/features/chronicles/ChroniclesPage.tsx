@@ -9,6 +9,8 @@ import {
   SAMPLE_MANUSCRIPTS,
 } from "./catalog";
 import type { ManuscriptStatus } from "./catalog";
+import { useAccount } from "../../data/account";
+import { Seal } from "../../ui/Seal";
 import "./chronicles.css";
 
 const STATUS_OPTIONS: { value: "all" | ManuscriptStatus; label: string }[] = [
@@ -23,6 +25,7 @@ function statusLabel(s: string): string {
 }
 
 export function ChroniclesPage() {
+  const user = useAccount();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | ManuscriptStatus>("all");
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
@@ -79,14 +82,27 @@ export function ChroniclesPage() {
           <Link to="/" className="chronicles-pill">Scriptorium</Link>
           <Link to="/" className="chronicles-pill">Codex</Link>
         </nav>
-        <div className="header-right" />
+        <div className="header-right">
+          {user.username && (
+            <Link to="/profile" className="header-user" title="Open your profile">
+              {user.avatarUrl
+                ? <img className="header-user-avatar" src={user.avatarUrl} alt="" />
+                : <span className="header-user-initial">{user.username.trim().charAt(0).toUpperCase()}</span>}
+              <span className="header-user-name">{user.username}</span>
+            </Link>
+          )}
+        </div>
       </header>
       <div className="library-hero">
+        <Seal letter="C" />
         <span className="library-brand-logo">Chronicles</span>
       </div>
       <main className="library-box">
         <div className="library-toolbar">
           <div className="search-box">
+            <span className="search-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="7" cy="7" r="4.5" /><path d="m11 11 3.2 3.2" strokeLinecap="round" /></svg>
+            </span>
             <input
               className="search-input"
               placeholder="Search stories, authors, synopses..."
@@ -95,7 +111,8 @@ export function ChroniclesPage() {
             />
           </div>
           <div className="filter-row">
-            <div className="filter-group">
+            <div className="filter-group filter-group-status">
+              <span className="filter-group-label">STATUS</span>
               {STATUS_OPTIONS.map((o) => (
                 <button
                   key={o.value}
@@ -108,6 +125,7 @@ export function ChroniclesPage() {
               ))}
             </div>
             <div className="filter-group filter-group-genres">
+              <span className="filter-group-label">GENRES</span>
               <button
                 type="button"
                 className="genres-dropdown-trigger"
@@ -148,6 +166,7 @@ export function ChroniclesPage() {
               )}
             </div>
             <div className="filter-group filter-group-tags">
+              <span className="filter-group-label">TAGS</span>
               <button
                 type="button"
                 className="genres-dropdown-trigger"
@@ -194,7 +213,7 @@ export function ChroniclesPage() {
                     setExcludedWarnings(excludedWarnings.length ? [] : CONTENT_WARNINGS.map((w) => w.value))
                   }
                 >
-                  {excludedWarnings.length ? "Show warnings" : "Hide warnings"}
+                  {excludedWarnings.length ? "SHOW WARNINGS" : "HIDE WARNINGS"}
                 </button>
                 {CONTENT_WARNINGS.map((w) => {
                   const off = excludedWarnings.includes(w.value);
