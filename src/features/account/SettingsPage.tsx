@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAccount } from "../../data/account";
+import { useScriptorium } from "../../data/store";
 import "./account.css";
 
 const CANCEL_CONFIRM = "Are you sure you want to cancel your Mythic subscription? You will lose access to Mythic features.";
@@ -51,6 +52,31 @@ export function SettingsPage() {
     if (!window.confirm(CANCEL_CONFIRM)) return;
     cancelSubscription();
     setCancelMsg("Your subscription has been cancelled.");
+  };
+
+  const exportData = useScriptorium((s) => s.exportData);
+  const importData = useScriptorium((s) => s.importData);
+  const pushToast = useScriptorium((s) => s.pushToast);
+
+  const doExport = () => {
+    const blob = new Blob([exportData()], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "scriptorium-backup.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const doImport = (file: File) => {
+    const fr = new FileReader();
+    fr.onload = () => {
+      const r = importData(String(fr.result));
+      if (r.ok) pushToast("success", "Backup imported.");
+      else pushToast("error", r.error);
+    };
+    fr.onerror = () => pushToast("error", "That file could not be read.");
+    fr.readAsText(file);
   };
 
   const statusText: string | null = !mythic ? null
@@ -239,6 +265,26 @@ export function SettingsPage() {
             </p>
           </div>
         )}
+        <div className="settings-section backup-section">
+          <h3>Data &amp; backup</h3>
+          <p className="backup-note">Your worlds live only in this browser. Export regularly to keep them safe.</p>
+          <div className="backup-actions">
+            <button type="button" className="save-btn" onClick={doExport}>Export all data</button>
+            <label className="import-label">
+              Import backup
+              <input
+                type="file"
+                accept="application/json,text/plain"
+                aria-label="Import backup"
+                className="visually-hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) { void doImport(f).then(() => { e.target.value = ""; }); }
+                }}
+              />
+            </label>
+          </div>
+        </div>
         <div className="settings-section">
           <h3>Community</h3>
           <a href="https://discord.gg/b9vrfR8rYC" target="_blank" rel="noopener" className="discord-link">

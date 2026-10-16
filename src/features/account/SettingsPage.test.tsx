@@ -1,8 +1,9 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SettingsPage } from "./SettingsPage";
 import { useAccount } from "../../data/account";
+import { useScriptorium } from "../../data/store";
 
 function renderPage() {
   return render(
@@ -166,5 +167,63 @@ describe("SettingsPage", () => {
     expect(screen.getByText("✓ You own the")).toBeTruthy();
     expect(screen.getByText("Scriptorium Bindery")).toBeTruthy();
     expect(screen.queryByText("Scriptorium Bindery — Lifetime")).toBeNull();
+  });
+});
+describe("SettingsPage backup", () => {
+  let anchorHref = "";
+  let anchorName = "";
+  let restoreAnchor: () => void = () => {};
+
+  function stubAnchor() {
+    const orig = document.createElement.bind(document);
+    document.createElement = ((tag: string) => {
+      const el = orig(tag) as HTMLAnchorElement;
+      if (tag === "a") {
+        el.click = () => { anchorHref = el.href; anchorName = el.download; };
+      }
+      return el as never;
+    }) as typeof document.createElement;
+    URL.createObjectURL = vi.fn(() => "blob:mock");
+    URL.revokeObjectURL = vi.fn();
+    restoreAnchor = () => { document.createElement = orig; };
+  }
+
+  beforeEach(() => {
+    anchorHref = ""; anchorName = "";
+  });
+
+  afterEach(() => restoreAnchor());
+
+  it("exports all data as a versioned backup file", () => {
+    stubAnchor();
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: /export all data/i }));
+    expect(anchorHref).toContain("blob:");
+    expect(anchorName).toBe("scriptorium-backup.json");
+  });
+
+  it("imports a backup file and toasts success", async () => {
+    useScriptorium.getState().seedDemo();
+    const full = useScriptorium.getState().exportData();
+    renderPage();
+    fireEvent.change(screen.getByLabelText(/import backup/i), {
+      target: { files: [new File([full], "backup.json", { type: "application/json" })] },
+    });
+    await waitFor(() =>
+      expect(useScriptorium.getState().toasts.some((t) => t.message === "Backup imported.")).toBe(true));
+  });
+
+  it("shows an error toast for a corrupt file", async () => {
+    renderPage();
+    fireEvent.change(screen.getByLabelText(/import backup/i), {
+      target: { files: [new File(["garbage"], "backup.json", { type: "application/json" })] },
+    });
+    await waitFor(() =>
+      expect(useScriptorium.getState().toasts.some((t) => t.kind === "error")).toBe(true));
+  });
+
+  it("states the local-first note", () => {
+    renderPage();
+    expect(screen.getByText(/your worlds live only in this browser/i)).toBeInTheDocument();
   });
 });
