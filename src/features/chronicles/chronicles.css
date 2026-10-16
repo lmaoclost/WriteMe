@@ -54,10 +54,10 @@
   gap: 16px;
   min-height: 200px;
 }
-.library-hero .seal { width: 56px; height: 56px; font-size: 26px; }
+
 .library-brand-logo {
   font-family: var(--font-display);
-  font-size: clamp(1.75rem, 3.5vw, 2.375rem);
+  font-size: clamp(2rem, 4.5vw, 2.75rem);
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--parchment-strong);
@@ -140,7 +140,7 @@
 }
 .genres-dropdown-trigger:hover { color: var(--parchment); border-color: var(--gold-dim); }
 .genres-dropdown-trigger.active { color: var(--lilac); border-color: var(--accent); }
-.genres-trigger-caret { font-size: 0.7rem; }
+.genres-trigger-caret { font-size: 0.6875rem; }
 .genres-count-badge {
   display: inline-flex;
   align-items: center;
@@ -151,7 +151,7 @@
   border-radius: 999px;
   background: color-mix(in srgb, var(--accent) 30%, transparent);
   color: var(--lilac);
-  font-size: 0.7rem;
+  font-size: 0.6875rem;
   font-weight: 600;
 }
 
@@ -224,7 +224,7 @@
   place-items: center;
   border-bottom: 1px solid var(--line);
 }
-.cover-placeholder { font-size: 1.6rem; color: var(--gold-dim); opacity: 0.85; }
+.cover-placeholder { font-size: 1.375rem; color: var(--gold-dim); opacity: 0.85; }
 .manuscript-warning-badge {
   position: absolute; top: 8px; left: 8px;
   min-width: 20px; height: 20px;
@@ -233,7 +233,7 @@
   background: color-mix(in srgb, var(--ember) 20%, var(--night));
   border: 1px solid var(--ember);
   color: var(--rose);
-  font-size: 0.7rem; font-weight: 600;
+  font-size: 0.6875rem; font-weight: 600;
   padding: 0 5px;
 }
 .manuscript-warning-count { line-height: 1; }
@@ -253,7 +253,7 @@
 .manuscript-info { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 5px; }
 .manuscript-name {
   font-family: var(--font-display);
-  font-size: 1.0625rem;
+  font-size: 1.125rem;
   font-weight: 600;
   color: var(--parchment-strong);
   margin: 0;
@@ -300,6 +300,8 @@
 }
 
 @media (max-width: 660px) {
+  .library-hero { min-height: 120px; }
+  .library-hero .seal { width: 44px; height: 44px; font-size: 20px; }
   .library-box { width: calc(100% - 32px); padding: 20px 16px 40px; }
   .library-header { padding: 0.75rem 1rem; }
   .chronicles-pill { font-size: 0.8125rem; padding: 3px 9px; }

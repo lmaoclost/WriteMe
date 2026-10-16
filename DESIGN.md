@@ -66,6 +66,11 @@ typography:
     fontWeight: 600
     letterSpacing: "0.08em"
     textTransform: uppercase
+  tag:
+    fontFamily: "'Inter Variable', system-ui, sans-serif"
+    fontSize: "0.6875rem"
+    fontWeight: 400
+    lineHeight: 1.4
 rounded:
   sm: "4px"
   md: "8px"
