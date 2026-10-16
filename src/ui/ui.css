@@ -35,7 +35,7 @@
 }
 .field input:focus-visible, .field textarea:focus-visible { border-color: var(--gold-dim); outline: none; }
 .modal-scrim {
-  position: fixed; inset: 0; background: rgb(10 10 18 / 0.7);
+  position: fixed; inset: 0; background: var(--scrim);
   display: grid; place-items: center; z-index: 50;
 }
 .modal {
@@ -52,7 +52,7 @@
   padding: 10px 12px; border-radius: 4px;
 }
 .toast[data-kind="error"] { border-left-color: var(--ember); }
-.toast[data-kind="success"] { border-left-color: #4d8f5f; }
+.toast[data-kind="success"] { border-left-color: var(--success); }
 .toasts {
   position: fixed; bottom: 18px; right: 18px; z-index: 60;
   display: flex; flex-direction: column; gap: 8px;
@@ -64,7 +64,7 @@
 .seal {
   display: inline-grid; place-items: center;
   width: 40px; height: 40px; border-radius: 50%;
-  background: radial-gradient(circle at 32% 30%, #d8b23a, #a3831e 62%, #7d6416);
-  color: #241c08; font-family: var(--font-display); font-weight: 700; font-size: 20px;
-  box-shadow: 0 1px 0 rgb(255 255 255 / 0.15) inset, 0 2px 6px rgb(0 0 0 / 0.5);
+  background: radial-gradient(circle at 32% 30%, var(--seal-wax), var(--seal-mid) 62%, var(--seal-deep));
+  color: var(--seal-engrave); font-family: var(--font-display); font-weight: 700; font-size: 1.25rem;
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.15) inset, 0 2px 6px var(--scrim-canvas);
 }

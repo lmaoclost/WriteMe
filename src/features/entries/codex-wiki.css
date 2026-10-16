@@ -17,7 +17,7 @@
   border: 1px solid var(--gold-dim);
   border-radius: 8px;
   padding: 10px 12px;
-  box-shadow: 0 8px 22px rgb(0 0 0 / 0.5);
+  box-shadow: 0 8px 22px var(--scrim-canvas);
   font-size: 12px;
 }
 .wiki-preview-head { display: flex; align-items: center; gap: 6px; }

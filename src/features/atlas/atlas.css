@@ -51,7 +51,7 @@
 .pin-dot .pin-core { fill: var(--pin-color); }
 .pin-dot .pin-ring { fill: none; stroke: var(--pin-color); stroke-width: 2; }
 .pin-dot .pin-ring-outer { fill: none; stroke: var(--gold); stroke-width: 1.5; }
-.pin-dot .pin-icon { font-size: 7px; fill: var(--parchment); }
+.pin-dot .pin-icon { font-size: 0.6875rem; fill: var(--parchment); }
 .pin-tooltip {
   position: absolute;
   z-index: 6;
@@ -91,7 +91,7 @@
   color: var(--parchment);
   background: none;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 4px 6px;
 }
 .editor-name-input:hover { border-color: var(--line); }
@@ -108,7 +108,7 @@
   background: none;
   border: 1px solid var(--line);
   color: var(--parchment);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 4px 10px;
   font-size: 13px;
   cursor: pointer;
@@ -179,7 +179,7 @@
   background: none;
   border: 1px solid var(--line);
   color: var(--parchment);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 4px 10px;
   font-size: 13px;
 }
@@ -201,7 +201,7 @@
 .region-chooser button {
   background: none;
   border: 0;
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--parchment);
   padding: 6px 10px;
   text-align: left;
@@ -265,7 +265,7 @@
   width: 100%;
   background: none;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 6px;
   color: var(--parchment);
 }
@@ -292,7 +292,7 @@
   position: relative;
   background: var(--night-2);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
 }
 .atlas-card:hover { border-color: var(--gold-dim); }
@@ -304,7 +304,7 @@
   justify-content: center;
   background: var(--ink);
   color: var(--slate);
-  font-size: 26px;
+  font-size: 1.375rem;
 }
 .atlas-card-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .atlas-card-name { margin: 10px 12px 2px; font-size: 15px; }
@@ -315,7 +315,7 @@
   right: 8px;
   background: color-mix(in srgb, var(--night) 85%, transparent);
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--parchment-dim);
   padding: 2px 8px;
   font-size: 12px;
@@ -359,7 +359,7 @@
   background: none;
   border: 1px solid var(--line);
   color: var(--parchment);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 6px 10px;
   font-size: 13px;
 }
@@ -370,7 +370,7 @@
   background: none;
   border: 1px solid var(--line);
   color: var(--parchment);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 4px 2px;
   font-size: 12px;
   white-space: nowrap;
@@ -395,7 +395,7 @@
   background: none;
   border: 1px solid var(--ember);
   color: var(--ember);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 6px 10px;
   font-size: 13px;
 }
@@ -421,7 +421,7 @@
 .link-unlink {
   background: none;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--parchment-dim);
   padding: 2px 8px;
 }
@@ -445,7 +445,7 @@
   border: 0;
   color: var(--parchment);
   padding: 6px 8px;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 13px;
 }
 .link-list li button:hover { background: var(--night); }

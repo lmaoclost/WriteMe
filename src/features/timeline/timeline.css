@@ -70,7 +70,7 @@
   text-align: left;
   background: var(--night);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--parchment);
   padding: 8px 12px;
   font: inherit;
@@ -123,7 +123,7 @@
   width: 100%;
   background: none;
   border: 0;
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--parchment);
   padding: 6px 8px;
   font-size: 13px;

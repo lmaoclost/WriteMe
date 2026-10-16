@@ -29,9 +29,28 @@
   --night: var(--bg-header);
   --night-2: var(--panel);
   --parchment: var(--text);
+  --parchment-strong: var(--text-strong);
   --parchment-dim: var(--text-muted);
   --slate: var(--text-muted);
   --ember: var(--warn);
+
+  --scrim: rgb(10 10 18 / 0.7);
+  --scrim-canvas: rgb(0 0 0 / 0.5);
+  --seal-wax: #d8b23a;
+  --seal-mid: #a3831e;
+  --seal-deep: #7d6416;
+  --seal-engrave: #241c08;
+  --shadow-seal: 0 1px 0 rgb(255 255 255 / 0.15) inset, 0 2px 6px rgb(0 0 0 / 0.5);
+  --fs-paper-h1: 30px;
+  --fs-paper-h2: 21px;
+  --fs-paper-title: 34px;
+  --fs-paper-body: 17px;
+  --paper: #fdfbf5;
+  --paper-ink: #241c08;
+  --paper-muted: #63583c;
+  --paper-muted-soft: #9a8d6a;
+  --print-ink: #000;
+  --print-paper: #fff;
 }
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }

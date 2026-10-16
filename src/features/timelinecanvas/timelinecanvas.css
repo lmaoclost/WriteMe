@@ -6,5 +6,5 @@
 .tl-bead-stem { stroke: var(--line); stroke-width: 1.5; }
 .tl-bead-label { font-size: 14px; fill: var(--parchment); font-weight: 600; }
 .tl-bead-date { font-size: 11px; fill: var(--gold); font-family: var(--font-mono); }
-.tl-bead-summary { font-size: 10px; fill: var(--slate); }
+.tl-bead-summary { font-size: 0.6875rem; fill: var(--slate); }
 .tl-selected-sentinel { display: none; }

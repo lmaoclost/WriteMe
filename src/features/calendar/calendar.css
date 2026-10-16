@@ -8,9 +8,9 @@
   align-content: start;
 }
 .cal-month { background: var(--night); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
-.cal-month h2 { font-size: 17px; margin-bottom: 8px; }
+.cal-month h2 { font-size: 1.125rem; margin-bottom: 8px; }
 .cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 4px; }
-.cal-wd { font-size: 9px; color: var(--slate); text-align: center; text-transform: uppercase; }
+.cal-wd { font-size: 0.6875rem; color: var(--slate); text-align: center; text-transform: uppercase; }
 .cal-wd.weekend { color: var(--ember); }
 .cal-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
 .cal-day {
@@ -23,7 +23,7 @@
 .cal-day:hover { border-color: var(--gold-dim); }
 .cal-day.weekend { background: color-mix(in srgb, var(--ember) 10%, var(--ink)); }
 .cal-day.selected { border-color: var(--gold); outline: 1px solid var(--gold); }
-.cal-day-num { font-family: var(--font-mono); font-size: 10px; text-align: left; }
+.cal-day-num { font-family: var(--font-mono); font-size: 0.6875rem; text-align: left; }
 .cal-day-events { display: flex; flex-wrap: wrap; gap: 2px; align-content: flex-start; }
 .cal-event-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
 .cal-panel .dim, .dim { color: var(--slate); }

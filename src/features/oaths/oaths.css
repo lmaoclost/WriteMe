@@ -11,10 +11,10 @@
 .oath-card-name { font-size: 14px; font-weight: 600; color: var(--parchment); }
 .oath-card-title { font-size: 11px; color: var(--parchment-dim); }
 .oath-card-org { font-size: 11px; color: var(--slate); }
-.oath-seat-badge { font-size: 10px; border-radius: 3px; padding: 1px 5px; width: max-content; background: var(--ink); color: var(--slate); }
+.oath-seat-badge { font-size: 0.6875rem; border-radius: 4px; padding: 1px 5px; width: max-content; background: var(--ink); color: var(--slate); }
 .oath-seat-badge.seat-vacant { color: var(--slate); }
 .oath-seat-badge.seat-disputed { color: var(--ember); }
-.oath-link-status { font-size: 10px; font-family: var(--font-mono); }
+.oath-link-status { font-size: 0.6875rem; font-family: var(--font-mono); }
 .oath-edit-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .oath-edit-row select { background: var(--ink); color: var(--parchment-dim); border: 1px solid var(--line); border-radius: 4px; padding: 3px 4px; font-size: 11px; }
 .oath-new-details { font-size: 12px; }
