@@ -60,7 +60,7 @@ afterEach(() => {
 describe("shell routes", () => {
   it("root shows library", () => {
     render(at("/"));
-    expect(screen.getByText(/Scriptorium/)).toBeInTheDocument();
+    expect(screen.getByText("Scriptorium")).toBeInTheDocument();
   });
 
   it("unknown project redirects to library with a toast", async () => {
@@ -68,7 +68,7 @@ describe("shell routes", () => {
     await waitFor(() => {
       expect(useScriptorium.getState().toasts.some((t) => /removed/i.test(t.message))).toBe(true);
     });
-    expect(screen.getByText(/Scriptorium/)).toBeInTheDocument();
+    expect(screen.getByText("Scriptorium")).toBeInTheDocument();
   });
 
   it("workspace overview shows counts and rail sections", () => {

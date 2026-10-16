@@ -213,7 +213,7 @@ describe("CodexPage", () => {
     );
     expect(screen.getByLabelText("Title")).toHaveValue("Cidade de Vellmora");
     fireEvent.click(screen.getByRole("button", { name: "go home" }));
-    expect(screen.getByRole("heading", { name: "Scriptorium" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Welcome back" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "go back" }));
     expect(screen.getByRole("button", { name: "Cidade de Vellmora" })).toHaveClass("active");
     expect(screen.getByLabelText("Title")).toHaveValue("Cidade de Vellmora");

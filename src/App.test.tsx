@@ -5,6 +5,6 @@ import App from "./App";
 describe("App shell", () => {
   it("mounts router and shows the library at root", () => {
     render(<App />);
-    expect(screen.getByText(/Scriptorium/)).toBeInTheDocument();
+    expect(screen.getByText("Scriptorium")).toBeInTheDocument();
   });
 });
