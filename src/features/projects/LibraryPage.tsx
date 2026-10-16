@@ -39,6 +39,12 @@ export function LibraryPage() {
       <header className="library-head">
         <h1>Scriptorium</h1>
         <p className="library-sub">Mundos, atlas e livros — tudo no seu navegador.</p>
+        <nav className="hub-pillars" aria-label="Site pages">
+          <Link to="/chronicles" className="hub-link">Chronicles</Link>
+          <Link to="/updates" className="hub-link">Updates</Link>
+          <Link to="/settings" className="hub-link">Settings</Link>
+          <Link to="/profile" className="hub-link">Profile</Link>
+        </nav>
         <Button onClick={() => setCreating(true)}>Novo mundo</Button>
       </header>
 

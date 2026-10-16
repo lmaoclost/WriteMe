@@ -21,3 +21,7 @@
 }
 .project-delete:hover { color: var(--ember); border-color: var(--ember); }
 .modal-warning { color: var(--parchment-dim); }
+
+.hub-pillars { display: flex; gap: 14px; flex-wrap: wrap; }
+.hub-link { color: var(--lilac); font-size: 0.9rem; text-decoration: none; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; }
+.hub-link:hover { border-color: var(--accent); }

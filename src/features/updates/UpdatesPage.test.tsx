@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import { UpdatesPage, SAMPLE_UPDATES } from "./UpdatesPage";
+import { AppRouter } from "../../app/router";
 
 function at(path: string) {
   return (
@@ -30,5 +31,14 @@ describe("UpdatesPage", () => {
     expect(screen.getAllByText("by Scriptorium")).toHaveLength(SAMPLE_UPDATES.length);
     expect(screen.getAllByText("Read more →")).toHaveLength(SAMPLE_UPDATES.length);
     expect(screen.getByText("Scriptorium Update — A NEW HOMEPAGE")).toBeTruthy();
+  });
+
+  it("route /updates renders through AppRouter", () => {
+    render(
+      <MemoryRouter initialEntries={["/updates"]}>
+        <AppRouter />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("heading", { level: 2, name: "Updates" })).toBeTruthy();
   });
 });
