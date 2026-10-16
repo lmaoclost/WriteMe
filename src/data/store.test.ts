@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { act } from "@testing-library/react";
-import { useScriptorium, selectHistoryFlags } from "./store";
+import { selectHistoryFlags, selectCounts, useScriptorium } from "./store";
 import { localStoragePersistence, STORE_KEY } from "./storage";
 import type { Project } from "../domain/types";
 
@@ -244,5 +244,25 @@ describe("seedDemo full subsystems", () => {
     const s = useScriptorium.getState();
     expect(s.bloodlines).toHaveLength(2);
     expect(s.calendars).toHaveLength(2);
+  });
+});
+describe("selectCounts full subsystems", () => {
+  it("counts the demo world across every forge", () => {
+    act(() => { useScriptorium.getState().seedDemo(); });
+    const s = useScriptorium.getState();
+    const pid = s.projects[s.projects.length - 1].id;
+    const c = selectCounts(pid)(s);
+    expect(c.entries).toBe(16);
+    expect(c.chapters).toBe(3);
+    expect(c.bloodlinePersons).toBe(6);
+    expect(c.oathMembers).toBe(6);
+    expect(c.factions).toBe(4);
+    expect(c.calendarEvents).toBe(9);
+    expect(c.plotCards).toBe(7);
+    expect(c.timelineBeads).toBe(6);
+    expect(c.wellspringNodes).toBe(8);
+    expect(c.conlangWords).toBe(12);
+    expect(c.atlasPins).toBeGreaterThanOrEqual(4);
+    expect(c.atlasRegions).toBe(3);
   });
 });

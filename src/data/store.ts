@@ -2766,15 +2766,47 @@ export const useScriptorium = create<ScriptoriumState>()(
 export const selectProject = (id: string) => (s: ScriptoriumState): Project | undefined =>
   s.projects.find((p) => p.id === id);
 
-export interface ProjectCounts { entries: number; atlases: number; manuscripts: number; chapters: number }
+export interface ProjectCounts {
+  entries: number; atlases: number; manuscripts: number; chapters: number;
+  atlasRegions: number; atlasPins: number;
+  bloodlinePersons: number; oathMembers: number; factions: number;
+  calendarEvents: number; plotCards: number; timelineBeads: number;
+  wellspringNodes: number; conlangWords: number;
+}
 
-export const selectCounts = (projectId: string) => (s: ScriptoriumState): ProjectCounts => ({
-  entries: s.entries.filter((e) => e.projectId === projectId).length,
-  atlases: s.atlases.filter((a) => a.projectId === projectId).length,
-  manuscripts: s.manuscripts.filter((m) => m.projectId === projectId).length,
-  chapters: s.manuscripts.filter((m) => m.projectId === projectId)
-    .reduce((acc, m) => acc + m.chapters.length, 0),
-});
+const byProjectFirst = <T extends { projectId: string }>(rows: readonly T[] | undefined, projectId: string): T | undefined =>
+  (rows ?? []).find((r) => r.projectId === projectId);
+
+export const selectCounts = (projectId: string) => (s: ScriptoriumState): ProjectCounts => {
+  const atlas = s.atlases.find((a) => a.projectId === projectId);
+  const bloodline = byProjectFirst(s.bloodlines, projectId);
+  const oaths = byProjectFirst(s.oathsCharts, projectId);
+  const factionWeb = byProjectFirst(s.factionWebs, projectId);
+  const calendar = byProjectFirst(s.calendars, projectId);
+  const plot = byProjectFirst(s.plotBoards, projectId);
+  const timeline = byProjectFirst(s.timelines, projectId);
+  const wellspring = byProjectFirst(s.wellsprings, projectId);
+  const conlang = byProjectFirst(s.conlangs, projectId);
+  return {
+    entries: s.entries.filter((e) => e.projectId === projectId).length,
+    atlases: s.atlases.filter((a) => a.projectId === projectId).length,
+    manuscripts: s.manuscripts.filter((m) => m.projectId === projectId).length,
+    chapters: s.manuscripts.filter((m) => m.projectId === projectId)
+      .reduce((acc, m) => acc + m.chapters.length, 0),
+    atlasRegions: atlas?.regions.length ?? 0,
+    atlasPins: atlas?.pins.length ?? 0,
+    bloodlinePersons: bloodline?.persons.length ?? 0,
+    oathMembers: oaths?.members.length ?? 0,
+    factions: factionWeb?.factions.length ?? 0,
+    calendarEvents: calendar
+      ? Object.values(calendar.events).reduce((acc, list) => acc + list.length, 0)
+      : 0,
+    plotCards: plot?.cards.length ?? 0,
+    timelineBeads: timeline?.beads.length ?? 0,
+    wellspringNodes: wellspring?.nodes.length ?? 0,
+    conlangWords: conlang?.words.length ?? 0,
+  };
+};
 
 export const selectHistoryFlags = (atlasId: string) => (s: ScriptoriumState): { canUndo: boolean; canRedo: boolean } => ({
   canUndo: (s.histories[atlasId]?.undo.length ?? 0) > 0,
