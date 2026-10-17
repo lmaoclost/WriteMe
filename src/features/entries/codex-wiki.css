@@ -24,4 +24,11 @@
 .wiki-preview-head strong { color: var(--parchment); }
 .wiki-preview-head em { color: var(--slate); font-style: normal; font-size: 11px; }
 .wiki-preview-blurb { color: var(--parchment-dim); line-height: 1.45; }
+.pin-preview-pop { width: 300px; z-index: 44; }
+.pin-preview-close {
+  position: absolute; top: 4px; right: 6px;
+  background: none; border: 0; color: var(--slate); cursor: pointer; font-size: 12px;
+}
+.pin-preview-close:hover { color: var(--parchment); }
+
 .md-view-links { position: relative; }

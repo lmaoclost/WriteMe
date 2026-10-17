@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import type { Atlas, PinType, Pt, Region, WorldEntry } from "../../domain/types";
 import { polygonArea } from "../../domain/geometry";
 import { useScriptorium } from "../../data/store";
@@ -263,6 +263,36 @@ describe("hover tooltip (div hoverCard)", () => {
     expect(tip.textContent).toContain("Torre");
     expect(tip.textContent).not.toContain("Reinos do Sol");
   });
+
+  it("clicking a linked pin opens the preview popup with blurb and Open-in-codex", () => {
+    useScriptorium.setState({
+      entries: [{ ...ENTRIES[0], summary: "Capital venceu o cerco." } as WorldEntry],
+    });
+    const atlas = makeAtlas({ pins: [{ x: 0.25, y: 0.25, label: "Capital", entryId: "ent_sol" }] });
+    render(
+      <MemoryRouter initialEntries={[`/p/prj_fix/atlas/${atlas.id}`]}>
+        <Routes>
+          <Route path="/p/:projectId/atlas/:atlasId" element={<AtlasEditor atlasId={atlas.id} projectId="prj_fix" />} />
+          <Route path="/p/:projectId/entries" element={<div data-testid="codex-dest" />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    const stageEl = screen.getByTestId("stage");
+    stubStageLayout(stageEl, { left: 0, top: 0, w: 800, h: 600 }, { w: 800, h: 600 });
+    const img = stageEl.querySelector(".stage-map") as HTMLImageElement;
+    Object.defineProperty(img, "naturalWidth", { configurable: true, value: 800 });
+    Object.defineProperty(img, "naturalHeight", { configurable: true, value: 600 });
+    act(() => { fireEvent.load(img); });
+    const dot = document.querySelector(".pin-dot");
+    void dot;
+    act(() => { selectPinByClick(document.body); });
+    const popup = screen.queryByTestId("pin-entry-preview");
+    expect(popup).toBeTruthy();
+    expect(popup!.textContent).toContain("Reinos do Sol");
+    expect(popup!.textContent).toContain("Capital venceu o cerco.");
+    act(() => { fireEvent.click(screen.getByRole("button", { name: "Open in codex" })); });
+    expect(screen.getByTestId("codex-dest")).toBeInTheDocument();
+  });
 });
 
 describe("Delete key", () => {
@@ -351,7 +381,7 @@ describe("PinPanel", () => {
 });
 
 describe("LinkPicker", () => {
-  it("filters case-insensitively by title substring, caps the list at 8 and shows No matching entries", () => {
+  it("filters case-insensitively by title substring, shows the full scrollable list", () => {
     const many = ENTRIES.concat(
       Array.from({ length: 7 }, (_, i) => ({
         id: `ent_x${i}`,
@@ -365,7 +395,8 @@ describe("LinkPicker", () => {
     const onPick = vi.fn();
     const onClear = vi.fn();
     const { container } = render(<LinkPicker entries={many} onPick={onPick} onClear={onClear} />);
-    expect(container.querySelectorAll(".link-list button")).toHaveLength(8); // max 8
+    expect(container.querySelectorAll(".link-list button")).toHaveLength(many.length); // full list, scrollable
+    expect(container.querySelector(".link-list")).toBeTruthy();
     const search = screen.getByLabelText("Search entries") as HTMLInputElement;
     act(() => {
       fireEvent.change(search, { target: { value: "herd" } }); // lowercase substring

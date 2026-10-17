@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import type { Id, Pt, Region } from "../../domain/types";
 import { pointInPolygon, polygonArea } from "../../domain/geometry";
@@ -13,6 +13,8 @@ import { PinPanel } from "./panels/PinPanel";
 import { RegionPanel } from "./panels/RegionPanel";
 import { useDraw, type AtlasTool, type DrawMode } from "./useDraw";
 import { EntryImagePicker } from "./EntryImagePicker";
+import { EntryPreview, entryBlurb } from "../entries/EntryPreview";
+import { categoryIcon, categoryLabel } from "../entries/categories";
 import { MapDropzone, loadMapIntoAtlas } from "./MapDropzone";
 import "./atlas.css";
 
@@ -95,6 +97,7 @@ function RegionChooser({ options, position, onPick, onClear, onClose }: {
 
 export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
   const atlas = useScriptorium((s) => s.atlases.find((a) => a.id === atlasId));
+  const navigate = useNavigate();
   const allEntries = useScriptorium((s) => s.entries);
   const images = useScriptorium((s) => s.images);
   const flags = useScriptorium(useShallow(selectHistoryFlags(atlasId)));
@@ -227,6 +230,10 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
   const hoverEntryTitle = hoveredPin?.entryId
     ? projectEntries.find((e) => e.id === hoveredPin.entryId)?.title
     : undefined;
+  // click-pop preview: select a pin/region with a linked entry → popup near it
+  const previewEntry = selectedPin?.entryId ?? selectedRegion?.entryId ?? null;
+  const previewEntryObj = previewEntry ? projectEntries.find((e) => e.id === previewEntry) : undefined;
+  const closePreview = () => { setSelectedPinId(null); setSelectedRegionId(null); };
 
   const handleStageClick = (pt: Pt, clientX: number, clientY: number) => {
     if (tool === "pin") {
@@ -409,6 +416,27 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
                     );
                   })()
                 ) : null}
+                {previewEntryObj ? (() => {
+                  const cur = hover?.cursor ?? { x: 24, y: 24 };
+                  const st = hover?.stage ?? { w: 0, h: 0 };
+                  const left = st.w > 0 ? Math.max(0, Math.min(cur.x + 12, st.w - 300)) : cur.x + 12;
+                  const top = st.h > 0 ? Math.max(0, Math.min(cur.y + 14, st.h - 190)) : cur.y + 14;
+                  return (
+                    <div className="pin-tooltip pin-preview-pop" data-testid="pin-entry-preview" style={{ left, top }}>
+                      <button type="button" className="pin-preview-close" aria-label="Fechar preview" onClick={closePreview}>✕</button>
+                      <EntryPreview
+                        data={{
+                          entryId: previewEntryObj.id,
+                          title: previewEntryObj.title,
+                          icon: categoryIcon(previewEntryObj.category),
+                          categoryLabel: categoryLabel(previewEntryObj.category),
+                          blurb: entryBlurb(previewEntryObj.summary, previewEntryObj.body),
+                        }}
+                        onOpen={(id) => navigate(projectId ? `/p/${projectId}/entries?e=${id}` : "/")}
+                      />
+                    </div>
+                  );
+                })() : null}
               </>
             )}
           >

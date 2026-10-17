@@ -3,8 +3,6 @@ import { useNavigate } from "react-router-dom";
 import type { Id, WorldEntry } from "../../../domain/types";
 import "../atlas.css";
 
-export const LINK_PICKER_MAX_ITEMS = 8;
-
 function LinkTarget({ entry }: { entry: WorldEntry }) {
   const navigate = useNavigate();
   return (
@@ -30,10 +28,10 @@ export function LinkPicker({ entries, currentEntryId, onPick, onClear }: LinkPic
   const [query, setQuery] = useState("");
   const current = currentEntryId ? entries.find((e) => e.id === currentEntryId) : undefined;
   const q = query.trim().toLowerCase();
+  // full scrollable list — capping at 8 hid most of the tome
   const matches = entries
     .filter((e) => e.id !== currentEntryId)
-    .filter((e) => (q ? e.title.toLowerCase().includes(q) : true))
-    .slice(0, LINK_PICKER_MAX_ITEMS);
+    .filter((e) => (q ? e.title.toLowerCase().includes(q) : true));
   return (
     <div className="link-picker">
       <div className="link-picker-head">
