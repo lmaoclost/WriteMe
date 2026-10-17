@@ -21,13 +21,13 @@ export function DrawLayer({ drawVertices, drawCursor, imgW, imgH, carvePreview, 
     <g className="draw-layer">
       {carvePreview ? (
         <polygon
-          className="carve-preview fill-gold fill-opacity-20 [stroke:var(--gold)] [stroke-width:2.5]"
+          className="carve-preview fill-gold [fill-opacity:0.2] [stroke:var(--gold)] [stroke-width:2.5]"
           points={carvePreview.points.map(toPx).join(" ")}
           vectorEffect="non-scaling-stroke"
         />
       ) : preview.length >= 2 ? (
         <polygon
-          className="draw-preview fill-gold fill-opacity-12 [stroke:var(--gold)] [stroke-width:2] [stroke-dasharray:6_4]"
+          className="draw-preview fill-gold [fill-opacity:0.12] [stroke:var(--gold)] [stroke-width:2] [stroke-dasharray:6_4]"
           points={preview.map(toPx).join(" ")}
           vectorEffect="non-scaling-stroke"
         />

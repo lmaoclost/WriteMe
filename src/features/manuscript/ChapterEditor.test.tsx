@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { useScriptorium } from "../../data/store";
+import { pickSelectOptionSync } from "../../test/selectHelper";
 import { ChapterEditor } from "./ChapterEditor";
 import type { Manuscript } from "../../domain/types";
 
@@ -141,15 +142,20 @@ describe("ChapterEditor rich", () => {
     expect(store().manuscripts[0].chapters[0].endMarker).toBe("Fim do Livro I");
   });
 
-  it("links a calendar day", () => {
+  it("links a calendar day", async () => {
     seedMS();
     const cal = store().addCalendar("prj_1", "Selo Anual");
     render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
     fireEvent.click(screen.getByRole("button", { name: "Link calendar" }));
-    fireEvent.change(screen.getByLabelText("Calendário"), { target: { value: cal.id } });
-    fireEvent.change(screen.getByLabelText("Ano do evento"), { target: { value: "0" } });
-    fireEvent.change(screen.getByLabelText("Month"), { target: { value: "2" } });
-    fireEvent.change(screen.getByLabelText("Dia"), { target: { value: "5" } });
+    await pickSelectOptionSync(() => screen.getByLabelText("Calendário"), "Selo Anual");
+    await pickSelectOptionSync(() => screen.getByLabelText("Month"), "Month 3");
+    // controlled number inputs: TL fireEvent.change is unreliable here; use the native setter (repo pattern)
+    const setVal = (el: HTMLElement, v: string) => {
+      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")!.set!;
+      setter.call(el, v);
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+    setVal(screen.getByLabelText("Dia") as HTMLElement, "5");
     fireEvent.click(screen.getByRole("button", { name: "Vincular dia" }));
     const ch = store().manuscripts[0].chapters[0];
     expect(ch.linkedCalendarId).toBe(cal.id);

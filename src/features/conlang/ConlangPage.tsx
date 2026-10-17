@@ -262,7 +262,7 @@ function LexiconTab({ conlang }: { conlang: NonNullable<ReturnType<typeof useScr
           ))}
         </div>
       ) : null}
-      <input aria-label="Search the lexicon" placeholder="Search the lexicon..." value={filter} onChange={(e) => setFilter(e.target.value)} className="codex-search" />
+      <input aria-label="Search the lexicon" placeholder="Search the lexicon..." value={filter} onChange={(e) => setFilter(e.target.value)} className="codex-search w-full bg-ink text-parchment border border-line rounded-lg px-2.5 py-[7px] text-[13px] placeholder:text-slate outline-none focus-visible:border-gold-dim" />
       <table className="w-full border-collapse text-[13px]" data-testid="lexicon-table">
         <thead>
           <tr className="text-left text-slate font-semibold [&_th]:py-1.5 [&_th]:px-2 [&_th]:border-b [&_th]:border-line"><th>Word</th><th>Meaning</th><th>Part of speech</th><th>Theme</th><th /></tr>

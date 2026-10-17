@@ -487,7 +487,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
               }}
             />
           ) : (
-            <p className="panel-placeholder">Select or create a pin or region.</p>
+            <p className="panel-placeholder text-parchment-dim text-[13px]">Select or create a pin or region.</p>
           )}
         </aside>
       </div>
@@ -500,10 +500,10 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
         />
       ) : null}
       {draw.carvePreview ? (
-        <div className="mode-actions" role="toolbar" aria-label="Carve actions">
-          <button type="button" onClick={draw.flipCarvePreview}>Outro lado</button>
-          <button type="button" onClick={confirmPreview}>Aplicar recorte</button>
-          <button type="button" onClick={cancelDraw}>Cancelar</button>
+        <div className="mode-actions absolute left-1/2 bottom-4 -translate-x-1/2 flex gap-2 z-20 px-2 py-1.5 bg-night-2 border border-line rounded-lg" role="toolbar" aria-label="Carve actions">
+          <button type="button" className="mode-actions-btn bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] hover:border-gold-dim" onClick={draw.flipCarvePreview}>Outro lado</button>
+          <button type="button" className="mode-actions-btn bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] hover:border-gold-dim" onClick={confirmPreview}>Aplicar recorte</button>
+          <button type="button" className="mode-actions-btn bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] hover:border-gold-dim" onClick={cancelDraw}>Cancelar</button>
         </div>
       ) : null}
       {chooser ? (

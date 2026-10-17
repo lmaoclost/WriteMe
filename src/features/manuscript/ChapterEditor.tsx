@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import type { Chapter } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { renderMarkdown, isHtmlFragment } from "../entries/markdown";
 import { countWords, formatWords } from "./words";
@@ -333,13 +334,18 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
         )}
         {calendarPickOpen && calendars.length ? (
           <div className="book-cal-picker flex gap-2 items-end flex-wrap bg-night-2 border border-line rounded-lg p-2.5">
-            <select aria-label="Calendário" value={calId} onChange={(e) => setCalId(e.target.value)}>
-              <option value="">Escolha…</option>
-              {calendars.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-            <select aria-label="Month" value={mm} disabled={!cal} onChange={(e) => setMm(e.target.value)}>
-              {(cal?.months ?? []).map((m, i) => <option key={i} value={i}>{m.name}</option>)}
-            </select>
+            <Select value={calId} onValueChange={(v) => setCalId(v)}>
+              <SelectTrigger aria-label="Calendário" className="justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto min-w-0"><SelectValue placeholder="Escolha…" /></SelectTrigger>
+              <SelectContent className="border-line bg-night text-parchment">
+                {calendars.map((c) => <SelectItem key={c.id} value={c.id} className="text-xs focus:bg-[#24233f] focus:text-parchment">{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={mm} disabled={!cal} onValueChange={(v) => setMm(v)}>
+              <SelectTrigger aria-label="Month" className="justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto min-w-0"><SelectValue /></SelectTrigger>
+              <SelectContent className="border-line bg-night text-parchment">
+                {(cal?.months ?? []).map((m, i) => <SelectItem key={i} value={String(i)} className="text-xs focus:bg-[#24233f] focus:text-parchment">{m.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <div className="flex flex-col gap-1"><span className="field-label text-xs font-semibold uppercase tracking-[0.08em] text-slate">Ano do evento</span>
               <input type="number" aria-label="Ano do evento" value={yy} onChange={(e) => setYy(e.target.value)} className="bg-ink border border-line rounded-sm text-parchment px-2 py-1.5 text-xs w-24" /></div>
             <div className="flex flex-col gap-1"><span className="field-label text-xs font-semibold uppercase tracking-[0.08em] text-slate">Dia</span>
