@@ -74,8 +74,8 @@ const isBindery = (v: unknown): boolean => {
     && typeof b.dropCaps === "boolean" && typeof b.runningHead === "boolean"
     && typeof b.titlePage === "boolean" && typeof b.toc === "boolean" && typeof b.glossary === "boolean"
     && optionalStr(b.dedication)
-    && (b.numberingStyle === undefined || (BIND_NUM_STYLES as string[]).includes(b.numberingStyle))
-    && (b.runningHeadMode === undefined || (BIND_HEAD_MODES as string[]).includes(b.runningHeadMode))
+    && (b.numberingStyle === undefined || (BIND_NUM_STYLES as readonly string[]).includes(b.numberingStyle))
+    && (b.runningHeadMode === undefined || (BIND_HEAD_MODES as readonly string[]).includes(b.runningHeadMode))
     && (b.pageNumbers === undefined || typeof b.pageNumbers === "boolean");
 };
 
