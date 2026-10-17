@@ -258,7 +258,7 @@ export function SettingsPage() {
                 type="file"
                 accept="application/json,text/plain"
                 aria-label="Import backup"
-                className="visually-hidden"
+                className="sr-only"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
                   if (f) { doImport(f); e.target.value = ""; }

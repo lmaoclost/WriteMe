@@ -4,7 +4,6 @@ import { selectCounts, selectProject, useScriptorium } from "../../data/store";
 import type { ProjectCounts } from "../../data/store";
 import { fileToDataUrl } from "../../data/image";
 import { Seal } from "../../ui/Seal";
-import "./overview.css";
 
 export interface WorkspaceContext {
   projectId: string;
@@ -58,18 +57,18 @@ export function OverviewPage() {
   };
 
   return (
-    <div className="overview">
-      <header className="ov-hero">
-        <label className="ov-cover">
+    <div className="mx-auto h-full max-w-[960px] overflow-y-auto pt-7 px-6 pb-16">
+      <header className="grid gap-[18px]">
+        <label className="group relative block h-[200px] rounded-lg border border-line overflow-hidden bg-[radial-gradient(ellipse_120%_80%_at_30%_20%,color-mix(in_srgb,var(--accent)_14%,var(--night-2)),var(--night))] cursor-pointer hover:border-gold-dim">
           {project?.coverImageKey && images[project.coverImageKey] && (
-            <img src={images[project.coverImageKey]} alt="" className="ov-cover-img" />
+            <img src={images[project.coverImageKey]} alt="" className="block h-full w-full object-cover" />
           )}
-          <span className="ov-cover-hint">Change cover</span>
+          <span className="absolute right-3 bottom-3 bg-[color-mix(in_srgb,var(--ink)_88%,var(--gold)_4%)] text-parchment border border-gold-dim rounded-sm px-2.5 py-1.5 text-xs tracking-[0.04em] shadow-[0_18px_40px_rgb(16_16_30/0.55)] group-hover:border-gold group-hover:text-parchment-strong">Change cover</span>
           <input
             type="file"
             accept="image/*"
             aria-label="Change cover"
-            className="visually-hidden"
+            className="sr-only"
             onChange={(e) => {
               const f = e.target.files?.[0];
               if (f) void onCover(f);
@@ -77,21 +76,24 @@ export function OverviewPage() {
             }}
           />
         </label>
-        <div className="ov-hero-text">
-          <h1 className="ov-name">{project?.name}</h1>
-          {project?.description && <p className="ov-desc">{project.description}</p>}
+        <div className="grid gap-1.5">
+          <h1 className="font-display font-semibold text-[clamp(2rem,4.5vw,2.75rem)] tracking-[-0.02em] leading-[1.15] text-parchment-strong max-w-[24ch] [text-wrap:balance]">{project?.name}</h1>
+          {project?.description && <p className="text-slate m-0 max-w-[70ch]">{project.description}</p>}
         </div>
       </header>
 
-      <section className="ov-ledger" aria-label="Forge ledger">
-        <ul className="ledger">
+      <section className="mt-[30px]" aria-label="Forge ledger">
+        <ul className="list-none m-0 p-0 grid grid-cols-2 gap-x-14 max-[760px]:grid-cols-1">
           {LEDGER.map((f) => (
-            <li className="ledger-row" key={f.name}>
-              <Link className="ledger-link" to={`/p/${projectId}/${f.path}`}>
-                <span className="letter-col"><Seal letter={f.letter.slice(0, 1)} /></span>
-                <span className="ledger-name">{f.name}</span>
+            <li
+              key={f.name}
+              className="flex items-center justify-between gap-4 py-[13px] border-t border-line odd:pr-6 even:pl-6 [&:nth-child(-n+2)]:border-t-0 max-[760px]:odd:pr-0 max-[760px]:even:pl-0 max-[760px]:[&:nth-child(-n+2)]:border-t max-[760px]:[&:nth-child(-n+2)]:border-line max-[760px]:first:border-t-0"
+            >
+              <Link className="group flex items-center gap-3.5 text-inherit no-underline min-w-0" to={`/p/${projectId}/${f.path}`}>
+                <span><Seal letter={f.letter.slice(0, 1)} className="size-[30px] text-[13px]" /></span>
+                <span className="font-display text-[1.125rem] font-semibold text-parchment whitespace-nowrap group-hover:text-parchment-strong">{f.name}</span>
               </Link>
-              <span className="ledger-count" aria-label={f.counter}>{f.read(counts)}</span>
+              <span className="text-slate text-xs tracking-[0.06em] uppercase whitespace-nowrap [font-variant-numeric:tabular-nums]" aria-label={f.counter}>{f.read(counts)}</span>
             </li>
           ))}
         </ul>

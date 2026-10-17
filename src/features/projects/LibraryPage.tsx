@@ -95,7 +95,7 @@ export function LibraryPage() {
   }, [projects, query, sortKey]);
 
   return (
-    <div className="relative mx-auto flex max-w-[1080px] flex-col">
+    <div className="relative mx-auto max-w-[1080px] px-6 pt-9 pb-16">
       <header className="grid justify-items-start gap-2.5">
         <div className="flex items-center gap-2.5">
           <Seal letter="S" className="size-7 text-sm" />

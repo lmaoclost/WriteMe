@@ -278,7 +278,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           <input
             type="file"
             accept="image/*"
-            className="visually-hidden"
+            className="sr-only"
             onChange={(e) => void onCoverChange(e)}
           />
         </label>

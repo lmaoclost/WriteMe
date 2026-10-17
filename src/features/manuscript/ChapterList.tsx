@@ -77,7 +77,7 @@ export function DocxReplaceButton({ chapterId }: { chapterId: string }) {
   return (
     <label className="book-mode book-docx-btn" title="Replace this chapter's body from a .docx">
       Replace with .docx
-      <input type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="visually-hidden" onChange={(e) => void onChange(e)} />
+      <input type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="sr-only" onChange={(e) => void onChange(e)} />
     </label>
   );
 }

@@ -96,7 +96,7 @@ describe("TimelinePage", () => {
     render(timelineRoute(projectId));
     fireEvent.click(screen.getByRole("button", { name: "Tratado das Três Pontes — 1200 · Maio" }));
     expect(screen.getByLabelText("Title")).toHaveValue("Tratado das Três Pontes");
-    expect(screen.getByRole("link", { name: "Codex" }).getAttribute("class")).toContain("active");
+    expect(screen.getByRole("link", { name: "Codex" }).getAttribute("class")).toContain("text-gold");
   });
 
   it("uses Só eventos as the default chip and Tudo reveals dated non-events", () => {
@@ -175,10 +175,10 @@ describe("TimelinePage", () => {
     const lei = mainLine().getByRole("button", { name: "Lei do Selo — 1300 · Janeiro" });
     const loreItem = lei.closest(".timeline-item") as HTMLElement;
     expect(loreItem.querySelector(".timeline-dot")).toHaveStyle({ backgroundColor: "#4d8f5f" });
-    const labels = Array.from(document.querySelectorAll(".rail-link .rail-label")).map(
+    const labels = Array.from(document.querySelectorAll("[aria-label='World sections'] a")).map(
       (el) => el.textContent,
     );
     expect(labels).toEqual(["Overview", "Atlas", "Codex", "Timeline", "Bloodline", "Factions", "Calendar", "Plot board", "Timeline canvas", "Oaths", "Wellspring", "Conlang", "Manuscript", "Bindery"]);
-    expect(screen.getByRole("link", { name: "Timeline" }).getAttribute("class")).toContain("active");
+    expect(screen.getByRole("link", { name: "Timeline" }).getAttribute("class")).toContain("text-gold");
   });
 });

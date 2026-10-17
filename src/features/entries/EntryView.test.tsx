@@ -187,7 +187,7 @@ describe("EntryView — category + cover", () => {
     const [entry] = entries;
     const oldKey = entryById(entry.id).imageKey as string;
     renderView(entry);
-    const input = document.querySelector('input[type="file"].visually-hidden') as HTMLInputElement;
+    const input = document.querySelector('input[type="file"].sr-only') as HTMLInputElement;
     expect(input).not.toBeNull();
     await act(async () => {
       fireEvent.change(input, { target: { files: [new File(["x"], "capa.png", { type: "image/png" })] } });
@@ -208,7 +208,7 @@ describe("EntryView — category + cover", () => {
     const { entries } = seed([{ title: "Aldric" }]);
     const [entry] = entries;
     renderView(entry);
-    const input = document.querySelector('input[type="file"].visually-hidden') as HTMLInputElement;
+    const input = document.querySelector('input[type="file"].sr-only') as HTMLInputElement;
     await act(async () => {
       fireEvent.change(input, { target: { files: [new File(["x"], "capa.png", { type: "image/png" })] } });
     });

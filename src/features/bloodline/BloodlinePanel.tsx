@@ -97,7 +97,7 @@ function PersonPanel({ bloodline, person, onSelect }: {
             <input
               type="file"
               accept="image/*"
-              className="visually-hidden"
+              className="sr-only"
               aria-label="Upload portrait"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) void onPortrait(f); e.target.value = ""; }}
             />

@@ -375,7 +375,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
           ref={replaceInputRef}
           type="file"
           accept="image/*"
-          className="visually-hidden"
+          className="sr-only"
           aria-label="Arquivo do mapa"
           onChange={onReplaceFile}
         />

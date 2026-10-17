@@ -65,7 +65,7 @@ export function MapDropzone({ atlasId }: { atlasId: string }) {
         ref={inputRef}
         type="file"
         accept="image/*"
-        className="visually-hidden"
+        className="sr-only"
         aria-label="Arquivo do mapa"
         onChange={pick}
       />
