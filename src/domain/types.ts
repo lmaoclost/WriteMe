@@ -72,6 +72,9 @@ export type BinderyConfig = {
   dedication?: string;
   toc: boolean;
   glossary: boolean;
+  numberingStyle?: "none" | "arabic" | "chapter" | "word";
+  pageNumbers?: boolean;
+  runningHeadMode?: "book" | "chapter";
 };
 
 export interface Chapter {

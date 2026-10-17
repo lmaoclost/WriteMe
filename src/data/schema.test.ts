@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { emptyProjectData, parseExport, validateProjectData } from "./schema";
+import { defaultBindery, emptyProjectData, parseExport, validateProjectData } from "./schema";
 import type { ProjectData } from "../domain/types";
 
 const valid: ProjectData = {
@@ -73,5 +73,37 @@ describe("parseExport", () => {
   });
   it("emptyProjectData is fresh and valid", () => {
     expect(validateProjectData(emptyProjectData())).toBe(true);
+  });
+});
+describe("BinderyConfig v2 fields", () => {
+  const mk = (patch: Record<string, unknown>) => ({
+    id: "man_x", projectId: "prj_x", title: "T", author: "A", chapters: [],
+    bindery: {
+      font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true,
+      titlePage: true, toc: true, glossary: false, ...patch,
+    },
+  });
+  it("defaults carry numberingStyle arabic, pageNumbers false, runningHeadMode book", () => {
+    const b = defaultBindery() as Record<string, unknown>;
+    expect(b.numberingStyle).toBe("arabic");
+    expect(b.pageNumbers).toBe(false);
+    expect(b.runningHeadMode).toBe("book");
+  });
+  it("accepts the new fields", () => {
+    expect(validateProjectData({ projects: [], entries: [], atlases: [], manuscripts: [mk({
+      numberingStyle: "word", pageNumbers: true, runningHeadMode: "chapter",
+    })], images: {} })).toBe(true);
+  });
+  it("rejects invalid numberingStyle/runningHeadMode/pageNumbers", () => {
+    expect(validateProjectData({ projects: [], entries: [], atlases: [], manuscripts: [mk({ numberingStyle: "roman" })], images: {} })).toBe(false);
+    expect(validateProjectData({ projects: [], entries: [], atlases: [], manuscripts: [mk({ runningHeadMode: "verse" })], images: {} })).toBe(false);
+    expect(validateProjectData({ projects: [], entries: [], atlases: [], manuscripts: [mk({ pageNumbers: "yes" })], images: {} })).toBe(false);
+  });
+  it("still accepts v1 docs without the new fields", () => {
+    const doc = mk({});
+    (doc.bindery as Record<string, unknown>).numberingStyle = undefined;
+    (doc.bindery as Record<string, unknown>).pageNumbers = undefined;
+    (doc.bindery as Record<string, unknown>).runningHeadMode = undefined;
+    expect(validateProjectData({ projects: [], entries: [], atlases: [], manuscripts: [doc], images: {} })).toBe(true);
   });
 });

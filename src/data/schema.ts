@@ -63,15 +63,20 @@ const isChapter = (v: unknown): boolean => {
 };
 
 export const BIND_TRIMS = ["6x9", "5x8", "5.5x8.5", "5.25x8", "6.14x9.21", "7x10"];
+export const BIND_NUM_STYLES = ["none", "arabic", "chapter", "word"] as const;
+export const BIND_HEAD_MODES = ["book", "chapter"] as const;
 export function defaultBindery() {
-  return { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: false };
+  return { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: false, numberingStyle: "arabic", pageNumbers: false, runningHeadMode: "book" };
 }
 const isBindery = (v: unknown): boolean => {
   const b = v as Manuscript["bindery"];
   return !!b && isStr(b.font) && isStr(b.trim) && (BIND_TRIMS as string[]).includes(b.trim)
     && typeof b.dropCaps === "boolean" && typeof b.runningHead === "boolean"
     && typeof b.titlePage === "boolean" && typeof b.toc === "boolean" && typeof b.glossary === "boolean"
-    && optionalStr(b.dedication);
+    && optionalStr(b.dedication)
+    && (b.numberingStyle === undefined || (BIND_NUM_STYLES as string[]).includes(b.numberingStyle))
+    && (b.runningHeadMode === undefined || (BIND_HEAD_MODES as string[]).includes(b.runningHeadMode))
+    && (b.pageNumbers === undefined || typeof b.pageNumbers === "boolean");
 };
 
 const isManuscript = (v: unknown): v is Manuscript => {
