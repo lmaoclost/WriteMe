@@ -14,7 +14,7 @@ export function Modal({
 }) {
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="w-[min(440px,92vw)] rounded-lg bg-card p-4.5 sm:max-w-[min(440px,92vw)]">
+      <DialogContent showCloseButton={false} className="w-[min(440px,92vw)] rounded-lg bg-card p-4.5 sm:max-w-[min(440px,92vw)]">
         <DialogHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
           <DialogTitle className="font-display">{title}</DialogTitle>
           <DialogClose
