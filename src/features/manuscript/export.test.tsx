@@ -192,6 +192,24 @@ describe("buildBookHtml v2", () => {
     expect(html).toContain('<h2><span class="ch-num">2</span>Fim</h2>');
   });
 
+  it("word numbering covers 1-99 with compounds, falls back to arabic at 100", () => {
+    const mkAt = (n: number) => {
+      const chapters = Array.from({ length: n }, (_, i) => ({ id: `c${i}`, heading: `C${i + 1}`, content: "x.", order: i }));
+      const html = buildBookHtml(mkBook({ chapters, bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: false, titlePage: false, toc: false, glossary: false, numberingStyle: "word" } }));
+      return html;
+    };
+    expect(mkAt(21)).toContain('<span class="ch-num">Twenty-One</span>');
+    expect(mkAt(99)).toContain('<span class="ch-num">Ninety-Nine</span>');
+    expect(mkAt(100)).toContain('<span class="ch-num">100</span>');
+  });
+
+  it("toc rows carry the chapter number prefix when numbering is on", () => {
+    const on = buildBookHtml(mkBook({}));
+    expect(on).toContain('<li class="toc-row"><span class="toc-num">1</span><span>Prólogo</span>');
+    const off = buildBookHtml(mkBook({ bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: false, numberingStyle: "none" } }));
+    expect(off).toContain('<li class="toc-row"><span>Prólogo</span>');
+  });
+
   it("numbering styles: none, chapter, word", () => {
     const none = buildBookHtml(mkBook({ bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: false, numberingStyle: "none" } }));
     expect(none).not.toContain('ch-num');

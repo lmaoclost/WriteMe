@@ -29,18 +29,28 @@ export function buildBookHtml(manuscript: Manuscript): string {
   const dedication = b.dedication
     ? `<section class="front-matter dedication">${escapeText(b.dedication)}</section>`
     : "";
-  const WORDS = ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
-  "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen", "Twenty"];
+  const ONES = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+  "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+const TENS = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+function wordNumber(n: number): string {
+  if (n < 20) return ONES[n];
+  if (n < 100) return n % 10 === 0 ? TENS[Math.floor(n / 10)] : `${TENS[Math.floor(n / 10)]}-${ONES[n % 10]}`;
+  return String(n);
+}
 
 function chapterNumber(style: NonNullable<Manuscript["bindery"]>["numberingStyle"], n: number): string {
   if (style === "none") return "";
   if (style === "chapter") return `Chapter ${n}`;
-  if (style === "word") return WORDS[n - 1] ?? String(n);
+  if (style === "word") return wordNumber(n);
   return String(n);
 }
 
-const tocRow = (chapter: Manuscript["chapters"][number]) =>
-    `<li class="toc-row"><span>${escapeText(chapter.heading)}</span><span class="toc-dot" aria-hidden="true"></span></li>`;
+const tocRow = (chapter: Manuscript["chapters"][number], i: number) => {
+    const num = chapterNumber(b.numberingStyle ?? "arabic", i + 1);
+    const numHtml = num ? `<span class="toc-num">${escapeText(num)}</span>` : "";
+    return `<li class="toc-row">${numHtml}<span>${escapeText(chapter.heading)}</span><span class="toc-dot" aria-hidden="true"></span></li>`;
+  };
   const toc = b.toc
     ? `<section class="front-matter toc"><h2>Contents</h2><ul>${chapters.map(tocRow).join("")}</ul></section>`
     : "";
