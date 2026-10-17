@@ -249,7 +249,7 @@ describe("deleteProject cascade", () => {
     expect(st.bloodlines).toHaveLength(1);
     expect(st.bloodlines[0].projectId).toBe(survivor);
     expect(st.calendars).toHaveLength(1);
-    expect(st.calendars[0].projectId).toBe(survivor);
+    expect(st.calendars![0].projectId).toBe(survivor);
     expect(st.conlangs).toHaveLength(1);
   });
 });
