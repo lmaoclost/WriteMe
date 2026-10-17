@@ -207,6 +207,19 @@ function MemberForm({ chart, member, onSelect }: {
             store().addOathMember(chart.id, member.id, { name: "Novo vassalo" });
           }}
         >+ Swear an oath</button>
+        <div className="field">
+          <span className="field-label">Subordinar a</span>
+          <select aria-label="Subordinar a" defaultValue="" onChange={(e) => {
+            const superior = e.target.value;
+            if (superior) store().addOathLink(chart.id, member.id, superior);
+            e.target.value = "";
+          }}>
+            <option value="">— pick an existing member —</option>
+            {candidates.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
       </section>
       <section className="bl-subsection">
         <h3>Their oaths</h3>
@@ -231,21 +244,9 @@ function MemberForm({ chart, member, onSelect }: {
               <option value="primary">Primary chain</option>
               <option value="joint">Joint report</option>
             </select>
+            <button type="button" aria-label="Remove oath link" onClick={() => store().removeOathLink(l.id)}>✕</button>
           </div>
         ))}
-        <details className="oath-new-details">
-          <summary>Reconhecer superior</summary>
-          <select
-            aria-label="Pick a superior"
-            defaultValue=""
-            onChange={(e) => { if (e.target.value) store().addOathMember(chart.id, e.target.value, { name: "Sem nome" }); e.target.value = ""; }}
-          >
-            <option value="">—</option>
-            {candidates.map((c) => (
-              <option key={c.id} value={c.id}>Novo subordinado de {c.name}</option>
-            ))}
-          </select>
-        </details>
       </section>
     </aside>
   );

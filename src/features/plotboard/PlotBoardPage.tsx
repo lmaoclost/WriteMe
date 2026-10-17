@@ -49,6 +49,20 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
           {!board.hasEpilogue ? (
             <button type="button" onClick={() => { pushPBHistory(boardId); useScriptorium.getState().setBoardFlags(boardId, { hasEpilogue: true }); }}>Epilogue</button>
           ) : null}
+          <button
+            type="button"
+            onClick={() => {
+              pushPBHistory(boardId);
+              const el = stageRef.current;
+              if (!el || !el.clientWidth) return;
+              const x = (el.clientWidth / 2 - view.panX) / view.s;
+              const y = (el.clientHeight / 2 - view.panY) / view.s;
+              const created = useScriptorium.getState().addCard(boardId, { x, y, actId: board.acts[0]?.id });
+              if (created) setSelectedCardId(created.id);
+            }}
+          >
+            + Add scene
+          </button>
           <button type="button" onClick={() => setNotesOpen((v) => !v)}>Notes</button>
         </div>
       </header>
@@ -62,13 +76,8 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
             const target = e.target as Element;
             if (target.closest(".board-card") || target.closest(".wire-delete")) return;
             if (connecting) { setConnecting(null); setGhost(null); return; }
-            // click the board → place a new card there
-            const rect = stageRef.current?.getBoundingClientRect();
-            if (!rect) return;
-            const x = (e.clientX - rect.left - view.panX) / view.s;
-            const y = (e.clientY - rect.top - view.panY) / view.s;
-            const created = useScriptorium.getState().addCard(boardId, { x, y, actId: board.acts[0]?.id });
-            if (created) setSelectedCardId(created.id);
+            // empty canvas → pan (creation is the header button's job)
+            pan.current = { x: e.clientX, y: e.clientY, basePanX: view.panX, basePanY: view.panY };
           }}
           onPointerMove={(e: React.PointerEvent) => {
             if (connecting) {
@@ -170,7 +179,7 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
             ))}
           </div>
           {board.cards.length === 0 ? (
-            <div className="bl-empty">Click anywhere to place your first scene card</div>
+            <div className="bl-empty">Drag to pan the board — "+ Add scene" places a scene at the center.</div>
           ) : connecting ? (
             <div className="fac-hint">Choose a scene card to connect.</div>
           ) : null}

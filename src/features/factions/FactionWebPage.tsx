@@ -51,6 +51,34 @@ export function FactionWebPage({ webId }: { webId: string }) {
     // run once per web mount
   }, [webId]);
 
+  const elWidth = () => stageRef.current?.clientWidth ?? 1200;
+  const elHeight = () => stageRef.current?.clientHeight ?? 800;
+  const zoomAt = (v: { s: number; panX: number; panY: number }, factor: number, cx: number, cy: number) => {
+    const s = Math.min(8, Math.max(0.05, v.s * factor));
+    const relX = (cx - v.panX) / v.s;
+    const relY = (cy - v.panY) / v.s;
+    return { s, panX: cx - relX * s, panY: cy - relY * s };
+  };
+  const adjustView = () => {
+    const el = stageRef.current;
+    if (!el || !el.clientWidth) return;
+    const fit = Math.min(el.clientWidth / planeSize, el.clientHeight / planeSize) * 2.5;
+    const s = Math.min(8, Math.max(0.05, fit));
+    setScale({ s, panX: (el.clientWidth - planeSize * s) / 2, panY: (el.clientHeight - planeSize * s) / 2 });
+  };
+
+  const onWheelZoom = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const el = stageRef.current;
+    if (!el) return;
+    const sx = e.clientX - el.getBoundingClientRect().left, sy = e.clientY - el.getBoundingClientRect().top;
+    const prev = scaleRef.current;
+    const s = Math.min(8, Math.max(0.02, prev.s * (e.deltaY < 0 ? 1.1 : 1 / 1.1)));
+    const relX = (sx - prev.panX) / prev.s, relY = (sy - prev.panY) / prev.s;
+    const next = { s, panX: sx - relX * s, panY: sy - relY * s };
+    setScale(next);
+  };
+
   if (!web) return null;
 
   const factionNodeById = (id: string) => web.factions.find((f) => f.id === id);
@@ -118,6 +146,10 @@ export function FactionWebPage({ webId }: { webId: string }) {
         <div className="bl-actions">
           <button type="button" aria-label="Undo" disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoFW(webId)}>↶</button>
           <button type="button" aria-label="Redo" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoFW(webId)}>↷</button>
+          <button type="button" aria-label="Zoom out" onClick={() => setScale((v) => zoomAt({ ...v }, 1 / 1.25, elWidth(), elHeight()))}>−</button>
+          <span className="fw-zoom" data-testid="fw-zoom">{Math.round(scale.s * 100)}%</span>
+          <button type="button" aria-label="Zoom in" onClick={() => setScale((v) => zoomAt({ ...v }, 1.25, elWidth(), elHeight()))}>+</button>
+          <button type="button" onClick={() => adjustView()}>Ajustar</button>
           <button type="button" onClick={() => { pushFWHistory(webId); const el = stageRef.current; const f = addFaction(webId, { x: el ? (el.clientWidth / 2 - scaleRef.current.panX) / scaleRef.current.s : 4000, y: el ? (el.clientHeight / 2 - scaleRef.current.panY) / scaleRef.current.s : 4000 }); if (f) setSelectedId(f.id); }}>
             New Faction
           </button>
@@ -144,6 +176,7 @@ export function FactionWebPage({ webId }: { webId: string }) {
           }}
           onPointerMove={onCanvasMove}
           onPointerUp={() => { drag.current = null; pan.current = null; }}
+          onWheel={onWheelZoom}
         >
           <div
             className="bl-plane"

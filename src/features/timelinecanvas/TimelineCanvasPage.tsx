@@ -26,7 +26,7 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
   const markDirty = () => { viewTick.current++; setDraw((t) => t + 1); };
   const [selectedBeadId, setSelectedBeadId] = useState<string | null>(null);
   const [notesOpen, setNotesOpen] = useState(false);
-  const beadDrag = useRef<{ id: string; sx: number; sxCanvas: number } | null>(null);
+  const beadDrag = useRef<{ id: string; sx: number; beadX: number; startBeadY?: number } | null>(null);
   const pan = useRef<{ x: number; basePanX: number; y: number; basePanY: number } | null>(null);
 
   useEffect(() => {
@@ -34,8 +34,6 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
   }, [timeline, pushToast]);
 
   if (!timeline) return null;
-
-  const WIRE_Y = 200;
 
   return (
     <div className="timelinecanvas-page" data-testid="timelinecanvas-page">
@@ -49,8 +47,8 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
         <div className="bl-actions">
           <button type="button" aria-label="Undo" disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoTL(timelineId)}>↶</button>
           <button type="button" aria-label="Redo" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoTL(timelineId)}>↷</button>
-          <button type="button" onClick={() => { pushTLHistory(timelineId); useScriptorium.getState().addBead(timelineId, { x: 4000, y: WIRE_Y === 200 ? -60 : -60 }); }}>Add Event Circle</button>
-          <button type="button" onClick={() => { pushTLHistory(timelineId); useScriptorium.getState().addSegment(timelineId, 1000, 3000, "New era"); }}>Add Timeline Segment</button>
+          <button type="button" onClick={() => { pushTLHistory(timelineId); const el = stageRef.current; const x = el && el.clientWidth ? (el.clientWidth / 2 - view.current.panX) / view.current.s : 4000; const created = useScriptorium.getState().addBead(timelineId, { x, y: 200 }); if (created) { setSelectedBeadId(created.id); markDirty(); } }}>Add event</button>
+          <button type="button" onClick={() => { pushTLHistory(timelineId); useScriptorium.getState().addSegment(timelineId, 1000, 3000, "New era"); }}>Add segment</button>
           <button type="button" onClick={() => setNotesOpen((v) => !v)}>Notas</button>
         </div>
       </header>
@@ -70,11 +68,9 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
             const d = beadDrag.current;
             if (d) {
               const dx = (e.clientX - d.sx) / view.current.s;
-              useScriptorium.getState().moveBead(d.id, d.sxCanvas + dx, view.current.panY / view.current.s);
-              void d.sxCanvas;
-              // vertical free: y from pointer
               const rect = stageRef.current?.getBoundingClientRect();
-              if (rect) useScriptorium.getState().moveBead(d.id, d.sxCanvas + dx, (e.clientY - rect.top - view.current.panY) / view.current.s);
+              const y = rect ? (e.clientY - rect.top - view.current.panY) / view.current.s : d.startBeadY ?? 0;
+              useScriptorium.getState().moveBead(d.id, d.beadX + dx, y);
               markDirty();
               return;
             }
@@ -110,7 +106,12 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
               {/* segments draw over the base wire */}
               <line data-testid="tl-wire-base" x1={0} y1={200} x2={20000} y2={200} className="tl-wire-base" />
               {timeline.segments.map((g) => (
-                <g key={g.id} data-testid="tl-seg" className="tl-seg">
+                <g key={g.id} data-testid="tl-seg" className="tl-seg"
+                  onPointerDown={(e) => {
+                    if (e.button !== 0) return;
+                    e.stopPropagation();
+                    setSelectedBeadId(g.id);
+                  }}>
                   <line x1={g.fromX} y1={200} x2={g.toX} y2={200} stroke={g.lineColor} strokeWidth={4} />
                   <text x={(g.fromX + g.toX) / 2} y={186} className="tl-seg-label" fill={g.lineColor} textAnchor="middle">{g.label}</text>
                 </g>
@@ -121,7 +122,7 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
                     if (e.button !== 0) return;
                     e.stopPropagation();
                     setSelectedBeadId(b.id);
-                    beadDrag.current = { id: b.id, sx: e.clientX, sxCanvas: b.x };
+                    beadDrag.current = { id: b.id, sx: e.clientX, beadX: b.x, startBeadY: b.y };
                     pushTLHistory(timelineId);
                   }}
                   transform={`translate(${b.x}, ${b.y})`}>

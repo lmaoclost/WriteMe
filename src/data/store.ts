@@ -296,6 +296,8 @@ interface ScriptoriumState extends ProjectData {
   renameOathsChart(id: string, name: string): void;
   deleteOathsChart(id: string): void;
   addOathMember(chartId: string, superiorId?: string, init?: { name?: string; kind?: "primary" | "joint" }): OathMember | null;
+  addOathLink(chartId: string, subordinateId: string, superiorId: string, init?: { kind?: OathLink["kind"] }): OathLink | null;
+  removeOathLink(linkId: string): void;
   updateOathMember(id: string, patch: Partial<Omit<OathMember, "id">>): void;
   deleteOathMember(id: string): void;
   setOathStatus(linkId: string, status: OathLink["status"]): void;
@@ -2083,6 +2085,41 @@ export const useScriptorium = create<ScriptoriumState>()(
           projects: touchProject(s.projects, chart.projectId),
         }));
         return member;
+      },
+
+      addOathLink(chartId, subordinateId, superiorId, init) {
+        const chart = (get().oathsCharts ?? []).find((c) => c.id === chartId);
+        if (!chart) return null;
+        const members = new Set(chart.members.map((m) => m.id));
+        if (subordinateId === superiorId || !members.has(subordinateId) || !members.has(superiorId)) return null;
+        const dup = chart.oathLinks.some(
+          (l) => (l.subordinateId === subordinateId && l.superiorId === superiorId));
+        if (dup) return null;
+        get().pushOCHistory(chartId);
+        const link: OathLink = {
+          id: `oath_${newId("")}`,
+          subordinateId,
+          superiorId,
+          kind: init?.kind ?? "primary",
+          status: "sworn",
+        };
+        set((s) => ({
+          oathsCharts: (s.oathsCharts ?? []).map((c) => (c.id === chartId ? { ...c, oathLinks: [...c.oathLinks, link] } : c)),
+          projects: touchProject(s.projects, chart.projectId),
+        }));
+        return link;
+      },
+
+      removeOathLink(linkId) {
+        const s = get();
+        const chart = (s.oathsCharts ?? []).find((c) => c.oathLinks.some((l) => l.id === linkId));
+        if (!chart) return;
+        get().pushOCHistory(chart.id);
+        set((st) => ({
+          oathsCharts: (st.oathsCharts ?? []).map((c) =>
+            c.id === chart.id ? { ...c, oathLinks: c.oathLinks.filter((l) => l.id !== linkId) } : c),
+          projects: touchProject(st.projects, chart.projectId),
+        }));
       },
 
       updateOathMember(id, patch) {

@@ -35,6 +35,26 @@ describe("OathsChartPage", () => {
     const panel = document.querySelector("[data-testid=oaths-panel]") as HTMLElement;
     expect(panel.textContent).toMatch(/pick a member/i);
   });
+
+  it("subordinating an existing member creates a link, not a new member", () => {
+    const ch = store().addOathsChart("prj_1", "Anel");
+    const a = store().addOathMember(ch.id, undefined, { name: "Mirren" })!;
+    const b = store().addOathMember(ch.id, undefined, { name: "Orvean" })!;
+    render(<MemoryRouter><OathsChartPage chartId={ch.id} /></MemoryRouter>);
+    fireEvent.click(screen.getByLabelText("Membro Mirren"));
+    const beforeMembers = store().oathsCharts![0].members.length;
+    const pick = screen.getByLabelText("Subordinar a") as HTMLSelectElement;
+    fireEvent.change(pick, { target: { value: b.id } });
+    const chart = store().oathsCharts![0];
+    expect(chart.members).toHaveLength(beforeMembers); // no phantom member
+    const link = chart.oathLinks.find((l) => l.subordinateId === a.id);
+    expect(link).toBeTruthy();
+    expect(link!.superiorId).toBe(b.id);
+    expect(link!.status).toBe("sworn");
+    // and the link can be removed from the row
+    fireEvent.click(screen.getByLabelText("Remove oath link"));
+    expect(store().oathsCharts![0].oathLinks.find((l) => l.subordinateId === a.id)).toBeFalsy();
+  });
 });
 
 describe("OathsIndexPage", () => {

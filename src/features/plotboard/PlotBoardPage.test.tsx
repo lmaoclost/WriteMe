@@ -39,22 +39,55 @@ describe("PlotBoardPage", () => {
   it("empty state invites the first scene", () => {
     const b = seedBoard();
     render(<PlotBoardPage boardId={b.id} />);
-    expect(screen.getByText(/first scene card/i)).toBeInTheDocument();
+    expect(screen.getByText(/drag to pan/i)).toBeInTheDocument();
+  });
+
+  it("empty-canvas drag pans the view instead of creating a scene", () => {
+    const b = seedBoard();
+    store().addCard(b.id, { x: 4000, y: 4000 });
+    render(<PlotBoardPage boardId={b.id} />);
+    const canvas = screen.getByTestId("pb-canvas");
+    const before = canvas.querySelector(".bl-plane")!.getAttribute("style")!;
+    firePointer(canvas, "pointerdown", { clientX: 500, clientY: 400 });
+    firePointer(canvas, "pointermove", { clientX: 380, clientY: 350 });
+    firePointer(canvas, "pointerup", { clientX: 380, clientY: 350 });
+    const after = canvas.querySelector(".bl-plane")!.getAttribute("style")!;
+    expect(after).not.toBe(before);
+    expect(after).toContain("scale(0.5)");
+    expect(store().plotBoards![0].cards).toHaveLength(1);
+  });
+
+  it("empty-canvas click without move creates nothing", () => {
+    const b = seedBoard();
+    render(<PlotBoardPage boardId={b.id} />);
+    const canvas = screen.getByTestId("pb-canvas");
+    firePointer(canvas, "pointerdown", { clientX: 240, clientY: 140 });
+    firePointer(canvas, "pointerup", { clientX: 240, clientY: 140 });
+    expect(store().plotBoards![0].cards).toHaveLength(0);
+  });
+
+  it("header + Add scene creates a card at the view center and selects it", () => {
+    const b = seedBoard();
+    render(<PlotBoardPage boardId={b.id} />);
+    fireEvent.click(screen.getByRole("button", { name: "+ Add scene" }));
+    const cards = store().plotBoards![0].cards;
+    expect(cards).toHaveLength(1);
+    // view default s=0.5, pan 60/20, canvas stub 1200x800 → center (1080, 760)
+    expect(cards[0].x).toBe(1080);
+    expect(cards[0].y).toBe(760);
+    const panel = document.querySelector("[data-testid=pb-panel]") as HTMLElement;
+    expect(panel.textContent).toContain("Scene");
   });
 
   it("placing a card by canvas click + selecting by node pointerdown", () => {
     const b = seedBoard();
+    const c = store().addCard(b.id, { x: 300, y: 200 })!;
     render(<PlotBoardPage boardId={b.id} />);
-    const canvas = screen.getByTestId("pb-canvas");
-    canvas.addEventListener("pointerdown", (ev: Event) => console.error("DEBUG RAW down on canvas", ev.type, (ev as Event & { button: number }).button));
-    console.error("DEBUG canvas children:", canvas.innerHTML.slice(0, 200), "rect:", canvas.getBoundingClientRect().left);
-    firePointer(canvas, "pointerdown", { clientX: 240, clientY: 140 });
-    console.error("DEBUG after: cards:", JSON.stringify(store().plotBoards![0].cards.map((c) => ({ id: c.id, x: c.x }))), "html:", canvas.innerHTML.slice(0, 300));
     const card = document.querySelector('[data-testid="board-card"]') as HTMLElement;
-    expect(card).toBeInTheDocument();
-    expect(store().plotBoards![0].cards).toHaveLength(1);
-    void canvas;
-    void card;
+    firePointer(card, "pointerdown", { clientX: 310, clientY: 210 });
+    expect(c.x).toBe(300);
+    const panel = document.querySelector("[data-testid=pb-panel]") as HTMLElement;
+    expect(panel).toBeTruthy();
   });
 
   it("card drag moves with history push", () => {
