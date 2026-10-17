@@ -141,3 +141,84 @@
   button { @apply cursor-pointer font-sans; }
   button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--lilac); outline-offset: 2px; }
 }
+
+/* Markdown/HTML content generated at runtime (dangerouslySetInnerHTML) —
+   styled as descendant rules here; cannot be utility classes in JSX. */
+@layer components {
+  .md-view {
+    color: var(--parchment);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+  .md-view h1, .md-view h2, .md-view h3, .md-view h4, .md-view h5, .md-view h6 {
+    font-family: var(--font-display);
+    color: var(--parchment);
+    margin: 14px 0 6px;
+  }
+  .md-view h1 { font-size: 1.375rem; }
+  .md-view h2 { font-size: 20px; }
+  .md-view h3 { font-size: 1.125rem; }
+  .md-view p { margin: 8px 0; }
+  .md-view ul, .md-view ol { margin: 8px 0; padding-left: 22px; }
+  .md-view li { margin: 2px 0; }
+  .md-view blockquote {
+    margin: 10px 0;
+    padding: 4px 12px;
+    border-left: 2px solid var(--gold-dim);
+    color: var(--parchment-dim);
+  }
+  .md-view code {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    background: var(--night-2);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+  .md-view pre {
+    background: var(--night-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    overflow-x: auto;
+  }
+  .md-view pre code { background: none; border: 0; padding: 0; }
+  .md-view img { max-width: 100%; border-radius: 8px; }
+
+  .wiki-link {
+    color: var(--gold);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--gold-dim);
+    cursor: pointer;
+    position: relative;
+  }
+  .wiki-link:hover { filter: brightness(1.12); }
+  .wiki-link-icon { font-size: 0.85em; margin-right: 2px; }
+
+  .wiki-preview-card {
+    position: absolute;
+    z-index: 42;
+    display: grid;
+    gap: 5px;
+    width: 260px;
+    background: var(--night-2);
+    border: 1px solid var(--gold-dim);
+    border-radius: 8px;
+    padding: 10px 12px;
+    box-shadow: 0 8px 22px var(--scrim-canvas);
+    font-size: 12px;
+  }
+  .wiki-preview-head { display: flex; align-items: center; gap: 6px; }
+  .wiki-preview-head strong { color: var(--parchment); }
+  .wiki-preview-head em { color: var(--slate); font-style: normal; font-size: 11px; }
+  .wiki-preview-blurb { color: var(--parchment-dim); line-height: 1.45; }
+
+  .pin-preview-pop { width: 300px; z-index: 44; }
+  .pin-preview-close {
+    position: absolute; top: 4px; right: 6px;
+    background: none; border: 0; color: var(--slate); cursor: pointer; font-size: 12px;
+  }
+  .pin-preview-close:hover { color: var(--parchment); }
+
+  .md-view-links { position: relative; }
+}

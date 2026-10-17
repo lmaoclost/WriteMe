@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { selectOption } from "../../test/selectHelper";
 import { AppRouter } from "../../app/router";
 import { useScriptorium } from "../../data/store";
 import type { EntryCategory, WorldEntry } from "../../domain/types";
@@ -227,12 +228,12 @@ describe("CodexPage", () => {
     expect(replaceSpy).not.toHaveBeenCalled();
   });
 
-  it("commits title, category and body edits to the store", () => {
+  it("commits title, category and body edits to the store", async () => {
     const projectId = seedProject([{ title: "Cidade de Vellmora", category: "place", body: "capital" }]);
     render(codexRoute(projectId));
     fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Porto de Vellmora" } });
     fireEvent.blur(screen.getByLabelText("Title"));
-    fireEvent.change(screen.getByLabelText("Category"), { target: { value: "faction" } });
+    await selectOption(() => screen.getByLabelText("Category"), /faction/i);
     fireEvent.change(screen.getByLabelText("Content"), { target: { value: "Torres de pedra." } });
     fireEvent.blur(screen.getByLabelText("Content"));
     const [entry] = projectEntries(projectId);
@@ -429,7 +430,7 @@ describe("CodexPage — cover framing, summary presentation, custom kinds", () =
     expect(useScriptorium.getState().entries.find((x) => x.id === e.id)!.focal).toEqual([0.5, 1]);
   });
 
-  it("user-created entry kinds join the chips, the selector and persist", () => {
+  it("user-created entry kinds join the chips, the selector and persist", async () => {
     const pid = useScriptorium.getState().addProject("V").id;
     useScriptorium.getState().addEntry(pid, "lore");
     render(codexRoute(pid));
@@ -442,12 +443,8 @@ describe("CodexPage — cover framing, summary presentation, custom kinds", () =
     expect(kind).toMatchObject({ key: "religion", label: "Religion", icon: "🕯️" });
     // chip filter includes the new kind
     expect(screen.getByTitle("Religion")).toBeInTheDocument();
-    // the category selector offers it
-    const cat = screen.getByLabelText("Category") as HTMLSelectElement;
-    const opts = Array.from(cat.options).map((o) => ({ v: o.value, t: o.textContent }));
-    expect(opts.some((o) => o.v === "religion" && o.t?.includes("Religion"))).toBe(true);
-    // assigning the kind persists (schema accepts it)
-    fireEvent.change(cat, { target: { value: "religion" } });
+    // the category selector offers it and assigning persists (schema accepts it)
+    await selectOption(() => screen.getByLabelText("Category"), /religion/i);
     expect(useScriptorium.getState().entries[0].category).toBe("religion");
   });
 

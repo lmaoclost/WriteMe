@@ -9,6 +9,7 @@ import { LinkPicker } from "../atlas/panels/LinkPicker";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { CATEGORY_LABELS, categoryIcon, categoryDot } from "./categories";
 import { ImagePicker } from "./ImagePicker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MarkdownView } from "./MarkdownView";
 
 export interface EntryViewProps {
@@ -153,11 +154,11 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
   const dateInvalid = !dateIsEmpty(dateDraft.draft) && !isValidDate(dateDraft.draft);
 
   return (
-    <div className="codex-view">
+    <div className="codex-view flex flex-col gap-3 max-w-[760px]">
       {cover ? (
         <img
           ref={coverEl}
-          className="codex-cover"
+          className="codex-cover w-full max-h-[220px] object-cover border border-line rounded-lg cursor-col-resize [touch-action:none]"
           src={cover}
           alt={`Cover of ${entry.title}`}
           draggable={false}
@@ -192,50 +193,44 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           }}
         />
       ) : null}
-      {entryDate ? <span className="codex-eyebrow">{formatDate(entryDate)}</span> : null}
-      <div className="codex-view-head">
+      {entryDate ? <span className="codex-eyebrow text-gold-dim font-mono text-[11px] font-bold tracking-[0.08em] uppercase">{formatDate(entryDate)}</span> : null}
+      <div className="flex items-baseline gap-2.5">
         <input
           ref={titleRef}
           type="text"
-          className="codex-title-input"
+          className="codex-title-input flex-1 min-w-0 font-display text-[1.375rem] font-semibold text-parchment bg-none border border-transparent rounded-lg px-1.5 py-0.5 hover:border-line focus:border-gold outline-none"
           aria-label="Title"
           value={titleDraft.draft}
           onChange={(e) => titleDraft.setDraft(e.target.value)}
           onBlur={flush}
         />
-        <select
-          className="codex-category"
-          aria-label="Category"
-          value={entry.category}
-          onChange={(e) => {
-            useScriptorium.getState().updateEntry(
-              entry.id,
-              { category: e.target.value },
-            );
-          }}
-        >
-          {ENTRY_CATEGORIES.map((c) => (
-            <option key={c} value={c}>{categoryIcon(c)} {CATEGORY_LABELS[c]}</option>
-          ))}
-          {(project?.customCategories ?? []).length ? <option disabled>— custom kinds —</option> : null}
-          {(project?.customCategories ?? []).map((k) => (
-            <option key={k.key} value={k.key}>{k.icon} {k.label}</option>
-          ))}
-        </select>
+        <Select value={entry.category} onValueChange={(v) => {
+            useScriptorium.getState().updateEntry(entry.id, { category: v });
+          }}>
+          <SelectTrigger aria-label="Category" className="rounded-lg border-line bg-night-2 text-parchment px-2 py-1.5 text-xs hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
+          <SelectContent className="border-line bg-night text-parchment">
+            {ENTRY_CATEGORIES.map((c) => (
+              <SelectItem key={c} value={c} className="text-xs focus:bg-[#24233f] focus:text-parchment">{categoryIcon(c)} {CATEGORY_LABELS[c]}</SelectItem>
+            ))}
+            {(project?.customCategories ?? []).map((k) => (
+              <SelectItem key={k.key} value={k.key} className="text-xs focus:bg-[#24233f] focus:text-parchment">{k.icon} {k.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <button
         type="button"
-        className={"codex-summary-toggle" + (summaryDraft.draft.trim() ? " filled" : "")}
+        className={"codex-summary-toggle grid grid-cols-[auto_1fr_auto] items-baseline gap-2.5 w-full text-left bg-night border border-line rounded-lg px-3 py-2 cursor-pointer text-parchment-dim hover:border-gold-dim" + (summaryDraft.draft.trim() ? " filled" : "") + (summaryOpen ? " rounded-bl-none rounded-br-none" : "")}
         aria-expanded={summaryOpen}
         onClick={() => { flush(); setSummaryOpen((v) => !v); }}
       >
-        <span className="codex-summary-label">Summary</span>
-        <span className="codex-summary-hint">{summaryDraft.draft.trim() || "Add a short blurb..."}</span>
+        <span className="text-[10px] tracking-[0.12em] uppercase text-slate">Summary</span>
+        <span className={"codex-summary-hint text-slate overflow-hidden text-ellipsis whitespace-nowrap " + (summaryDraft.draft.trim() ? "text-parchment not-italic" : "italic")}>{summaryDraft.draft.trim() || "Add a short blurb..."}</span>
         <span aria-hidden="true">{summaryOpen ? "▾" : "▸"}</span>
       </button>
       {summaryOpen ? (
         <textarea
-          className="codex-summary-input"
+          className="codex-summary-input w-full bg-night border border-line border-t-0 rounded-lg pt-2 px-3 pb-2 text-parchment resize-y outline-none focus:border-gold-dim max-[720px]:rounded-tl-none max-[720px]:rounded-tr-none"
           aria-label="Summary"
           placeholder="Add a short blurb..."
           value={summaryDraft.draft}
@@ -244,22 +239,22 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           rows={2}
         />
       ) : null}
-      <div className="codex-date-row">
+      <div className="flex items-center gap-2.5 flex-wrap">
         <input
           type="text"
-          className="codex-date-input"
+          className="codex-date-input font-mono text-[13px] text-parchment bg-ink border border-line rounded-lg px-2.5 py-1.5 outline-none focus:border-gold placeholder:text-slate"
           aria-label="Date"
           placeholder="1200 · 1200-05 · 1200-05-10"
           value={dateDraft.draft}
           onChange={(e) => dateDraft.setDraft(e.target.value)}
           onBlur={dateDraft.flush}
         />
-        {dateInvalid ? <p className="date-hint error">Invalid date.</p> : null}
+        {dateInvalid ? <p className="text-[var(--ember)] text-xs m-0">Invalid date.</p> : null}
       </div>
-      <div className="codex-view-actions">
+      <div className="flex items-center justify-end flex-wrap gap-2">
         <button
           type="button"
-          className="codex-mode"
+          className="codex-mode bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold"
           aria-pressed={writing}
           onClick={() => setMode(true)}
         >
@@ -267,13 +262,13 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
         </button>
         <button
           type="button"
-          className="codex-mode"
+          className="codex-mode bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold"
           aria-pressed={!writing}
           onClick={() => setMode(false)}
         >
           Preview
         </button>
-        <label className="codex-action">
+        <label className="codex-action bg-none border border-line text-parchment-dim rounded-lg py-1 px-2.5 text-xs cursor-pointer hover:border-gold-dim">
           Change cover
           <input
             type="file"
@@ -284,20 +279,20 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
         </label>
         <button
           type="button"
-          className="codex-action"
+          className="codex-action bg-none border border-line text-parchment-dim rounded-lg py-1 px-2.5 text-xs cursor-pointer hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold"
           aria-pressed={imagePickerOpen}
           onClick={() => setImagePickerOpen((open) => !open)}
         >
           Entry image
         </button>
         {entry.imageKey ? (
-          <button type="button" className="codex-action" onClick={clearCover}>
+          <button type="button" className="codex-action bg-none border border-line text-parchment-dim rounded-lg py-1 px-2.5 text-xs cursor-pointer hover:border-gold-dim" onClick={clearCover}>
             Remove cover
           </button>
         ) : null}
       </div>
       {pickersOpen ? (
-        <div className="chooser-backdrop" aria-hidden="true" onPointerDown={closePickers} />
+        <div className="chooser-backdrop fixed inset-0 z-29 bg-transparent" aria-hidden="true" onPointerDown={closePickers} />
       ) : null}
       {imagePickerOpen ? (
         <ImagePicker
@@ -311,7 +306,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
         />
       ) : null}
       {(entry.sections ?? []).length ? (
-        <div className="codex-sections">
+        <div className="grid gap-3">
           {(entry.sections ?? []).map((sec, si) => (
             <SectionBlock
               key={si}
@@ -342,7 +337,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           ))}
           <button
             type="button"
-            className="codex-section-add"
+            className="codex-section-add bg-none border border-line rounded-md text-slate cursor-pointer py-1 px-2.5 text-xs tracking-[0.04em] justify-self-start hover:text-parchment hover:border-gold-dim"
             aria-label="New section"
             onClick={() => {
               const sections = [...(entry.sections ?? []), { name: "New section", fields: [] } satisfies EntrySection];
@@ -355,7 +350,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
       ) : null}
       {writing ? (
         <textarea
-          className="codex-body"
+          className="codex-body min-h-[260px] resize-y bg-ink border border-line rounded-lg p-3 text-parchment font-mono text-[13px] leading-[1.6] outline-none focus:border-gold placeholder:text-slate"
           aria-label="Content"
           placeholder="No content yet."
           value={bodyDraft.draft}
@@ -363,20 +358,20 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           onBlur={flush}
         />
       ) : bodyDraft.draft.trim() === "" ? (
-        <p className="codex-md-empty">No content yet.</p>
+        <p className="text-slate text-sm italic">No content yet.</p>
       ) : (
         <MarkdownView body={bodyDraft.draft} onSelectEntry={onSelectEntry} />
       )}
-      <section className="codex-links" aria-label="Links">
-        <span className="codex-links-title">Links</span>
+      <section className="flex items-center flex-wrap gap-1.5 border-t border-line pt-2.5" aria-label="Links">
+        <span className="text-[11px] tracking-[0.08em] uppercase text-slate">Links</span>
         {entry.links.map((id) => {
           const other = siblings.find((e) => e.id === id);
           if (!other) return null;
           return (
-            <span className="codex-link-chip" key={id}>
+            <span className="codex-link-chip inline-flex items-center border border-line rounded-full bg-night-2 pt-px pr-px pl-0.5" key={id}>
               <button
                 type="button"
-                className="codex-link-chip-main"
+                className="codex-link-chip-main inline-flex items-center gap-1.5 bg-none border-0 text-parchment py-[3px] pr-1 pl-2 text-xs cursor-pointer hover:text-gold"
                 onClick={() => onSelectEntry?.(id)}
               >
                 <span
@@ -384,11 +379,11 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
                   aria-hidden="true"
                   style={{ backgroundColor: categoryDot(other.category, project?.customCategories) }}
                 />
-                <span className="codex-link-chip-title">{other.title}</span>
+                <span className="codex-link-chip-title max-w-40 overflow-hidden text-ellipsis whitespace-nowrap">{other.title}</span>
               </button>
               <button
                 type="button"
-                className="codex-link-unlink"
+                className="codex-link-unlink bg-none border-0 text-slate px-[7px] py-[3px] text-[11px] cursor-pointer hover:text-[var(--ember)]"
                 aria-label={`Unlink ${other.title}`}
                 onClick={() => useScriptorium.getState().unlinkEntries(entry.id, id)}
               >
@@ -399,7 +394,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
         })}
         <button
           type="button"
-          className="codex-link-add"
+          className="codex-link-add bg-none border border-line text-parchment-dim rounded-lg py-1 px-2.5 text-xs cursor-pointer hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold"
           aria-pressed={linkPickerOpen}
           onClick={() => setLinkPickerOpen((open) => !open)}
         >
@@ -416,10 +411,10 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           />
         ) : null}
       </section>
-      <div className="codex-view-actions">
+      <div className="flex items-center justify-end flex-wrap gap-2">
         <button
           type="button"
-          className={"codex-delete" + (armed ? " armed" : "")}
+          className={"codex-delete bg-none border border-[var(--ember)] text-[var(--ember)] rounded-lg py-1.5 px-2.5 text-[13px] hover:bg-[color-mix(in_srgb,var(--ember)_18%,transparent)]" + (armed ? " armed bg-[color-mix(in_srgb,var(--ember)_20%,transparent)]" : "")}
           onClick={confirmOrDelete}
         >
           {armed ? "Confirm?" : "Delete"}
@@ -437,24 +432,24 @@ function SectionBlock({ sec, onField, onAddField, onRemoveField, onRename }: {
   onRename(name: string): void;
 }) {
   return (
-    <section className="codex-section" aria-label={sec.name}>
-      <header className="codex-section-head">
+    <section className="bg-night border border-line rounded-lg px-3.5 py-3 grid gap-2.5" aria-label={sec.name}>
+      <header className="flex items-baseline gap-2">
         <input
-          className="codex-section-name"
+          className="codex-section-name font-display text-[15px] font-semibold text-gold bg-none border border-transparent rounded-md px-1.5 py-0.5 flex-1 min-w-0 hover:border-line focus:border-gold-dim outline-none"
           aria-label={`Section ${sec.name}`}
           value={sec.name}
           onChange={(e) => onRename(e.target.value)}
         />
-        <button type="button" className="codex-field-add" aria-label={`Add field to ${sec.name}`} onClick={onAddField}>+ field</button>
+        <button type="button" className="codex-field-add bg-none border border-line rounded-md text-slate cursor-pointer py-1 px-2.5 text-xs tracking-[0.04em] hover:text-parchment hover:border-gold-dim" aria-label={`Add field to ${sec.name}`} onClick={onAddField}>+ field</button>
       </header>
-      {sec.fields.length === 0 ? <p className="codex-field-empty">No fields.</p> : null}
+      {sec.fields.length === 0 ? <p className="text-slate text-[13px] italic px-0.5 py-1">No fields.</p> : null}
       {sec.fields.map((f, fi) => (
-        <div className="codex-field" key={fi}>
-          <div className="codex-field-label-row">
-            <span className="codex-field-label">{f.label}</span>
+        <div className="grid grid-cols-[130px_1fr_auto] gap-1.5 items-start" key={fi}>
+          <div className="codex-field-label-row min-w-0 pt-[7px]">
+            <span className="codex-field-label text-[11px] uppercase tracking-[0.08em] text-slate px-0.5 min-w-0">{f.label}</span>
             <button
               type="button"
-              className="codex-field-remove"
+              className="codex-field-remove bg-none border-0 text-slate px-1.5 py-0.5 text-xs cursor-pointer hover:text-[var(--ember)]"
               aria-label={`Remove field ${f.label}`}
               onClick={() => onRemoveField(fi)}
             >✕</button>

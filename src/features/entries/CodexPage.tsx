@@ -5,7 +5,8 @@ import { useScriptorium } from "../../data/store";
 import { EntryList } from "./EntryList";
 import { EntryView } from "./EntryView";
 import { Modal } from "../../ui/Modal";
-import "./codex.css";
+import { Field } from "../../ui/Field";
+import { Button } from "../../ui/Button";
 
 interface RouteState {
   select?: string;
@@ -111,7 +112,7 @@ export function CodexPage({ projectId }: { projectId: string }) {
   const selectedEntry = entries.find((e) => e.id === selectedId);
 
   return (
-    <div className="codex">
+    <div className="grid grid-cols-[300px_1fr] h-full min-h-0 max-[720px]:grid-cols-1 max-[720px]:grid-rows-[auto_1fr]">
       <EntryList
         entries={entries}
         selectedId={selectedId}
@@ -119,24 +120,24 @@ export function CodexPage({ projectId }: { projectId: string }) {
         onCreate={create}
         onCreateKind={() => setKindOpen(true)}
       />
-      <section className="codex-main">
+      <section className="min-h-0 overflow-y-auto px-6 py-[18px]">
         {selectedEntry
           ? <EntryView key={selectedEntry.id} entry={selectedEntry} titleRef={titleRef} onDeleted={onEntryDeleted} onSelectEntry={setSelectedId} />
           : null}
       </section>
       {kindOpen ? (
         <Modal title="New entry kind" onClose={() => setKindOpen(false)}>
-          <div className="field">
-            <span className="field-label">Kind name</span>
-            <input aria-label="Kind name" value={kindName} onChange={(e) => setKindName(e.target.value)} placeholder="Religion, Currency, Season..." autoFocus />
-          </div>
-          <div className="field">
-            <span className="field-label">Kind emoji</span>
-            <input aria-label="Kind emoji" value={kindEmoji} onChange={(e) => setKindEmoji(e.target.value)} maxLength={4} />
-          </div>
-          <div className="modal-actions">
-            <button type="button" className="btn-primary" onClick={createKind}>Create kind</button>
-            <button type="button" className="btn-ghost" onClick={() => setKindOpen(false)}>Cancel</button>
+          <div className="grid gap-3">
+            <Field label="Kind name">
+              <input aria-label="Kind name" value={kindName} onChange={(e) => setKindName(e.target.value)} placeholder="Religion, Currency, Season..." autoFocus />
+            </Field>
+            <Field label="Kind emoji">
+              <input aria-label="Kind emoji" value={kindEmoji} onChange={(e) => setKindEmoji(e.target.value)} maxLength={4} />
+            </Field>
+            <div className="mt-3 flex gap-2">
+              <Button onClick={createKind}>Create kind</Button>
+              <Button kind="ghost" onClick={() => setKindOpen(false)}>Cancel</Button>
+            </div>
           </div>
         </Modal>
       ) : null}

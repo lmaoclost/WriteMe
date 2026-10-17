@@ -3,7 +3,6 @@ import type { PointerEvent as ReactPointerEvent, MouseEvent as ReactMouseEvent }
 import { useScriptorium } from "../../data/store";
 import { renderWithLinks, resolveWikilink } from "./wikilinks";
 import { categoryIcon, categoryLabel } from "./categories";
-import "./codex-wiki.css";
 
 export function MarkdownView({ body, onSelectEntry }: { body: string; onSelectEntry?(id: string): void }) {
   const entries = useScriptorium((s) => s.entries);

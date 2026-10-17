@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { selectOption } from "../../test/selectHelper";
 import { fileToDataUrl } from "../../data/image";
 import { useScriptorium } from "../../data/store";
 import type { EntryCategory, WorldEntry } from "../../domain/types";
@@ -173,13 +174,13 @@ describe("EntryView — Write/Preview", () => {
 });
 
 describe("EntryView — category + cover", () => {
-  it("commits the category select directly", () => {
+  it("commits the category select directly", async () => {
     const { entries } = seed([{ title: "Aldric", category: "person" }]);
     const [entry] = entries;
     renderView(entry);
-    fireEvent.change(screen.getByLabelText("Category"), { target: { value: "faction" } });
+    await selectOption(() => screen.getByLabelText("Category"), /faction/i);
     expect(entryById(entry.id).category).toBe("faction");
-    expect(screen.getByLabelText("Category")).toHaveValue("faction");
+    expect(screen.getByLabelText("Category")).toHaveTextContent(/faction/i);
   });
 
   it("uploads a cover via hidden file input, swaps and releases the old key", async () => {
