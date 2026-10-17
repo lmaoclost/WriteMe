@@ -50,7 +50,6 @@ export function CodexPage({ projectId }: { projectId: string }) {
       setSelectedId(select);
       window.history.replaceState({ ...window.history.state, usr: null }, "");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location, entries, selectedId]);
 
   // Deep link: if the param arrives/changes while we're mounted, follow it.
@@ -60,7 +59,6 @@ export function CodexPage({ projectId }: { projectId: string }) {
     if (useScriptorium.getState().entries.some((e) => e.id === urlEntry)) {
       setSelectedId(urlEntry);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlEntry, selectedId]);
 
   useEffect(() => {

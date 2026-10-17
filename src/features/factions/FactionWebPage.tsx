@@ -59,7 +59,6 @@ export function FactionWebPage({ webId }: { webId: string }) {
   useEffect(() => {
     fitToContentNow();
     // run once per web mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [webId]);
 
   const elWidth = () => stageRef.current?.clientWidth ?? 1200;

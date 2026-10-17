@@ -407,7 +407,6 @@ function RichNoteField({ testid, ariaLabel, placeholder, value, onCommit }: {
       window.clearTimeout(timer.current);
       if (dirtyRef.current && el) onCommit(el.innerHTML.trim());
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
