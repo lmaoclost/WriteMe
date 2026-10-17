@@ -217,15 +217,14 @@ function PersonPanel({ bloodline, person, onSelect }: {
             onPick={(id) => update({ siblingId: id })}
             onClear={() => update({ siblingId: undefined })}
           />
-          <label className="field">
-            <span className="field-label">Ordem de nascimento</span>
+          <Field label="Ordem de nascimento">
             <input
               type="number"
               aria-label="Ordem de nascimento"
               value={person.birthOrder ?? ""}
               onChange={(e) => update({ birthOrder: e.target.value === "" ? undefined : Number(e.target.value) })}
-            />
-          </label>
+          />
+          </Field>
         </div>
         <label className="flex gap-2 items-center text-[13px] text-parchment-dim">
           <input type="checkbox" checked={person.isTwin} onChange={(e) => update({ isTwin: e.target.checked })} />
@@ -335,10 +334,9 @@ function HousePanel({ bloodline, house, onSelect }: {
           {armDelete ? "Confirm?" : "Delete"}
         </Button>
       </header>
-      <div className="field">
-        <span className="field-label">Name</span>
+      <Field label="Name">
         <input value={house.name} onChange={(e) => update({ name: e.target.value })} aria-label="House Name" />
-      </div>
+      </Field>
       <PersonField label="Subtitle" value={house.subtitle ?? ""} onCommit={(v) => update({ subtitle: v.trim() || undefined })} />
       <label className="flex gap-2 items-center text-[13px] text-parchment-dim">
         <input type="checkbox" checked={house.isMainBranch} onChange={(e) => update({ isMainBranch: e.target.checked })} />

@@ -12,11 +12,15 @@ export function Toasts() {
     return () => { timers.forEach(clearTimeout); };
   }, [toasts, dismiss]);
   return (
-    <div className="toasts" aria-live="polite">
+    <div className="toasts fixed bottom-[18px] right-[18px] z-60 flex flex-col gap-2" aria-live="polite">
       {toasts.map((t) => (
-        <div key={t.id} className="toast" data-kind={t.kind}>
+        <div
+          key={t.id}
+          className={"toast flex items-center gap-2.5 rounded-sm border border-line border-l-[3px] bg-panel py-2.5 pr-3 pl-3 " + (t.kind === "error" ? "border-l-destructive" : t.kind === "success" ? "border-l-success" : "border-l-gold")}
+          data-kind={t.kind}
+        >
           <span className="toast-message">{t.message}</span>
-          <button className="toast-dismiss" onClick={() => dismiss(t.id)} aria-label="Dispensar">✕</button>
+          <button className="toast-dismiss border-0 bg-transparent text-xs text-slate hover:text-parchment" onClick={() => dismiss(t.id)} aria-label="Dispensar">✕</button>
         </div>
       ))}
     </div>
