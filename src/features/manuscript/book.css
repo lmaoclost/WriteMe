@@ -154,7 +154,8 @@
 .book-ch-words { font-size: 11px; color: var(--slate); }
 .book-ch-new { align-self: flex-start; }
 
-/* Right: editor */
+/* Right: editor — a light "paper" canvas so the writing area never blends
+   into the dark page background (legacy = white paper on the dark shell). */
 .book-main {
   min-height: 0;
   overflow-y: auto;
@@ -166,8 +167,8 @@
 .book-editor {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  max-width: 760px;
+  gap: 10px;
+  max-width: 860px;
 }
 .book-ch-heading-input {
   font-family: var(--font-display);
@@ -193,6 +194,77 @@
 }
 .book-mode:hover { border-color: var(--gold-dim); }
 .book-mode[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+
+/* Formatting toolbar: grouped ghost buttons (B/I/U, lists, alignment, blocks). */
+.rich-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: fit-content;
+  max-width: 860px;
+  background: var(--night-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 3px 6px;
+  box-shadow: 0 4px 14px var(--scrim-canvas);
+}
+.rich-toolbar .rt-group { display: flex; gap: 2px; padding: 0 4px; }
+.rich-toolbar .rt-group + .rt-group { border-left: 1px solid var(--line); }
+.rich-toolbar .rt-sep { width: 1px; align-self: stretch; background: var(--line); margin: 2px 0; }
+.rich-toolbar button {
+  min-width: 26px; height: 26px;
+  background: transparent; border: 0; border-radius: 4px;
+  color: #b9b3c9; font-size: 12.5px; cursor: pointer;
+  padding: 0 6px;
+}
+.rich-toolbar button:hover { background: #ffffff14; color: var(--parchment); }
+.rich-toolbar button:active,
+.rich-toolbar button[aria-pressed="true"] { background: rgb(124 92 191); color: #fff; }
+.rich-toolbar .rich-blocks { width: auto; padding: 0 10px; font-size: 12px; }
+.rich-blocks { position: relative; }
+.rich-blocks-pop {
+  position: absolute; top: 30px; left: 0; z-index: 10;
+  min-width: 170px; background: var(--night-2); border: 1px solid var(--line);
+  border-radius: 6px; padding: 4px; box-shadow: 0 8px 22px var(--scrim-canvas);
+}
+.rich-blocks-pop button { width: 100%; text-align: left; padding: 6px 8px; }
+
+/* The paper itself: warm white sheet, ink text, reading measure. */
+.book-body-rich {
+  background: #f7f2e6;
+  color: #241f17;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 28px 40px 34px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+  line-height: 1.7;
+  min-height: 420px;
+  box-shadow: inset 0 0 0 1px #00000010;
+}
+.book-body-rich:focus { border-color: var(--gold); outline: none; }
+.book-body-rich p { margin: 0 0 0.9em; }
+.book-body-rich h1, .book-body-rich h2, .book-body-rich h3 { margin: 1.2em 0 0.5em; font-family: var(--font-display); }
+.book-body-rich blockquote { margin: 0.8em 0 0.8em 12px; padding-left: 12px; border-left: 3px solid #cbb891; color: #4a4235; }
+.book-body-rich ul, .book-body-rich ol { margin: 0 0 0.9em 1.4em; }
+.book-body-rich[data-placeholder]:empty::before {
+  content: attr(data-placeholder);
+  color: #8a8069; font-style: italic; pointer-events: none;
+}
+
+/* Prologue / Epilogue notes ride the same paper with a lighter frame. */
+.book-note-field { display: flex; flex-direction: column; gap: 6px; }
+.book-note-rich { min-height: 72px; padding: 14px 20px; font-size: 14.5px; line-height: 1.6; }
+.chapter-note { color: #6d6350; font-style: italic; }
+.book-end-marker { display: flex; align-items: center; gap: 8px; color: var(--gold); }
+.book-end-marker input { flex: 1; }
+.book-end-marker-off { justify-content: flex-start; }
+.book-cal-link { display: flex; align-items: center; gap: 8px; }
+.book-cal-picker { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; background: var(--night-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+
 .book-body {
   min-height: 260px;
   resize: vertical;
@@ -208,6 +280,20 @@
 .book-body:focus { border-color: var(--gold); outline: none; }
 .book-body::placeholder { color: var(--slate); }
 .book-md-empty { margin: 4px 2px; color: var(--slate); font-size: 14px; font-style: italic; }
+
+/* Preview mode shares the paper with the editing surface. */
+.book-editor .md-view {
+  background: #f7f2e6;
+  color: #241f17;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 28px 40px 34px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+  line-height: 1.7;
+  min-height: 200px;
+}
+.book-editor .md-view img { max-width: 100%; border-radius: 4px; }
 .book-footer {
   display: flex;
   align-items: center;
@@ -258,4 +344,9 @@
     background: var(--print-paper);
   }
   .print-book h1 { font-size: 24pt; }
+  /* single-sided page breaks: only break-before, never break-after — adjacent
+     forced breaks of both kinds make Chromium print blank pages */
+  .print-book .front-matter.toc,
+  .print-book .dedication,
+  .print-book .chapter { break-before: page; }
 }

@@ -1,14 +1,6 @@
 import type { Chapter } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
-
-/** `content.trim().split(/\s+/).filter(Boolean)` — the plan's wordcount rule. */
-export const countWords = (content: string): number =>
-  content.trim().split(/\s+/).filter(Boolean).length;
-
-export const formatWords = (words: number): string => {
-  if (words === 0) return "sem palavras";
-  return words === 1 ? "1 palavra" : `${words} palavras`;
-};
+import { countWords, formatWords } from "./words";
 
 export interface ChapterListProps {
   chapters: Chapter[];

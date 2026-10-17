@@ -30,6 +30,33 @@ describe("ChapterEditor rich", () => {
     expect(screen.getByRole("button", { name: "Negrito" })).toBeInTheDocument();
   });
 
+  it("footer shows the store word count on load (tag-stripped)", () => {
+    const m = store().addManuscript("prj_1", "Livro A");
+    store().addChapter(m.id, "Primeiro");
+    store().updateChapter(store().manuscripts[0].chapters[0].id, { content: "<p>Havia um ditado em Vellmora: a cidade se fecha.</p>" });
+    render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
+    expect(document.querySelector(".book-words")?.textContent).toBe("9 palavras");
+  });
+
+  it("notes are rich and optional: Prologue / Epilogue commit HTML", () => {
+    const m = store().addManuscript("prj_1", "Livro A");
+    store().addChapter(m.id, "Primeiro");
+    const chId = store().manuscripts[0].chapters[0].id;
+    render(<ChapterEditor chapterId={chId} onDeleted={() => {}} />);
+    const top = screen.getByTestId("rich-note-top") as HTMLElement;
+    const end = screen.getByTestId("rich-note-end") as HTMLElement;
+    expect(top.getAttribute("contenteditable")).toBe("true");
+    expect(end.getAttribute("contenteditable")).toBe("true");
+    top.textContent = "A cidade dorme sob a cera.";
+    fireEvent.input(top, {});
+    fireEvent.blur(top);
+    expect(store().manuscripts[0].chapters[0].noteTop).toContain("A cidade dorme sob a cera.");
+    end.textContent = "— fim do registro —";
+    fireEvent.input(end, {});
+    fireEvent.blur(end);
+    expect(store().manuscripts[0].chapters[0].noteEnd).toContain("fim do registro");
+  });
+
   it("bold click calls execCommand with 'bold'", () => {
     const { m } = seedMS();
     void m;
@@ -90,13 +117,17 @@ describe("ChapterEditor rich", () => {
   it("notes top/end + endMarker persist", () => {
     seedMS();
     render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
-    fireEvent.change(screen.getByLabelText("Author's note (top)"), { target: { value: "Dedico ao rio." } });
-    fireEvent.blur(screen.getByLabelText("Author's note (top)"));
-    fireEvent.change(screen.getByLabelText("Nota do autor — fim"), { target: { value: "Continua no fim do inverno." } });
-    fireEvent.blur(screen.getByLabelText("Nota do autor — fim"));
+    const typeNote = (testid: string, text: string) => {
+      const el = screen.getByTestId(testid) as HTMLElement;
+      el.textContent = text;
+      fireEvent.input(el, {});
+      fireEvent.blur(el);
+    };
+    typeNote("rich-note-top", "Dedico ao rio.");
+    typeNote("rich-note-end", "Continua no fim do inverno.");
     const ch = store().manuscripts[0].chapters[0];
-    expect(ch.noteTop).toBe("Dedico ao rio.");
-    expect(ch.noteEnd).toBe("Continua no fim do inverno.");
+    expect(ch.noteTop).toContain("Dedico ao rio.");
+    expect(ch.noteEnd).toContain("Continua no fim do inverno.");
     expect(ch.endMarker).toBeUndefined(); // untouched
   });
 

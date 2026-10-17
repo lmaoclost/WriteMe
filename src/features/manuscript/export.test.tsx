@@ -220,11 +220,26 @@ describe("buildBookHtml v2", () => {
     expect(word).toContain('<span class="ch-num">Two</span>');
   });
 
+  it("print page breaks are single-sided (no break-after: page anywhere)", async () => {
+    const fsp = await import("node:fs/promises");
+    const dir = "src/features/manuscript";
+    const bookCss = await fsp.readFile(`${dir}/book.css`, "utf8");
+    const binderyCss = await fsp.readFile(`${dir}/bindery.css`, "utf8");
+    // adjacent forced breaks (break-after + break-before on touching elements)
+    // make Chromium emit blank pages in print-to-PDF
+    expect(bookCss).not.toMatch(/break-after:\s*page/);
+    expect(binderyCss).not.toMatch(/break-after:\s*page/);
+    // single-side breaks exist where the document advances a page
+    expect(binderyCss).toMatch(/\.bindery-live \.chapter \{ break-before: page; \}/);
+    expect(bookCss).toMatch(/\.print-book \.chapter \{ break-before: page; \}/);
+    expect(binderyCss).toMatch(/\.bindery-live \.front-matter\.toc,\s*\.bindery-live \.dedication \{ break-before: page; \}/);
+  });
+
   it("renders scene markers: endMarker between paragraphs, noteTop/noteEnd around the body", () => {
     const html = buildBookHtml(mkBook({ chapters: [{ id: "c1", heading: "Um", content: "para um.\n\npara dois.", order: 0, endMarker: "⁂", noteTop: "Drafted 1204", noteEnd: "End of draft" }] }));
     expect(html).toContain('<div class="scene-marker">⁂</div>');
-    expect(html).toContain('<p class="chapter-note top">Drafted 1204</p>');
-    expect(html).toContain('<p class="chapter-note bottom">End of draft</p>');
+    expect(html).toContain('<div class="chapter-note top"><p>Drafted 1204</p>');
+    expect(html).toContain('<div class="chapter-note bottom"><p>End of draft</p>');
   });
 
   it("running-head mode chapter uses the chapter title per section", () => {

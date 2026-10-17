@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObjec
 import type { Chapter } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
-import { renderMarkdown } from "../entries/markdown";
-import { countWords, formatWords } from "./ChapterList";
+import { renderMarkdown, isHtmlFragment } from "../entries/markdown";
+import { countWords, formatWords } from "./words";
 
 const CONFIRM_RESET_MS = 3000;
 
@@ -50,6 +50,9 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
   };
 
   const setMode = (next: boolean) => {
+    // leaving W mode: commit whatever the live contenteditable holds right now
+    // (never rely on the blur handler or the unmount capture)
+    if (writing && !next) commitRichNow();
     flush();
     setWriting(next);
   };
@@ -136,12 +139,15 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
     commitRichNow();
   };
 
-  // Footer count follows the DRAFT; list rows use the store.
+  // Footer follows the live DOM exactly while the user types (dirty), and the
+  // tag-stripped store content otherwise — never the raw HTML string.
   const words = useMemo(() => {
-    if (writing && bodyRef.current) return countWords(bodyRef.current.textContent ?? "");
     void richTick; // typing re-runs this memo
-    return countWords(bodyDraft.draft);
-  }, [writing, bodyDraft.draft, bodyRef.current, richTick]);
+    if (writing && richDirtyRef.current && bodyRef.current) {
+      return countWords(bodyRef.current.innerHTML);
+    }
+    return countWords(chapter.content);
+  }, [writing, chapter.content, richTick]);
 
   return (
     <div className="book-editor">
@@ -211,16 +217,22 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
 function RichToolbar({ onExec }: { onExec(cmd: string, value?: string): void }) {
   const [blocksOpen, setBlocksOpen] = useState(false);
   return (
-    <div className="rich-toolbar">
-      <button type="button" aria-label="Negrito" onClick={() => onExec("bold")}><b>B</b></button>
-      <button type="button" aria-label="Italic" onClick={() => onExec("italic")}><i>I</i></button>
-      <button type="button" aria-label="Sublinhado" onClick={() => onExec("underline")}><u>U</u></button>
-      <button type="button" aria-label="Lista com marcadores" onClick={() => onExec("insertUnorderedList")}>•</button>
-      <button type="button" aria-label="Lista numerada" onClick={() => onExec("insertOrderedList")}>1.</button>
-      <button type="button" aria-label="Align left" onClick={() => onExec("justifyLeft")}>⇤</button>
-      <button type="button" aria-label="Alinhar ao centro" onClick={() => onExec("justifyCenter")}>↔</button>
-      <button type="button" aria-label="Align right" onClick={() => onExec("justifyRight")}>⇥</button>
-      <button type="button" aria-label="Justificar" onClick={() => onExec("justifyFull")}>≡</button>
+    <div className="rich-toolbar" role="toolbar" aria-label="Formatting">
+      <div className="rt-group">
+        <button type="button" aria-label="Negrito" onClick={() => onExec("bold")}><b>B</b></button>
+        <button type="button" aria-label="Italic" onClick={() => onExec("italic")}><i>I</i></button>
+        <button type="button" aria-label="Sublinhado" onClick={() => onExec("underline")}><u>U</u></button>
+      </div>
+      <div className="rt-group">
+        <button type="button" aria-label="Lista com marcadores" onClick={() => onExec("insertUnorderedList")}>•</button>
+        <button type="button" aria-label="Lista numerada" onClick={() => onExec("insertOrderedList")}>1.</button>
+      </div>
+      <div className="rt-group">
+        <button type="button" aria-label="Align left" onClick={() => onExec("justifyLeft")}>⇤</button>
+        <button type="button" aria-label="Alinhar ao centro" onClick={() => onExec("justifyCenter")}>↔</button>
+        <button type="button" aria-label="Align right" onClick={() => onExec("justifyRight")}>⇥</button>
+        <button type="button" aria-label="Justificar" onClick={() => onExec("justifyFull")}>≡</button>
+      </div>
       <button type="button" className="rich-blocks" aria-expanded={blocksOpen} onClick={() => setBlocksOpen((v) => !v)}>Blocos ▾</button>
       {blocksOpen ? (
         <div className="rich-blocks-pop" role="menu">
@@ -246,13 +258,9 @@ function RichToolbar({ onExec }: { onExec(cmd: string, value?: string): void }) 
 
 function NotesAndLinks({ chapter }: { chapter: Chapter }) {
   const store = useScriptorium.getState;
-  const noteTop = useDebouncedDraft(chapter.noteTop ?? "", (v) =>
-    store().updateChapter(chapter.id, { noteTop: v || undefined }), 300);
-  const noteEnd = useDebouncedDraft(chapter.noteEnd ?? "", (v) =>
-    store().updateChapter(chapter.id, { noteEnd: v || undefined }), 300);
   const endMarker = useDebouncedDraft(chapter.endMarker ?? "", (v) =>
     store().updateChapter(chapter.id, { endMarker: v.trim() || undefined }), 300);
-  useEffect(() => () => { noteTop.flush(); noteEnd.flush(); endMarker.flush(); });
+  useEffect(() => () => { endMarker.flush(); });
 
   const calendars = useScriptorium((s) => s.calendars ?? []);
   const [calendarPickOpen, setCalendarPickOpen] = useState(false);
@@ -265,23 +273,23 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
   return (
     <>
       <label className="book-note-field">
-        <span className="field-label">Author's note (top)</span>
-        <input
-          aria-label="Author's note (top)"
+        <span className="field-label">Prologue</span>
+        <RichNoteField
+          testid="rich-note-top"
+          ariaLabel="Prologue"
           placeholder="Optional: context, content note, dedication..."
-          value={noteTop.draft}
-          onChange={(e) => noteTop.setDraft(e.target.value)}
-          onBlur={() => noteTop.flush()}
+          value={chapter.noteTop ?? ""}
+          onCommit={(v) => store().updateChapter(chapter.id, { noteTop: v || undefined })}
         />
       </label>
       <label className="book-note-field">
-        <span className="field-label">Nota do autor — fim</span>
-        <input
-          aria-label="Nota do autor — fim"
+        <span className="field-label">Epilogue</span>
+        <RichNoteField
+          testid="rich-note-end"
+          ariaLabel="Epilogue"
           placeholder="Optional: acknowledgements, next-chapter teaser..."
-          value={noteEnd.draft}
-          onChange={(e) => noteEnd.setDraft(e.target.value)}
-          onBlur={() => noteEnd.flush()}
+          value={chapter.noteEnd ?? ""}
+          onCommit={(v) => store().updateChapter(chapter.id, { noteEnd: v || undefined })}
         />
       </label>
       {chapter.noteEnd || endMarker.draft ? (
@@ -359,4 +367,62 @@ function labelDay(dayKey: string | undefined, cal: NonNullable<ReturnType<typeof
   if (!dayKey) return "sem dia";
   const [y, m, d] = dayKey.split(":").map(Number);
   return `${d + 1} de ${cal.months[m]?.name ?? "?"} · Ano ${(y || 0) + 1}`;
+}
+
+/** Notes and end markers are optional rich text: contenteditable that commits
+ *  its HTML on blur/unmount like the chapter body does (debounced 400ms). */
+function RichNoteField({ testid, ariaLabel, placeholder, value, onCommit }: {
+  testid: string;
+  ariaLabel: string;
+  placeholder: string;
+  value: string;
+  onCommit(html: string): void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const dirtyRef = useRef(false);
+  const timer = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (el && !dirtyRef.current && el.innerHTML !== value) {
+      el.innerHTML = isHtmlFragment(value) ? value : (value.trim() ? renderMarkdown(value.trim()) : "");
+    }
+  }, [value]);
+
+  const commit = () => {
+    window.clearTimeout(timer.current);
+    const el = ref.current;
+    if (!dirtyRef.current || !el) return;
+    dirtyRef.current = false;
+    onCommit(el.innerHTML.trim());
+  };
+  const schedule = () => {
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(commit, 400);
+  };
+
+  useEffect(() => {
+    const el = ref.current;
+    return () => {
+      window.clearTimeout(timer.current);
+      if (dirtyRef.current && el) onCommit(el.innerHTML.trim());
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className="book-body-rich book-note-rich"
+      data-testid={testid}
+      contentEditable
+      suppressContentEditableWarning
+      role="textbox"
+      aria-multiline="true"
+      aria-label={ariaLabel}
+      data-placeholder={placeholder}
+      onInput={() => { dirtyRef.current = true; schedule(); }}
+      onBlur={commit}
+    />
+  );
 }

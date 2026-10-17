@@ -61,13 +61,13 @@ const tocRow = (chapter: Manuscript["chapters"][number], i: number) => {
         ? renderMarkdown(chapter.content)
         : EMPTY_PARAGRAPH;
       if (chapter.noteTop?.trim()) {
-        body = `<p class="chapter-note top">${escapeText(chapter.noteTop.trim())}</p>` + body;
+        body = `<div class="chapter-note top">${renderMarkdown(chapter.noteTop.trim())}</div>` + body;
       }
       if (chapter.endMarker?.trim()) {
         body = body + `<div class="scene-marker">${escapeText(chapter.endMarker.trim())}</div>`;
       }
       if (chapter.noteEnd?.trim()) {
-        body = body + `<p class="chapter-note bottom">${escapeText(chapter.noteEnd.trim())}</p>`;
+        body = body + `<div class="chapter-note bottom">${renderMarkdown(chapter.noteEnd.trim())}</div>`;
       }
       const headText = b.runningHead
         ? (b.runningHeadMode === "chapter" ? chapter.heading : manuscript.title)

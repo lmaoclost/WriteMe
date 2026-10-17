@@ -298,6 +298,21 @@ describe("ManuscriptPage chapters", () => {
     vi.useRealTimers();
   });
 
+  it("commits pending rich content synchronously on Preview click (no blur needed)", () => {
+    vi.useFakeTimers();
+    const projectId = seedProject();
+    seedBook(projectId, { title: "A", chapters: [{ heading: "Início", content: "" }] });
+    render(manuscriptRoute(projectId));
+    const richBody = document.querySelector('[data-testid="rich-body"]') as HTMLElement;
+    richBody.textContent = "texto pendente sem blur";
+    fireEvent.input(richBody);
+    // click Preview BEFORE blur has a chance (blur commit happens anyway)
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+    expect(bookOf("A").chapters[0].content).toContain("texto pendente sem blur");
+    expect(document.querySelector(".md-view")?.textContent).toContain("texto pendente sem blur");
+    vi.useRealTimers();
+  });
+
   it("shows the empty preview copy when the committed content is empty", () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A", chapters: [{ heading: "Início", content: "" }] });

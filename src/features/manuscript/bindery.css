@@ -16,7 +16,8 @@
 .bindery-live .tp-title { text-align: center; font-size: var(--fs-paper-title); margin: 0.6em 0; }
 .bindery-live .tp-series { text-align: center; letter-spacing: 0.3em; text-transform: uppercase; font-size: var(--fs-paper-body); color: var(--paper-muted); }
 .bindery-live .tp-author { text-align: center; font-style: italic; }
-.bindery-live .front-matter { break-after: page; padding: 3in 0 2in; }
+.bindery-live .front-matter { padding: 3in 0 2in; }
+.bindery-live .front-matter.toc, .bindery-live .dedication { break-before: page; }
 .bindery-live .dedication { text-align: center; font-style: italic; padding-top: 2.5in; }
 .bindery-live .toc ul { list-style: none; padding: 0; }
 .bindery-live .toc-row { display: flex; gap: 6px; align-items: baseline; }
