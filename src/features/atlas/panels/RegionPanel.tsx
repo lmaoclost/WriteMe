@@ -46,7 +46,7 @@ export function RegionPanel({ atlasId, region, entries, onDelete }: RegionPanelP
   return (
     <div className="panel flex flex-col gap-3">
       <div className="text-xs tracking-[0.08em] uppercase text-slate">Region</div>
-      <Field label="Label" htmlFor="region-label-input">
+      <Field label="Label">
           <input
             id="region-label-input"
             aria-label="Region label"

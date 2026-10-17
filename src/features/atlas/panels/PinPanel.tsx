@@ -30,7 +30,7 @@ export function PinPanel({ pin, entries, onDelete }: PinPanelProps) {
   return (
     <div className="panel flex flex-col gap-3">
       <div className="panel-title text-xs tracking-[0.08em] uppercase text-slate">Pin</div>
-      <Field label="Label" htmlFor="pin-label-input">
+     <Field label="Label">
         <input
           id="pin-label-input"
           aria-label="Pin label"
