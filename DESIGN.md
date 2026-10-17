@@ -113,7 +113,7 @@ components:
 
 ## Overview
 
-> **Stack note (2026-10):** styling now runs on **Tailwind CSS v4 + shadcn/ui**. Tokens live in `src/app/theme.css` (`@theme inline`); semantic shadcn variables (`--primary`, `--card-well`, `--border`, …) are mapped 1:1 from this palette, and the legacy CSS variable names (`--gold`, `--line`, `--night`, …) remain defined as aliases so feature CSS keeps working while it migrates.
+> **Stack note (2026-10):** styling now runs on **Tailwind CSS v4 + shadcn/ui**. Tokens live in `src/app/theme.css` (`@theme inline`); semantic shadcn variables (`--primary`, `--card-well`, `--border`, …) are mapped 1:1 from this palette. Legacy variable names remain as aliases. Feature pages use utility classes directly (phase 2 complete): only two stylesheets remain — `theme.css` (tokens/base/components layer for runtime-generated HTML) and `print.css`.
 
 **Creative North Star: "The Scriptor's Archive"**
 
