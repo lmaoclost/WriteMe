@@ -3,7 +3,6 @@ import type { Id, Pin } from "../../../domain/types";
 import { useScriptorium } from "../../../data/store";
 import type { TransformApi } from "./useStageTransform";
 import { PIN_TYPE_META } from "../panels/pinTypes";
-import "../atlas.css";
 
 export const PIN_SIZE_PX = 18;
 export const PIN_HALF_PX = PIN_SIZE_PX / 2;
@@ -152,19 +151,19 @@ export function PinLayer({
   };
 
   return (
-    <div className="pin-layer">
+    <div className="pin-layer absolute inset-0 pointer-events-none">
       {pins.map((pin) => {
         const selected = pin.id === selectedPinId;
         return (
           <div
             key={pin.id}
-            className="atlas-pin"
+            className="atlas-pin absolute size-[18px] pointer-events-auto"
             data-pin-id={pin.id}
             style={{ ...pinStyle(pin, transformApi), pointerEvents: interactive ? "auto" : "none" }}
           >
             <button
               type="button"
-              className={"pin-dot" + (selected ? " selected" : "")}
+              className={"pin-dot block w-full h-full p-0 border-0 bg-none cursor-pointer" + (selected ? " selected" : "")}
               style={{ "--pin-color": pin.color } as CSSProperties}
               aria-label={pin.label || "Pino"}
               aria-pressed={selected}
@@ -173,10 +172,10 @@ export function PinLayer({
               onPointerLeave={onHoverLeave}
             >
               <svg width={PIN_SIZE_PX} height={PIN_SIZE_PX} viewBox="0 0 18 18" aria-hidden="true">
-                {selected ? <circle className="pin-ring-outer" cx="9" cy="9" r="9.2" /> : null}
-                <circle className="pin-ring" cx="9" cy="9" r="7.5" />
-                <circle className="pin-core" cx="9" cy="9" r="5.5" />
-                <text className="pin-icon" x="9" y="11.8" textAnchor="middle">
+                {selected ? <circle className="pin-ring-outer fill-none [stroke:var(--gold)] [stroke-width:1.5]" cx="9" cy="9" r="9.2" /> : null}
+                <circle className="pin-ring fill-none [stroke:var(--pin-color)] [stroke-width:2]" cx="9" cy="9" r="7.5" />
+                <circle className="pin-core fill-[var(--pin-color)]" cx="9" cy="9" r="5.5" />
+                <text className="pin-icon text-[0.6875rem] fill-parchment" x="9" y="11.8" textAnchor="middle">
                   {PIN_TYPE_META[pin.type].icon}
                 </text>
               </svg>

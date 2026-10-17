@@ -4,7 +4,8 @@ import { useScriptorium } from "../../../data/store";
 import { ColorSwatches } from "./ColorSwatches";
 import { LinkPicker } from "./LinkPicker";
 import { PIN_TYPE_META } from "./pinTypes";
-import "../atlas.css";
+import { Field } from "../../../ui/Field";
+import { Button } from "../../../ui/Button";
 
 export interface PinPanelProps {
   pin: Pin;
@@ -27,10 +28,9 @@ export function PinPanel({ pin, entries, onDelete }: PinPanelProps) {
   };
 
   return (
-    <div className="panel pin-panel">
-      <div className="panel-title">Pin</div>
-      <div className="field">
-        <label className="field-label" htmlFor="pin-label-input">Label</label>
+    <div className="panel flex flex-col gap-3">
+      <div className="panel-title text-xs tracking-[0.08em] uppercase text-slate">Pin</div>
+      <Field label="Label" htmlFor="pin-label-input">
         <input
           id="pin-label-input"
           aria-label="Pin label"
@@ -41,36 +41,35 @@ export function PinPanel({ pin, entries, onDelete }: PinPanelProps) {
             patch({ label: e.target.value });
           }}
         />
-      </div>
-      <div className="field">
-        <span className="field-label">Type</span>
-        <div className="seg" role="group" aria-label="Pin type">
+      </Field>
+      <Field label="Type">
+        <div className="seg grid grid-cols-4 gap-1" role="group" aria-label="Pin type">
           {(Object.keys(PIN_TYPE_META) as PinType[]).map((t) => (
             <button
               type="button"
               key={t}
               aria-pressed={pin.type === t}
               onClick={() => patch({ type: t })}
+              className="bg-none border border-line text-parchment rounded-lg py-1 px-0.5 text-xs whitespace-nowrap hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold"
             >
               <span aria-hidden="true">{PIN_TYPE_META[t].icon}</span>
               {PIN_TYPE_META[t].label}
             </button>
           ))}
         </div>
-      </div>
-      <div className="field">
-        <span className="field-label">Color</span>
+      </Field>
+      <Field label="Color">
         <ColorSwatches
           currentColor={pin.color}
           onPickColor={(color) => patch({ color })}
         />
-      </div>
-      <div className="field">
-        <span className="field-label">Tome entry</span>
+      </Field>
+      <Field label="Tome entry">
         <button
           type="button"
           aria-pressed={pickerOpen}
           onClick={() => setPickerOpen((open) => !open)}
+          className="bg-none border border-line text-parchment rounded-lg px-2.5 py-1.5 text-[13px] hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold"
         >
           Link entry
         </button>
@@ -85,15 +84,10 @@ export function PinPanel({ pin, entries, onDelete }: PinPanelProps) {
             onClear={() => patch({ entryId: undefined })}
           />
         ) : null}
-      </div>
-      <button
-        type="button"
-        className="btn-danger panel-delete"
-        aria-label="Delete pin"
-        onClick={() => onDelete(pin.id)}
-      >
+      </Field>
+      <Button kind="danger" className="panel-delete self-start" aria-label="Delete pin" onClick={() => onDelete(pin.id)}>
         Excluir pino
-      </button>
+      </Button>
     </div>
   );
 }

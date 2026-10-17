@@ -16,7 +16,6 @@ import { EntryImagePicker } from "./EntryImagePicker";
 import { EntryPreview, entryBlurb } from "../entries/EntryPreview";
 import { categoryIcon, categoryLabel } from "../entries/categories";
 import { MapDropzone, loadMapIntoAtlas } from "./MapDropzone";
-import "./atlas.css";
 
 export interface AtlasEditorProps {
   atlasId: string;
@@ -77,19 +76,19 @@ function RegionChooser({ options, position, onPick, onClear, onClose }: {
   }, [onClose]);
   return (
     <>
-      <div className="chooser-backdrop" onPointerDown={onClose} aria-hidden="true" />
+      <div className="chooser-backdrop fixed inset-0 z-29 bg-transparent" onPointerDown={onClose} aria-hidden="true" />
       <div
-        className="region-chooser"
+        className="region-chooser fixed z-30 flex flex-col min-w-[150px] p-1 bg-night-2 border border-line rounded-lg"
         role="dialog"
         aria-label="Pick region"
         style={{ left: position.x, top: position.y }}
       >
         {options.map((r) => (
-          <button type="button" key={r.id} onClick={() => onPick(r.id)}>
+          <button type="button" key={r.id} onClick={() => onPick(r.id)} className="bg-none border-0 rounded-lg text-parchment px-2.5 py-1.5 text-left hover:bg-night">
             {r.label || "Region"}
           </button>
         ))}
-        <button type="button" onClick={onClear}>None</button>
+        <button type="button" onClick={onClear} className="bg-none border-0 rounded-lg text-parchment px-2.5 py-1.5 text-left hover:bg-night">None</button>
       </div>
     </>
   );
@@ -286,10 +285,10 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
   ];
 
   return (
-    <div className="atlas-editor" data-tool={tool}>
-      <header className="editor-header">
+    <div className="atlas-editor relative flex flex-col h-full [&[data-tool=region]_.stage]:cursor-crosshair" data-tool={tool}>
+      <header className="flex items-center gap-2.5 px-3 py-2 bg-night border-b border-line flex-wrap">
         <input
-          className="editor-name-input"
+          className="editor-name-input w-[190px] min-w-[120px] font-mono text-base text-parchment bg-none border border-transparent rounded-lg px-1.5 py-1 hover:border-line focus:border-gold outline-none"
           aria-label="Nome do atlas"
           value={nameDraft}
           onChange={(e) => setNameDraft(e.target.value)}
@@ -302,13 +301,14 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
           }}
           onBlur={commitName}
         />
-        <div className="editor-toolbar" role="toolbar" aria-label="Atlas tools">
+        <div className="flex items-center gap-1.5" role="toolbar" aria-label="Atlas tools">
           {tools.map((t) => (
             <button
               type="button"
               key={t.value}
               aria-label={t.name}
               aria-pressed={tool === t.value}
+              className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold"
               onClick={() => setTool(t.value)}
             >
               {t.label}
@@ -316,14 +316,14 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
           ))}
           {tool === "region" ? (
             <>
-              <span className="editor-hint" aria-hidden="true">
+              <span className="text-[11px] text-slate whitespace-nowrap" aria-hidden="true">
                 Esc cancela · Enter fecha
               </span>
               {DRAW_MODES.map((m) => (
                 <button
                   type="button"
                   key={m.value}
-                  className="mode-toggle"
+                  className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold"
                   aria-pressed={mode === m.value}
                   onClick={() => setMode((cur) => (cur === m.value ? "none" : m.value))}
                 >
@@ -333,16 +333,16 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
             </>
           ) : null}
         </div>
-        <div className="editor-zoom" role="toolbar" aria-label="Zoom do mapa">
-          <button type="button" aria-label="Reduzir" onClick={() => apiRef.current?.zoomBy(ZOOM_OUT)}>−</button>
-          <output className="zoom-label" aria-label="Zoom level">{Math.round(zoom * 100)}%</output>
-          <button type="button" aria-label="Ampliar" onClick={() => apiRef.current?.zoomBy(ZOOM_IN)}>+</button>
-          <button type="button" onClick={() => apiRef.current?.fitToContainer()}>Ajustar</button>
+        <div className="flex items-center gap-1.5 ml-auto" role="toolbar" aria-label="Zoom do mapa">
+          <button type="button" aria-label="Reduzir" className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold w-7 text-center" onClick={() => apiRef.current?.zoomBy(ZOOM_OUT)}>−</button>
+          <output className="font-mono text-xs text-parchment-dim min-w-[44px] text-center" aria-label="Zoom level">{Math.round(zoom * 100)}%</output>
+          <button type="button" aria-label="Ampliar" className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold w-7 text-center" onClick={() => apiRef.current?.zoomBy(ZOOM_IN)}>+</button>
+          <button type="button" className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold" onClick={() => apiRef.current?.fitToContainer()}>Ajustar</button>
         </div>
-        <div className="editor-actions" role="toolbar" aria-label="Atlas actions">
+        <div className="flex items-center gap-1.5 ml-auto" role="toolbar" aria-label="Atlas actions">
           <button
             type="button"
-            className="icon-btn"
+            className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold w-[30px] text-center"
             aria-label="Desfazer"
             title="Desfazer"
             disabled={!flags.canUndo}
@@ -352,7 +352,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
           </button>
           <button
             type="button"
-            className="icon-btn"
+            className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold w-[30px] text-center"
             aria-label="Refazer"
             title="Refazer"
             disabled={!flags.canRedo}
@@ -360,11 +360,11 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
           >
             ↷
           </button>
-          <button type="button" onClick={() => replaceInputRef.current?.click()}>Replace map</button>
-          <button type="button" onClick={() => setPickerOpen(true)}>Entry image</button>
+          <button type="button" className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold" onClick={() => replaceInputRef.current?.click()}>Replace map</button>
+          <button type="button" className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold" onClick={() => setPickerOpen(true)}>Entry image</button>
           <button
             type="button"
-            className="danger-btn"
+            className="danger-btn border-[var(--ember)] text-[var(--ember)] hover:bg-[color-mix(in_srgb,var(--ember)_18%,transparent)] bg-none rounded-lg py-1 px-2.5 text-[13px] cursor-pointer transition-colors"
             aria-label="Excluir atlas"
             onClick={deleteFromHeader}
           >
@@ -380,8 +380,8 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
           onChange={onReplaceFile}
         />
       </header>
-      <div className="atlas-body">
-        <div className="atlas-stage-wrap">
+      <div className="flex flex-1 min-h-0">
+        <div className="flex flex-1 min-w-0 min-h-0 relative">
           <Stage
             atlas={atlas}
             onStageClick={handleStageClick}
@@ -409,9 +409,9 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
                       ? Math.max(0, Math.min(hover!.cursor.y - TOOLTIP_SIZE.height, hover!.stage.h - TOOLTIP_SIZE.height))
                       : hover!.cursor.y - TOOLTIP_SIZE.height;
                     return (
-                      <div className="pin-tooltip" data-testid="pin-tooltip" style={{ left, top }}>
-                        <span className="pin-tooltip-label">{hoveredPin.label || "Pino"}</span>
-                        {hoverEntryTitle ? <span className="pin-tooltip-entry">{hoverEntryTitle}</span> : null}
+                      <div className="pin-tooltip absolute z-6 flex flex-col gap-0.5 max-w-[180px] px-2 py-1.5 bg-night-2 border border-line rounded-lg pointer-events-none text-xs" data-testid="pin-tooltip" style={{ left, top }}>
+                        <span className="font-semibold text-parchment">{hoveredPin.label || "Pino"}</span>
+                        {hoverEntryTitle ? <span className="text-parchment-dim">{hoverEntryTitle}</span> : null}
                       </div>
                     );
                   })()
@@ -422,8 +422,8 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
                   const left = st.w > 0 ? Math.max(0, Math.min(cur.x + 12, st.w - 300)) : cur.x + 12;
                   const top = st.h > 0 ? Math.max(0, Math.min(cur.y + 14, st.h - 190)) : cur.y + 14;
                   return (
-                    <div className="pin-tooltip pin-preview-pop" data-testid="pin-entry-preview" style={{ left, top }}>
-                      <button type="button" className="pin-preview-close" aria-label="Fechar preview" onClick={closePreview}>✕</button>
+                    <div className="pin-tooltip pin-preview-pop absolute z-44 flex flex-col gap-1 w-[300px] px-3 py-2.5 bg-night-2 border border-gold-dim rounded-lg text-xs" data-testid="pin-entry-preview" style={{ left, top }}>
+                      <button type="button" className="pin-preview-close absolute top-1 right-1.5 bg-none border-0 text-slate cursor-pointer text-xs hover:text-parchment" aria-label="Fechar preview" onClick={closePreview}>✕</button>
                       <EntryPreview
                         data={{
                           entryId: previewEntryObj.id,
@@ -466,7 +466,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
           </Stage>
           {!atlas.mapImageKey ? <MapDropzone atlasId={atlasId} /> : null}
         </div>
-        <aside className="atlas-panels" aria-label="Atlas panels">
+        <aside className="w-[280px] flex-none min-h-0 overflow-y-auto p-3 bg-night border-l border-line flex flex-col gap-3.5" aria-label="Atlas panels">
           {selectedPin ? (
             <PinPanel
               pin={selectedPin}

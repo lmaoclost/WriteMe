@@ -1,7 +1,6 @@
 import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { fileToDataUrl } from "../../data/image";
 import { useScriptorium, type ToastKind } from "../../data/store";
-import "./atlas.css";
 
 export type PushToast = (kind: ToastKind, message: string) => void;
 
@@ -53,14 +52,14 @@ export function MapDropzone({ atlasId }: { atlasId: string }) {
 
   return (
     <div
-      className={"map-dropzone" + (over ? " drag-over" : "")}
+      className={"map-dropzone group absolute inset-0 z-10 flex flex-col items-center justify-center gap-2.5 p-6 bg-[color-mix(in_srgb,var(--ink)_82%,transparent)] border-2 border-dashed border-line text-center cursor-pointer" + (over ? " drag-over border-gold bg-[color-mix(in_srgb,var(--gold)_8%,var(--ink))]" : "")}
       onClick={() => inputRef.current?.click()}
       onDragOver={onDragOver}
       onDragLeave={() => setOver(false)}
       onDrop={onDrop}
     >
-      <p className="map-dropzone-title">Arraste um mapa…</p>
-      <p className="map-dropzone-sub">ou clique para escolher o arquivo.</p>
+      <p className="m-0 text-parchment-dim text-[15px] group-[.drag-over]:text-gold">Arraste um mapa…</p>
+      <p className="m-0 text-slate text-[13px]">ou clique para escolher o arquivo.</p>
       <input
         ref={inputRef}
         type="file"

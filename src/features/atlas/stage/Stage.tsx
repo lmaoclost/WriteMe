@@ -2,7 +2,6 @@ import { useEffect, useRef, type ReactNode } from "react";
 import type { Atlas, Pt } from "../../../domain/types";
 import { useScriptorium } from "../../../data/store";
 import { MOVE_THRESHOLD_PX, useStageTransform, type StageTransform, type TransformApi } from "./useStageTransform";
-import "../atlas.css";
 
 export interface StageProps {
   atlas: Atlas;
@@ -59,7 +58,7 @@ export function Stage({
     <div
       ref={stageRef}
       data-testid="stage"
-      className={"stage" + (transform.dragging ? " dragging" : "")}
+      className={"stage relative overflow-hidden flex-1 bg-ink cursor-grab" + (transform.dragging ? " dragging cursor-grabbing" : "")}
       onPointerDown={(e) => {
         if (e.button === 0) clickAnchor.current = { clientX: e.clientX, clientY: e.clientY };
       }}
@@ -84,13 +83,13 @@ export function Stage({
       }}
     >
       <div
-        className="stage-content"
+        className="stage-content absolute [transform-origin:0_0]"
         style={{ transform: `translate(${transform.panX}px, ${transform.panY}px) scale(${transform.scale})` }}
       >
         {mapImage ? (
           <img
             ref={imgRef}
-            className="stage-map"
+            className="stage-map block select-none [-webkit-user-drag:none]"
             src={mapImage}
             alt=""
             draggable={false}
@@ -98,7 +97,7 @@ export function Stage({
           />
         ) : null}
         <svg
-          className="stage-overlay"
+          className="stage-overlay absolute inset-0 overflow-visible"
           viewBox={mapImage ? `0 0 ${transform.imgW} ${transform.imgH}` : "0 0 1 1"}
           preserveAspectRatio="none"
         >
@@ -106,7 +105,7 @@ export function Stage({
         </svg>
         {overlayChildren ? (
           <div
-            className="stage-overlay-dom"
+            className="stage-overlay-dom absolute inset-0 [transform-origin:0_0] overflow-visible pointer-events-none"
             style={{
               // Exact inverse of the wrapper matrix T(pan)·S(s): function lists
               // compose right-to-left on the point, so scale(1/s) must sit

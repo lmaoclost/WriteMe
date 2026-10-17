@@ -4,7 +4,8 @@ import type { Region } from "../../../domain/types";
 import { useScriptorium } from "../../../data/store";
 import { ColorSwatches } from "./ColorSwatches";
 import { LinkPicker } from "./LinkPicker";
-import "../atlas.css";
+import { Field } from "../../../ui/Field";
+import { Button } from "../../../ui/Button";
 
 export interface RegionPanelProps {
   atlasId: Id;
@@ -43,31 +44,28 @@ export function RegionPanel({ atlasId, region, entries, onDelete }: RegionPanelP
   };
 
   return (
-    <div className="panel region-panel">
-      <div className="panel-title">Region</div>
-      <div className="field">
-        <label className="field-label" htmlFor="region-label-input">Label</label>
-        <input
-          id="region-label-input"
-          aria-label="Region label"
-          type="text"
-          value={label}
-          onChange={(e) => {
-            setLabel(e.target.value);
-            patch({ label: e.target.value });
-          }}
-        />
-      </div>
-      <div className="field">
-        <span className="field-label">Color</span>
+    <div className="panel flex flex-col gap-3">
+      <div className="text-xs tracking-[0.08em] uppercase text-slate">Region</div>
+      <Field label="Label" htmlFor="region-label-input">
+          <input
+            id="region-label-input"
+            aria-label="Region label"
+            type="text"
+            value={label}
+            onChange={(e) => {
+              setLabel(e.target.value);
+              patch({ label: e.target.value });
+            }}
+          />
+      </Field>
+      <Field label="Color">
         <ColorSwatches
           currentColor={region.color}
           onPickColor={(color) => patch({ color })}
         />
-      </div>
-      <div className="field">
-        <span className="field-label">Fill</span>
-        <div className="range-row">
+      </Field>
+      <Field label="Fill">
+        <div className="flex items-center gap-2 [&_input[type=range]]:flex-1 [&_input[type=range]]:accent-[var(--gold)] [&_output]:font-mono [&_output]:text-xs [&_output]:text-parchment-dim [&_output]:min-w-[38px]">
           <input
             type="range"
             min={0}
@@ -79,13 +77,13 @@ export function RegionPanel({ atlasId, region, entries, onDelete }: RegionPanelP
           />
           <output data-testid="opacity-value">{Math.round(region.fillOpacity * 100)}%</output>
         </div>
-      </div>
-      <div className="field">
-        <span className="field-label">Tome entry</span>
+      </Field>
+      <Field label="Tome entry">
         <button
           type="button"
           aria-pressed={pickerOpen}
           onClick={() => setPickerOpen((open) => !open)}
+          className="bg-none border border-line text-parchment rounded-lg px-2.5 py-1.5 text-[13px] hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold"
         >
           Link entry
         </button>
@@ -100,20 +98,16 @@ export function RegionPanel({ atlasId, region, entries, onDelete }: RegionPanelP
             onClear={() => patch({ entryId: undefined })}
           />
         ) : null}
-      </div>
-      <div className="panel-meta">
+      </Field>
+      <div className="text-xs text-parchment-dim">
         <span data-testid="vertex-count">Vertices: {region.points.length}</span>
       </div>
-      <div className="field">
-        <button type="button" onClick={claimRemaining}>Claim remaining area</button>
-      </div>
-      <button
-        type="button"
-        className="btn-danger panel-delete"
-        onClick={() => (confirming ? onDelete(region.id) : setConfirming(true))}
-      >
+      <Field label="Claim area">
+        <button type="button" onClick={claimRemaining} className="bg-none border border-line text-parchment rounded-lg px-2.5 py-1.5 text-[13px] hover:border-gold-dim self-start justify-self-start">Claim remaining area</button>
+      </Field>
+      <Button kind="danger" className="panel-delete self-start" onClick={() => (confirming ? onDelete(region.id) : setConfirming(true))}>
         {confirming ? "Confirm?" : "Delete region"}
-      </button>
+      </Button>
     </div>
   );
 }

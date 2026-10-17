@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useScriptorium } from "../../data/store";
 import type { Id, WorldEntry } from "../../domain/types";
-import "./atlas.css";
 
 export interface EntryImagePickerProps {
   atlasId: Id;
@@ -33,17 +32,17 @@ export function EntryImagePicker({ atlasId, entries, images, onClose }: EntryIma
 
   return (
     <>
-      <div className="chooser-backdrop" onPointerDown={onClose} aria-hidden="true" />
-      <div className="entry-image-picker" role="dialog" aria-label="Entry image">
+      <div className="chooser-backdrop fixed inset-0 z-29 bg-transparent" onPointerDown={onClose} aria-hidden="true" />
+      <div className="fixed top-[52px] right-3 z-30 w-[340px] max-h-[70vh] overflow-y-auto p-2.5 bg-night-2 border border-line rounded-lg" role="dialog" aria-label="Entry image">
         {candidates.length === 0 ? (
-          <p className="entry-picker-empty">Nenhuma entrada com imagem.</p>
+          <p className="m-0 text-parchment-dim text-[13px]">Nenhuma entrada com imagem.</p>
         ) : (
-          <ul className="entry-picker-grid">
+          <ul className="list-none m-0 p-0 grid grid-cols-2 gap-2">
             {candidates.map((e) => (
               <li key={e.id}>
-                <button type="button" onClick={() => apply(e.id)}>
-                  <img src={images[e.imageKey!]} alt="" />
-                  <span className="entry-picker-title">{e.title}</span>
+                <button type="button" onClick={() => apply(e.id)} className="flex flex-col gap-1 w-full bg-none border border-line rounded-lg p-1.5 text-parchment hover:border-gold-dim">
+                  <img src={images[e.imageKey!]} alt="" className="max-h-16 w-full object-cover" />
+                  <span className="entry-picker-title text-xs overflow-hidden text-ellipsis whitespace-nowrap">{e.title}</span>
                 </button>
               </li>
             ))}

@@ -1,6 +1,5 @@
 import type { Pt } from "../../../domain/types";
 import type { CarvePreview } from "../useDraw";
-import "../atlas.css";
 
 export interface DrawLayerProps {
   drawVertices: Pt[];
@@ -22,22 +21,22 @@ export function DrawLayer({ drawVertices, drawCursor, imgW, imgH, carvePreview, 
     <g className="draw-layer">
       {carvePreview ? (
         <polygon
-          className="carve-preview"
+          className="carve-preview fill-gold fill-opacity-20 [stroke:var(--gold)] [stroke-width:2.5]"
           points={carvePreview.points.map(toPx).join(" ")}
           vectorEffect="non-scaling-stroke"
         />
       ) : preview.length >= 2 ? (
         <polygon
-          className="draw-preview"
+          className="draw-preview fill-gold fill-opacity-12 [stroke:var(--gold)] [stroke-width:2] [stroke-dasharray:6_4]"
           points={preview.map(toPx).join(" ")}
           vectorEffect="non-scaling-stroke"
         />
       ) : null}
       {!previewing && first ? (
-        <circle className="draw-first-marker" cx={first.x * imgW} cy={first.y * imgH} r={6} />
+        <circle className="draw-first-marker fill-none [stroke:var(--gold)] [stroke-width:2]" cx={first.x * imgW} cy={first.y * imgH} r={6} />
       ) : null}
       {(carveSnapPoints ?? []).map((p, i) => (
-        <circle key={i} className="carve-snap-marker" cx={p.x * imgW} cy={p.y * imgH} r={6} />
+        <circle key={i} className="carve-snap-marker fill-none [stroke:var(--gold)] [stroke-width:2]" cx={p.x * imgW} cy={p.y * imgH} r={6} />
       ))}
     </g>
   );

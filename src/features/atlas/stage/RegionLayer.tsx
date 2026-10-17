@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { Id, Region } from "../../../domain/types";
 import { polygonArea, regionCentroid } from "../../../domain/geometry";
 import type { TransformApi } from "./useStageTransform";
-import "../atlas.css";
 
 export interface RegionLayerProps {
   regions: Region[];
@@ -41,10 +40,9 @@ export function RegionLayer({
             : roundOpacity(base);
         const centroid = regionCentroid(region.points);
         const className =
-          "region-poly" +
-          (selected ? " selected" : "") +
-          (hovered ? " hovered" : "") +
-          (region.id === carveParentId ? " carve-parent" : "");
+          "region-poly [stroke-width:2]" +
+          (selected || hovered ? " [stroke-width:3]" : "") +
+          (region.id === carveParentId ? " carve-parent [stroke:var(--gold-dim)] [stroke-opacity:0.9] [stroke-width:3]" : "");
         return (
           <g key={region.id}>
             <polygon
@@ -60,7 +58,7 @@ export function RegionLayer({
               onPointerLeave={() => setHoveredId(null)}
             />
             <text
-              className="region-label"
+              className="region-label font-mono text-xs"
               x={centroid.x * imgW}
               y={centroid.y * imgH}
               fontSize={12}

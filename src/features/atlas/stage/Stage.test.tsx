@@ -258,7 +258,7 @@ describe("Stage render", () => {
     const m = mountStage();
     expect(m.api().imgW).toBe(0);
     const img = loadMapImage(m.container);
-    expect(img.className).toBe("stage-map");
+    expect(img.className).toContain("stage-map");
     expect(img.getAttribute("draggable")).toBe("false");
     expect(m.api().imgW).toBe(800);
     expect(m.api().imgH).toBe(600);
