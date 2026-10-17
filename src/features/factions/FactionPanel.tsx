@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { useScriptorium } from "../../data/store";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { FACTION_PRESET_COLORS } from "./connectionStyles";
+import { Field } from "../../ui/Field";
+import { Button } from "../../ui/Button";
+import { BOARD_PANEL, BOARD_PANEL_HINT, BOARD_PANEL_HEAD, BOARD_PANEL_HEAD_H2 } from "../../ui/board";
 import type { Faction, FactionWeb } from "../../domain/types";
-import "./factions.css";
 
 export function FactionPanel({ web, selectedId, selectedConnectionId, onSelect }: {
   web: FactionWeb;
@@ -14,13 +16,13 @@ export function FactionPanel({ web, selectedId, selectedConnectionId, onSelect }
   const faction = web.factions.find((f) => f.id === selectedId);
   if (!faction && !selectedConnectionId) {
     return (
-      <aside className="bl-panel" data-testid="fac-panel">
-        <p className="bl-panel-hint">Select a faction or connection.</p>
+      <aside className={BOARD_PANEL} data-testid="fac-panel">
+        <p className={BOARD_PANEL_HINT}>Select a faction or connection.</p>
       </aside>
     );
   }
   return (
-    <aside className="bl-panel" data-testid="fac-panel">
+    <aside className={BOARD_PANEL} data-testid="fac-panel">
       {faction ? <FactionForm web={web} faction={faction} onSelect={onSelect} /> : null}
       {selectedConnectionId ? <ConnectionForm connectionId={selectedConnectionId} web={web} onSelect={onSelect} /> : null}
     </aside>
@@ -46,43 +48,40 @@ export function FactionForm({ web, faction, onSelect }: {
   };
 
   return (
-    <div className="bl-house-panel" data-testid="faction-form">
-      <header className="bl-panel-head">
-        <h2>{faction.name}</h2>
-        <button type="button" className={armDelete ? "btn-danger" : ""} onClick={remove}
+    <div className="grid gap-3" data-testid="faction-form">
+      <header className={BOARD_PANEL_HEAD}>
+        <h2 className={BOARD_PANEL_HEAD_H2}>{faction.name}</h2>
+        <Button kind={armDelete ? "danger" : "ghost"} className="px-2 py-1 text-xs" onClick={remove}
           aria-label={armDelete ? "Confirm delete faction" : "Delete faction"}>
           {armDelete ? "Confirm?" : "Delete"}
-        </button>
+        </Button>
       </header>
-      <div className="field">
-        <span className="field-label">Name</span>
+      <Field label="Name">
         <input aria-label="Name" placeholder="e.g. House Valoris" value={nameDraft.draft} onChange={(e) => nameDraft.setDraft(e.target.value)} onBlur={() => nameDraft.flush()} />
-      </div>
+      </Field>
       <TextDebounced label="Leader" value={faction.leader ?? ""} onCommit={(v) => update({ leader: v.trim() || undefined })} />
       <TextDebounced label="Territory" value={faction.territory ?? ""} onCommit={(v) => update({ territory: v.trim() || undefined })} />
       <TextDebounced label="Objetivos" value={faction.goals ?? ""} onCommit={(v) => update({ goals: v.trim() || undefined })} />
-      <label className="field">
-        <span className="field-label">Description</span>
+      <Field label="Description">
         <textarea aria-label="Description" placeholder="Background, history, culture..." rows={4} value={faction.description ?? ""} onChange={(e) => update({ description: e.target.value })} />
-      </label>
-      <div className="field">
-        <span className="field-label">Color</span>
-        <div className="color-row" role="listbox" aria-label="Faction color">
+      </Field>
+      <Field label="Color">
+        <div className="flex flex-wrap gap-1.5" role="listbox" aria-label="Faction color">
           {FACTION_PRESET_COLORS.map((c) => (
             <button
               key={c}
               type="button"
               role="option"
               aria-selected={faction.color === c}
-              className={`color-swatch${faction.color === c ? " current" : ""}`}
+              className={`color-swatch size-5 rounded-full border border-transparent cursor-pointer${faction.color === c ? " outline outline-2 outline-parchment" : ""}`}
               style={{ background: c }}
               onClick={() => update({ color: c })}
               data-color={c}
             />
           ))}
         </div>
-      </div>
-      <p className="bl-panel-note">{web.factions.length} factions · {web.connections.length} connections</p>
+      </Field>
+      <p className="text-slate text-xs">{web.factions.length} factions · {web.connections.length} connections</p>
     </div>
   );
 }
@@ -99,10 +98,9 @@ function TextDebounced({ label, value, onCommit }: { label: string; value: strin
   const { draft, setDraft, flush } = useDebouncedDraft(value, onCommit, 300);
   useEffect(() => () => flush(), [flush]);
   return (
-    <label className="field">
-      <span className="field-label">{label}</span>
+    <Field label={label}>
       <input aria-label={label} value={draft} onChange={(e) => setDraft(e.target.value)} onBlur={() => flush()} />
-    </label>
+    </Field>
   );
 }
 
@@ -120,14 +118,14 @@ function ConnectionForm({ connectionId, web, onSelect }: {
   const a = web.factions.find((f) => f.id === conn.fromId);
   const b = web.factions.find((f) => f.id === conn.toId);
   return (
-    <div className="bl-house-panel" data-testid="connection-form">
-      <header className="bl-panel-head">
-        <h2>Relationship</h2>
-        <button type="button" className="btn-danger" aria-label="Remove connection"
-          onClick={() => { store().removeConnection(conn.id); onSelect(null); }}>Delete</button>
+    <div className="grid gap-3" data-testid="connection-form">
+      <header className={BOARD_PANEL_HEAD}>
+        <h2 className={BOARD_PANEL_HEAD_H2}>Relationship</h2>
+        <Button kind="danger" className="px-2 py-1 text-xs" aria-label="Remove connection"
+          onClick={() => { store().removeConnection(conn.id); onSelect(null); }}>Delete</Button>
       </header>
-      <p className="bl-panel-note">{a?.name} ⇄ {b?.name}</p>
-      <p className="bl-panel-note">Tipo atual: {conn.type}</p>
+      <p className="text-slate text-xs">{a?.name} ⇄ {b?.name}</p>
+      <p className="text-slate text-xs">Tipo atual: {conn.type}</p>
     </div>
   );
 }

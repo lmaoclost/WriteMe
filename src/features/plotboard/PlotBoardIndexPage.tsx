@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useScriptorium } from "../../data/store";
 import { Button } from "../../ui/Button";
+import { CARD_GRID, WORLD_CARD, CARD_LINK, CARD_NAME, CARD_DESC, DELETE_CHIP, EMPTY_STATE } from "../../ui/pageBits";
 import { Modal } from "../../ui/Modal";
 import { Field } from "../../ui/Field";
-import "./plotboard.css";
 
 export function PlotBoardIndexPage({ projectId }: { projectId: string }) {
   const boards = useScriptorium((s) => s.plotBoards ?? []);
@@ -16,27 +16,27 @@ export function PlotBoardIndexPage({ projectId }: { projectId: string }) {
   const target = mine.find((b) => b.id === toDelete);
 
   return (
-    <div className="bloodline-index">
-      <header className="library-head">
+    <div className="mx-auto max-w-[900px] px-6 py-8">
+      <header className="grid gap-1.5 justify-items-start mb-5">
         <h1>Plot board</h1>
-        <p className="library-sub">Plan your story as scenes you can move around.</p>
+        <p className="text-slate text-sm">Plan your story as scenes you can move around.</p>
         <Button onClick={() => setCreating(true)}>Forge New Plot Board</Button>
       </header>
 
       {mine.length === 0 ? (
-        <div className="empty">
+        <div className={EMPTY_STATE}>
           <p>No saved plot boards found. Create a new one first!</p>
-          <p className="empty-hint">Click anywhere to place your first scene.</p>
+          <p className="text-slate text-sm">Click anywhere to place your first scene.</p>
         </div>
       ) : (
-        <div className="library-grid">
+        <div className={CARD_GRID}>
           {mine.map((b) => (
-            <article key={b.id} className="project-card">
-              <Link className="project-link" to={`/p/${projectId}/plotboard/${b.id}`}>
-                <h2 className="project-name">{b.name}</h2>
-                <p className="project-desc">{b.acts.length} acts · {b.cards.length} scenes · {b.wires.length} wires</p>
+            <article key={b.id} className={WORLD_CARD}>
+              <Link className={CARD_LINK} to={`/p/${projectId}/plotboard/${b.id}`}>
+                <h2 className={CARD_NAME}>{b.name}</h2>
+                <p className={CARD_DESC}>{b.acts.length} acts · {b.cards.length} scenes · {b.wires.length} wires</p>
               </Link>
-              <button title="Delete plot board" className="project-delete" onClick={() => setToDelete(b.id)}>✕</button>
+              <button title="Delete plot board" className={DELETE_CHIP} onClick={() => setToDelete(b.id)}>✕</button>
             </article>
           ))}
         </div>
@@ -44,9 +44,9 @@ export function PlotBoardIndexPage({ projectId }: { projectId: string }) {
 
       {creating ? (
         <Modal title="Forge New Plot Board" onClose={() => setCreating(false)}>
-          <div className="form-stack">
+          <div className="grid gap-3">
             <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
-            <div className="form-actions">
+            <div className="mt-2 flex justify-end gap-2.5">
               <Button onClick={() => {
                 const n = name.trim();
                 if (!n) { pushToast("error", "Please enter a plot board name."); return; }
@@ -62,8 +62,8 @@ export function PlotBoardIndexPage({ projectId }: { projectId: string }) {
 
       {target ? (
         <Modal title={`Excluir "${target.name}"?`} onClose={() => setToDelete(null)}>
-          <p className="modal-warning">Removes acts, scenes and wires. No undo.</p>
-          <div className="form-actions">
+          <p className="text-parchment-dim">Removes acts, scenes and wires. No undo.</p>
+          <div className="mt-2 flex justify-end gap-2.5">
             <Button kind="danger" onClick={() => {
               useScriptorium.getState().deletePlotBoard(target.id);
               pushToast("success", "Plot board deleted.");

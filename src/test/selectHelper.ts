@@ -10,11 +10,11 @@ export async function selectOption(
   const trigger = getTrigger();
   fireEventOpen(trigger);
   await waitFor(() => {
-    const listbox = document.querySelector("[role='listbox']");
-    if (!listbox) throw new Error("select listbox not open");
+    const content = document.querySelector("[data-slot='select-content']");
+    if (!content) throw new Error("select content not open");
   });
   const option = waitFor(() => {
-    const el = Array.from(document.querySelectorAll("[role='option']")).find(
+    const el = Array.from(document.querySelectorAll("[data-slot='select-content'] [role='option']")).find(
       (o) =>
         typeof optionName === "string"
           ? (o.textContent ?? "").trim() === optionName
@@ -25,7 +25,7 @@ export async function selectOption(
   });
   const chosen = await option;
   chooseOption(chosen);
-  await waitFor(() => expect(document.querySelector("[role='listbox']")).not.toBeInTheDocument());
+  await waitFor(() => expect(document.querySelector("[data-slot='select-content']")).not.toBeInTheDocument());
   return trigger;
 }
 

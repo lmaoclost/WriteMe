@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { useScriptorium } from "../../data/store";
+import { selectOption } from "../../test/selectHelper";
 import { OathsChartPage } from "./OathsChartPage";
 import { OathsIndexPage } from "./OathsIndexPage";
 
@@ -25,7 +26,7 @@ describe("OathsChartPage", () => {
     expect(panel).toBeTruthy();
     // editor beside the canvas, never painted behind the plane
     expect(panel.closest("[data-testid=oaths-canvas]")).toBeNull();
-    expect(panel.parentElement?.className).toContain("bl-body");
+    expect(panel.parentElement?.className).toContain("grid-cols-[1fr_300px]");
     void a;
   });
 
@@ -36,15 +37,14 @@ describe("OathsChartPage", () => {
     expect(panel.textContent).toMatch(/pick a member/i);
   });
 
-  it("subordinating an existing member creates a link, not a new member", () => {
+  it("subordinating an existing member creates a link, not a new member", async () => {
     const ch = store().addOathsChart("prj_1", "Anel");
     const a = store().addOathMember(ch.id, undefined, { name: "Mirren" })!;
     const b = store().addOathMember(ch.id, undefined, { name: "Orvean" })!;
     render(<MemoryRouter><OathsChartPage chartId={ch.id} /></MemoryRouter>);
     fireEvent.click(screen.getByLabelText("Membro Mirren"));
     const beforeMembers = store().oathsCharts![0].members.length;
-    const pick = screen.getByLabelText("Subordinar a") as HTMLSelectElement;
-    fireEvent.change(pick, { target: { value: b.id } });
+    await selectOption(() => screen.getByLabelText("Subordinar a"), "Orvean");
     const chart = store().oathsCharts![0];
     expect(chart.members).toHaveLength(beforeMembers); // no phantom member
     const link = chart.oathLinks.find((l) => l.subordinateId === a.id);

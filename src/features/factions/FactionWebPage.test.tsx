@@ -37,18 +37,18 @@ describe("FactionWebPage", () => {
     const { w } = seedWeb();
     render(<FactionWebPage webId={w.id} />);
     const canvas = screen.getByTestId("fw-canvas");
-    const before = canvas.querySelector(".bl-plane")!.getAttribute("style")!;
+    const before = canvas.querySelector("[data-testid=\"fw-plane\"]")!.getAttribute("style")!;
     // wheel up at the canvas center → zoom anchored at cursor
     fireEvent.wheel(canvas, { deltaY: -100, clientX: 600, clientY: 400 });
-    const afterWheel = canvas.querySelector(".bl-plane")!.getAttribute("style")!;
+    const afterWheel = canvas.querySelector("[data-testid=\"fw-plane\"]")!.getAttribute("style")!;
     expect(afterWheel).not.toBe(before);
     // header zoom buttons
     fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
-    const afterIn = canvas.querySelector(".bl-plane")!.getAttribute("style")!;
+    const afterIn = canvas.querySelector("[data-testid=\"fw-plane\"]")!.getAttribute("style")!;
     expect(afterIn).not.toBe(afterWheel);
     fireEvent.click(screen.getByRole("button", { name: "Zoom out" }));
     fireEvent.click(screen.getByRole("button", { name: "Zoom out" }));
-    expect(canvas.querySelector(".bl-plane")!.getAttribute("style")! || "z").toBeTruthy();
+    expect(canvas.querySelector("[data-testid=\"fw-plane\"]")!.getAttribute("style")! || "z").toBeTruthy();
     // display shows a percentage
     expect(screen.getByTestId("fw-zoom").textContent).toMatch(/%$/);
   });

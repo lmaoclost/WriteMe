@@ -5,7 +5,8 @@ import { FACTION_CONNECTION_STYLES } from "./connectionStyles";
 import { FactionPanel } from "./FactionPanel";
 import { WebNotepad } from "./WebNotepad";
 import type { Faction } from "../../domain/types";
-import "./factions.css";import { useBoardNotesHotkey } from "../../ui/boardNotes";
+import { BOARD_HEADER, BOARD_NAME_INPUT, BOARD_ACTIONS, BOARD_ACTION_BTN } from "../../ui/board";
+import { useBoardNotesHotkey } from "../../ui/boardNotes";
 
 
 export function FactionWebPage({ webId }: { webId: string }) {
@@ -143,30 +144,30 @@ export function FactionWebPage({ webId }: { webId: string }) {
   void centerOf;
 
   return (
-    <div className="factions-page" data-testid="factions-page">
-      <header className="bl-header">
+    <div className="grid grid-rows-[auto_1fr] h-full" data-testid="factions-page">
+      <header className={BOARD_HEADER}>
         <input
-          className="bl-name"
+          className={BOARD_NAME_INPUT}
           aria-label="Faction web name"
           value={web.name}
           onChange={(e) => useScriptorium.getState().renameFactionWeb(webId, e.target.value)}
         />
-        <div className="bl-actions">
-          <button type="button" aria-label="Undo" disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoFW(webId)}>↶</button>
-          <button type="button" aria-label="Redo" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoFW(webId)}>↷</button>
-          <button type="button" aria-label="Zoom out" onClick={() => setScale((v) => zoomAt({ ...v }, 1 / 1.25, elWidth(), elHeight()))}>−</button>
-          <span className="fw-zoom" data-testid="fw-zoom">{Math.round(scale.s * 100)}%</span>
-          <button type="button" aria-label="Zoom in" onClick={() => setScale((v) => zoomAt({ ...v }, 1.25, elWidth(), elHeight()))}>+</button>
-          <button type="button" onClick={() => adjustView()}>Ajustar</button>
-          <button type="button" onClick={() => { pushFWHistory(webId); const el = stageRef.current; const f = addFaction(webId, { x: el ? (el.clientWidth / 2 - scaleRef.current.panX) / scaleRef.current.s : 4000, y: el ? (el.clientHeight / 2 - scaleRef.current.panY) / scaleRef.current.s : 4000 }); if (f) setSelectedId(f.id); }}>
+        <div className={BOARD_ACTIONS}>
+          <button type="button" aria-label="Undo" className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoFW(webId)}>↶</button>
+          <button type="button" aria-label="Redo" className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoFW(webId)}>↷</button>
+          <button type="button" aria-label="Zoom out" className={BOARD_ACTION_BTN} onClick={() => setScale((v) => zoomAt({ ...v }, 1 / 1.25, elWidth(), elHeight()))}>−</button>
+          <span className="text-slate text-xs font-mono self-center" data-testid="fw-zoom">{Math.round(scale.s * 100)}%</span>
+          <button type="button" aria-label="Zoom in" className={BOARD_ACTION_BTN} onClick={() => setScale((v) => zoomAt({ ...v }, 1.25, elWidth(), elHeight()))}>+</button>
+          <button type="button" className={BOARD_ACTION_BTN} onClick={() => adjustView()}>Ajustar</button>
+          <button type="button" className={BOARD_ACTION_BTN} onClick={() => { pushFWHistory(webId); const el = stageRef.current; const f = addFaction(webId, { x: el ? (el.clientWidth / 2 - scaleRef.current.panX) / scaleRef.current.s : 4000, y: el ? (el.clientHeight / 2 - scaleRef.current.panY) / scaleRef.current.s : 4000 }); if (f) setSelectedId(f.id); }}>
             New Faction
           </button>
-          <button type="button" aria-pressed={notesOpen} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
+          <button type="button" aria-pressed={notesOpen} className={BOARD_ACTION_BTN} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
         </div>
       </header>
-      <div className="bl-body">
+      <div className="grid grid-cols-[1fr_300px] min-h-0 overflow-hidden">
         <div
-          className="bl-canvas"
+          className="relative overflow-hidden bg-ink cursor-grab active:cursor-grabbing"
           data-testid="fw-canvas"
           ref={stageRef}
           style={{ ...(pendingFrom ? { cursor: "crosshair" } : {}) }}
@@ -187,7 +188,7 @@ export function FactionWebPage({ webId }: { webId: string }) {
           onWheel={onWheelZoom}
         >
           <div
-            className="bl-plane"
+            className="absolute bg-[radial-gradient(circle_at_25%_25%,#17162a,var(--ink)_65%)] shadow-[inset_0_0_0_1px_var(--line)]"
             data-testid="fw-plane"
             style={{
               width: planeSize,
@@ -196,7 +197,7 @@ export function FactionWebPage({ webId }: { webId: string }) {
               transformOrigin: "0 0",
             }}
           >
-            <svg data-testid="fw-edges" className="edges-layer" width="100%" height="100%">
+            <svg data-testid="fw-edges" className="edges-layer absolute left-0 top-0 w-full h-full pointer-events-none" width="100%" height="100%">
               {web.connections.map((c) => {
                 const a = factionNodeById(c.fromId);
                 const b = factionNodeById(c.toId);
@@ -213,20 +214,20 @@ export function FactionWebPage({ webId }: { webId: string }) {
                       strokeWidth={2}
                       strokeDasharray={style.dashArray}
                     />
-                    <text x={mx} y={my - 6} className="edge-type-label" fill={style.color} textAnchor="middle">{style.label}</text>
+                    <text x={mx} y={my - 6} className="text-[11px] font-mono" fill={style.color} textAnchor="middle">{style.label}</text>
                   </g>
                 );
               })}
               {pendingFrom ? (() => {
                 const from = factionNodeById(pendingFrom.id);
                 if (!from || !cursor) return null;
-                return <line data-testid="pending-conn" x1={from.x} y1={from.y} x2={cursor.x / scaleRef.current.s} y2={cursor.y / scaleRef.current.s} className="pending-conn" />;
+                return <line data-testid="pending-conn" x1={from.x} y1={from.y} x2={cursor.x / scaleRef.current.s} y2={cursor.y / scaleRef.current.s} className="[stroke:var(--gold)] [stroke-width:2] [stroke-dasharray:6_6]" />;
               })() : null}
             </svg>
             {web.factions.map((f) => (
               <div
                 key={f.id}
-                className={`fac-node${selectedId === f.id ? " selected" : ""}`}
+                className={`fac-node absolute w-[120px] px-2.5 py-2 rounded-lg bg-night border border-slate border-t-3 grid gap-0.5 cursor-pointer${selectedId === f.id ? " outline outline-2 outline-gold" : ""}`}
                 data-fac-id={f.id}
                 data-testid="fac-node"
                 style={{ left: f.x - 60, top: f.y - 22, borderTopColor: f.color }}
@@ -244,12 +245,12 @@ export function FactionWebPage({ webId }: { webId: string }) {
                 aria-label={`Faction ${f.name}`}
                 tabIndex={0}
               >
-                <span className="fac-dot" style={{ background: f.color }} />
-                <span className="fac-name">{f.name}</span>
-                {f.leader ? <span className="fac-leader">{f.leader}</span> : null}
+                <span className="absolute size-2.5 rounded-full -left-1.5 -top-1.5" style={{ background: f.color }} />
+                <span className="text-[13px] font-semibold text-parchment">{f.name}</span>
+                {f.leader ? <span className="text-[11px] text-slate">{f.leader}</span> : null}
                 <button
                   type="button"
-                  className="conn-handle"
+                  className="conn-handle absolute -right-2.5 top-1/2 -translate-y-1/2 size-5 rounded-full bg-gold text-wax border-0 text-[0.6875rem] grid place-items-center cursor-crosshair"
                   aria-label={`Conectar ${f.name}`}
                   onClick={(e) => e.stopPropagation()}
                   onPointerDown={(e) => {
@@ -267,10 +268,10 @@ export function FactionWebPage({ webId }: { webId: string }) {
             ))}
           </div>
           {web.factions.length === 0 ? (
-            <div className="bl-empty">Add the first faction to the web.</div>
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[calc(1/var(--bl-scale,0.1))] text-slate whitespace-nowrap">Add the first faction to the web.</div>
           ) : null}
           {pendingFrom ? (
-            <div className="fac-hint">Choose a faction to connect.</div>
+            <div className="absolute bottom-3.5 left-1/2 -translate-x-1/2 bg-night-2 border border-line text-parchment-dim px-3 py-1.5 rounded-lg text-[13px]">Choose a faction to connect.</div>
           ) : null}
         </div>
         <FactionPanel
@@ -281,19 +282,19 @@ export function FactionWebPage({ webId }: { webId: string }) {
         />
         {notesOpen ? <WebNotepad notes={web.notes} onNotes={(v) => useScriptorium.getState().setWebNotes(webId, v)} onClose={() => setNotesOpen(false)} /> : null}
         {typePicker ? (
-          <div className="conn-type-picker" style={{ left: typePicker.left, top: typePicker.top }} data-testid="conn-type-picker">
+          <div className="conn-type-picker absolute z-45 bg-night-2 border border-line rounded-lg p-1.5 grid gap-1" style={{ left: typePicker.left, top: typePicker.top }} data-testid="conn-type-picker">
             {Object.entries(FACTION_CONNECTION_STYLES).map(([type, style]) => (
               <button
                 key={type}
                 type="button"
-                className="conn-type-option"
+                className="bg-transparent border rounded-sm px-2.5 py-1 text-[13px] text-left hover:brightness-110"
                 style={{ borderColor: style.color, color: style.color }}
                 onClick={() => { setConnectionType(typePicker.connId, type as never); setTypePicker(null); }}
               >
                 {style.label}
               </button>
             ))}
-            <button type="button" className="conn-type-option" onClick={() => { useScriptorium.getState().removeConnection(typePicker.connId); setTypePicker(null); }}>Remove connection</button>
+            <button type="button" className="conn-type-option bg-transparent border border-line rounded-sm px-2.5 py-1 text-[13px] text-left hover:brightness-110" onClick={() => { useScriptorium.getState().removeConnection(typePicker.connId); setTypePicker(null); }}>Remove connection</button>
           </div>
         ) : null}
       </div>

@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useScriptorium } from "../../data/store";
 import { Button } from "../../ui/Button";
+import { CARD_GRID, WORLD_CARD, CARD_LINK, CARD_NAME, CARD_DESC, DELETE_CHIP, EMPTY_STATE } from "../../ui/pageBits";
 import { Modal } from "../../ui/Modal";
 import { Field } from "../../ui/Field";
-import "./wellspring.css";
 
 export function WellSpringIndexPage({ projectId }: { projectId: string }) {
   const wells = useScriptorium((s) => s.wellsprings ?? []);
@@ -16,27 +16,27 @@ export function WellSpringIndexPage({ projectId }: { projectId: string }) {
   const target = mine.find((w) => w.id === toDelete);
 
   return (
-    <div className="bloodline-index">
-      <header className="library-head">
+    <div className="mx-auto max-w-[900px] px-6 py-8">
+      <header className="grid gap-1.5 justify-items-start mb-5">
         <h1>The Wellspring</h1>
-        <p className="library-sub">Somewhere to put an idea before it has a home.</p>
+        <p className="text-slate text-sm">Somewhere to put an idea before it has a home.</p>
         <Button onClick={() => setCreating(true)}>Forge New Wellspring</Button>
       </header>
 
       {mine.length === 0 ? (
-        <div className="empty">
+        <div className={EMPTY_STATE}>
           <p>No saved wellsprings found. Create a new one first!</p>
-          <p className="empty-hint">Loose ideas, before they have a home.</p>
+          <p className="text-slate text-sm">Loose ideas, before they have a home.</p>
         </div>
       ) : (
-        <div className="library-grid">
+        <div className={CARD_GRID}>
           {mine.map((w) => (
-            <article key={w.id} className="project-card">
-              <Link className="project-link" to={`/p/${projectId}/wellspring/${w.id}`}>
-                <h2 className="project-name">{w.name}</h2>
-                <p className="project-desc">{w.nodes.length} circles · {w.borders.length} lines</p>
+            <article key={w.id} className={WORLD_CARD}>
+              <Link className={CARD_LINK} to={`/p/${projectId}/wellspring/${w.id}`}>
+                <h2 className={CARD_NAME}>{w.name}</h2>
+                <p className={CARD_DESC}>{w.nodes.length} circles · {w.borders.length} lines</p>
               </Link>
-              <button title="Delete wellspring" className="project-delete" onClick={() => setToDelete(w.id)}>✕</button>
+              <button title="Delete wellspring" className={DELETE_CHIP} onClick={() => setToDelete(w.id)}>✕</button>
             </article>
           ))}
         </div>
@@ -44,9 +44,9 @@ export function WellSpringIndexPage({ projectId }: { projectId: string }) {
 
       {creating ? (
         <Modal title="Forge New Wellspring" onClose={() => setCreating(false)}>
-          <div className="form-stack">
+          <div className="grid gap-3">
             <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
-            <div className="form-actions">
+            <div className="mt-2 flex justify-end gap-2.5">
               <Button onClick={() => {
                 const n = name.trim();
                 if (!n) { pushToast("error", "Please enter a wellspring name."); return; }
@@ -62,8 +62,8 @@ export function WellSpringIndexPage({ projectId }: { projectId: string }) {
 
       {target ? (
         <Modal title={`Excluir "${target.name}"?`} onClose={() => setToDelete(null)}>
-          <p className="modal-warning">Removes circles and lines. No undo.</p>
-          <div className="form-actions">
+          <p className="text-parchment-dim">Removes circles and lines. No undo.</p>
+          <div className="mt-2 flex justify-end gap-2.5">
             <Button kind="danger" onClick={() => {
               useScriptorium.getState().deleteWellSpring(target.id);
               pushToast("success", "Wellspring deleted.");

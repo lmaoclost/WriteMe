@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useScriptorium } from "../../data/store";
 import { Button } from "../../ui/Button";
+import { CARD_GRID, WORLD_CARD, CARD_LINK, CARD_NAME, CARD_DESC, DELETE_CHIP, EMPTY_STATE } from "../../ui/pageBits";
 import { Modal } from "../../ui/Modal";
 import { Field } from "../../ui/Field";
-import "./oaths.css";
 
 export function OathsIndexPage({ projectId }: { projectId: string }) {
   const charts = useScriptorium((s) => s.oathsCharts ?? []);
@@ -16,27 +16,27 @@ export function OathsIndexPage({ projectId }: { projectId: string }) {
   const target = mine.find((c) => c.id === toDelete);
 
   return (
-    <div className="bloodline-index">
-      <header className="library-head">
+    <div className="mx-auto max-w-[900px] px-6 py-8">
+      <header className="grid gap-1.5 justify-items-start mb-5">
         <h1>Oaths Hierarchy</h1>
-        <p className="library-sub">Chart who answers to whom — courts, orders, armies and guilds.</p>
+        <p className="text-slate text-sm">Chart who answers to whom — courts, orders, armies and guilds.</p>
         <Button onClick={() => setCreating(true)}>Forge New Oaths Hierarchy</Button>
       </header>
 
       {mine.length === 0 ? (
-        <div className="empty">
+        <div className={EMPTY_STATE}>
           <p>No saved chains of command found. Create a new one first!</p>
-          <p className="empty-hint">A primary chain sets the rank.</p>
+          <p className="text-slate text-sm">A primary chain sets the rank.</p>
         </div>
       ) : (
-        <div className="library-grid">
+        <div className={CARD_GRID}>
           {mine.map((c) => (
-            <article key={c.id} className="project-card">
-              <Link className="project-link" to={`/p/${projectId}/oaths/${c.id}`}>
-                <h2 className="project-name">{c.name}</h2>
-                <p className="project-desc">{c.members.length} members · {c.oathLinks.length} oaths</p>
+            <article key={c.id} className={WORLD_CARD}>
+              <Link className={CARD_LINK} to={`/p/${projectId}/oaths/${c.id}`}>
+                <h2 className={CARD_NAME}>{c.name}</h2>
+                <p className={CARD_DESC}>{c.members.length} members · {c.oathLinks.length} oaths</p>
               </Link>
-              <button title="Delete oaths hierarchy" className="project-delete" onClick={() => setToDelete(c.id)}>✕</button>
+              <button title="Delete oaths hierarchy" className={DELETE_CHIP} onClick={() => setToDelete(c.id)}>✕</button>
             </article>
           ))}
         </div>
@@ -44,9 +44,9 @@ export function OathsIndexPage({ projectId }: { projectId: string }) {
 
       {creating ? (
         <Modal title="Forge New Oaths Hierarchy" onClose={() => setCreating(false)}>
-          <div className="form-stack">
+          <div className="grid gap-3">
             <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
-            <div className="form-actions">
+            <div className="mt-2 flex justify-end gap-2.5">
               <Button onClick={() => {
                 const n = name.trim();
                 if (!n) { pushToast("error", "Please enter a chain name."); return; }
@@ -62,8 +62,8 @@ export function OathsIndexPage({ projectId }: { projectId: string }) {
 
       {target ? (
         <Modal title={`Excluir "${target.name}"?`} onClose={() => setToDelete(null)}>
-          <p className="modal-warning">Removes members and oaths. No undo.</p>
-          <div className="form-actions">
+          <p className="text-parchment-dim">Removes members and oaths. No undo.</p>
+          <div className="mt-2 flex justify-end gap-2.5">
             <Button kind="danger" onClick={() => {
               useScriptorium.getState().deleteOathsChart(target.id);
               pushToast("success", "Hierarchy deleted.");

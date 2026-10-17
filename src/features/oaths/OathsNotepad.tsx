@@ -9,12 +9,12 @@ export function OathsNotepad({ notes, onNotes, onClose }: { notes: string; onNot
     return () => clearTimeout(id);
   }, [draft, notes, onNotes]);
   return (
-    <div className="bl-notepad" data-testid="oaths-notepad">
-      <header className="bl-notepad-head">
+    <div className="absolute top-3.5 right-[320px] w-[260px] z-39 bg-night-2 border border-gold-dim rounded-lg shadow-[0_6px_18px_var(--scrim-canvas)]" data-testid="oaths-notepad">
+      <header className="flex justify-between items-center px-2.5 py-1.5 cursor-move text-gold text-xs tracking-[0.1em] uppercase">
         <span>Notes</span>
-        <button type="button" aria-label="Close notes" onClick={onClose}>✕</button>
+        <button type="button" aria-label="Close notes" onClick={onClose} className="bg-none border-0 text-slate">✕</button>
       </header>
-      <textarea aria-label="Chart notes" value={draft} onChange={(e) => setDraft(e.target.value)} rows={5} />
+      <textarea aria-label="Chart notes" value={draft} onChange={(e) => setDraft(e.target.value)} rows={5} className="w-full border-0 border-t border-line bg-transparent text-parchment px-2.5 py-2 resize-y min-h-[90px]" />
     </div>
   );
 }

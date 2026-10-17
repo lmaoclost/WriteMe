@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useScriptorium } from "../../data/store";
 import { Button } from "../../ui/Button";
+import { CARD_GRID, WORLD_CARD, CARD_LINK, CARD_NAME, CARD_DESC, DELETE_CHIP, EMPTY_STATE } from "../../ui/pageBits";
 import { Modal } from "../../ui/Modal";
 import { Field } from "../../ui/Field";
-import "./factions.css";
 
 export function FactionWebServicePage({ projectId }: { projectId: string }) {
   const webs = useScriptorium((s) => s.factionWebs ?? []);
@@ -16,27 +16,27 @@ export function FactionWebServicePage({ projectId }: { projectId: string }) {
   const target = mine.find((w) => w.id === toDelete);
 
   return (
-    <div className="bloodline-index">
-      <header className="library-head">
+    <div className="mx-auto max-w-[900px] px-6 py-8">
+      <header className="grid gap-1.5 justify-items-start mb-5">
         <h1>Faction Webs</h1>
-        <p className="library-sub">How the powers in your world regard one another.</p>
+        <p className="text-slate text-sm">How the powers in your world regard one another.</p>
         <Button onClick={() => setCreating(true)}>Forge New Faction Web</Button>
       </header>
 
       {mine.length === 0 ? (
-        <div className="empty">
+        <div className={EMPTY_STATE}>
           <p>No saved faction webs found. Create a new one first!</p>
-          <p className="empty-hint">Add the first faction to the web.</p>
+          <p className="text-slate text-sm">Add the first faction to the web.</p>
         </div>
       ) : (
-        <div className="library-grid">
+        <div className={CARD_GRID}>
           {mine.map((w) => (
-            <article key={w.id} className="project-card">
-              <Link className="project-link" to={`/p/${projectId}/factions/${w.id}`}>
-                <h2 className="project-name">{w.name}</h2>
-                <p className="project-desc">{w.factions.length} factions · {w.connections.length} connections</p>
+            <article key={w.id} className={WORLD_CARD}>
+              <Link className={CARD_LINK} to={`/p/${projectId}/factions/${w.id}`}>
+                <h2 className={CARD_NAME}>{w.name}</h2>
+                <p className={CARD_DESC}>{w.factions.length} factions · {w.connections.length} connections</p>
               </Link>
-              <button title="Delete faction web" className="project-delete" onClick={() => setToDelete(w.id)}>✕</button>
+              <button title="Delete faction web" className={DELETE_CHIP} onClick={() => setToDelete(w.id)}>✕</button>
             </article>
           ))}
         </div>
@@ -44,9 +44,9 @@ export function FactionWebServicePage({ projectId }: { projectId: string }) {
 
       {creating ? (
         <Modal title="Forge New Faction Web" onClose={() => setCreating(false)}>
-          <div className="form-stack">
+          <div className="grid gap-3">
             <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
-            <div className="form-actions">
+            <div className="mt-2 flex justify-end gap-2.5">
               <Button onClick={() => {
                 const n = name.trim();
                 if (!n) { pushToast("error", "Please enter a web name."); return; }
@@ -62,8 +62,8 @@ export function FactionWebServicePage({ projectId }: { projectId: string }) {
 
       {target ? (
         <Modal title={`Excluir "${target.name}"?`} onClose={() => setToDelete(null)}>
-          <p className="modal-warning">Removes factions and connections. No undo.</p>
-          <div className="form-actions">
+          <p className="text-parchment-dim">Removes factions and connections. No undo.</p>
+          <div className="mt-2 flex justify-end gap-2.5">
             <Button kind="danger" onClick={() => {
               useScriptorium.getState().deleteFactionWeb(target.id);
               pushToast("success", "Faction web deleted.");
