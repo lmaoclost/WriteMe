@@ -21,7 +21,7 @@ export function ChapterList({ chapters, selectedId, onSelect, onMove, onCreate }
           {chapters.map((chapter, index) => {
             const words = countWords(chapter.content);
             return (
-              <li key={chapter.id}>
+              <li key={chapter.id} className="flex items-stretch gap-1">
                 <button
                   type="button"
                   className="book-ch-move w-[26px] bg-none border border-line rounded-lg text-parchment-dim text-xs leading-none hover:border-gold-dim hover:text-gold disabled:opacity-35 disabled:cursor-default"
@@ -42,7 +42,7 @@ export function ChapterList({ chapters, selectedId, onSelect, onMove, onCreate }
                 </button>
                 <button
                   type="button"
-                  className={"book-ch-row flex-1 min-w-0 text-left bg-none border-0 border-l-2 border-transparent rounded-lg text-parchment px-2 py-1.5 text-sm" + (chapter.id === selectedId ? " active border-l-gold bg-night-2" : "") + " hover:bg-night-2"}
+                  className={"book-ch-row flex-1 min-w-0 flex flex-col gap-0.5 text-left bg-none border-0 border-l-2 border-transparent rounded-lg text-parchment px-2 py-1.5 text-sm" + (chapter.id === selectedId ? " active border-l-gold bg-night-2" : "") + " hover:bg-night-2"}
                   onClick={() => onSelect(chapter.id)}
                 >
                   <span className="book-ch-heading overflow-hidden text-ellipsis whitespace-nowrap">{chapter.heading}</span>
