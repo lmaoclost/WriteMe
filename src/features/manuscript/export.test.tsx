@@ -242,7 +242,7 @@ describe("EPUB export", () => {
     render(manuscriptRoute(projectId));
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
-    expect(epubMock.calls[0].options.cover).toBe("data:image/png;base64,CAPACOVER");
+    expect((epubMock.calls[0].options as { cover?: string }).cover).toBe("data:image/png;base64,CAPACOVER");
   });
 
   it("omits the cover option when the project has none", async () => {
@@ -251,7 +251,7 @@ describe("EPUB export", () => {
     render(manuscriptRoute(projectId));
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
-    expect(epubMock.calls[0].options.cover).toBeUndefined();
+    expect((epubMock.calls[0].options as { cover?: string }).cover).toBeUndefined();
   });
 });
 
