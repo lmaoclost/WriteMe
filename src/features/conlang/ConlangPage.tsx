@@ -170,13 +170,26 @@ function GlyphEditor({ conlang, glyphId, onDone }: {
     <div className="glyph-editor" data-testid="glyph-editor">
       <div className="conlang-actions-row">
         <span className="dim">Glifo {glyph.char} — desenhe com o mouse</span>
-        <button
-          type="button"
-          className="btn-danger"
-          aria-label={`Excluir glifo ${glyph.char}`}
-          onClick={() => { useScriptorium.getState().deleteGlyph(glyph.id); onDone(); }}
-        >Delete glyph</button>
+        <button type="button" className="btn-ghost" onClick={() => useScriptorium.getState().deleteGlyph(glyph.id)} aria-label={`Delete glyph ${glyph.char}`}>Delete glyph</button>
         <button type="button" aria-label="Close glyph editor" onClick={onDone}>✕</button>
+      </div>
+      <div className="glyph-letter-row">
+        <label className="field">
+          <span className="field-label">Represents letter</span>
+          <input
+            aria-label="Represents letter"
+            defaultValue={glyph.char}
+            maxLength={3}
+            onBlur={(e) => {
+              const v = e.target.value.trim().toUpperCase() || glyph.char;
+              const dup = conlang.glyphs.some((g) => g.id !== glyph.id && g.char === v);
+              const s = useScriptorium.getState();
+              if (dup) { s.pushToast("error", `"${v}" already belongs to another glyph.`); e.target.value = glyph.char; return; }
+              s.updateGlyph(glyph.id, { char: v });
+            }}
+          />
+        </label>
+        <p className="dim">Point which letter (or sound) this glyph stands for.</p>
       </div>
       <svg
         ref={svgRef}

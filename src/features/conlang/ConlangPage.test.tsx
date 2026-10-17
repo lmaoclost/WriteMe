@@ -34,6 +34,21 @@ describe("ConlangPage — alfabeto", () => {
     expect(store().conlangs![0].glyphs[0].svgPath).toContain("Q ");
   });
 
+  it("glyph letter is editable (what the glyph represents) with duplicate guard", () => {
+    const c = seed();
+    render(<ConlangPage conlangId={c.id} />);
+    fireEvent.click(screen.getByRole("button", { name: "New glyph" }));
+    const inp = screen.getByLabelText("Represents letter") as HTMLInputElement;
+    fireEvent.change(inp, { target: { value: "th" } });
+    fireEvent.blur(inp);
+    expect(store().conlangs![0].glyphs[0].char).toBe("TH");
+    // duplicate → toast + revert
+    const dup = screen.getByLabelText("Represents letter") as HTMLInputElement;
+    fireEvent.change(dup, { target: { value: "TH" } });
+    fireEvent.blur(dup);
+    expect(store().conlangs![0].glyphs[0].char).toBe("TH");
+  });
+
   it("duplicate letter rejected; delete glyph", () => {
     const c = seed();
     render(<ConlangPage conlangId={c.id} />);
@@ -41,7 +56,7 @@ describe("ConlangPage — alfabeto", () => {
     let again: unknown;
     act(() => { again = store().addGlyph(c.id, "A"); });
     expect(again).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: /Excluir glifo/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Delete glyph/ }));
     expect(store().conlangs![0].glyphs).toHaveLength(0);
   });
 
