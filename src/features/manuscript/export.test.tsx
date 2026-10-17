@@ -223,7 +223,6 @@ describe("buildBookHtml v2", () => {
 
   it("print page breaks are single-sided (no break-after: page anywhere)", async () => {
     const fsp = await import("node:fs/promises");
-    const dir = "src/features/manuscript";
     const bookCss = await fsp.readFile("src/app/print.css", "utf8");
     const binderyCss = await fsp.readFile("src/app/theme.css", "utf8");
     // adjacent forced breaks (break-after + break-before on touching elements)

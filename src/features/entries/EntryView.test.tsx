@@ -241,8 +241,8 @@ describe("EntryView — category + cover", () => {
     renderView(aldric);
     fireEvent.click(screen.getByRole("button", { name: "Entry image" }));
     const picker = screen.getByRole("group", { name: "Entry images" });
-    expect(picker.querySelectorAll(".codex-thumbgrid button")).toHaveLength(1);
-    const thumb = picker.querySelector(".codex-thumbgrid img");
+    expect(picker.querySelectorAll("ul button")).toHaveLength(1);
+    const thumb = picker.querySelector("ul img");
     expect(thumb).not.toBeNull();
     expect(thumb).toHaveAttribute("src", "data:image/jpeg;base64,OUTRO");
     fireEvent.click(screen.getByRole("button", { name: /rio sarnen/i }));
