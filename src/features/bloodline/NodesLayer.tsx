@@ -18,7 +18,7 @@ export function PersonNode({
   return (
     <div
       data-testid="person-node"
-      className={`bl-node person-node${selected ? " selected" : ""}`}
+      className={`bl-node person-node absolute size-16 rounded-full bg-night-2 border-2 border-line grid place-items-center cursor-pointer [grid-template-rows:1fr]${selected ? " selected border-gold shadow-[0_0_0_2px_color-mix(in_srgb,var(--gold)_40%,transparent)]" : " border-line"}`}
       style={{ left: person.x - 32, top: person.y - 32 }}
       onPointerDown={(e) => {
         if (e.button !== 0) return;
@@ -47,18 +47,18 @@ export function PersonNode({
       onKeyDown={(e) => { if (e.key === "Delete") onDelete(); }}
     >
       {portrait ? (
-        <img className="person-portrait" src={portrait} alt="" draggable={false} />
+        <img className="person-portrait size-[60px] rounded-full object-cover" src={portrait} alt="" draggable={false} />
       ) : (
-        <span className="person-initial">{(person.name || "?").charAt(0).toUpperCase()}</span>
+        <span className="person-initial font-display text-[1.375rem] text-parchment">{(person.name || "?").charAt(0).toUpperCase()}</span>
       )}
       {person.showBadge && person.badgeText ? (
-        <span className="person-badge">{person.badgeText}</span>
+        <span className="person-badge absolute -top-2 left-1/2 -translate-x-1/2 text-[0.6875rem] bg-gold text-wax py-px px-1.5 rounded-lg whitespace-nowrap">{person.badgeText}</span>
       ) : null}
-      {person.isTwin ? <span className="person-twin" aria-hidden="true">⇉</span> : null}
-      <span className="person-name">{person.name}</span>
-      {houseName ? <span className="person-house">{houseName}</span> : null}
+      {person.isTwin ? <span className="person-twin absolute -right-2.5 top-0 text-slate text-xs" aria-hidden="true">⇉</span> : null}
+      <span className="person-name absolute top-[66px] left-1/2 -translate-x-1/2 text-xs text-parchment bg-[rgb(18_18_30/0.9)] px-1.5 py-0.5 rounded-sm whitespace-nowrap">{person.name}</span>
+      {houseName ? <span className="person-house absolute top-[84px] left-1/2 -translate-x-1/2 text-[10px] tracking-[0.04em] text-slate whitespace-nowrap uppercase">{houseName}</span> : null}
       {person.birthOrder != null ? (
-        <span className="person-order">{person.birthOrder}</span>
+        <span className="person-order absolute -bottom-[18px] left-1/2 -translate-x-1/2 font-mono text-[0.6875rem] text-slate">{person.birthOrder}</span>
       ) : null}
     </div>
   );
@@ -72,16 +72,16 @@ export function HouseNode({ house, selected, onSelect }: {
   return (
     <div
       data-testid="house-node"
-      className={`bl-node house-node${house.isMainBranch ? " house-main" : ""}${house.isMonarch ? " house-monarch" : ""}${selected ? " selected" : ""}`}
+      className={`bl-node house-node absolute w-32 px-2.5 py-2 rounded-lg bg-night border border-slate grid gap-0.5 cursor-pointer${house.isMainBranch ? " house-main border-gold-dim shadow-[0_0_12px_color-mix(in_srgb,var(--gold)_25%,transparent)]" : ""}${house.isMonarch ? " house-monarch border-gold border-2" : ""}${selected ? " selected border-gold shadow-[0_0_0_2px_color-mix(in_srgb,var(--gold)_40%,transparent)]" : ""}`}
       style={{ left: house.x - 64, top: house.y - 24 }}
       onPointerDown={(e) => { e.stopPropagation(); onSelect(); }}
       role="button"
       aria-label={`Casa ${house.name}`}
       tabIndex={0}
     >
-      <span className="house-name">{house.name}</span>
-      {house.subtitle ? <span className="house-subtitle">{house.subtitle}</span> : null}
-      {house.isMonarch ? <span className="house-crown" aria-hidden="true">♛</span> : null}
+      <span className="house-name text-sm font-semibold text-parchment">{house.name}</span>
+      {house.subtitle ? <span className="house-subtitle text-[11px] text-slate">{house.subtitle}</span> : null}
+      {house.isMonarch ? <span className="house-crown absolute -top-4 right-1.5 text-gold" aria-hidden="true">♛</span> : null}
     </div>
   );
 }
@@ -99,20 +99,20 @@ export function EdgesLayer({ persons, selected }: { persons: BloodlinePerson[]; 
     if (partner && partner.partnerId === p.id && p.x <= partner.x) partners.push({ fromId: p.id, toId: partner.id, x1: p.x, y1: p.y, x2: partner.x, y2: partner.y });
   }
   return (
-    <svg data-testid="edges-layer" className="edges-layer" width="100%" height="100%">
+    <svg data-testid="edges-layer" className="edges-layer absolute left-0 top-0 w-full h-full pointer-events-none" width="100%" height="100%">
       {blood.map((e, i) => (
         <g key={`b${i}`}>
           <path
             data-testid="edge-blood"
-            className={`edge-blood${selected && (e.fromId === selected || e.toId === selected) ? " highlighted" : ""}`}
+            className={`edge-blood [stroke:var(--gold-dim)] [stroke-width:1.5] [fill:none]${selected && (e.fromId === selected || e.toId === selected) ? " highlighted [stroke:var(--gold)] [stroke-width:2]" : ""}`}
             d={`M ${e.x1} ${e.y1} L ${e.x2} ${(e.y1 + e.y2) / 2} L ${e.x2} ${e.y2}`}
           />
         </g>
       ))}
       {partners.map((e, i) => (
         <g key={`p${i}`}>
-          <path data-testid="edge-partner" className={`edge-partner${selected && (e.fromId === selected || e.toId === selected) ? " highlighted" : ""}`} d={`M ${e.x1} ${e.y1} L ${e.x2} ${e.y2}`} />
-          <path data-testid="edge-partner" className="edge-partner edge-partner-2" d={`M ${e.x1} ${e.y1 + 3} L ${e.x2} ${e.y2 + 3}`} />
+          <path data-testid="edge-partner" className={`edge-partner [stroke:var(--slate)] [stroke-width:1.5] [fill:none]${selected && (e.fromId === selected || e.toId === selected) ? " highlighted [stroke:var(--gold)] [stroke-width:2]" : ""}`} d={`M ${e.x1} ${e.y1} L ${e.x2} ${e.y2}`} />
+          <path data-testid="edge-partner" className="edge-partner edge-partner-2 opacity-60 [stroke:var(--slate)] [stroke-width:1.5] [fill:none]" d={`M ${e.x1} ${e.y1 + 3} L ${e.x2} ${e.y2 + 3}`} />
         </g>
       ))}
     </svg>

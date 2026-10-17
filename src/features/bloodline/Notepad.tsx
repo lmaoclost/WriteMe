@@ -18,24 +18,25 @@ export function Notepad({ notes, onNotes, onClose }: {
   };
   return (
     <div
-      className="bl-notepad"
+      className="absolute top-3.5 right-[320px] w-[260px] z-39 bg-night-2 border border-gold-dim rounded-lg shadow-[0_6px_18px_var(--scrim-canvas)]"
       data-testid="bl-notepad"
       style={pos.x != null ? { position: "fixed", left: pos.x, top: pos.y, right: "auto" } : undefined}
     >
       <header
-        className="bl-notepad-head"
+        className="flex justify-between items-center px-2.5 py-1.5 cursor-move text-gold text-xs tracking-[0.1em] uppercase"
         onPointerDown={(e) => { if (e.button === 0) setDrag({ dx: e.clientX, dy: e.clientY }); }}
         onPointerMove={onDragMove}
         onPointerUp={() => setDrag(null)}
       >
         <span>Notas</span>
-        <button type="button" aria-label="Fechar notas" onClick={onClose}>✕</button>
+        <button type="button" aria-label="Fechar notas" onClick={onClose} className="bg-none border-0 text-slate">✕</button>
       </header>
       <textarea
         aria-label="Notas da linhagem"
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         rows={5}
+        className="w-full border-0 border-t border-line bg-transparent text-parchment px-2.5 py-2 resize-y min-h-[90px]"
       />
     </div>
   );

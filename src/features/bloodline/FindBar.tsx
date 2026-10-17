@@ -20,23 +20,24 @@ export function FindBar({ persons, onPick, onClose }: {
     return haystack.includes(q);
   }).slice(0, 50);
   return (
-    <div className="find-bar" role="dialog" aria-label="Buscar pessoas" data-testid="find-bar">
+    <div className="find-bar absolute top-3 right-[320px] z-40 bg-night-2 border border-line rounded-lg p-2.5 w-[260px]" role="dialog" aria-label="Buscar pessoas" data-testid="find-bar">
       <input
         autoFocus
         aria-label="Buscar"
         placeholder="Nome, sufixo, título…"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
+        className="w-full bg-ink border border-line text-parchment rounded-sm px-2 py-1.5"
       />
-      <ul className="find-results">
+      <ul className="find-results list-none mt-1.5 mb-0 p-0 max-h-[200px] overflow-y-auto">
         {matches.map((p) => (
           <li key={p.id}>
-            <button type="button" onClick={() => onPick(p.id)}>{p.name}</button>
+            <button type="button" onClick={() => onPick(p.id)} className="block w-full text-left bg-none border-0 text-parchment-dim py-1 px-1.5 rounded-sm hover:bg-[color-mix(in_srgb,var(--gold)_12%,transparent)] hover:text-parchment">{p.name}</button>
           </li>
         ))}
       </ul>
-      {!q ? <p className="find-hint">Digite para buscar.</p> : null}
-      {q && matches.length === 0 ? <p className="find-hint">Nenhum resultado.</p> : null}
+      {!q ? <p className="text-slate text-xs mt-1.5 mb-0">Digite para buscar.</p> : null}
+      {q && matches.length === 0 ? <p className="text-slate text-xs mt-1.5 mb-0">Nenhum resultado.</p> : null}
     </div>
   );
 }

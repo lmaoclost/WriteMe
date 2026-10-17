@@ -6,7 +6,8 @@ import { EdgesLayer, HouseNode, PersonNode } from "./NodesLayer";
 import { BloodlinePanel } from "./BloodlinePanel";
 import { FindBar } from "./FindBar";
 import { Notepad } from "./Notepad";
-import "./bloodline.css";import { useBoardNotesHotkey } from "../../ui/boardNotes";
+import { BOARD_HEADER, BOARD_NAME_INPUT, BOARD_ACTIONS, BOARD_ACTION_BTN } from "../../ui/board";
+import { useBoardNotesHotkey } from "../../ui/boardNotes";
 
 
 export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
@@ -67,18 +68,18 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
   };
 
   return (
-    <div className="bloodline-page" data-testid="bloodline-page">
-      <header className="bl-header">
+    <div className="grid grid-rows-[auto_1fr] h-full" data-testid="bloodline-page">
+      <header className={BOARD_HEADER}>
         <input
-          className="bl-name"
+          className={BOARD_NAME_INPUT}
           aria-label="Nome da linhagem"
           value={bloodline.name}
           onChange={(e) => useScriptorium.getState().renameBloodline(bloodlineId, e.target.value)}
         />
-        <div className="bl-actions">
-          <button type="button" aria-label="Desfazer" disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoBL(bloodlineId)}>↶</button>
-          <button type="button" aria-label="Refazer" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoBL(bloodlineId)}>↷</button>
-          <button type="button" onClick={() => {
+        <div className={BOARD_ACTIONS}>
+          <button type="button" aria-label="Desfazer" className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoBL(bloodlineId)}>↶</button>
+          <button type="button" aria-label="Refazer" className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoBL(bloodlineId)}>↷</button>
+          <button type="button" className={BOARD_ACTION_BTN} onClick={() => {
             useScriptorium.getState().pushBLHistory(bloodlineId);
             const rect = stageRef.current?.getBoundingClientRect();
             const p = useScriptorium.getState().addPerson(bloodlineId, {
@@ -87,7 +88,7 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
             });
             if (p) setSelectedId(p.id);
           }}>Adicionar pessoa</button>
-          <button type="button" onClick={() => {
+          <button type="button" className={BOARD_ACTION_BTN} onClick={() => {
             useScriptorium.getState().pushBLHistory(bloodlineId);
             const rect = stageRef.current?.getBoundingClientRect();
             const h = useScriptorium.getState().addHouse(bloodlineId, {
@@ -96,12 +97,12 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
             });
             if (h) setSelectedId(h.id);
           }}>Nova casa</button>
-          <button type="button" onClick={() => setFindOpen((v) => !v)} aria-label="Buscar pessoa">Buscar</button>
-          <button type="button" aria-pressed={notesOpen} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
+          <button type="button" onClick={() => setFindOpen((v) => !v)} aria-label="Buscar pessoa" className={BOARD_ACTION_BTN}>Buscar</button>
+          <button type="button" aria-pressed={notesOpen} className={BOARD_ACTION_BTN} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
         </div>
       </header>
-      <div className="bl-body">
-        <div className="bl-canvas" data-testid="bl-canvas" ref={stageRef}
+      <div className="grid grid-cols-[1fr_300px] min-h-0 overflow-hidden">
+        <div className="relative overflow-hidden bg-ink cursor-grab active:cursor-grabbing" data-testid="bl-canvas" ref={stageRef}
           onPointerDown={plane.onPointerDown}
           onPointerMove={plane.onPointerMove}
           onPointerUp={plane.onPointerUp}
@@ -109,7 +110,7 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
           onTouchMove={plane.onTouchMove}
           onTouchEnd={plane.onTouchEnd}
         >
-          <div className="bl-plane" data-testid="bl-plane"
+          <div className="absolute bg-[radial-gradient(circle_at_25%_25%,#17162a,var(--ink)_65%)] shadow-[inset_0_0_0_1px_var(--line)]" data-testid="bl-plane"
             style={{
               width: plane.planeW, height: plane.planeH,
               transform: `translate(${plane.panX}px, ${plane.panY}px) scale(${plane.scale})`,
@@ -137,7 +138,7 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
             ))}
           </div>
           {bloodline.persons.length === 0 && bloodline.houses.length === 0 ? (
-            <div className="bl-empty">Comece pelo fundador — adicione a primeira pessoa.</div>
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[calc(1/var(--bl-scale,0.1))] text-slate whitespace-nowrap">Comece pelo fundador — adicione a primeira pessoa.</div>
           ) : null}
         </div>
         <BloodlinePanel bloodline={bloodline} selectedId={selectedId} onSelect={setSelectedId} />
@@ -150,7 +151,7 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
         {notesOpen ? <Notepad notes={bloodline.notes} onNotes={(v) => useScriptorium.getState().setNotes(bloodlineId, v)} onClose={() => setNotesOpen(false)} /> : null}
       </div>
       {selected ? "" : ""}
-      <div className="bl-selected-sentinel" data-selected-id={selected?.id ?? ""} />
+      <div className="hidden" data-selected-id={selected?.id ?? ""} />
     </div>
   );
 }

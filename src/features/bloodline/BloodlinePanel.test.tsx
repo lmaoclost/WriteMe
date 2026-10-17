@@ -4,6 +4,7 @@ import { useScriptorium } from "../../data/store";
 import { BloodlineCanvasPage } from "./BloodlineCanvas";
 import type { Bloodline } from "../../domain/types";
 import { firePointer } from "../../test/pointer";
+import { selectOption } from "../../test/selectHelper";
 import "@testing-library/jest-dom/vitest";
 
 const store = () => useScriptorium.getState();
@@ -140,13 +141,13 @@ describe("BloodlinePanel — house", () => {
 });
 
 describe("BloodlinePanel — house picker", () => {
-  it("person joined to a house via panel picker; card shows the house", () => {
+  it("person joined to a house via panel picker; card shows the house", async () => {
     const { b, p1 } = seed();
     const h = store().addHouse(b.id, { x: 4200, y: 3700, name: "Casa Vellmor" })!;
     mountCanvas(b.id);
     const node = screen.getAllByTestId("person-node").find((n) => n.getAttribute("aria-label") === "Pessoa Aldric")!;
     firePointer(node, "pointerdown", { clientX: 0, clientY: 0 });
-    fireEvent.change(screen.getByLabelText("House"), { target: { value: h.id } });
+    await selectOption(() => screen.getAllByLabelText("House").pop()!, "Casa Vellmor");
     expect(store().bloodlines[0].persons.find((x) => x.id === p1)!.houseId).toBe(h.id);
     const nodeWithHouse = screen.getAllByTestId("person-node").find((n) => n.getAttribute("aria-label") === "Pessoa Aldric")!;
     expect(nodeWithHouse.textContent).toContain("Casa Vellmor");

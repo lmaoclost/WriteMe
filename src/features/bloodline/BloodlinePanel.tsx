@@ -3,7 +3,10 @@ import { useScriptorium } from "../../data/store";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { fileToDataUrl } from "../../data/image";
 import type { Bloodline, BloodlineHouse, BloodlinePerson, BloodlineTenure } from "../../domain/types";
-import "./bloodline.css";
+import { Field } from "../../ui/Field";
+import { Button } from "../../ui/Button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { BOARD_PANEL, BOARD_PANEL_HINT, BOARD_PANEL_HEAD, BOARD_PANEL_HEAD_H2 } from "../../ui/board";
 
 const TENURE_LABELS = ["Reigned", "Served", "Tenure", "Ruled", "Governed", "Appointed"];
 
@@ -16,13 +19,13 @@ export function BloodlinePanel({ bloodline, selectedId, onSelect }: {
   const house = bloodline.houses.find((h) => h.id === selectedId);
   if (!person && !house) {
     return (
-      <aside className="bl-panel">
-        <p className="bl-panel-hint">Selecione uma pessoa ou casa no canvas.</p>
+      <aside className={BOARD_PANEL}>
+        <p className={BOARD_PANEL_HINT}>Selecione uma pessoa ou casa no canvas.</p>
       </aside>
     );
   }
   return (
-    <aside className="bl-panel" data-testid="bl-panel">
+    <aside className={BOARD_PANEL} data-testid="bl-panel">
       {person ? <PersonPanel bloodline={bloodline} person={person} onSelect={onSelect} /> : null}
       {house ? <HousePanel bloodline={bloodline} house={house} onSelect={onSelect} /> : null}
     </aside>
@@ -33,10 +36,9 @@ function PersonField({ label, value, onCommit, placeholder }: { label: string; v
   const { draft, setDraft, flush } = useDebouncedDraft(value, onCommit);
   useEffect(() => () => flush(), [flush]);
   return (
-    <label className="field">
-      <span className="field-label">{label}</span>
+    <Field label={label}>
       <input value={draft} onChange={(e) => setDraft(e.target.value)} onBlur={() => flush()} aria-label={label} placeholder={placeholder} />
-    </label>
+    </Field>
   );
 }
 
@@ -76,23 +78,22 @@ function PersonPanel({ bloodline, person, onSelect }: {
   const candidates = bloodline.persons;
 
   return (
-    <div className="bl-person-panel">
-      <header className="bl-panel-head">
-        <h2>{person.name || "Sem nome"}</h2>
-        <button type="button" className={armDelete ? "btn-danger" : ""} onClick={removePerson}
+    <div className="grid gap-3">
+      <header className={BOARD_PANEL_HEAD}>
+        <h2 className={BOARD_PANEL_HEAD_H2}>{person.name || "Sem nome"}</h2>
+        <Button kind={armDelete ? "danger" : "ghost"} className="px-2 py-1 text-xs" onClick={removePerson}
           aria-label={armDelete ? "Confirm delete person" : "Delete person"}>
           {armDelete ? "Confirm?" : "Delete"}
-        </button>
+        </Button>
       </header>
-      <div className="field">
-        <span className="field-label">Retrato</span>
-        <div className="portrait-row">
+      <Field label="Retrato">
+        <div className="flex items-center gap-2">
           {person.portraitKey ? (
             <PortraitThumb personId={person.id} />
           ) : (
-            <span className="portrait-none">Sem retrato</span>
+            <span className="portrait-none text-slate text-[13px]">Sem retrato</span>
           )}
-          <label className="upload-label">
+          <label className="upload-label rounded-sm border border-line py-1 px-2.5 text-parchment-dim cursor-pointer hover:text-parchment hover:border-gold-dim">
             {portraitUploading ? "…" : "Carregar"}
             <input
               type="file"
@@ -103,41 +104,39 @@ function PersonPanel({ bloodline, person, onSelect }: {
             />
           </label>
           {person.portraitKey ? (
-            <button type="button" aria-label="Remove portrait" onClick={() => {
+            <Button kind="ghost" className="px-1.5 py-0.5 text-xs" aria-label="Remove portrait" onClick={() => {
               const key = person.portraitKey!;
               update({ portraitKey: undefined });
               store().removeImage(key);
-            }}>✕</button>
+            }}>✕</Button>
           ) : null}
         </div>
-      </div>
+      </Field>
       <PersonField label="Name" placeholder="Full name..." value={person.name} onCommit={(v) => { const name = v.trim(); if (name) update({ name }); }} />
       <PersonField label="Suffix" placeholder="Jr, Sr, II, III, IV..." value={person.suffix ?? ""} onCommit={(v) => update({ suffix: v.trim() || undefined })} />
-      <div className="field">
-        <span className="field-label">House</span>
-        <select aria-label="House" value={person.houseId ?? ""} onChange={(e) => update({ houseId: e.target.value || undefined })}>
-          <option value="">— without house —</option>
-          {bloodline.houses.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
-        </select>
-      </div>
-      <div className="field">
-        <span className="field-label">Title</span>
+      <Field label="House">
+        <Select value={person.houseId ?? ""} onValueChange={(v) => update({ houseId: v || undefined })}>
+          <SelectTrigger aria-label="House" className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue placeholder="— without house —" /></SelectTrigger>
+          <SelectContent className="border-line bg-night text-parchment">
+            {bloodline.houses.map((h) => <SelectItem key={h.id} value={h.id} className="text-xs focus:bg-[#24233f] focus:text-parchment" data-testid="house-option">{h.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </Field>
+      <Field label="Title">
         <input value={person.title ?? ""} onChange={(e) => update({ title: e.target.value })} aria-label="Title" placeholder="e.g. King, Queen, Lord..." />
-      </div>
-      <div className="field">
-        <span className="field-label">Relationship</span>
+      </Field>
+      <Field label="Relationship">
         <input value={person.relationship ?? ""} onChange={(e) => update({ relationship: e.target.value })} aria-label="Relationship" placeholder="Child of / Sibling of / Partner of" />
-      </div>
-      <label className="field">
-        <span className="field-label">Bio</span>
+      </Field>
+      <Field label="Bio">
         <textarea value={person.bio ?? ""} onChange={(e) => update({ bio: e.target.value })} aria-label="Bio" placeholder="A brief biography of this person..." rows={3} />
-      </label>
+      </Field>
       <PersonField label="Birth Date" placeholder="e.g. 12th of Joremein, Year 250" value={person.birthDate ?? ""} onCommit={(v) => update({ birthDate: v.trim() || undefined })} />
       <PersonField label="Death Date" placeholder="e.g. 5th of Forun, Year 312" value={person.deathDate ?? ""} onCommit={(v) => update({ deathDate: v.trim() || undefined })} />
 
-      <section className="bl-subsection">
+      <section className="border-t border-line mt-3.5 pt-2.5 grid gap-2">
         <h3>Additional titles</h3>
-        <ul className="titles-list">
+        <ul className="titles-list list-none m-0 p-0 grid gap-1 [&_li]:flex [&_li]:justify-between [&_li]:items-center [&_li]:gap-2 [&_li]:text-[13px] [&_li]:text-parchment-dim [&_button]:bg-none [&_button]:border-0 [&_button]:text-slate [&_button]:text-xs">
           {person.additionalTitles.map((t, i) => (
             <li key={i}>
               {t.title}
@@ -146,42 +145,41 @@ function PersonPanel({ bloodline, person, onSelect }: {
             </li>
           ))}
         </ul>
-        <div className="titles-add">
-          <input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} aria-label="New title" placeholder="New title" />
-          <button type="button" aria-label="Add title" onClick={() => {
+        <div className="flex gap-1.5">
+          <input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} aria-label="New title" placeholder="New title" className="flex-1 min-w-0 bg-ink border border-line rounded-sm text-parchment px-2 py-1.5" />
+          <Button kind="ghost" className="px-2 py-1 text-xs" aria-label="Add title" onClick={() => {
             const t = newTitle.trim();
             if (!t) return;
             update({ additionalTitles: [...person.additionalTitles, { title: t }] });
             setNewTitle("");
-          }}>+</button>
+          }}>+</Button>
         </div>
       </section>
 
-      <section className="bl-subsection">
+      <section className="border-t border-line mt-3.5 pt-2.5 grid gap-2">
         <h3>Reinado / mandato</h3>
-        <ul className="tenures-list">
+        <ul className="list-none m-0 p-0 grid gap-1.5">
           {person.tenures.map((t, i) => (
-            <li key={i} className="tenure-row">
-              <select
-                aria-label="Tenure label"
-                value={t.label}
-                onChange={(e) => update({ tenures: person.tenures.map((tt, j) => (j === i ? { ...tt, label: e.target.value } : tt)) })}
-              >
-                {TENURE_LABELS.map((l) => <option key={l} value={l}>{l}</option>)}
-              </select>
+            <li key={i} className="tenure-row grid grid-cols-[1.2fr_1fr_1fr_auto] gap-1.5 items-center [&>*]:min-w-0 [&_button]:text-slate [&_button]:text-xs [&_input]:bg-ink [&_input]:border [&_input]:border-line [&_input]:rounded-sm [&_input]:text-parchment [&_input]:px-1.5 [&_input]:py-1 [&_input]:text-xs [&_input]:w-full">
+              <Select value={t.label} onValueChange={(v) => update({ tenures: person.tenures.map((tt, j) => (j === i ? { ...tt, label: v } : tt)) })}>
+                <SelectTrigger aria-label="Tenure label" className="w-full justify-between rounded-sm border-line bg-ink px-1.5 py-1 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
+                <SelectContent className="border-line bg-night text-parchment">
+                  {TENURE_LABELS.map((l) => <SelectItem key={l} value={l} className="text-xs focus:bg-[#24233f] focus:text-parchment">{l}</SelectItem>)}
+                </SelectContent>
+              </Select>
               <input value={t.from} aria-label="Start" onChange={(e) => update({ tenures: person.tenures.map((tt, j) => (j === i ? { ...tt, from: e.target.value } : tt)) })} placeholder="From" />
               <input value={t.to} aria-label="End" onChange={(e) => update({ tenures: person.tenures.map((tt, j) => (j === i ? { ...tt, to: e.target.value } : tt)) })} placeholder="To" />
-              <button type="button" aria-label="Remove tenure" onClick={() => update({ tenures: person.tenures.filter((_, j) => j !== i) })}>✕</button>
+              <button type="button" aria-label="Remove tenure" onClick={() => update({ tenures: person.tenures.filter((_, j) => j !== i) })} className="bg-none border-0 text-slate text-xs">✕</button>
             </li>
           ))}
         </ul>
-        <button type="button" aria-label="Add tenure" onClick={() => {
+        <Button kind="ghost" className="justify-self-start px-2 py-1 text-xs" aria-label="Add tenure" onClick={() => {
           const t: BloodlineTenure = { label: TENURE_LABELS[0], from: "", to: "" };
           update({ tenures: [...person.tenures, t] });
-        }}>+ Tenure</button>
+        }}>+ Tenure</Button>
       </section>
 
-      <section className="bl-subsection">
+      <section className="border-t border-line mt-3.5 pt-2.5 grid gap-2">
         <h3>Blood bonds</h3>
         <ConnectionPicker
           label="Blood bond (parent)"
@@ -211,7 +209,7 @@ function PersonPanel({ bloodline, person, onSelect }: {
             update({ partnerId: undefined });
           }}
         />
-        <div className="row-2">
+        <div className="grid grid-cols-2 gap-2 [&>*]:min-w-0">
           <ConnectionPicker
             label="Sibling / Cousin of"
             persons={candidates.filter((c) => c.id !== person.id)}
@@ -229,15 +227,15 @@ function PersonPanel({ bloodline, person, onSelect }: {
             />
           </label>
         </div>
-        <label className="check-row">
+        <label className="flex gap-2 items-center text-[13px] text-parchment-dim">
           <input type="checkbox" checked={person.isTwin} onChange={(e) => update({ isTwin: e.target.checked })} />
           <span>Twin</span>
         </label>
       </section>
 
-      <section className="bl-subsection">
+      <section className="border-t border-line mt-3.5 pt-2.5 grid gap-2">
         <h3>Badge</h3>
-        <label className="check-row">
+        <label className="flex gap-2 items-center text-[13px] text-parchment-dim">
           <input type="checkbox" checked={person.showBadge} onChange={(e) => update({ showBadge: e.target.checked, ...(e.target.checked ? {} : { badgeText: person.badgeText }) })} />
           <span>Show badge</span>
         </label>
@@ -246,6 +244,7 @@ function PersonPanel({ bloodline, person, onSelect }: {
           aria-label="Badge text"
           onChange={(e) => update({ badgeText: e.target.value })}
           placeholder="e.g. King - 3rd House"
+          className="bg-ink border border-line rounded-sm text-parchment px-2 py-1.5 text-xs"
         />
       </section>
     </div>
@@ -257,7 +256,7 @@ function PortraitThumb({ personId }: { personId: string }) {
   const person = useScriptorium((s) => s.bloodlines.flatMap((b) => b.persons).find((p) => p.id === personId));
   const src = person?.portraitKey ? images[person.portraitKey] : undefined;
   if (!src) return null;
-  return <img className="portrait-thumb" src={src} alt="" />;
+  return <img className="portrait-thumb size-10 rounded-full object-cover" src={src} alt="" />;
 }
 
 function ConnectionPicker({ label, persons, currentId, onPick, onClear }: {
@@ -284,27 +283,27 @@ function ConnectionPicker({ label, persons, currentId, onPick, onClear }: {
   const q = query.trim().toLowerCase();
   const matches = persons.filter((p) => p.name.toLowerCase().includes(q)).slice(0, 8);
   return (
-    <div className="field connection-picker">
-      <span className="field-label">{label}</span>
-      <div className="connection-current">
+    <div className="flex flex-col gap-1.5 connection-picker">
+      <span className="field-label text-xs font-semibold uppercase tracking-[0.08em] text-slate">{label}</span>
+      <div className="flex items-center gap-2">
         {current ? (
-          <span className="connection-name">{current.name}</span>
+          <span className="connection-name text-[13px] text-parchment">{current.name}</span>
         ) : (
-          <span className="connection-name dim">—</span>
+          <span className="connection-name text-slate text-[13px]">—</span>
         )}
-        <button type="button" aria-label={`Escolher ${label}`} onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}>v</button>
-        {current ? <button type="button" aria-label={`Remover ${label}`} onClick={onClear}>✕</button> : null}
+        <button type="button" aria-label={`Escolher ${label}`} onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }} className="bg-ink border border-line text-slate rounded-sm px-2 py-0.5 text-xs">v</button>
+        {current ? <button type="button" aria-label={`Remover ${label}`} onClick={onClear} className="bg-ink border border-line text-slate rounded-sm px-1.5 py-0.5 text-xs">✕</button> : null}
       </div>
       {open ? (
-        <div className="connection-pop" onClick={(e) => e.stopPropagation()}>
-          <input value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search persons" placeholder="Type to search persons..." />
-          <ul className="link-list">
+        <div className="connection-pop absolute mt-1 z-30 bg-night-2 border border-line rounded-lg p-2 w-60" onClick={(e) => e.stopPropagation()}>
+          <input value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search persons" placeholder="Type to search persons..." className="w-full bg-ink border border-line text-parchment rounded-sm px-2 py-1 mb-1.5" />
+          <ul className="link-list list-none m-0 p-0 grid gap-0.5 [&_button]:block [&_button]:w-full [&_button]:text-left [&_button]:bg-none [&_button]:border-0 [&_button]:text-parchment-dim [&_button]:text-[13px] [&_button]:py-1 [&_button]:px-1.5 [&_button]:rounded-sm hover:[&_button]:bg-accent">
             {matches.map((p) => (
               <li key={p.id}>
                 <button type="button" onClick={() => { onPick(p.id); setOpen(false); }}>{p.name}</button>
               </li>
             ))}
-            {matches.length === 0 ? <li><span className="dim">No matches.</span></li> : null}
+            {matches.length === 0 ? <li><span className="text-slate">No matches.</span></li> : null}
           </ul>
         </div>
       ) : null}
@@ -328,28 +327,28 @@ function HousePanel({ bloodline, house, onSelect }: {
     onSelect(null);
   };
   return (
-    <div className="bl-house-panel">
-      <header className="bl-panel-head">
-        <h2>{house.name}</h2>
-        <button type="button" className={armDelete ? "btn-danger" : ""} onClick={removeHouse}
+    <div className="grid gap-3">
+      <header className={BOARD_PANEL_HEAD}>
+        <h2 className={BOARD_PANEL_HEAD_H2}>{house.name}</h2>
+        <Button kind={armDelete ? "danger" : "ghost"} className="px-2 py-1 text-xs" onClick={removeHouse}
           aria-label={armDelete ? "Confirm delete house" : "Delete house"}>
           {armDelete ? "Confirm?" : "Delete"}
-        </button>
+        </Button>
       </header>
       <div className="field">
         <span className="field-label">Name</span>
         <input value={house.name} onChange={(e) => update({ name: e.target.value })} aria-label="House Name" />
       </div>
       <PersonField label="Subtitle" value={house.subtitle ?? ""} onCommit={(v) => update({ subtitle: v.trim() || undefined })} />
-      <label className="check-row">
+      <label className="flex gap-2 items-center text-[13px] text-parchment-dim">
         <input type="checkbox" checked={house.isMainBranch} onChange={(e) => update({ isMainBranch: e.target.checked })} />
         <span>Ramo principal</span>
       </label>
-      <label className="check-row">
+      <label className="flex gap-2 items-center text-[13px] text-parchment-dim">
         <input type="checkbox" checked={house.isMonarch} onChange={(e) => update({ isMonarch: e.target.checked })} />
         <span>Monarch House</span>
       </label>
-      <p className="bl-panel-note" aria-hidden="true">
+      <p className="text-slate text-xs" aria-hidden="true">
         {bloodline.persons.length} {bloodline.persons.length === 1 ? "pessoa" : "pessoas"} · {bloodline.houses.length} {bloodline.houses.length === 1 ? "casa" : "casas"}
       </p>
     </div>
