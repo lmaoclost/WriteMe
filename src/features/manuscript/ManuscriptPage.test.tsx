@@ -161,6 +161,7 @@ describe("ManuscriptPage books", () => {
   it("deletes the selected book with a two-step confirm and selects the first remaining, then none", () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A", chapters: [{ heading: "Um" }] });
+    seedBook(projectId, { title: "B", chapters: [{ heading: "Dois" }] });
     render(manuscriptRoute(projectId));
     pickSelectOptionSync(() => screen.getByLabelText("Livro"), "B");
     fireEvent.click(screen.getByRole("button", { name: "Excluir livro" }));
