@@ -1,70 +1,64 @@
+/* Shared primitives styled with the shadcn/Tailwind design tokens.
+   Keep the .btn-* lists in sync with the cva variants in Button.tsx
+   (phase 2 migrates raw btn-* buttons onto the component and these die). */
+@reference "../app/theme.css";
+
 .btn-primary {
-  background: var(--gold);
-  color: #17131f;
-  border: 0;
-  border-radius: 4px;
-  padding: 8px 14px;
-  font-weight: 600;
+  @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-sm px-3.5 py-2 text-[15px]
+    bg-gold font-semibold text-wax transition-[filter] duration-150 hover:brightness-[1.08]
+    disabled:pointer-events-none disabled:opacity-50;
 }
-.btn-primary:hover { filter: brightness(1.08); }
 .btn-ghost {
-  background: transparent;
-  color: var(--parchment-dim);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  padding: 8px 14px;
+  @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-sm px-3.5 py-2 text-[15px]
+    border border-line text-parchment-dim transition-colors duration-150
+    hover:border-gold-dim hover:text-parchment disabled:pointer-events-none disabled:opacity-50;
 }
-.btn-ghost:hover { color: var(--parchment); border-color: var(--gold-dim); }
 .btn-danger {
-  background: transparent;
-  color: var(--ember);
-  border: 1px solid var(--ember);
-  border-radius: 4px;
-  padding: 8px 14px;
+  @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-sm px-3.5 py-2 text-[15px]
+    border border-destructive text-destructive transition-colors duration-150
+    hover:bg-destructive/18 disabled:pointer-events-none disabled:opacity-50;
 }
-.btn-danger:hover { background: color-mix(in srgb, var(--ember) 18%, transparent); }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field-label { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); }
-.field input, .field textarea {
-  background: var(--ink);
-  color: var(--parchment);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  padding: 8px 10px;
-  font: inherit;
+
+.field { @apply flex flex-col gap-1.5; }
+.field-label { @apply text-xs font-semibold uppercase tracking-[0.08em] text-slate; }
+.field input,
+.field textarea {
+  @apply w-full rounded-sm border border-line bg-ink px-2.5 py-2 text-[15px] text-parchment outline-none;
 }
-.field input:focus-visible, .field textarea:focus-visible { border-color: var(--gold-dim); outline: none; }
-.modal-scrim {
-  position: fixed; inset: 0; background: var(--scrim);
-  display: grid; place-items: center; z-index: 50;
-}
-.modal {
-  background: var(--night); border: 1px solid var(--line); border-radius: 8px;
-  width: min(440px, 92vw); padding: 18px;
-}
-.modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.modal-title { font-size: 20px; }
-.modal-close { background: none; border: 0; color: var(--slate); font-size: 14px; }
-.toast {
-  display: flex; align-items: center; gap: 10px;
-  background: var(--night-2); border: 1px solid var(--line);
-  border-left: 3px solid var(--gold);
-  padding: 10px 12px; border-radius: 4px;
-}
-.toast[data-kind="error"] { border-left-color: var(--ember); }
-.toast[data-kind="success"] { border-left-color: var(--success); }
+.field input:focus-visible,
+.field textarea:focus-visible { @apply border-gold-dim outline-none; }
+
 .toasts {
-  position: fixed; bottom: 18px; right: 18px; z-index: 60;
-  display: flex; flex-direction: column; gap: 8px;
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
-.toast-dismiss { background: none; border: 0; color: var(--slate); font-size: 12px; }
-.toast-dismiss:hover { color: var(--parchment); }
-.form-stack { display: grid; gap: 12px; }
-.form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+.toast {
+  @apply flex items-center gap-2.5 rounded-sm border border-line bg-panel py-2.5 pr-3 pl-3;
+  border-left: 3px solid var(--gold);
+}
+.toast[data-kind="error"] { border-left-color: var(--destructive); }
+.toast[data-kind="success"] { border-left-color: var(--success); }
+.toast-message { font: inherit; }
+.toast-dismiss { @apply border-0 bg-transparent text-xs text-slate hover:text-parchment; }
+
 .seal {
-  display: inline-grid; place-items: center;
-  width: 40px; height: 40px; border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   background: radial-gradient(circle at 32% 30%, var(--seal-wax), var(--seal-mid) 62%, var(--seal-deep));
-  color: var(--seal-engrave); font-family: var(--font-display); font-weight: 700; font-size: 1.25rem;
+  color: var(--seal-engrave);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.25rem;
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.15) inset, 0 2px 6px var(--scrim-canvas);
 }
+
+.form-stack { display: grid; gap: 12px; }
+.form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
