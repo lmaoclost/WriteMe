@@ -275,8 +275,7 @@ function ConfigPopover({ cal, onClose }: { cal: CustomCalendar; onClose(): void 
         <div className="cal-month-add" data-testid="cal-month-add">
           <input aria-label="New month name" placeholder="New month..." defaultValue=""
             onBlur={(e) => { if (e.target.value.trim()) { store().addMonth(cal.id, e.target.value.trim(), 30); e.target.value = ""; } }} />
-          <input aria-label="New month days" type="number" min={1} placeholder="Days" defaultValue={30}
-            onBlur={(e) => { void Number(e.target.value); }} />
+          <input aria-label="New month days" type="number" min={1} placeholder="Days" defaultValue={30} />
           <button
             type="button"
             onClick={() => {

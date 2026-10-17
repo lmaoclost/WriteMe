@@ -7,7 +7,7 @@ import { fileToDataUrl } from "../../data/image";
 import { dateIsEmpty, formatDate, isValidDate, sanitizeDate } from "../../domain/dates";
 import { LinkPicker } from "../atlas/panels/LinkPicker";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
-import { CATEGORY_COLORS, CATEGORY_LABELS, categoryIcon } from "./categories";
+import { CATEGORY_LABELS, categoryIcon, categoryDot } from "./categories";
 import { ImagePicker } from "./ImagePicker";
 import { MarkdownView } from "./MarkdownView";
 
@@ -160,24 +160,34 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           className="codex-cover"
           src={cover}
           alt={`Cover of ${entry.title}`}
+          draggable={false}
           style={entry.focal ? { objectPosition: `${entry.focal[0] * 100}% ${entry.focal[1] * 100}%` } : undefined}
           title="Drag to reframe"
           onPointerDown={(e) => {
             if (e.button !== 0) return;
-            const start = { x: e.clientX, y: e.clientY };
-            const step = (ev: PointerEvent) => {
+            let pending = false;
+            let raf = 0;
+            const apply = (ev: PointerEvent) => {
               const r = coverEl.current?.getBoundingClientRect();
               if (!r || r.width === 0 || r.height === 0) return;
               const fx = Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width));
               const fy = Math.min(1, Math.max(0, (ev.clientY - r.top) / r.height));
-              useScriptorium.getState().updateEntry(entry.id, { focal: [fx, fy] });
-              void start;
+              pending = true;
+              cancelAnimationFrame(raf);
+              raf = requestAnimationFrame(() => {
+                raf = 0;
+                if (!pending) return;
+                pending = false;
+                useScriptorium.getState().updateEntry(entry.id, { focal: [fx, fy] });
+              });
             };
             const up = () => {
-              window.removeEventListener("pointermove", step);
+              window.removeEventListener("pointermove", apply);
+              window.removeEventListener("pointercancel", up);
               window.removeEventListener("pointerup", up);
             };
-            window.addEventListener("pointermove", step);
+            window.addEventListener("pointermove", apply);
+            window.addEventListener("pointercancel", up);
             window.addEventListener("pointerup", up);
           }}
         />
@@ -372,7 +382,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
                 <span
                   className="codex-dot"
                   aria-hidden="true"
-                  style={{ backgroundColor: CATEGORY_COLORS[other.category] }}
+                  style={{ backgroundColor: categoryDot(other.category, project?.customCategories) }}
                 />
                 <span className="codex-link-chip-title">{other.title}</span>
               </button>

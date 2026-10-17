@@ -16,15 +16,13 @@ export function CodexPage({ projectId }: { projectId: string }) {
     useShallow((s) => s.entries.filter((e) => e.projectId === projectId)),
   );
   const location = useLocation();
-  const [searchParams] = useSearchParams();
-  // Deep link (?e=<id>): resolve in the state initializer so StrictMode's
-  // double effects (state.select consumed once, default selection re-applied)
-  // can never override it.
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Deep link (?e=<id>): resolve in the state initializer (StrictMode-safe:
+  // the initializer has no double-run effects to fight), then consume once.
   const urlEntry = searchParams.get("e");
   const [selectedId, setSelectedId] = useState<string | null>(() => {
-    if (urlEntry && useScriptorium.getState().entries.some((e) => e.id === urlEntry)) {
-      return urlEntry;
-    }
+    const wanted = searchParams.get("e");
+    if (wanted && useScriptorium.getState().entries.some((e) => e.id === wanted)) return wanted;
     return null;
   });
   const [pendingFocus, setPendingFocus] = useState<string | null>(null);
@@ -53,14 +51,19 @@ export function CodexPage({ projectId }: { projectId: string }) {
     }
   }, [location, entries, selectedId]);
 
-  // Deep link: if the param arrives/changes while we're mounted, follow it.
-  // (StrictMode-safe: idempotent and guarded.)
+  // Deep link (?e=<id>): consumed ONCE, then stripped from the URL so the
+  // selection stays free afterwards. lastAppliedRef keeps StrictMode's rerun
+  // idempotent; validation is project-scoped (no cross-project loops).
+  const lastAppliedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!urlEntry || selectedId === urlEntry) return;
-    if (useScriptorium.getState().entries.some((e) => e.id === urlEntry)) {
-      setSelectedId(urlEntry);
-    }
-  }, [urlEntry, selectedId]);
+    if (!urlEntry || lastAppliedRef.current === urlEntry) return;
+    lastAppliedRef.current = urlEntry;
+    if (!entries.some((e) => e.id === urlEntry)) return; // stale/foreign: ignore
+    setSelectedId(urlEntry);
+    const next = new URLSearchParams(searchParams);
+    next.delete("e");
+    setSearchParams(next, { replace: true });
+  }, [urlEntry, searchParams, setSearchParams, entries]);
 
   useEffect(() => {
     if (!pendingFocus || pendingFocus !== selectedId) return;

@@ -1585,8 +1585,11 @@ export const useScriptorium = create<ScriptoriumState>()(
       setWeekdays(id, weekdays) {
         const cal = (get().calendars ?? []).find((c) => c.id === id);
         if (!cal) return;
-        const clean = weekdays.map((w) => w.trim()).filter(Boolean);
-        if (clean.length === 0) return;
+        // blank names would collapse the weekday cycle (misaligning weekendDays
+        // and startingWeekday) — reject instead of shifting every name over
+        if (weekdays.some((w) => !w.trim())) return;
+        if (weekdays.length === 0) return;
+        const clean = weekdays.map((w) => w.trim());
         get().pushCLHistory(id);
         set((st) => ({
           calendars: (st.calendars ?? []).map((c) => (c.id === id ? { ...c, weekdays: clean } : c)),
@@ -1634,7 +1637,7 @@ export const useScriptorium = create<ScriptoriumState>()(
               const [y, mStr, dStr] = parts;
               const mi = Number(mStr);
               const di = Number(dStr);
-              if (!Number.isInteger(mi) || !Number.isInteger(di)) return key;
+              if (!Number.isInteger(Number(y)) || !Number.isInteger(mi) || !Number.isInteger(di)) return key;
               if (mi === index) return null;
               const shifted = mi > index ? mi - 1 : mi;
               if (shifted < 0 || shifted >= months.length) return null;
@@ -2169,7 +2172,10 @@ export const useScriptorium = create<ScriptoriumState>()(
         if (subordinateId === superiorId || !members.has(subordinateId) || !members.has(superiorId)) return null;
         const dup = chart.oathLinks.some(
           (l) => (l.subordinateId === subordinateId && l.superiorId === superiorId));
-        if (dup) return null;
+        if (dup) {
+          get().pushToast("error", "Esse oath já existe entre os dois.");
+          return null;
+        }
         get().pushOCHistory(chartId);
         const link: OathLink = {
           id: `oath_${newId("")}`,

@@ -53,7 +53,7 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
         <div className="bl-actions">
           <button type="button" aria-label="Undo" disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoTL(timelineId)}>↶</button>
           <button type="button" aria-label="Redo" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoTL(timelineId)}>↷</button>
-          <button type="button" onClick={() => { pushTLHistory(timelineId); const el = stageRef.current; const x = el && el.clientWidth ? (el.clientWidth / 2 - view.current.panX) / view.current.s : 4000; const created = useScriptorium.getState().addBead(timelineId, { x, y: 200 }); if (created) { setSelectedBeadId(created.id); markDirty(); } }}>Add event</button>
+          <button type="button" onClick={() => { pushTLHistory(timelineId); const el = stageRef.current; const x = el && el.clientWidth ? (el.clientWidth / 2 - view.current.panX) / view.current.s : 4000; const created = useScriptorium.getState().addBead(timelineId, { x, y: -60 }); if (created) { setSelectedBeadId(created.id); markDirty(); } }}>Add event</button>
           <button type="button" onClick={() => { pushTLHistory(timelineId); useScriptorium.getState().addSegment(timelineId, 1000, 3000, "New era"); }}>Add segment</button>
           <button type="button" aria-pressed={notesOpen} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
         </div>
@@ -142,7 +142,7 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
             </svg>
           </div>
           {timeline.beads.length === 0 ? (
-            <div className="bl-empty">Coloque o primeiro evento no fio — clique e arraste.</div>
+            <div className="bl-empty">Coloque o primeiro evento no fio — botão "Add event" cria no centro do view.</div>
           ) : null}
           {notesOpen ? <TLNotepad notes={timeline.notes} onNotes={(v) => useScriptorium.getState().setTimelineNotes(timelineId, v)} onClose={() => setNotesOpen(false)} /> : null}
           {/* invisible selection guard for tests */}

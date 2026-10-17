@@ -193,4 +193,11 @@ describe("CalendarPage — config popover", () => {
     fireEvent.click(screen.getByLabelText(`Remove month ${after.months.length}`));
     expect(store().calendars![0].months).toHaveLength(12);
   });
+
+  it("setWeekdays rejects writes containing blank names (cycle integrity)", () => {
+    const cal = seed();
+    const before = [...store().calendars![0].weekdays];
+    act(() => { store().setWeekdays(cal.id, ["Alvor", "", "Vela"]); });
+    expect(store().calendars![0].weekdays).toEqual(before);
+  });
 });

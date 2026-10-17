@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { dateIsEmpty, dateKey, formatDate, sanitizeDate } from "../../domain/dates";
-import { CATEGORY_COLORS } from "../entries/categories";
+import { CATEGORY_COLORS, categoryDot } from "../entries/categories";
 import "./timeline.css";
 
 interface DatedRow {
@@ -85,7 +85,7 @@ export function TimelinePage({ projectId }: { projectId: string }) {
                 <span
                   className="timeline-dot"
                   aria-hidden="true"
-                  style={{ backgroundColor: CATEGORY_COLORS[row.category] }}
+                  style={{ backgroundColor: categoryDot(row.category) }}
                 />
               </li>
             );

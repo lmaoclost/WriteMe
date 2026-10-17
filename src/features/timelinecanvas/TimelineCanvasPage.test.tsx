@@ -43,9 +43,9 @@ describe("TimelineCanvasPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add event" }));
     const beads = store().timelines![0].beads;
     expect(beads).toHaveLength(1);
-    // default view s=0.4, pan 100/0, canvas stub 1200x800 → center x=(600−100)/0.4=1250, on the wire (y=200)
+    // default view s=0.4, pan 100/0, canvas stub 1200x800 → center x=(600−100)/0.4=1250, acima do fio (y=−60)
     expect(beads[0].x).toBe(1250);
-    expect(beads[0].y).toBe(200);
+    expect(beads[0].y).toBe(-60);
     const panel = document.querySelector("[data-testid=tl-panel]") as HTMLElement;
     expect(panel.textContent).not.toMatch(/choose|escolha/i); // selected → editor fields
     expect(screen.getByLabelText("Event label")).toBeTruthy();

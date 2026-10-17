@@ -301,6 +301,41 @@ describe("entries route wiring", () => {
     );
     expect(screen.getByLabelText("Title")).toHaveValue("Guerra dos Cinco Invernos");
   });
+
+  it("the selection is free after a deep link: clicking another entry stays", () => {
+    const projectId = seedProject([
+      { title: "Rio Sarnen", category: "place" },
+      { title: "Guerra dos Cinco Invernos", category: "event" },
+    ]);
+    const other = projectEntries(projectId)[0].id;
+    render(
+      <MemoryRouter initialEntries={[`/p/${projectId}/entries?e=${projectEntries(projectId)[1].id}`]}>
+        <AppRouter />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Rio Sarnen" }));
+    expect(screen.getByLabelText("Title")).toHaveValue("Rio Sarnen");
+    void other;
+  });
+
+  it("a foreign deep link is ignored without locking the page", () => {
+    useScriptorium.getState().addProject("Outro mundo");
+    const otherProject = useScriptorium.getState().projects[0].id;
+    const foreignEntryId = "ent_forem";
+    useScriptorium.setState((s) => ({
+      projects: s.projects,
+      entries: [{ id: foreignEntryId, projectId: otherProject, title: "Outro", category: "lore", body: "", links: [] }, ...s.entries],
+    }));
+    const projectId = seedProject([{ title: "Aqui", category: "lore" }]);
+    render(
+      <MemoryRouter initialEntries={[`/p/${projectId}/entries?e=${foreignEntryId}`]}>
+        <AppRouter />
+      </MemoryRouter>,
+    );
+    expect(screen.getByLabelText("Title")).toHaveValue("Aqui");
+    fireEvent.click(screen.getByRole("button", { name: "Aqui" }));
+    expect(screen.getByLabelText("Title")).toHaveValue("Aqui");
+  });
 });
 
 describe("CodexPage — sections and summary (codex-15)", () => {
@@ -354,7 +389,7 @@ describe("CodexPage — cover framing, summary presentation, custom kinds", () =
     useScriptorium.setState(useScriptorium.getInitialState());
   });
 
-  it("cover respects the saved focal point; dragging the cover sets it", () => {
+  it("cover respects the saved focal point; dragging the cover sets it; cancel stops tracking", async () => {
     const pid = useScriptorium.getState().addProject("V").id;
     const e = useScriptorium.getState().addEntry(pid, "place")!;
     useScriptorium.getState().putEntryImage(e.id, "data:image/svg+xml,%3Csvg/%3E");
@@ -380,9 +415,18 @@ describe("CodexPage — cover framing, summary presentation, custom kinds", () =
       fire("pointermove", 100, 120);
       fire("pointerup", 100, 120);
     });
+    // the focal write is rAF-throttled
+    await act(async () => { await new Promise((r) => setTimeout(r, 30)); });
     const saved = useScriptorium.getState().entries.find((x) => x.id === e.id)!;
     expect(saved.focal).toEqual([0.5, 1]);
     expect(cover.style.objectPosition).toBe("50% 100%");
+    // pointercancel stops tracking: a later move must not move the focal
+    act(() => {
+      fire("pointercancel", 100, 0);
+      fire("pointermove", 0, 0);
+    });
+    await act(async () => { await new Promise((r) => setTimeout(r, 30)); });
+    expect(useScriptorium.getState().entries.find((x) => x.id === e.id)!.focal).toEqual([0.5, 1]);
   });
 
   it("user-created entry kinds join the chips, the selector and persist", () => {
