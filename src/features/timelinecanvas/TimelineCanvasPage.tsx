@@ -6,8 +6,11 @@ import { TLNotepad } from "./TLNotepad";
 import { LinkPicker } from "../atlas/panels/LinkPicker";
 import { EntryPreview, entryBlurb } from "../entries/EntryPreview";
 import { categoryIcon, categoryLabel } from "../entries/categories";
+import { Field } from "../../ui/Field";
+import { Button } from "../../ui/Button";
+import { BOARD_HEADER, BOARD_NAME_INPUT, BOARD_ACTIONS, BOARD_ACTION_BTN, BOARD_PANEL, BOARD_PANEL_HINT, BOARD_PANEL_HEAD, BOARD_PANEL_HEAD_H2 } from "../../ui/board";
 import type { TimelineWire, TimelineBead } from "../../domain/types";
-import "./timelinecanvas.css";import { useBoardNotesHotkey } from "../../ui/boardNotes";
+import { useBoardNotesHotkey } from "../../ui/boardNotes";
 
 
 export const BEAD_PRESET_COLORS = [
@@ -42,25 +45,25 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
   if (!timeline) return null;
 
   return (
-    <div className="timelinecanvas-page" data-testid="timelinecanvas-page">
-      <header className="bl-header">
+    <div className="grid grid-rows-[auto_1fr] h-full" data-testid="timelinecanvas-page">
+      <header className={BOARD_HEADER}>
         <input
-          className="bl-name"
+          className={BOARD_NAME_INPUT}
           aria-label="Timeline name"
           value={timeline.name}
           onChange={(e) => useScriptorium.getState().renameTimeline(timelineId, e.target.value)}
         />
-        <div className="bl-actions">
-          <button type="button" aria-label="Undo" disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoTL(timelineId)}>↶</button>
-          <button type="button" aria-label="Redo" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoTL(timelineId)}>↷</button>
-          <button type="button" onClick={() => { pushTLHistory(timelineId); const el = stageRef.current; const x = el && el.clientWidth ? (el.clientWidth / 2 - view.current.panX) / view.current.s : 4000; const created = useScriptorium.getState().addBead(timelineId, { x, y: -60 }); if (created) { setSelectedBeadId(created.id); markDirty(); } }}>Add event</button>
-          <button type="button" onClick={() => { pushTLHistory(timelineId); useScriptorium.getState().addSegment(timelineId, 1000, 3000, "New era"); }}>Add segment</button>
-          <button type="button" aria-pressed={notesOpen} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
+        <div className={BOARD_ACTIONS}>
+          <button type="button" aria-label="Undo" className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoTL(timelineId)}>↶</button>
+          <button type="button" aria-label="Redo" className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoTL(timelineId)}>↷</button>
+          <button type="button" className={BOARD_ACTION_BTN} onClick={() => { pushTLHistory(timelineId); const el = stageRef.current; const x = el && el.clientWidth ? (el.clientWidth / 2 - view.current.panX) / view.current.s : 4000; const created = useScriptorium.getState().addBead(timelineId, { x, y: -60 }); if (created) { setSelectedBeadId(created.id); markDirty(); } }}>Add event</button>
+          <button type="button" className={BOARD_ACTION_BTN} onClick={() => { pushTLHistory(timelineId); useScriptorium.getState().addSegment(timelineId, 1000, 3000, "New era"); }}>Add segment</button>
+          <button type="button" aria-pressed={notesOpen} className={BOARD_ACTION_BTN} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
         </div>
       </header>
-      <div className="bl-body">
+      <div className="grid grid-cols-[1fr_300px] min-h-0 overflow-hidden">
         <div
-          className="bl-canvas"
+          className="relative overflow-hidden bg-ink cursor-grab active:cursor-grabbing"
           data-testid="tl-canvas"
           ref={stageRef}
           style={{ cursor: pan.current ? "grabbing" : "grab" }}
@@ -100,7 +103,7 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
           }}
         >
           <div
-            className="bl-plane"
+            className="absolute bg-[radial-gradient(circle_at_25%_25%,#17162a,var(--ink)_65%)] shadow-[inset_0_0_0_1px_var(--line)]"
             data-testid="tl-plane"
             style={{
               width: 20000, height: 20000,
@@ -108,9 +111,9 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
               transformOrigin: "0 0",
             }}
           >
-            <svg data-testid="tl-wire-svg" className="edges-layer" width="100%" height="100%">
+            <svg data-testid="tl-wire-svg" className="edges-layer absolute left-2 top-2 w-full h-full pointer-events-none" width="100%" height="100%">
               {/* segments draw over the base wire */}
-              <line data-testid="tl-wire-base" x1={0} y1={200} x2={20000} y2={200} className="tl-wire-base" />
+              <line data-testid="tl-wire-base" x1={0} y1={200} x2={20000} y2={200} className="tl-wire-base [stroke:var(--gold-dim)] [stroke-width:3]" />
               {timeline.segments.map((g) => (
                 <g key={g.id} data-testid="tl-seg" className="tl-seg"
                   onPointerDown={(e) => {
@@ -119,7 +122,7 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
                     setSelectedBeadId(g.id);
                   }}>
                   <line x1={g.fromX} y1={200} x2={g.toX} y2={200} stroke={g.lineColor} strokeWidth={4} />
-                  <text x={(g.fromX + g.toX) / 2} y={186} className="tl-seg-label" fill={g.lineColor} textAnchor="middle">{g.label}</text>
+                  <text x={(g.fromX + g.toX) / 2} y={186} className="tl-seg-label text-sm font-display" fill={g.lineColor} textAnchor="middle">{g.label}</text>
                 </g>
               ))}
               {timeline.beads.map((b) => (
@@ -132,17 +135,17 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
                     pushTLHistory(timelineId);
                   }}
                   transform={`translate(${b.x}, ${b.y})`}>
-                  <line x1={0} y1={0} x2={0} y2={200 - b.y} className="tl-bead-stem" />
-                  <circle cx={0} cy={0} r={8} fill={b.color} className="tl-bead-dot" />
-                  <text x={0} y={-18} className="tl-bead-label" textAnchor="middle">{b.label}</text>
-                  {b.dateText ? <text x={0} y={-34} className="tl-bead-date" textAnchor="middle">{b.dateText}</text> : null}
-                  {b.summary ? <text x={0} y={14} className="tl-bead-summary" textAnchor="middle">{b.summary.slice(0, 40)}</text> : null}
+                  <line x1={0} y1={0} x2={0} y2={200 - b.y} className="tl-bead-stem [stroke:var(--line)] [stroke-width:1.5]" />
+                  <circle cx={0} cy={0} r={8} fill={b.color} className="tl-bead-dot cursor-pointer" />
+                  <text x={0} y={-18} className="tl-bead-label text-sm fill-parchment font-semibold" textAnchor="middle">{b.label}</text>
+                  {b.dateText ? <text x={0} y={-34} className="tl-bead-date text-[11px] fill-gold font-mono" textAnchor="middle">{b.dateText}</text> : null}
+                  {b.summary ? <text x={0} y={14} className="tl-bead-summary text-[0.6875rem] fill-slate" textAnchor="middle">{b.summary.slice(0, 40)}</text> : null}
                 </g>
               ))}
             </svg>
           </div>
           {timeline.beads.length === 0 ? (
-            <div className="bl-empty">Coloque o primeiro evento no fio — botão "Add event" cria no centro do view.</div>
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[calc(1/var(--bl-scale,0.1))] text-slate whitespace-nowrap">Coloque o primeiro evento no fio — botão "Add event" cria no centro do view.</div>
           ) : null}
           {notesOpen ? <TLNotepad notes={timeline.notes} onNotes={(v) => useScriptorium.getState().setTimelineNotes(timelineId, v)} onClose={() => setNotesOpen(false)} /> : null}
           {/* invisible selection guard for tests */}
@@ -164,8 +167,8 @@ function TomeEntryLink({ timeline, bead, onNavigate }: {
   const entry = entries.find((e) => e.id === bead.entryId);
   if (entries.length === 0) return null;
   return (
-    <div className="field" data-testid="bead-tome-link">
-      <span className="field-label">Tome entry</span>
+    <div className="flex flex-col gap-1.5" data-testid="bead-tome-link">
+      <span className="field-label text-xs font-semibold uppercase tracking-[0.08em] text-slate">Tome entry</span>
       {entry ? (
         <EntryPreview
           data={{
@@ -202,8 +205,8 @@ function BeadPanel({ timeline, selectedId, onSelect }: {
 
   if (!bead && !seg) {
     return (
-      <aside className="bl-panel" data-testid="tl-panel">
-        <p className="bl-panel-hint">Escolha um evento ou era no fio.</p>
+      <aside className={BOARD_PANEL} data-testid="tl-panel">
+        <p className={BOARD_PANEL_HINT}>Escolha um evento ou era no fio.</p>
       </aside>
     );
   }
@@ -216,56 +219,50 @@ function BeadPanel({ timeline, selectedId, onSelect }: {
   };
 
   return (
-    <aside className="bl-panel" data-testid="tl-panel">
-      <header className="bl-panel-head">
-        <h2>{bead?.label ?? seg?.label}</h2>
-        <button type="button" className={armDelete ? "btn-danger" : ""} onClick={remove}
+    <aside className={BOARD_PANEL} data-testid="tl-panel">
+      <header className={BOARD_PANEL_HEAD}>
+        <h2 className={BOARD_PANEL_HEAD_H2}>{bead?.label ?? seg?.label}</h2>
+        <Button kind={armDelete ? "danger" : "ghost"} className="px-2 py-1 text-xs" onClick={remove}
           aria-label={armDelete ? "Confirm delete" : "Excluir"}>
           {armDelete ? "Confirmar?" : "Excluir"}
-        </button>
+        </Button>
       </header>
       {bead ? (
         <>
-          <div className="field">
-            <span className="field-label">Label</span>
+          <Field label="Label">
             <input aria-label="Event label" defaultValue={bead.label}
               onBlur={(e) => store().updateBead(bead.id, { label: e.target.value })} />
-          </div>
-          <div className="field">
-            <span className="field-label">Date</span>
+          </Field>
+          <Field label="Date">
             <input aria-label="Event date" defaultValue={bead.dateText ?? ""}
               onBlur={(e) => store().updateBead(bead.id, { dateText: e.target.value.trim() || undefined })} />
-          </div>
-          <label className="field">
-            <span className="field-label">Summary</span>
+          </Field>
+          <Field label="Summary">
             <textarea aria-label="Event summary" rows={3} defaultValue={bead.summary ?? ""}
               onBlur={(e) => store().updateBead(bead.id, { summary: e.target.value.trim() || undefined })} />
-          </label>
+          </Field>
           <TomeEntryLink timeline={timeline} bead={bead} onNavigate={(entryId) => navigate(`/p/${timeline.projectId}/entries?e=${entryId}`)} />
-          <div className="field">
-            <span className="field-label">Color</span>
-            <div className="color-row" role="listbox" aria-label="Event color">
+          <Field label="Color">
+            <div className="color-row flex flex-wrap gap-1.5" role="listbox" aria-label="Event color">
               {BEAD_PRESET_COLORS.map((c) => (
                 <button key={c} type="button" role="option" aria-selected={bead.color === c}
-                  className={`color-swatch${bead.color === c ? " current" : ""}`} style={{ background: c }}
+                  className={`color-swatch size-5 rounded-full border border-transparent cursor-pointer${bead.color === c ? " outline outline-2 outline-parchment" : ""}`} style={{ background: c }}
                   onClick={() => store().updateBead(bead.id, { color: c })} />
               ))}
             </div>
-          </div>
+          </Field>
         </>
       ) : null}
       {seg ? (
         <>
-          <div className="field">
-            <span className="field-label">Segment name</span>
+          <Field label="Segment name">
             <input aria-label="Segment name" defaultValue={seg.label}
               onBlur={(e) => store().updateSegment(seg.id, { label: e.target.value })} />
-          </div>
-          <div className="field">
-            <span className="field-label">Line color</span>
+          </Field>
+          <Field label="Line color">
             <input type="color" aria-label="Segment line color" defaultValue={seg.lineColor}
-              onBlur={(e) => store().updateSegment(seg.id, { lineColor: e.target.value })} />
-          </div>
+              onBlur={(e) => store().updateSegment(seg.id, { lineColor: e.target.value })} className="h-9 w-full bg-ink border border-line rounded-sm" />
+          </Field>
         </>
       ) : null}
     </aside>

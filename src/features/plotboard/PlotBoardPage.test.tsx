@@ -33,7 +33,7 @@ describe("PlotBoardPage", () => {
     expect(panel).toBeTruthy();
     // editor beside the canvas, never inside the plane-covered container
     expect(panel.closest("[data-testid=pb-canvas]")).toBeNull();
-    expect(panel.parentElement?.className).toContain("bl-body");
+    expect(panel.parentElement?.className).toContain("grid-cols-[1fr_300px]");
     void c;
   });
   it("empty state invites the first scene", () => {
@@ -47,11 +47,11 @@ describe("PlotBoardPage", () => {
     store().addCard(b.id, { x: 4000, y: 4000 });
     render(<PlotBoardPage boardId={b.id} />);
     const canvas = screen.getByTestId("pb-canvas");
-    const before = canvas.querySelector(".bl-plane")!.getAttribute("style")!;
+    const before = canvas.querySelector("[data-testid=\"pb-plane\"]")!.getAttribute("style")!;
     firePointer(canvas, "pointerdown", { clientX: 500, clientY: 400 });
     firePointer(canvas, "pointermove", { clientX: 380, clientY: 350 });
     firePointer(canvas, "pointerup", { clientX: 380, clientY: 350 });
-    const after = canvas.querySelector(".bl-plane")!.getAttribute("style")!;
+    const after = canvas.querySelector("[data-testid=\"pb-plane\"]")!.getAttribute("style")!;
     expect(after).not.toBe(before);
     expect(after).toContain("scale(0.5)");
     expect(store().plotBoards![0].cards).toHaveLength(1);

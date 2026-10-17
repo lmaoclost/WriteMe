@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Field } from "../../ui/Field";
+import { Button } from "../../ui/Button";
+import { BOARD_HEADER, BOARD_NAME_INPUT, BOARD_ACTIONS, BOARD_ACTION_BTN, BOARD_PANEL, BOARD_PANEL_HINT, BOARD_PANEL_HEAD, BOARD_PANEL_HEAD_H2 } from "../../ui/board";
 import { useScriptorium } from "../../data/store";
 import { WellNotepad } from "./WellNotepad";
 import type { WellSpring, WellKind } from "../../domain/types";
-import "./wellspring.css";import { useBoardNotesHotkey } from "../../ui/boardNotes";
+import { useBoardNotesHotkey } from "../../ui/boardNotes";
 
 
 export const WELL_KIND_META: Record<WellKind, { label: string; icon: string; color: string }> = {
@@ -42,21 +46,21 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
   const nodeById = (id: string) => well.nodes.find((n) => n.id === id);
 
   return (
-    <div className="well-page" data-testid="well-page">
-      <header className="bl-header">
+    <div className="grid grid-rows-[auto_1fr] h-full" data-testid="well-page">
+      <header className={BOARD_HEADER}>
         <input
-          className="bl-name"
+          className={BOARD_NAME_INPUT}
           aria-label="Wellspring name"
           value={well.name}
           onChange={(e) => useScriptorium.getState().renameWellSpring(wellId, e.target.value)}
         />
-        <div className="well-toolkit">
+        <div className="flex gap-1.5">
           {(Object.keys(WELL_KIND_META) as WellKind[]).map((k) => (
             <button
               key={k}
               type="button"
               aria-pressed={placingKind === k}
-              className={"well-kind-btn" + (placingKind === k ? " armed" : "") + (placingKind && placingKind !== k ? " dim" : "")}
+              className={"well-kind-btn bg-ink rounded-sm px-2.5 py-1.5 text-parchment-dim" + (placingKind === k ? " bg-[color-mix(in_srgb,var(--gold)_18%,var(--ink))] text-parchment" : "") + (placingKind && placingKind !== k ? " opacity-55" : "")}
               style={{ borderColor: WELL_KIND_META[k].color }}
               onClick={() => setPlacingKind((cur) => (cur === k ? null : k))}
             >
@@ -64,15 +68,15 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
             </button>
           ))}
         </div>
-        <div className="bl-actions">
-          <button type="button" aria-label="Undo" disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoWS(wellId)}>↶</button>
-          <button type="button" aria-label="Redo" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoWS(wellId)}>↷</button>
-          <button type="button" aria-pressed={notesOpen} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
+        <div className={BOARD_ACTIONS}>
+          <button type="button" aria-label="Undo" className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoWS(wellId)}>↶</button>
+          <button type="button" aria-label="Redo" className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoWS(wellId)}>↷</button>
+          <button type="button" aria-pressed={notesOpen} className={BOARD_ACTION_BTN} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
         </div>
       </header>
-      <div className="bl-body">
+      <div className="grid grid-cols-[1fr_320px] min-h-0 overflow-hidden">
         <div
-          className="bl-canvas"
+          className="relative overflow-hidden bg-ink cursor-grab active:cursor-grabbing"
           data-testid="well-canvas"
           ref={stageRef}
           onPointerDown={(e) => {
@@ -119,7 +123,7 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
           }}
         >
           <div
-            className="bl-plane"
+            className="absolute bg-[radial-gradient(circle_at_25%_25%,#17162a,var(--ink)_65%)] shadow-[inset_0_0_0_1px_var(--line)]"
             data-testid="well-plane"
             style={{
               width: 20000, height: 20000,
@@ -127,18 +131,18 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
               transformOrigin: "0 0",
             }}
           >
-            <svg data-testid="well-borders" className="edges-layer" width="100%" height="100%">
+            <svg data-testid="well-borders" className="edges-layer absolute left-0 top-0 w-full h-full pointer-events-none" width="100%" height="100%">
               {well.borders.map((b) => {
                 const a = nodeById(b.fromId), c = nodeById(b.toId);
                 if (!a || !c) return null;
                 const mx = (a.x + c.x) / 2, my = (a.y + c.y) / 2;
                 return (
                   <g key={b.id}>
-                    <line data-testid="well-border" x1={a.x} y1={a.y} x2={c.x} y2={c.y} className="well-border-line" />
-                    <text x={mx} y={my - 8} className="well-border-label" textAnchor="middle">{b.label}</text>
+                    <line data-testid="well-border" x1={a.x} y1={a.y} x2={c.x} y2={c.y} className="well-border-line [stroke:var(--gold-dim)] [stroke-width:2] [stroke-dasharray:2_6]" />
+                    <text x={mx} y={my - 8} className="well-border-label text-[0.6875rem] fill-slate italic" textAnchor="middle">{b.label}</text>
                     <line
                       x1={a.x} y1={a.y} x2={c.x} y2={c.y}
-                      className="plot-wire-hit"
+                      className="plot-wire-hit [stroke:transparent] [stroke-width:12] cursor-pointer hover:[stroke:rgb(244_67_54/0.35)]"
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={() => useScriptorium.getState().removeWellBorder(b.id)}
                     />
@@ -151,7 +155,7 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
               return (
                 <div
                   key={n.id}
-                  className={"well-node" + (n.id === selectedId ? " selected" : "")}
+                  className={"well-node absolute w-40 px-3 py-2 rounded-lg bg-night border border-slate grid gap-0.5 cursor-pointer shadow-[inset_2px_0_0_currentColor]" + (n.id === selectedId ? " outline outline-2 outline-gold" : "")}
                   data-testid="well-node"
                   data-node-id={n.id}
                   style={{ left: n.x - 80, top: n.y - 26, borderColor: meta.color, color: meta.color }}
@@ -167,10 +171,10 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
                   }}
                 >
                   <span aria-hidden="true">{meta.icon}</span>
-                  <span className="well-node-text">{n.text || meta.label}</span>
+                  <span className="text-[13px] font-semibold text-parchment">{n.text || meta.label}</span>
                   <button
                     type="button"
-                    className="conn-btn"
+                    className="conn-btn w-5 h-5 rounded-full bg-gold text-wax border-0 text-[0.6875rem] grid place-items-center cursor-crosshair"
                     aria-label={`Borda de ${n.text || meta.label}`}
                     onPointerDown={(e) => {
                       e.stopPropagation();
@@ -185,7 +189,7 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
             })}
           </div>
           {well.nodes.length === 0 ? (
-            <div className="bl-empty">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[calc(1/var(--bl-scale,0.1))] text-slate whitespace-nowrap">
               {placingKind
                 ? `Escolha onde ancorar: ${WELL_KIND_META[placingKind].label}`
                 : "Choose a type and click the canvas — sketch a loose idea before it has a home."}
@@ -214,8 +218,8 @@ function WellPanel({ well, selectedId, onSelect, otherNodes }: {
 
   if (!node) {
     return (
-      <aside className="bl-panel" data-testid="well-panel">
-        <p className="bl-panel-hint">Pick a note on the canvas.</p>
+      <aside className={BOARD_PANEL} data-testid="well-panel">
+        <p className={BOARD_PANEL_HINT}>Pick a note on the canvas.</p>
       </aside>
     );
   }
@@ -231,53 +235,56 @@ function WellPanel({ well, selectedId, onSelect, otherNodes }: {
   const bordersMine = well.borders.filter((b) => b.fromId === node.id || b.toId === node.id);
 
   return (
-    <aside className="bl-panel" data-testid="well-panel">
-      <header className="bl-panel-head">
-        <h2>{node.text || WELL_KIND_META[node.kind].label}</h2>
-        <button type="button" className={armDelete ? "btn-danger" : ""} onClick={remove}
+    <aside className={BOARD_PANEL} data-testid="well-panel">
+      <header className={BOARD_PANEL_HEAD}>
+        <h2 className={BOARD_PANEL_HEAD_H2}>{node.text || WELL_KIND_META[node.kind].label}</h2>
+        <Button kind={armDelete ? "danger" : "ghost"} className="px-2 py-1 text-xs" onClick={remove}
           aria-label={armDelete ? "Confirm delete note" : "Delete note"}>
           {armDelete ? "Confirmar?" : "Excluir"}
-        </button>
+        </Button>
       </header>
-      <div className="field">
-        <span className="field-label">Text</span>
+      <Field label="Text">
         <input aria-label="Node text" value={node.text} onChange={(e) => store().updateWellNode(node.id, { text: e.target.value })} />
-      </div>
-      <div className="field">
-        <span className="field-label">Type</span>
-        <select aria-label="Node type" value={node.kind} onChange={(e) => store().updateWellNode(node.id, { kind: e.target.value as WellKind })}>
-          {(Object.keys(WELL_KIND_META) as WellKind[]).map((k) => (
-            <option key={k} value={k}>{WELL_KIND_META[k].label}</option>
-          ))}
-        </select>
-      </div>
-      <section className="bl-subsection">
-        <h3>Fronteiras (bordas)</h3>
-        {bordersMine.length === 0 ? <p className="dim">Nenhuma borda.</p> : null}
+      </Field>
+      <Field label="Type">
+        <Select value={node.kind} onValueChange={(v) => store().updateWellNode(node.id, { kind: v as WellKind })}>
+          <SelectTrigger aria-label="Node type" className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
+          <SelectContent className="border-line bg-night text-parchment">
+            {(Object.keys(WELL_KIND_META) as WellKind[]).map((k) => (
+              <SelectItem key={k} value={k} className="text-xs focus:bg-[#24233f] focus:text-parchment">{WELL_KIND_META[k].label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </Field>
+      <section className="border-t border-line mt-3.5 pt-2.5 grid gap-2">
+        <h3 className="text-[13px] tracking-[0.08em] uppercase text-slate font-semibold">Fronteiras (bordas)</h3>
+        {bordersMine.length === 0 ? <p className="text-slate">Nenhuma borda.</p> : null}
         {bordersMine.map((b) => {
           const otherId = b.fromId === node.id ? b.toId : b.fromId;
           const other = well.nodes.find((n) => n.id === otherId);
           return (
-            <div key={b.id} className="oath-edit-row" data-testid="well-border-row">
-              <span className="dim">{other?.text || "?"}:</span>
+            <div key={b.id} className="flex flex-wrap items-center gap-1.5" data-testid="well-border-row">
+              <span className="text-slate">{other?.text || "?"}:</span>
               <input
                 aria-label={`Label da borda com ${other?.text ?? "?"}`}
                 value={b.label}
                 onChange={(e) => store().updateWellBorder(b.id, e.target.value)}
                 onBlur={() => { if (!b.label.trim()) store().removeWellBorder(b.id); }}
+                className="min-w-0 flex-1 bg-ink border border-line rounded-sm text-parchment px-1.5 py-0.5 text-xs"
               />
-              <button type="button" aria-label="Remove border" onClick={() => store().removeWellBorder(b.id)}>✕</button>
+              <button type="button" aria-label="Remove border" onClick={() => store().removeWellBorder(b.id)} className="bg-none border-0 text-slate text-xs">✕</button>
             </div>
           );
         })}
-        <div className="well-border-add">
-          <select aria-label="Border target" value={fromId} onChange={(e) => setFromId(e.target.value)}>
-            <option value="">Connect to...</option>
-            {others.map((n) => <option key={n.id} value={n.id}>{n.text || WELL_KIND_META[n.kind].label}</option>)}
-          </select>
-          <input aria-label="Name this border" placeholder="como essa fronteira se chama?" value={borderLabel} onChange={(e) => setBorderLabel(e.target.value)} />
-          <button
-            type="button"
+        <div className="grid gap-1.5">
+          <Select value={fromId} onValueChange={(v) => setFromId(v)}>
+            <SelectTrigger aria-label="Border target" className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue placeholder="Connect to..." /></SelectTrigger>
+            <SelectContent className="border-line bg-night text-parchment">
+              {others.map((n) => <SelectItem key={n.id} value={n.id} className="text-xs focus:bg-[#24233f] focus:text-parchment">{n.text || WELL_KIND_META[n.kind].label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <input aria-label="Name this border" placeholder="como essa fronteira se chama?" value={borderLabel} onChange={(e) => setBorderLabel(e.target.value)} className="bg-ink border border-line rounded-sm text-parchment px-2 py-1.5 text-xs" />
+          <Button
             disabled={!fromId || !borderLabel.trim()}
             onClick={() => {
               const b = store().addWellBorder(well.id, node.id, fromId, borderLabel.trim());
@@ -285,10 +292,10 @@ function WellPanel({ well, selectedId, onSelect, otherNodes }: {
               setFromId("");
               setBorderLabel("");
             }}
-          >+ Borda</button>
+          >+ Borda</Button>
         </div>
       </section>
-      <p className="bl-panel-note">{well.nodes.length} notes · {well.borders.length} borders</p>
+      <p className="text-slate text-xs">{well.nodes.length} notes · {well.borders.length} borders</p>
     </aside>
   );
 }

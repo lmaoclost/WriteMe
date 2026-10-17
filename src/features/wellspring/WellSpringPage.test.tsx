@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { firePointer } from "../../test/pointer";
+import { selectOption } from "../../test/selectHelper";
 import { useScriptorium } from "../../data/store";
 import { WellSpringPage } from "./WellSpringPage";
 import { WellSpringIndexPage } from "./WellSpringIndexPage";
@@ -62,7 +63,7 @@ describe("WellSpringPage", () => {
     // the editor must be a sibling column of the canvas, never inside it
     // (inside = painted behind the opaque plane, unreachable)
     expect(panel.closest("[data-testid=well-canvas]")).toBeNull();
-    expect(panel.parentElement?.className).toContain("bl-body");
+    expect(panel.parentElement?.className).toContain("grid-cols-[1fr_320px]");
   });
 
   it("panel shows a hint when nothing is selected", () => {
@@ -107,7 +108,7 @@ describe("WellSpringPage", () => {
     expect(store().wellsprings![0].nodes[0].text).toBe("O rio virou sangue");
   });
 
-  it("border add via panel with label then remove by wire click", () => {
+  it("border add via panel with label then remove by wire click", async () => {
     const w = seed();
     act(() => {
       store().addWellNode(w.id, { kind: "character", x: 100, y: 100, text: "Aerith" });
@@ -116,7 +117,7 @@ describe("WellSpringPage", () => {
     render(<WellSpringPage wellId={w.id} />);
     const node = screen.getAllByTestId("well-node").find((n) => n.getAttribute("data-node-id") === store().wellsprings![0].nodes[0].id)!;
     firePointer(node, "pointerdown", { clientX: 0, clientY: 0 });
-    fireEvent.change(screen.getByLabelText("Border target"), { target: { value: store().wellsprings![0].nodes[1].id } });
+    await selectOption(() => screen.getByLabelText("Border target"), "Por que o rio fala?");
     fireEvent.change(screen.getByLabelText("Name this border"), { target: { value: "ouviu o aviso" } });
     fireEvent.click(screen.getByRole("button", { name: "+ Borda" }));
     expect(screen.getByText("ouviu o aviso")).toBeInTheDocument();

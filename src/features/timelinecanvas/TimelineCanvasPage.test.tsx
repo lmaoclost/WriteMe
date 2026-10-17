@@ -26,7 +26,7 @@ describe("TimelineCanvasPage", () => {
     expect(panel).toBeTruthy();
     // editor beside the canvas, never painted behind the plane
     expect(panel.closest("[data-testid=tl-canvas]")).toBeNull();
-    expect(panel.parentElement?.className).toContain("bl-body");
+    expect(panel.parentElement?.className).toContain("grid-cols-[1fr_300px]");
     void b;
   });
 
