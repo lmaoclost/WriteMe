@@ -18,6 +18,7 @@ const SECTIONS = [
   { key: "wellspring", label: "Wellspring", to: "wellspring" },
   { key: "conlang", label: "Conlang", to: "conlang" },
   { key: "manuscript", label: "Manuscript", to: "manuscript" },
+  { key: "bindery", label: "Bindery", to: "bindery" },
 ] as const;
 
 export function WorkspaceLayout() {

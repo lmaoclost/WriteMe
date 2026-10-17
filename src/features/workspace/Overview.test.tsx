@@ -117,9 +117,9 @@ describe("overview dashboard", () => {
     const pid = seeded();
     render(at(`/p/${pid}`));
     const ledger = within(screen.getByRole("region", { name: "Forge ledger" }));
-    expect(ledger.getAllByRole("listitem")).toHaveLength(11);
+    expect(ledger.getAllByRole("listitem")).toHaveLength(12);
     ["Codex", "Atlas", "Bloodline", "Oaths", "Factions", "Calendar",
-     "Plot board", "Timeline wheel", "Wellspring", "Conlang", "Manuscript"]
+     "Plot board", "Timeline wheel", "Wellspring", "Conlang", "Manuscript", "Bindery"]
       .forEach((n) => expect(ledger.getByText(n)).toBeInTheDocument());
   });
 
@@ -165,5 +165,42 @@ describe("overview dashboard", () => {
     const ledger = within(screen.getByRole("region", { name: "Forge ledger" }));
     expect(ledger.getByLabelText("Bloodline persons")).toHaveTextContent("—");
     expect(ledger.getByLabelText("Conlang words")).toHaveTextContent("—");
+  });
+});
+describe("Bindery index", () => {
+  it("rail gains a Bindery item and the ledger row points at the index", () => {
+    const p = useScriptorium.getState().addProject("Shimradis");
+    render(at(`/p/${p.id}`));
+    const rail = within(screen.getByRole("navigation", { name: /world sections/i }));
+    expect(rail.getByRole("link", { name: "Bindery" })).toHaveAttribute("href", `/p/${p.id}/bindery`);
+    const ledger = within(screen.getByRole("region", { name: "Forge ledger" }));
+    expect(ledger.getByRole("link", { name: /Bindery/i })).toHaveAttribute("href", `/p/${p.id}/bindery`);
+  });
+
+  it("index lists manuscripts with chapter counts and links into the deep route", () => {
+    const p = useScriptorium.getState().addProject("Shimradis");
+    act(() => { useScriptorium.getState().addManuscript(p.id, "Cantar de Vellmora"); });
+    act(() => { useScriptorium.getState().addChapter(useScriptorium.getState().manuscripts[0].id, "Arco da Coroa"); });
+    act(() => { useScriptorium.getState().setBindery(useScriptorium.getState().manuscripts[0].id, { trim: "5x8" }); });
+    render(at(`/p/${p.id}/bindery`));
+    expect(screen.getByRole("heading", { name: "Bindery" })).toBeInTheDocument();
+    const row = screen.getByRole("link", { name: /Cantar de Vellmora/i });
+    expect(row.getAttribute("href")).toBe(`/p/${p.id}/bindery/${useScriptorium.getState().manuscripts[0].id}`);
+    expect(screen.getByText(/1 chapter/i)).toBeInTheDocument();
+    expect(screen.getByText(/5 × 8/i)).toBeInTheDocument();
+  });
+
+  it("empty index invites creating a manuscript in the Manuscript forge", () => {
+    const p = useScriptorium.getState().addProject("Shimradis");
+    render(at(`/p/${p.id}/bindery`));
+    expect(screen.getByText(/no manuscripts yet/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /open the manuscript/i })).toHaveAttribute("href", `/p/${p.id}/manuscript`);
+  });
+
+  it("deep route still configures the specific manuscript", () => {
+    const p = useScriptorium.getState().addProject("Shimradis");
+    act(() => { useScriptorium.getState().addManuscript(p.id, "Cantar"); });
+    render(at(`/p/${p.id}/bindery/${useScriptorium.getState().manuscripts[0].id}`));
+    expect(screen.getByLabelText("Typography")).toBeInTheDocument();
   });
 });

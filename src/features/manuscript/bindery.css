@@ -25,3 +25,17 @@
 .bindery-live .glossary td { border-bottom: 1px dotted var(--paper-muted-soft); padding: 5px 6px; vertical-align: top; }
 .bindery-link { display: inline-grid; place-items: center; text-decoration: none; }
 .bindery-link:hover { filter: brightness(1.1); }
+.bl-title { font-family: var(--font-display); font-size: 1.375rem; color: var(--parchment-strong); margin: 0; }
+.bindery-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.bindery-row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+  padding: 14px 4px; border-top: 1px solid var(--line);
+  color: inherit; text-decoration: none;
+}
+.bindery-list li:first-child .bindery-row { border-top: 0; }
+.bindery-row:hover .bindery-row-title { color: var(--gold); }
+.bindery-row-title { font-family: var(--font-display); font-size: 1.25rem; font-weight: 600; color: var(--parchment-strong); }
+.bindery-row-meta { color: var(--slate); font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+.bindery-empty { color: var(--slate); font-size: 0.9375rem; margin-top: 8px; }
+.bindery-create-link { color: var(--lilac); text-decoration: none; }
+.bindery-create-link:hover { text-decoration: underline; }

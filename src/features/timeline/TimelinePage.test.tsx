@@ -178,7 +178,7 @@ describe("TimelinePage", () => {
     const labels = Array.from(document.querySelectorAll(".rail-link .rail-label")).map(
       (el) => el.textContent,
     );
-    expect(labels).toEqual(["Overview", "Atlas", "Codex", "Timeline", "Bloodline", "Factions", "Calendar", "Plot board", "Timeline canvas", "Oaths", "Wellspring", "Conlang", "Manuscript"]);
+    expect(labels).toEqual(["Overview", "Atlas", "Codex", "Timeline", "Bloodline", "Factions", "Calendar", "Plot board", "Timeline canvas", "Oaths", "Wellspring", "Conlang", "Manuscript", "Bindery"]);
     expect(screen.getByRole("link", { name: "Timeline" }).getAttribute("class")).toContain("active");
   });
 });

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { BINDERY_FONTS, BINDERY_TRIMS, binderyCss, trimToPage } from "./bindery";
@@ -120,6 +121,41 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
 }
 
 const PRINT_SETTLE_MS = 800;
+
+/** Bindery index: every manuscript of the project + where it stands. */
+export function BinderyIndex({ projectId }: { projectId: string }) {
+  const manuscripts = useScriptorium(useShallow((s) => s.manuscripts.filter((m) => m.projectId === projectId)));
+
+  return (
+    <div className="bindery-page" data-testid="bindery-index">
+      <header className="bl-header">
+        <h1 className="bl-title">Bindery</h1>
+      </header>
+      {manuscripts.length === 0 ? (
+        <p className="bindery-empty">
+          No manuscripts yet.{" "}
+          <Link className="bindery-create-link" to={`/p/${projectId}/manuscript`}>Open the Manuscript</Link>{" "}
+          to write one.
+        </p>
+      ) : (
+        <ul className="bindery-list">
+          {manuscripts.map((m) => (
+            <li key={m.id}>
+              <Link className="bindery-row" to={`/p/${projectId}/bindery/${m.id}`}>
+                <span className="bindery-row-title">{m.title}</span>
+                <span className="bindery-row-meta">
+                  {m.chapters.length} {m.chapters.length === 1 ? "chapter" : "chapters"}
+                  {" · "}
+                  {BINDERY_TRIMS.find((t) => t.id === (m.bindery?.trim ?? "6x9"))?.label ?? "6 × 9\""}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 /** re-export for tests */
 export { BINDERY_TRIMS, BINDERY_FONTS };

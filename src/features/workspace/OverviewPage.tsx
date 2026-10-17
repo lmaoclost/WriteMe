@@ -30,6 +30,7 @@ const LEDGER: LedgerDef[] = [
   { letter: "K", name: "Wellspring", path: "wellspring", counter: "Wellspring nodes", read: (c) => c.wellspringNodes > 0 ? String(c.wellspringNodes) : "\u2014" },
   { letter: "K2", name: "Conlang", path: "conlang", counter: "Conlang words", read: (c) => c.conlangWords > 0 ? String(c.conlangWords) : "\u2014" },
   { letter: "M", name: "Manuscript", path: "manuscript", counter: "Manuscript chapters", read: (c) => c.chapters > 0 ? String(c.chapters) : "\u2014" },
+  { letter: "S", name: "Bindery", path: "bindery", counter: "Bindery trims", read: () => "\u2726" },
 ];
 
 export function OverviewPage() {

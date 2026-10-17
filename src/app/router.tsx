@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes, useParams } from "react-router-dom";
+import { Navigate, Route, Routes, useParams, useOutletContext } from "react-router-dom";
 import { LibraryPage } from "../features/projects/LibraryPage";
 import { AtlasIndexPage } from "../features/atlas/AtlasIndexPage";
 import { AtlasEditor } from "../features/atlas/AtlasEditor";
@@ -20,7 +20,8 @@ import { WellSpringIndexPage } from "../features/wellspring/WellSpringIndexPage"
 import { WellSpringPage } from "../features/wellspring/WellSpringPage";
 import { ConlangIndexPage } from "../features/conlang/ConlangIndexPage";
 import { ConlangPage } from "../features/conlang/ConlangPage";
-import { BinderyPage } from "../features/manuscript/BinderyPage";
+import { BinderyPage, BinderyIndex } from "../features/manuscript/BinderyPage";
+import type { WorkspaceContext } from "../features/workspace/OverviewPage";
 import { ManuscriptPage } from "../features/manuscript/ManuscriptPage";
 import { OverviewPage } from "../features/workspace/OverviewPage";
 import { WorkspaceLayout } from "../features/workspace/WorkspaceLayout";
@@ -130,6 +131,11 @@ function ConlangRoute() {
   return <ConlangPage conlangId={conlangId ?? ""} />;
 }
 
+function BinderyIndexRoute() {
+  const { projectId } = useOutletContext<WorkspaceContext>();
+  return <BinderyIndex projectId={projectId} />;
+}
+
 function BinderyRoute() {
   const { manuscriptId } = useParams();
   return <BinderyPage manuscriptId={manuscriptId ?? ""} />;
@@ -166,6 +172,7 @@ export function AppRouter() {
         <Route path="wellspring/:wellId" element={<WellSpringRoute />} />
         <Route path="conlang" element={<ConlangIndexRoute />} />
         <Route path="conlang/:conlangId" element={<ConlangRoute />} />
+        <Route path="bindery" element={<BinderyIndexRoute />} />
         <Route path="bindery/:manuscriptId" element={<BinderyRoute />} />
         <Route path="manuscript" element={<ManuscriptRoute />} />
       </Route>

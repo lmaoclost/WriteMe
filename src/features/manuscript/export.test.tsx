@@ -233,6 +233,29 @@ describe("buildBookHtml v2", () => {
 });
 
 describe("EPUB export", () => {
+  it("passes the project cover as EPUB cover when one exists", async () => {
+    const projectId = seedProject();
+    let key!: string;
+    act(() => { key = useScriptorium.getState().putImage("data:image/png;base64,CAPACOVER", "cover"); });
+    act(() => { useScriptorium.getState().updateProject(projectId, { coverImageKey: key }); });
+    seedBook(projectId, { title: "Livro Com Capa", chapters: [{ heading: "Um", content: "x." }] });
+    render(manuscriptRoute(projectId));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
+    await waitFor(() => expect(epubMock.calls).toHaveLength(1));
+    expect(epubMock.calls[0].options.cover).toBe("data:image/png;base64,CAPACOVER");
+  });
+
+  it("omits the cover option when the project has none", async () => {
+    const projectId = seedProject();
+    seedBook(projectId, { title: "Livro Sem Capa", chapters: [{ heading: "Um", content: "x." }] });
+    render(manuscriptRoute(projectId));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
+    await waitFor(() => expect(epubMock.calls).toHaveLength(1));
+    expect(epubMock.calls[0].options.cover).toBeUndefined();
+  });
+});
+
+describe("EPUB export", () => {
   it("assembles the book in order, downloads <slug>.epub and shows the success toast", async () => {
     const projectId = seedProject();
     seedBook(projectId, {
@@ -369,7 +392,7 @@ describe("PDF export", () => {
     expect(printBook.querySelector("h1")?.textContent).toBe("Cantar de Vellmora");
     expect(printBook.querySelector(".toc h2")?.textContent).toBe("Contents");
     expect(printBook.querySelector(".chapter h2 .ch-num")?.textContent).toBe("1");
-    expect(printBook.querySelector(".chapter h2")?.textContent).toBe("Prólogo");
+    expect(printBook.querySelector(".chapter h2")?.textContent).toBe("1Prólogo");
     await waitFor(() => expect(printSpy).toHaveBeenCalled());
   });
 
