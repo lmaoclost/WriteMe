@@ -129,6 +129,28 @@ describe("BloodlinePanel — house", () => {
     expect(store().bloodlines[0].houses).toHaveLength(0);
     vi.useRealTimers();
   });
+
+  it("panel shows the exact census of this bloodline", () => {
+    const { b } = seed();
+    store().addHouse(b.id, { name: "Casa Vellmor" })!;
+    mountCanvas(b.id);
+    firePointer(screen.getByTestId("house-node"), "pointerdown", { clientX: 0, clientY: 0 });
+    expect(screen.getByText("2 pessoas · 1 casa")).toBeInTheDocument();
+  });
+});
+
+describe("BloodlinePanel — house picker", () => {
+  it("person joined to a house via panel picker; card shows the house", () => {
+    const { b, p1 } = seed();
+    const h = store().addHouse(b.id, { x: 4200, y: 3700, name: "Casa Vellmor" })!;
+    mountCanvas(b.id);
+    const node = screen.getAllByTestId("person-node").find((n) => n.getAttribute("aria-label") === "Pessoa Aldric")!;
+    firePointer(node, "pointerdown", { clientX: 0, clientY: 0 });
+    fireEvent.change(screen.getByLabelText("House"), { target: { value: h.id } });
+    expect(store().bloodlines[0].persons.find((x) => x.id === p1)!.houseId).toBe(h.id);
+    const nodeWithHouse = screen.getAllByTestId("person-node").find((n) => n.getAttribute("aria-label") === "Pessoa Aldric")!;
+    expect(nodeWithHouse.textContent).toContain("Casa Vellmor");
+  });
 });
 
 describe("Find + Notepad", () => {

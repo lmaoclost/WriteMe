@@ -112,6 +112,7 @@ const isBloodlinePerson = (v: unknown): v is BloodlinePerson => {
     && optionalStr(p.relationship) && optionalStr(p.bio)
     && optionalStr(p.birthDate) && optionalStr(p.deathDate)
     && optionalStr(p.connectedTo) && optionalStr(p.siblingId) && optionalStr(p.partnerId)
+    && optionalStr(p.houseId)
     && optionalNum(p.birthOrder);
 };
 

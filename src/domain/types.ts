@@ -123,6 +123,7 @@ export interface BloodlinePerson {
   connectedTo?: Id;
   siblingId?: Id;
   partnerId?: Id;
+  houseId?: Id;
   birthOrder?: number;
   isTwin: boolean;
 }

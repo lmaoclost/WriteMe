@@ -34,6 +34,11 @@
 .person-badge { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); font-size: 0.6875rem; background: var(--gold); color: #17131f; padding: 1px 6px; border-radius: 8px; white-space: nowrap; }
 .person-order { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-family: var(--font-mono); font-size: 0.6875rem; color: var(--slate); }
 .person-twin { position: absolute; right: -10px; top: 0; color: var(--slate); font-size: 12px; }
+.person-house {
+  position: absolute; top: 84px; left: 50%; transform: translateX(-50%);
+  font-size: 10px; letter-spacing: 0.04em; color: var(--slate);
+  white-space: nowrap; text-transform: uppercase;
+}
 .house-node {
   width: 128px; padding: 8px 10px; border-radius: 8px;
   background: var(--night); border: 1px solid var(--slate);
@@ -45,7 +50,7 @@
 .house-name { font-size: 14px; font-weight: 600; color: var(--parchment); }
 .house-subtitle { font-size: 11px; color: var(--slate); }
 .house-crown { position: absolute; top: -16px; right: 6px; color: var(--gold); }
-.bl-panel { background: var(--night); border-left: 1px solid var(--line); padding: 16px; overflow-y: auto; }
+.bl-panel { background: var(--night); border-left: 1px solid var(--line); padding: 16px; overflow-y: auto; overflow-x: hidden; }
 .bl-panel-hint { color: var(--slate); }
 .bl-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
 .bl-panel-head h2 { font-size: 1.125rem; }
@@ -58,7 +63,8 @@
 .titles-add input { flex: 1; background: var(--ink); border: 1px solid var(--line); border-radius: 4px; color: var(--parchment); padding: 6px 8px; }
 .tenures-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .tenure-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr auto; gap: 6px; align-items: center; }
-.tenure-row select, .tenure-row input { background: var(--ink); border: 1px solid var(--line); border-radius: 4px; color: var(--parchment); padding: 5px 6px; font-size: 12px; }
+.tenure-row > * { min-width: 0; }
+.tenure-row select, .tenure-row input { background: var(--ink); border: 1px solid var(--line); border-radius: 4px; color: var(--parchment); padding: 5px 6px; font-size: 12px; width: 100%; }
 .tenure-row button, .titles-list button { color: var(--slate); font-size: 12px; }
 .connection-current { display: flex; align-items: center; gap: 8px; }
 .connection-name { color: var(--parchment); font-size: 13px; }
@@ -72,6 +78,7 @@
 .upload-label { border: 1px solid var(--line); border-radius: 4px; padding: 4px 10px; color: var(--parchment-dim); cursor: pointer; }
 .check-row { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--parchment-dim); }
 .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.row-2 > * { min-width: 0; }
 .find-bar { position: absolute; top: 12px; right: 320px; z-index: 40; background: var(--night-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px; width: 260px; }
 .find-bar input { width: 100%; background: var(--ink); border: 1px solid var(--line); color: var(--parchment); border-radius: 4px; padding: 6px 8px; }
 .find-results { list-style: none; margin: 6px 0 0; padding: 0; max-height: 200px; overflow-y: auto; }

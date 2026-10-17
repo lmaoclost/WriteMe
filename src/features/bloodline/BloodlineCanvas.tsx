@@ -37,7 +37,14 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
 
   useEffect(() => {
     if (!bloodline) return;
-    const t = setTimeout(() => plane.fitToContainer(), 0);
+    // fit to the content bounds — the 20k plane itself must never define the view
+    const xs = [...bloodline.persons.map((p) => p.x), ...bloodline.houses.map((h) => h.x)];
+    const ys = [...bloodline.persons.map((p) => p.y), ...bloodline.houses.map((h) => h.y)];
+    if (xs.length === 0) return;
+    const t = setTimeout(() => plane.fitToContent({
+      minX: Math.min(...xs), maxX: Math.max(...xs),
+      minY: Math.min(...ys), maxY: Math.max(...ys),
+    }), 0);
     return () => clearTimeout(t);
     // fit once on mount
   }, [bloodline?.id]);
@@ -114,6 +121,7 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
             ))}
             {bloodline.persons.map((p) => (
               <PersonNode key={p.id} person={p} images={images} selected={p.id === selectedId}
+                houseName={bloodline.houses.find((h) => h.id === p.houseId)?.name}
                 onSelect={() => selectNode(p.id)}
                 onDelete={() => useScriptorium.getState().deletePerson(p.id)}
                 onDragStart={() => useScriptorium.getState().pushBLHistory(bloodlineId)}

@@ -36,6 +36,7 @@ export interface PlaneApi {
   zoomAtPoint(clientX: number, clientY: number, nextScale: number): void;
   zoomBy(factor: number): void;
   fitToContainer(): void;
+  fitToContent(bounds: { minX: number; minY: number; maxX: number; maxY: number }): void;
   fromClient(clientX: number, clientY: number): { x: number; y: number } | null;
   centerOn(x: number, y: number): void;
   onPointerDown(e: React.PointerEvent): void;
@@ -73,6 +74,27 @@ export function usePlane(stageRef: RefObject<HTMLDivElement>): PlaneApi {
       scale,
       panX: (cw - w * scale) / 2,
       panY: (ch - h * scale) / 2,
+    });
+  }, [applyView, stageRef]);
+
+  /** Fit the view to real CONTENT bounds (nodes), capped at scale 1 —
+   *  fitting the whole 20k plane puts compact families offscreen. */
+  const fitToContent = useCallback((bounds: { minX: number; minY: number; maxX: number; maxY: number }) => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const cw = stage.clientWidth;
+    const ch = stage.clientHeight;
+    if (!cw || !ch) return;
+    const MIN_SPAN = 600;
+    const bw = Math.max(bounds.maxX - bounds.minX, MIN_SPAN);
+    const bh = Math.max(bounds.maxY - bounds.minY, MIN_SPAN);
+    const cx = (bounds.minX + bounds.maxX) / 2;
+    const cy = (bounds.minY + bounds.maxY) / 2;
+    const scale = Math.min(1, clampScale(Math.min(cw / bw, ch / bh) * 0.85));
+    applyView({
+      scale,
+      panX: cw / 2 - cx * scale,
+      panY: ch / 2 - cy * scale,
     });
   }, [applyView, stageRef]);
 
@@ -216,6 +238,7 @@ export function usePlane(stageRef: RefObject<HTMLDivElement>): PlaneApi {
     zoomAtPoint,
     zoomBy,
     fitToContainer,
+    fitToContent,
     fromClient,
     centerOn,
     onPointerDown,

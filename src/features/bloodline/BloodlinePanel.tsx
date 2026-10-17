@@ -114,6 +114,13 @@ function PersonPanel({ bloodline, person, onSelect }: {
       <PersonField label="Name" placeholder="Full name..." value={person.name} onCommit={(v) => { const name = v.trim(); if (name) update({ name }); }} />
       <PersonField label="Suffix" placeholder="Jr, Sr, II, III, IV..." value={person.suffix ?? ""} onCommit={(v) => update({ suffix: v.trim() || undefined })} />
       <div className="field">
+        <span className="field-label">House</span>
+        <select aria-label="House" value={person.houseId ?? ""} onChange={(e) => update({ houseId: e.target.value || undefined })}>
+          <option value="">— without house —</option>
+          {bloodline.houses.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
+        </select>
+      </div>
+      <div className="field">
         <span className="field-label">Title</span>
         <input value={person.title ?? ""} onChange={(e) => update({ title: e.target.value })} aria-label="Title" placeholder="e.g. King, Queen, Lord..." />
       </div>
@@ -342,7 +349,9 @@ function HousePanel({ bloodline, house, onSelect }: {
         <input type="checkbox" checked={house.isMonarch} onChange={(e) => update({ isMonarch: e.target.checked })} />
         <span>Monarch House</span>
       </label>
-      <p className="bl-panel-note" aria-hidden="true">{bloodline.persons.length} pessoas no canvas</p>
+      <p className="bl-panel-note" aria-hidden="true">
+        {bloodline.persons.length} {bloodline.persons.length === 1 ? "pessoa" : "pessoas"} · {bloodline.houses.length} {bloodline.houses.length === 1 ? "casa" : "casas"}
+      </p>
     </div>
   );
 }

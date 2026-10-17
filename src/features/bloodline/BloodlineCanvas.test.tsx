@@ -15,6 +15,10 @@ beforeEach(() => {
 });
 afterEach(() => vi.restoreAllMocks());
 
+// fit math needs real-ish stage dimensions in jsdom
+Object.defineProperty(HTMLElement.prototype, "clientWidth", { configurable: true, value: 1200 });
+Object.defineProperty(HTMLElement.prototype, "clientHeight", { configurable: true, value: 800 });
+
 function makeBloodline(): Bloodline {
   let b!: Bloodline;
   act(() => { b = store().addBloodline("prj_1", "Vellmor"); });
@@ -78,6 +82,31 @@ describe("BloodlineCanvasPage", () => {
     expect(plane.style.transform).toMatch(/scale/);
   });
 
+  it("initial fit places the content onscreen (not the whole 20k plane)", () => {
+    vi.useFakeTimers();
+    const b = makeBloodline();
+    addPersonAt(b.id, 240, 140, "Aldric");
+    addPersonAt(b.id, 620, 420, "Ora");
+    mount(b);
+    act(() => { vi.advanceTimersByTime(10); }); // fit runs on a 0ms timeout
+    const plane = screen.getByTestId("bl-plane");
+    const m = plane.style.transform.match(/translate\((-?[\d.]+)px, (-?[\d.]+)px\) scale\(([\d.]+)\)$/);
+    expect(m).toBeTruthy();
+    const px = Number(m![1]);
+    const py = Number(m![2]);
+    const s = Number(m![3]);
+    // every node's screen position must land inside the 1200×800 stub canvas
+    for (const n of store().bloodlines[0].persons) {
+      const sx = n.x * s + px;
+      const sy = n.y * s + py;
+      expect(sx).toBeGreaterThanOrEqual(0);
+      expect(sx).toBeLessThanOrEqual(1200);
+      expect(sy).toBeGreaterThanOrEqual(0);
+      expect(sy).toBeLessThanOrEqual(800);
+    }
+    vi.useRealTimers();
+  });
+
   it("empty state invites founder", () => {
     const b = makeBloodline();
     mount(b);
@@ -93,20 +122,22 @@ describe("BloodlineCanvasPage", () => {
   });
 
   it("drag moves a person by pointer events", () => {
+    vi.useFakeTimers();
     const b = makeBloodline();
     const p = addPersonAt(b.id, 4000, 4000);
     mount(b);
+    act(() => { vi.advanceTimersByTime(10); }); // content-fit fires on a 0ms timeout
     const node = screen.getByTestId("person-node");
     firePointer(node, "pointerdown", { clientX: 100, clientY: 100 });
     firePointer(node, "pointermove", { clientX: 140, clientY: 100 });
     firePointer(node, "pointerup", { clientX: 140, clientY: 100 });
     const moved = store().bloodlines[0].persons.find((x) => x.id === p.id)!;
-    // plane starts at scale 0.1 (20k canvas in a 800×600 viewport): 40 screen
-    // px drag = 400 canvas px.
-    expect(moved.x).toBe(4400);
+    // content-fit initial view: single person → scale capped at 1 → 40 screen px = 40 canvas px
+    expect(moved.x).toBe(4040);
     // undo restores
     act(() => { store().undoBL(b.id); });
     expect(store().bloodlines[0].persons.find((x) => x.id === p.id)!.x).toBe(4000);
+    vi.useRealTimers();
   });
 
   it("edges render for connected persons and vanish on delete", () => {
@@ -128,5 +159,15 @@ describe("BloodlineCanvasPage", () => {
     const house = screen.getByTestId("house-node");
     expect(house).toHaveClass("house-monarch");
     expect(house).toHaveClass("house-main");
+  });
+
+  it("person joined to a house shows the house name on the node", () => {
+    const b = makeBloodline();
+    const p = addPersonAt(b.id, 4000, 4000);
+    const h = store().addHouse(b.id, { x: 4300, y: 3700, name: "Casa Vellmor" })!;
+    act(() => { store().updatePerson(p.id, { houseId: h.id }); });
+    mount(b);
+    const node = screen.getByTestId("person-node");
+    expect(node.textContent).toContain("Casa Vellmor");
   });
 });

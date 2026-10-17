@@ -198,21 +198,22 @@ export function seedDemoProject() {
   // Genealogia Casa Vellmor
   const pSarn = newId("blp"), pAldric = newId("blp"), pMirren = newId("blp"),
     pTalan = newId("blp"), pOra = newId("blp"), pVesper = newId("blp");
+  const houseVellmor = newId("house"), houseSarnen = newId("house");
   const bloodline: Bloodline = {
     id: newId("bl"),
     projectId: project.id,
     name: "Genealogia Casa Vellmor",
     houses: [
-      { id: newId("house"), x: 560, y: 80, name: "Casa Vellmor", subtitle: "Ramo real", isMainBranch: true, isMonarch: true },
-      { id: newId("house"), x: 200, y: 80, name: "Ramo de Sarnen", subtitle: "Ramo cadete", isMainBranch: false, isMonarch: false },
+      { id: houseVellmor, x: 560, y: 80, name: "Casa Vellmor", subtitle: "Ramo real", isMainBranch: true, isMonarch: true },
+      { id: houseSarnen, x: 200, y: 80, name: "Ramo de Sarnen", subtitle: "Ramo cadete", isMainBranch: false, isMonarch: false },
     ],
     persons: [
-      { id: pSarn, x: 240, y: 180, name: "Sarn Vellmor", title: "Capitão do Sarnen", relationship: "Raiz do ramo cadete", additionalTitles: [], tenures: [{ label: "Capitão da Costa do Selo", from: "1150", to: "1178" }], showBadge: true, badgeText: "†", isTwin: false },
-      { id: pAldric, x: 620, y: 180, name: "Aldric Vellmor", title: "Rei Fundador", relationship: "Raiz do ramo real", bio: "Sumiu no nono mês do cerco com a Coroa sob o braço.", additionalTitles: [{ title: "Portador da Coroa" }], tenures: [{ label: "Coroação no Arco", from: "1160", to: "1200" }], showBadge: true, badgeText: "✦", isTwin: false },
-      { id: pMirren, x: 430, y: 300, name: "Mirren Vellmor", title: "Juíza do Selo", relationship: "Filha de Aldric", additionalTitles: [], tenures: [{ label: "Tribunal do Selo", from: "1204", to: "" }], showBadge: false, badgeText: "", isTwin: false, connectedTo: pAldric },
-      { id: pTalan, x: 430, y: 420, name: "Talan Vellmor", title: "Herdeiro", relationship: "Neto de Aldric", birthDate: "1210-03-12", additionalTitles: [], tenures: [], showBadge: false, badgeText: "", isTwin: false, connectedTo: pMirren, partnerId: pOra },
-      { id: pOra, x: 640, y: 420, name: "Ora Sarnen", relationship: "Prima de Talan", title: "Lady da Costa", additionalTitles: [], tenures: [], showBadge: false, badgeText: "", isTwin: false, partnerId: pTalan },
-      { id: pVesper, x: 430, y: 540, name: "Vesper Vellmor", title: "Recém-nascida", relationship: "Filha de Talan e Ora", additionalTitles: [], tenures: [], showBadge: true, badgeText: "✧", isTwin: false, connectedTo: pTalan },
+      { id: pSarn, x: 240, y: 180, name: "Sarn Vellmor", title: "Capitão do Sarnen", relationship: "Raiz do ramo cadete", additionalTitles: [], tenures: [{ label: "Capitão da Costa do Selo", from: "1150", to: "1178" }], showBadge: true, badgeText: "†", isTwin: false, houseId: houseSarnen },
+      { id: pAldric, x: 620, y: 180, name: "Aldric Vellmor", title: "Rei Fundador", relationship: "Raiz do ramo real", bio: "Sumiu no nono mês do cerco com a Coroa sob o braço.", additionalTitles: [{ title: "Portador da Coroa" }], tenures: [{ label: "Coroação no Arco", from: "1160", to: "1200" }], showBadge: true, badgeText: "✦", isTwin: false, houseId: houseVellmor },
+      { id: pMirren, x: 430, y: 300, name: "Mirren Vellmor", title: "Juíza do Selo", relationship: "Filha de Aldric", additionalTitles: [], tenures: [{ label: "Tribunal do Selo", from: "1204", to: "" }], showBadge: false, badgeText: "", isTwin: false, connectedTo: pAldric, houseId: houseVellmor },
+      { id: pTalan, x: 430, y: 420, name: "Talan Vellmor", title: "Herdeiro", relationship: "Neto de Aldric", birthDate: "1210-03-12", additionalTitles: [], tenures: [], showBadge: false, badgeText: "", isTwin: false, connectedTo: pMirren, partnerId: pOra, houseId: houseVellmor },
+      { id: pOra, x: 640, y: 420, name: "Ora Sarnen", relationship: "Prima de Talan", title: "Lady da Costa", additionalTitles: [], tenures: [], showBadge: false, badgeText: "", isTwin: false, partnerId: pTalan, houseId: houseVellmor },
+      { id: pVesper, x: 430, y: 540, name: "Vesper Vellmor", title: "Recém-nascida", relationship: "Filha de Talan e Ora", additionalTitles: [], tenures: [], showBadge: true, badgeText: "✧", isTwin: false, connectedTo: pTalan, houseId: houseVellmor },
     ],
     notes: "O ramo real seguiu por Talan; a linha do rio segue por Ora. O ramo cadete de Sarn guarda a costa.",
   };

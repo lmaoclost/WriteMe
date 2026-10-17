@@ -41,14 +41,25 @@ export function FactionWebPage({ webId }: { webId: string }) {
     return Math.ceil(size / 10000) * 10000;
   }, [web]);
 
-  // center-ish default view
-  useEffect(() => {
+  const fitToContentNow = () => {
     const el = stageRef.current;
-    if (!el || !el.clientWidth) return;
-    const fit = Math.min(el.clientWidth / planeSize, el.clientHeight / planeSize) * 2.5;
-    const s = Math.min(8, Math.max(0.1, fit));
-    setScale({ s, panX: (el.clientWidth - planeSize * s) / 2, panY: (el.clientHeight - planeSize * s) / 2 });
+    if (!el || !el.clientWidth || !web?.factions.length) return;
+    const xs = web.factions.map((f) => f.x);
+    const ys = web.factions.map((f) => f.y);
+    const MIN_SPAN = 600;
+    const bw = Math.max(Math.max(...xs) - Math.min(...xs), MIN_SPAN);
+    const bh = Math.max(Math.max(...ys) - Math.min(...ys), MIN_SPAN);
+    const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+    const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+    const s = Math.min(1, Math.min(el.clientWidth / bw, el.clientHeight / bh) * 0.85);
+    setScale({ s, panX: el.clientWidth / 2 - cx * s, panY: el.clientHeight / 2 - cy * s });
+  };
+
+  // center-ish default view — fit the CONTENT (factions), capped at scale 1
+  useEffect(() => {
+    fitToContentNow();
     // run once per web mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [webId]);
 
   const elWidth = () => stageRef.current?.clientWidth ?? 1200;
@@ -60,11 +71,7 @@ export function FactionWebPage({ webId }: { webId: string }) {
     return { s, panX: cx - relX * s, panY: cy - relY * s };
   };
   const adjustView = () => {
-    const el = stageRef.current;
-    if (!el || !el.clientWidth) return;
-    const fit = Math.min(el.clientWidth / planeSize, el.clientHeight / planeSize) * 2.5;
-    const s = Math.min(8, Math.max(0.05, fit));
-    setScale({ s, panX: (el.clientWidth - planeSize * s) / 2, panY: (el.clientHeight - planeSize * s) / 2 });
+    fitToContentNow();
   };
 
   const onWheelZoom = (e: React.WheelEvent) => {

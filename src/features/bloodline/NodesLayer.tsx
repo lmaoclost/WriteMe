@@ -1,11 +1,12 @@
 import type { BloodlineHouse, BloodlinePerson } from "../../domain/types";
 
 export function PersonNode({
-  person, images, selected, onSelect, onDelete, onDragStart, onDragMove, onDragEnd,
+  person, images, selected, houseName, onSelect, onDelete, onDragStart, onDragMove, onDragEnd,
 }: {
   person: BloodlinePerson;
   images: Record<string, string>;
   selected: boolean;
+  houseName?: string;
   onSelect(): void;
   onDelete(): void;
   onDragStart?(): void;
@@ -55,6 +56,7 @@ export function PersonNode({
       ) : null}
       {person.isTwin ? <span className="person-twin" aria-hidden="true">⇉</span> : null}
       <span className="person-name">{person.name}</span>
+      {houseName ? <span className="person-house">{houseName}</span> : null}
       {person.birthOrder != null ? (
         <span className="person-order">{person.birthOrder}</span>
       ) : null}
