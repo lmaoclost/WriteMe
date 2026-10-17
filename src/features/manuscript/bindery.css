@@ -1,4 +1,4 @@
-.bindery-page { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+.bindery-page { display: grid; grid-template-rows: auto 1fr; height: 100%; }
 .bindery-body { display: grid; grid-template-columns: 300px 1fr; }
 .bindery-panel h2 { font-size: 1.125rem; margin-bottom: 10px; }
 .bindery-preview { overflow: auto; padding: 24px; background: var(--ink); }
@@ -7,6 +7,9 @@
   background: var(--paper); color: var(--paper-ink); padding: 40px 48px;
   text-align: left; min-height: 100%;
 }
+/* The live preview reuses .print-book for print styling, but book.css hides
+   .print-book on screen — win by specificity, independent of import order. */
+.bindery-page .print-book { display: block; }
 .bindery-live h1 { font-size: var(--fs-paper-h1); color: var(--paper-ink); }
 .bindery-live h2 { font-size: var(--fs-paper-h2); color: var(--paper-ink); margin-top: 2em; }
 .bindery-live p { line-height: 1.65; margin: 0.8em 0; }

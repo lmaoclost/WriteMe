@@ -189,9 +189,9 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
                 : "Choose a type and click the canvas — sketch a loose idea before it has a home."}
             </div>
           ) : null}
-          <WellPanel well={well} selectedId={selectedId} onSelect={setSelectedId} otherNodes={well.nodes} />
           {notesOpen ? <WellNotepad notes={well.notes} onNotes={(v) => useScriptorium.getState().setWellNotes(wellId, v)} onClose={() => setNotesOpen(false)} /> : null}
         </div>
+        <WellPanel well={well} selectedId={selectedId} onSelect={setSelectedId} otherNodes={well.nodes} />
       </div>
     </div>
   );

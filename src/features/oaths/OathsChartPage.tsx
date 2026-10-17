@@ -110,9 +110,9 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
           {chart.members.length === 0 ? (
             <div className="bl-empty">Coloque o fundador — todos os oaths descem dele.</div>
           ) : null}
-          <OathsPanel chart={chart} selectedId={selectedId} onSelect={setSelectedId} />
           {notesOpen ? <OathsNotepadBridge notes={chart.notes} onNotes={(v) => useScriptorium.getState().setOathsNotes(chartId, v)} onClose={() => setNotesOpen(false)} /> : null}
         </div>
+        <OathsPanel chart={chart} selectedId={selectedId} onSelect={setSelectedId} />
       </div>
     </div>
   );

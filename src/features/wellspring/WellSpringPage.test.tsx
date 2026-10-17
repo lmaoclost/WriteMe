@@ -49,6 +49,29 @@ describe("store — wellspring", () => {
 });
 
 describe("WellSpringPage", () => {
+  it("panel sits beside the canvas after selecting a note", () => {
+    const w = seed();
+    act(() => {
+      store().addWellNode(w.id, { kind: "character", x: 200, y: 140, text: "Aerith" });
+    });
+    render(<WellSpringPage wellId={w.id} />);
+    const node = screen.getByTestId("well-node");
+    firePointer(node, "pointerdown", { clientX: 220, clientY: 150 });
+    const panel = document.querySelector("[data-testid=well-panel]") as HTMLElement;
+    expect(panel).toBeTruthy();
+    // the editor must be a sibling column of the canvas, never inside it
+    // (inside = painted behind the opaque plane, unreachable)
+    expect(panel.closest("[data-testid=well-canvas]")).toBeNull();
+    expect(panel.parentElement?.className).toContain("bl-body");
+  });
+
+  it("panel shows a hint when nothing is selected", () => {
+    const w = seed();
+    render(<WellSpringPage wellId={w.id} />);
+    const panel = document.querySelector("[data-testid=well-panel]") as HTMLElement;
+    expect(panel).toBeTruthy();
+    expect(panel.textContent).toMatch(/pick a note/i);
+  });
   it("placing nodes by kind, moving them, panel edits text", () => {
     const w = seed();
     render(<WellSpringPage wellId={w.id} />);

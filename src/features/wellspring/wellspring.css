@@ -1,4 +1,4 @@
-.well-page { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+.well-page { display: grid; grid-template-rows: auto 1fr; height: 100%; }
 .well-page .bl-body { display: grid; grid-template-columns: 1fr 320px; }
 .well-toolkit { display: flex; gap: 6px; }
 .well-kind-btn { background: var(--ink); border: 1px solid; border-radius: 4px; padding: 6px 10px; color: var(--parchment-dim); }

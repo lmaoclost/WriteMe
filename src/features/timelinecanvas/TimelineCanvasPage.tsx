@@ -137,11 +137,11 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
           {timeline.beads.length === 0 ? (
             <div className="bl-empty">Coloque o primeiro evento no fio — clique e arraste.</div>
           ) : null}
-          <BeadPanel timeline={timeline} selectedId={selectedBeadId} onSelect={setSelectedBeadId} />
           {notesOpen ? <TLNotepad notes={timeline.notes} onNotes={(v) => useScriptorium.getState().setTimelineNotes(timelineId, v)} onClose={() => setNotesOpen(false)} /> : null}
           {/* invisible selection guard for tests */}
           <div className="tl-selected-sentinel" data-selected-bead={selectedBeadId ?? ""} style={{ display: "none" }} />
         </div>
+        <BeadPanel timeline={timeline} selectedId={selectedBeadId} onSelect={setSelectedBeadId} />
       </div>
     </div>
   );

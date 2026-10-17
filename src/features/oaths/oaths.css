@@ -1,4 +1,4 @@
-.oaths-page { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+.oaths-page { display: grid; grid-template-rows: auto 1fr; height: 100%; }
 .oaths-page .bl-body { display: grid; grid-template-columns: 1fr 300px; }
 .oath-card {
   width: 180px; padding: 10px 12px; border-radius: 8px;

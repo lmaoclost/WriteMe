@@ -1,4 +1,4 @@
-.workspace { display: grid; grid-template-columns: 180px 1fr; min-height: 100vh; }
+.workspace { display: grid; grid-template-columns: 180px 1fr; height: 100vh; }
 .rail {
   background: var(--night); border-right: 1px solid var(--line);
   padding: 22px 14px; display: flex; flex-direction: column; gap: 6px;
@@ -15,7 +15,12 @@
   color: var(--gold); background: color-mix(in srgb, var(--gold) 10%, transparent);
   box-shadow: inset 2px 0 0 var(--gold);
 }
-.workspace-main { padding: 40px 48px; }
+.workspace-main {
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+  padding: 24px 28px;
+}
 .overview-note { color: var(--slate); font-size: 13px; }
 .visually-hidden {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
@@ -38,7 +43,7 @@
 .cover-img { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
 .cover-upload:hover .cover-hint { color: var(--gold); }
 @media (max-width: 720px) {
-  .workspace { grid-template-columns: 1fr; }
+  .workspace { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
   .rail { position: static; height: auto; flex-direction: row; align-items: center; overflow-x: auto; scroll-padding-right: 16px; scrollbar-width: none; }
   .rail::-webkit-scrollbar { display: none; }
   .rail-link { flex: none; overflow: visible; text-overflow: unset; }

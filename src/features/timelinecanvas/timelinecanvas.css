@@ -1,4 +1,4 @@
-.timelinecanvas-page { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+.timelinecanvas-page { display: grid; grid-template-rows: auto 1fr; height: 100%; }
 .timelinecanvas-page .bl-body { display: grid; grid-template-columns: 1fr 300px; }
 .tl-wire-base { stroke: var(--gold-dim); stroke-width: 3; }
 .tl-seg-label { font-size: 14px; font-family: var(--font-display); }

@@ -174,9 +174,9 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
           ) : connecting ? (
             <div className="fac-hint">Choose a scene card to connect.</div>
           ) : null}
-          <PlotBoardPanel board={board} selectedId={selectedCardId} onSelect={setSelectedCardId} />
           {notesOpen ? <BoardNotepad notes={board.notes} onNotes={(v) => useScriptorium.getState().setBoardNotes(boardId, v)} onClose={() => setNotesOpen(false)} /> : null}
         </div>
+        <PlotBoardPanel board={board} selectedId={selectedCardId} onSelect={setSelectedCardId} />
       </div>
     </div>
   );

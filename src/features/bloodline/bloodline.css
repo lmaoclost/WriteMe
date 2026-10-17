@@ -1,4 +1,4 @@
-.bloodline-page { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+.bloodline-page { display: grid; grid-template-rows: auto 1fr; height: 100%; }
 .bl-header { display: flex; align-items: center; gap: 14px; padding: 12px 18px; background: var(--night); border-bottom: 1px solid var(--line); }
 .bl-name { background: transparent; border: 0; color: var(--gold); font-family: var(--font-display); font-size: 20px; font-weight: 600; width: 220px; }
 .bl-actions { display: flex; gap: 8px; margin-left: auto; }
@@ -6,6 +6,7 @@
 .bl-actions button:hover:not(:disabled) { color: var(--parchment); border-color: var(--gold-dim); }
 .bl-actions button:disabled { opacity: 0.4; cursor: default; }
 .bl-body { display: grid; grid-template-columns: 1fr 300px; min-height: 0; }
+.bl-body-full { display: block; }
 .bl-canvas { position: relative; overflow: hidden; background: var(--ink); cursor: grab; }
 .bl-canvas:active { cursor: grabbing; }
 .bl-plane { position: absolute; background: radial-gradient(circle at 25% 25%, #17162a, var(--ink) 65%); box-shadow: inset 0 0 0 1px var(--line); }
@@ -86,7 +87,6 @@
 .bl-notepad-head button { background: none; border: 0; color: var(--slate); }
 .bl-notepad textarea { width: 100%; border: 0; border-top: 1px solid var(--line); background: transparent; color: var(--parchment); padding: 8px 10px; resize: vertical; min-height: 90px; }
 .bl-selected-sentinel { display: none; }
-#root:has(.print-book) .workspace, #root:has(.print-book) .toasts { display: none; }
 @media print {
   .workspace, .toasts { display: none !important; }
   .print-book { display: block !important; color: var(--print-ink); background: var(--print-paper); }

@@ -23,6 +23,19 @@ function seedBoard(): PlotBoard {
 }
 
 describe("PlotBoardPage", () => {
+  it("panel sits beside the canvas after selecting a scene", () => {
+    const b = seedBoard();
+    const c = store().addCard(b.id, { x: 200, y: 140 })!;
+    render(<PlotBoardPage boardId={b.id} />);
+    const node = screen.getByTestId("board-card");
+    firePointer(node, "pointerdown", { clientX: 210, clientY: 150 });
+    const panel = document.querySelector("[data-testid=pb-panel]") as HTMLElement;
+    expect(panel).toBeTruthy();
+    // editor beside the canvas, never inside the plane-covered container
+    expect(panel.closest("[data-testid=pb-canvas]")).toBeNull();
+    expect(panel.parentElement?.className).toContain("bl-body");
+    void c;
+  });
   it("empty state invites the first scene", () => {
     const b = seedBoard();
     render(<PlotBoardPage boardId={b.id} />);

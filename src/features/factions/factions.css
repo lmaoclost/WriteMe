@@ -1,4 +1,4 @@
-.factions-page { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+.factions-page { display: grid; grid-template-rows: auto 1fr; height: 100%; }
 .fac-node {
   width: 120px; padding: 8px 10px; border-radius: 8px;
   background: var(--night); border: 1px solid var(--slate); border-top-width: 3px;
