@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { TLNotepad } from "./TLNotepad";
-import type { TimelineWire } from "../../domain/types";
+import { LinkPicker } from "../atlas/panels/LinkPicker";
+import { EntryPreview, entryBlurb } from "../entries/EntryPreview";
+import { categoryIcon, categoryLabel } from "../entries/categories";
+import type { TimelineWire, TimelineBead } from "../../domain/types";
 import "./timelinecanvas.css";
 
 export const BEAD_PRESET_COLORS = [
@@ -148,6 +152,40 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
   );
 }
 
+/** A bead may point at a tome entry: picker + preview card + click-through. */
+function TomeEntryLink({ timeline, bead, onNavigate }: {
+  timeline: TimelineWire;
+  bead: TimelineBead;
+  onNavigate(entryId: string): void;
+}) {
+  const entries = useScriptorium(useShallow((s) => s.entries.filter((e) => e.projectId === timeline.projectId)));
+  const entry = entries.find((e) => e.id === bead.entryId);
+  if (entries.length === 0) return null;
+  return (
+    <div className="field" data-testid="bead-tome-link">
+      <span className="field-label">Tome entry</span>
+      {entry ? (
+        <EntryPreview
+          data={{
+            entryId: entry.id,
+            title: entry.title,
+            icon: categoryIcon(entry.category),
+            categoryLabel: categoryLabel(entry.category),
+            blurb: entryBlurb(entry.summary, entry.body),
+          }}
+          onOpen={onNavigate}
+        />
+      ) : null}
+      <LinkPicker
+        entries={entries}
+        currentEntryId={bead.entryId ?? null}
+        onPick={(id) => useScriptorium.getState().updateBead(bead.id, { entryId: id })}
+        onClear={() => useScriptorium.getState().updateBead(bead.id, { entryId: undefined })}
+      />
+    </div>
+  );
+}
+
 function BeadPanel({ timeline, selectedId, onSelect }: {
   timeline: TimelineWire;
   selectedId: string | null;
@@ -155,6 +193,7 @@ function BeadPanel({ timeline, selectedId, onSelect }: {
 }) {
   const store = useScriptorium.getState;
   const pushToast = useScriptorium((s) => s.pushToast);
+  const navigate = useNavigate();
   const bead = timeline.beads.find((b) => b.id === selectedId);
   const seg = timeline.segments.find((g) => g.id === selectedId);
   const [armDelete, setArmDelete] = useState(false);
@@ -200,6 +239,7 @@ function BeadPanel({ timeline, selectedId, onSelect }: {
             <textarea aria-label="Event summary" rows={3} defaultValue={bead.summary ?? ""}
               onBlur={(e) => store().updateBead(bead.id, { summary: e.target.value.trim() || undefined })} />
           </label>
+          <TomeEntryLink timeline={timeline} bead={bead} onNavigate={(entryId) => navigate(`/p/${timeline.projectId}/entries?e=${entryId}`)} />
           <div className="field">
             <span className="field-label">Color</span>
             <div className="color-row" role="listbox" aria-label="Event color">

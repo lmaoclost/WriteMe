@@ -192,7 +192,7 @@ const isPlotBoard = (v: unknown): boolean => {
 const isTimelineBead = (v: unknown): boolean => {
   const b = v as TimelineBead;
   return !!b && isStr(b.id) && isNum(b.x) && isNum(b.y) && isStr(b.label) && isStr(b.color)
-    && optionalStr(b.dateText) && optionalStr(b.summary);
+    && optionalStr(b.dateText) && optionalStr(b.summary) && optionalStr(b.entryId);
 };
 
 const isTimelineSegment = (v: unknown): boolean => {

@@ -229,6 +229,7 @@ export type TimelineBead = {
   dateText?: string;
   summary?: string;
   color: string;
+  entryId?: Id; // tome entry ligado ao evento
 };
 
 export type TimelineSegment = {

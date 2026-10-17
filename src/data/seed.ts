@@ -310,7 +310,7 @@ export function seedDemoProject() {
     beads: [
       { id: newId("tb"), x: 620, y: -40, label: "Sarn nasce em Sarnen", dateText: "1148", summary: "Ramo cadete da costa.", color: "#4d6f8f" },
       { id: newId("tb"), x: 820, y: 40, label: "Coroação de Aldric no Arco", dateText: "1160", summary: "Fundação da Casa Vellmor.", color: "#c9a227" },
-      { id: newId("tb"), x: 1020, y: -40, label: "Guerra dos Cinco Invernos", dateText: "1200-05-10", summary: "O rio ficou vermelho; a capital resistiu.", color: "#8f4d6f" },
+      { id: newId("tb"), x: 1020, y: -40, label: "Guerra dos Cinco Invernos", dateText: "1200-05-10", summary: "O rio ficou vermelho; a capital resistiu.", color: "#8f4d6f", entryId: eWar },
       { id: newId("tb"), x: 1210, y: 40, label: "Aldric entrega a Coroa e some", dateText: "1200", summary: "Nono mês do cerco.", color: "#8f4d6f" },
       { id: newId("tb"), x: 1400, y: -40, label: "Mirren assume o Tribunal", dateText: "1204", summary: "Lei do Selo endurecida.", color: "#4d8f5f" },
       { id: newId("tb"), x: 1580, y: 40, label: "Nascimento de Talan", dateText: "1210-03-12", summary: "Herdeiro do ramo real.", color: "#c9a227" },

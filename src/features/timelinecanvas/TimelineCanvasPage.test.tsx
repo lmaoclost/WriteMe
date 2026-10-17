@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { firePointer } from "../../test/pointer";
 import { useScriptorium } from "../../data/store";
 import { TimelineCanvasPage } from "./TimelineCanvasPage";
@@ -63,5 +63,28 @@ describe("TimelineCanvasPage", () => {
     fireEvent.change(name, { target: { value: "Era da Prata" } });
     fireEvent.blur(name);
     expect(store().timelines![0].segments[0].label).toBe("Era da Prata");
+  });
+
+  it("a bead bound to a tome entry previews it and opens the codex", () => {
+    const prj = store().addProject("V").id;
+    const entry = store().addEntry(prj, "event");
+    store().updateEntry(entry.id, { title: "Guerra dos Cinco Invernos", summary: "O rio ficou vermelho." });
+    const tl = store().addTimeline(prj, "Fio dos Selos");
+    const bead = store().addBead(tl.id, { x: 800, y: 140, label: "Guerra" })!;
+    store().updateBead(bead.id, { entryId: entry.id });
+    render(
+      <MemoryRouter initialEntries={[`/p/${prj}/linewheel/${tl.id}`]}>
+        <Routes>
+          <Route path="/p/:projectId/linewheel/:timelineId" element={<TimelineCanvasPage timelineId={tl.id} />} />
+          <Route path="/p/:projectId/entries" element={<div data-testid="codex-dest" />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    firePointer(screen.getByTestId("tl-bead"), "pointerdown", { clientX: 300, clientY: 200 });
+    const panel = document.querySelector("[data-testid=tl-panel]")!;
+    expect(panel.textContent).toContain("Guerra dos Cinco Invernos");
+    expect(panel.textContent).toContain("O rio ficou vermelho."); // blurb preview
+    fireEvent.click(screen.getByRole("button", { name: "Open in codex" }));
+    expect(screen.getByTestId("codex-dest")).toBeInTheDocument();
   });
 });
