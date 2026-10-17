@@ -81,12 +81,13 @@ describe("ProfilePage", () => {
     expect(fileToDataUrl).not.toHaveBeenCalled();
   });
 
-  it("uploads avatar, then Remove clears it", async () => {
+  it("uploads avatar with a 512 cap (quota safety), then Remove clears it", async () => {
     renderPage();
     const input = document.querySelector<HTMLInputElement>('input[type="file"]')!;
     const ok = new File(["x"], "a.png", { type: "image/png", lastModified: 0 });
     Object.defineProperty(ok, "size", { value: 100 });
     fireEvent.change(input, { target: { files: [ok] } });
+    expect(vi.mocked(fileToDataUrl)).toHaveBeenCalledWith(expect.anything(), 512);
     await waitFor(() => expect(screen.getByText("Avatar updated.")).toBeTruthy());
     expect(useAccount.getState().avatarUrl).toBe("data:image/png;base64,AVATAR");
     fireEvent.click(screen.getByRole("button", { name: "Remove" }));

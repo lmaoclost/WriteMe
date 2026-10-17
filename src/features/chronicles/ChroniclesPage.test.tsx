@@ -149,3 +149,25 @@ describe("Chronicles Archivist", () => {
     expect(box.parentElement!.querySelector(".search-icon")).toBeTruthy();
   });
 });
+
+describe("chronicles dropdowns a11y", () => {
+  it("closes the genres menu on Escape and restores focus to the trigger", () => {
+    renderPage();
+    const trigger = screen.getAllByRole("button", { name: /All genres/i })[0];
+    fireEvent.click(trigger);
+    expect(document.querySelector(".genres-menu")).toBeTruthy();
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(document.querySelector(".genres-menu")).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("closes an open menu when clicking outside", () => {
+    renderPage();
+    const trigger = screen.getAllByRole("button", { name: /All genres/i })[0];
+    fireEvent.click(trigger);
+    expect(document.querySelector(".genres-menu")).toBeTruthy();
+    fireEvent.mouseDown(document.body);
+    fireEvent.click(document.body);
+    expect(document.querySelector(".genres-menu")).toBeNull();
+  });
+});

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   GENRE_GROUPS,
@@ -33,6 +33,30 @@ export function ChroniclesPage() {
   const [excludedWarnings, setExcludedWarnings] = useState<string[]>([]);
   const [showGenres, setShowGenres] = useState(false);
   const [showTags, setShowTags] = useState(false);
+  const genresTrigger = useRef<HTMLButtonElement>(null);
+  const tagsTrigger = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!showGenres && !showTags) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (showGenres) { setShowGenres(false); genresTrigger.current?.focus(); }
+      if (showTags) { setShowTags(false); tagsTrigger.current?.focus(); }
+    };
+    const onDown = (e: MouseEvent) => {
+      const menus = document.querySelectorAll(".genres-menu");
+      const hits = Array.from(menus).some((m) => m.contains(e.target as Node));
+      if (hits) return;
+      setShowGenres(false);
+      setShowTags(false);
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("mousedown", onDown);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("mousedown", onDown);
+    };
+  }, [showGenres, showTags]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -128,6 +152,7 @@ export function ChroniclesPage() {
               <span className="filter-group-label">GENRES</span>
               <button
                 type="button"
+                ref={genresTrigger}
                 className="genres-dropdown-trigger"
                 onClick={() => setShowGenres(!showGenres)}
               >
@@ -169,6 +194,7 @@ export function ChroniclesPage() {
               <span className="filter-group-label">TAGS</span>
               <button
                 type="button"
+                ref={tagsTrigger}
                 className="genres-dropdown-trigger"
                 onClick={() => setShowTags(!showTags)}
               >

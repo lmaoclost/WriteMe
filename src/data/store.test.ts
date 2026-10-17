@@ -220,6 +220,40 @@ describe("toasts and images", () => {
     expect(useScriptorium.getState().images[key]).toBeUndefined();
   });
 });
+describe("deleteProject cascade", () => {
+  it("removes all 8 subsystems when the project dies", () => {
+    act(() => { useScriptorium.getState().seedDemo(); });
+    const st1 = useScriptorium.getState();
+    const pid = st1.projects[0].id;
+    act(() => { useScriptorium.getState().deleteProject(pid); });
+    const st = useScriptorium.getState();
+    expect(st.projects).toHaveLength(0);
+    expect(st.bloodlines).toHaveLength(0);
+    expect(st.factionWebs).toHaveLength(0);
+    expect(st.calendars).toHaveLength(0);
+    expect(st.plotBoards).toHaveLength(0);
+    expect(st.timelines).toHaveLength(0);
+    expect(st.oathsCharts).toHaveLength(0);
+    expect(st.wellsprings).toHaveLength(0);
+    expect(st.conlangs).toHaveLength(0);
+  });
+  it("keeps another seeded project's subsystems intact", () => {
+    act(() => { useScriptorium.getState().seedDemo(); });
+    act(() => { useScriptorium.getState().seedDemo(); });
+    const victims = useScriptorium.getState().projects;
+    const pid = victims[0].id;
+    act(() => { useScriptorium.getState().deleteProject(pid); });
+    const st = useScriptorium.getState();
+    const survivor = st.projects[0].id;
+    expect(st.projects).toHaveLength(1);
+    expect(st.bloodlines).toHaveLength(1);
+    expect(st.bloodlines[0].projectId).toBe(survivor);
+    expect(st.calendars).toHaveLength(1);
+    expect(st.calendars[0].projectId).toBe(survivor);
+    expect(st.conlangs).toHaveLength(1);
+  });
+});
+
 describe("seedDemo full subsystems", () => {
   it("persists every subsystem from the demo seed", () => {
     act(() => { useScriptorium.getState().seedDemo(); });
@@ -236,7 +270,7 @@ describe("seedDemo full subsystems", () => {
     expect(s.bloodlines[0].projectId).toBe(pid);
     expect(s.calendars![0].projectId).toBe(pid);
   });
-  it("does not duplicate existing project data across a second seed", () => {
+  it("appends a full second copy on a second seed", () => {
     act(() => {
       useScriptorium.getState().seedDemo();
       useScriptorium.getState().seedDemo();

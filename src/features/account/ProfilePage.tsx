@@ -51,7 +51,7 @@ export function ProfilePage() {
     if (f.size > MAX_AVATAR_BYTES) { setAvatarError("Image must be under 10MB."); return; }
     setUploading(true);
     try {
-      const res = await fileToDataUrl(f);
+      const res = await fileToDataUrl(f, 512);
       setAvatar(res.dataUrl);
       setAvatarMsg("Avatar updated.");
       setAvatarTick((t) => t + 1);

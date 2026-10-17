@@ -403,6 +403,13 @@ export const useScriptorium = create<ScriptoriumState>()(
           atlases: s.atlases.filter((a) => a.projectId !== id),
           manuscripts: s.manuscripts.filter((m) => m.projectId !== id),
           bloodlines: keptBloodlines,
+          factionWebs: s.factionWebs.filter((f) => f.projectId !== id),
+          calendars: s.calendars.filter((c) => c.projectId !== id),
+          plotBoards: s.plotBoards.filter((b) => b.projectId !== id),
+          timelines: s.timelines.filter((t) => t.projectId !== id),
+          oathsCharts: s.oathsCharts.filter((o) => o.projectId !== id),
+          wellsprings: s.wellsprings.filter((w) => w.projectId !== id),
+          conlangs: s.conlangs.filter((c) => c.projectId !== id),
           images,
           histories,
         });
