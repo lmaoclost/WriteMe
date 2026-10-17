@@ -6,7 +6,8 @@ import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { ChapterList } from "./ChapterList";
 import { ChapterEditor } from "./ChapterEditor";
 import { ExportTools } from "./Export";
-import "./book.css";
+import { Button } from "../../ui/Button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const CONFIRM_RESET_MS = 3000;
 
@@ -22,10 +23,10 @@ function BookInputs({ manuscript }: { manuscript: Manuscript }) {
   const titleDraft = useDebouncedDraft(manuscript.title, commitTitle);
   const authorDraft = useDebouncedDraft(manuscript.author, commitAuthor);
   return (
-    <div className="book-meta">
+    <div className="flex gap-2 px-4 pt-2.5">
       <input
         type="text"
-        className="book-title-input"
+        className="book-title-input flex-1 min-w-0 font-display text-lg font-semibold text-parchment bg-ink border border-line rounded-lg px-2.5 py-1.5 outline-none focus:border-gold"
         aria-label="Manuscript title"
         value={titleDraft.draft}
         onChange={(e) => titleDraft.setDraft(e.target.value)}
@@ -33,7 +34,7 @@ function BookInputs({ manuscript }: { manuscript: Manuscript }) {
       />
       <input
         type="text"
-        className="book-author-input"
+        className="book-author-input w-[220px] text-[13px] text-parchment bg-ink border border-line rounded-lg px-2.5 py-1.5 outline-none focus:border-gold"
         aria-label="Autor"
         value={authorDraft.draft}
         onChange={(e) => authorDraft.setDraft(e.target.value)}
@@ -134,12 +135,12 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
 
   if (!book) {
     return (
-      <div className="book book-page">
-        <div className="book-empty">
-          <p className="book-empty-copy">Comece o seu livro — crie o primeiro.</p>
-          <button type="button" className="btn-primary" onClick={createBook}>
+      <div className="grid grid-rows-[auto_auto_1fr] h-full min-h-0">
+        <div className="flex flex-col items-center justify-center gap-3.5 p-6">
+          <p className="m-0 text-parchment-dim text-sm">Comece o seu livro — crie o primeiro.</p>
+          <Button onClick={createBook}>
             Novo livro
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -148,29 +149,25 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
   const chapter = chapters.find((c) => c.id === chapterId);
 
   return (
-    <div className="book book-page">
-      <header className="book-head">
+    <div className="grid grid-rows-[auto_auto_1fr] h-full min-h-0">
+      <header className="flex items-center gap-2.5 px-4 pt-3">
         {books.length > 1 ? (
-          <select
-            className="book-select"
-            aria-label="Livro"
-            value={book.id}
-            onChange={(e) => onBookSelected(e.target.value)}
-          >
-            {books.map((m) => (
-              <option key={m.id} value={m.id}>{m.title}</option>
-            ))}
-          </select>
+          <Select value={book.id} onValueChange={(v) => onBookSelected(v)}>
+            <SelectTrigger aria-label="Livro" className="min-w-[180px] justify-between rounded-lg border-line bg-night-2 px-2 py-1.5 text-[13px] text-parchment hover:border-gold data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
+            <SelectContent className="border-line bg-night text-parchment">
+              {books.map((m) => <SelectItem key={m.id} value={m.id} className="text-[13px] focus:bg-[#24233f] focus:text-parchment">{m.title}</SelectItem>)}
+            </SelectContent>
+          </Select>
         ) : (
-          <h2 className="book-title">{book.title}</h2>
+          <h2 className="book-title flex-1 m-0 font-display text-[22px] font-semibold text-parchment overflow-hidden text-ellipsis whitespace-nowrap">{book.title}</h2>
         )}
-        <div className="book-head-actions">
-          <button type="button" className="btn-primary" onClick={createBook}>
+        <div className="flex gap-2 ml-auto">
+          <Button onClick={createBook}>
             Novo livro
-          </button>
+          </Button>
           <button
             type="button"
-            className={"book-delete" + (armed ? " armed" : "")}
+            className={"book-delete bg-none border border-[var(--ember)] text-[var(--ember)] rounded-lg py-1.5 px-2.5 text-[13px] hover:bg-[color-mix(in_srgb,var(--ember)_18%,transparent)]" + (armed ? " armed bg-[color-mix(in_srgb,var(--ember)_20%,transparent)]" : "")}
             onClick={confirmOrDeleteBook}
           >
             {armed ? "Confirmar?" : "Excluir livro"}
@@ -178,7 +175,7 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
         </div>
       </header>
       <BookInputs key={book.id} manuscript={book} />
-      <div className="book-columns">
+      <div className="grid grid-cols-[300px_1fr] min-h-0 pt-3 max-[720px]:grid-cols-1 max-[720px]:grid-rows-[auto_1fr]">
         <ChapterList
           chapters={chapters}
           selectedId={chapterId}
@@ -186,7 +183,7 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
           onMove={(id, dir) => useScriptorium.getState().moveChapter(id, dir)}
           onCreate={createChapter}
         />
-        <section className="book-main">
+        <section className="min-h-0 overflow-y-auto py-1 px-6 pb-[18px] flex flex-col gap-3.5">
           {chapter ? (
             <ChapterEditor
               key={chapter.id}

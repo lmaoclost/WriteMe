@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { useScriptorium } from "../../data/store";
+import { pickSelectOptionSync } from "../../test/selectHelper";
 import { BinderyPage } from "./BinderyPage";
 import { binderyCss, trimToPage, BINDERY_FONTS, BINDERY_TRIMS } from "./bindery";
 
@@ -43,11 +44,10 @@ describe("BinderyPage", () => {
     expect(screen.getByTestId("bindery-book").innerHTML).toContain("Contents");
   });
 
-  it("font select updates bindery + preview font", () => {
+  it("font select updates bindery + preview font", async () => {
     const id = seedBook();
     render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
-    const sel = screen.getByLabelText("Typography") as HTMLSelectElement;
-    fireEvent.change(sel, { target: { value: '"Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif' } });
+    await pickSelectOptionSync(() => screen.getByLabelText("Typography"), /Palatino/);
     expect(store().manuscripts[0].bindery!.font).toContain("Palatino");
     act(() => { store().setBindery(id, {}); }); // re-render hook
     expect(document.querySelector(".print-book")?.getAttribute("style") || document.querySelector("style")?.textContent || "").toBeTruthy();
@@ -105,12 +105,11 @@ describe("BinderyPage", () => {
 });
 
 describe("Bindery v2 controls", () => {
-  it("chapter numbering select updates config and book prefix", () => {
+  it("chapter numbering select updates config and book prefix", async () => {
     const id = seedBook();
     act(() => { store().addChapter(id, "Rio fundo"); });
     render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
-    const sel = screen.getByLabelText("Chapter numbering") as HTMLSelectElement;
-    fireEvent.change(sel, { target: { value: "chapter" } });
+    await pickSelectOptionSync(() => screen.getByLabelText("Chapter numbering"), "Chapter 1");
     expect(store().manuscripts[0].bindery!.numberingStyle).toBe("chapter");
     const book = screen.getByTestId("bindery-book");
     expect(book.innerHTML).toContain('<span class="ch-num">Chapter 1</span>');

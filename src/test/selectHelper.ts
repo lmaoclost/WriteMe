@@ -1,6 +1,29 @@
 import { act, waitFor } from "@testing-library/react";
 import { expect } from "vitest";
 
+// Synchronous variant (no waitFor) — for tests running under vi.useFakeTimers().
+export function pickSelectOptionSync(
+  getTrigger: () => HTMLElement,
+  optionName: string | RegExp
+) {
+  const trigger = getTrigger();
+  act(() => { trigger.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true })); });
+  const all = document.querySelectorAll("[data-slot='select-content'] [role='option']");
+  const option = Array.from(all).find((o) =>
+    typeof optionName === "string" ? (o.textContent ?? "").trim() === optionName : optionName.test(o.textContent ?? ""));
+  if (!option) throw new Error(`option not found: ${String(optionName)}`);
+  for (const type of ["pointerdown", "pointerup"] as const) {
+    const ev = new Event(type, { bubbles: true, cancelable: true }) as
+      Event & { pointerType: string; button: number };
+    ev.pointerType = "mouse";
+    // synthetic events need jsdom coordinate defaults; click position at
+    // the option's origin
+    ev.button = 0;
+    act(() => { option.dispatchEvent(ev); });
+  }
+  return trigger;
+}
+
 // Opens a radix-based shadcn Select from its trigger and picks an option
 // by accessible name. Works under jsdom (no pointer events required).
 export async function selectOption(

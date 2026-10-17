@@ -3,6 +3,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppRouter } from "../../app/router";
 import { useScriptorium } from "../../data/store";
+import { pickSelectOptionSync } from "../../test/selectHelper";
 import type { Manuscript } from "../../domain/types";
 import { buildBookHtml } from "./buildBook";
 import { binderyCss } from "./bindery";
@@ -223,8 +224,8 @@ describe("buildBookHtml v2", () => {
   it("print page breaks are single-sided (no break-after: page anywhere)", async () => {
     const fsp = await import("node:fs/promises");
     const dir = "src/features/manuscript";
-    const bookCss = await fsp.readFile(`${dir}/book.css`, "utf8");
-    const binderyCss = await fsp.readFile(`${dir}/bindery.css`, "utf8");
+    const bookCss = await fsp.readFile("src/app/print.css", "utf8");
+    const binderyCss = await fsp.readFile("src/app/theme.css", "utf8");
     // adjacent forced breaks (break-after + break-before on touching elements)
     // make Chromium emit blank pages in print-to-PDF
     expect(bookCss).not.toMatch(/break-after:\s*page/);
@@ -361,10 +362,7 @@ describe("EPUB export", () => {
       const created = state.addManuscript(projectId, "Açúcar & Sal");
       state.addChapter(created.id, "Um");
     });
-    const second = useScriptorium.getState().manuscripts[1].id;
-    fireEvent.change(screen.getByRole("combobox", { name: "Livro" }), {
-      target: { value: second },
-    });
+    await pickSelectOptionSync(() => screen.getByRole("combobox", { name: "Livro" }), "Açúcar & Sal");
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(2));
     expect(anchorDownload).toBe("acucar-sal.epub");

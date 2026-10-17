@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "./print.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -221,4 +222,60 @@
   .pin-preview-close:hover { color: var(--parchment); }
 
   .md-view-links { position: relative; }
+
+  /* Manuscript paper (rich editor + preview share the warm sheet). */
+  .book-body-rich,
+  .book-editor .md-view {
+    background: #f7f2e6;
+    color: #241f17;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 28px 40px 34px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 16px;
+    line-height: 1.7;
+  }
+  .book-body-rich { min-height: 420px; box-shadow: inset 0 0 0 1px #00000010; }
+  .book-editor .md-view { min-height: 200px; }
+  .book-body-rich:focus { border-color: var(--gold); outline: none; }
+  .book-body-rich p { margin: 0 0 0.9em; }
+  .book-body-rich h1, .book-body-rich h2, .book-body-rich h3 { margin: 1.2em 0 0.5em; font-family: var(--font-display); }
+  .book-body-rich blockquote { margin: 0.8em 0 0.8em 12px; padding-left: 12px; border-left: 3px solid #cbb891; color: #4a4235; }
+  .book-body-rich ul, .book-body-rich ol { margin: 0 0 0.9em 1.4em; }
+  .book-body-rich[data-placeholder]:empty::before {
+    content: attr(data-placeholder);
+    color: #8a8069; font-style: italic; pointer-events: none;
+  }
+  .book-editor .md-view img { max-width: 100%; border-radius: 4px; }
+  .book-note-rich { min-height: 72px; padding: 14px 20px; font-size: 14.5px; line-height: 1.6; }
+}
+
+/* Bindery live book preview (runtime-injected binderyCss handles typography). */
+@layer components {
+  .bindery-live {
+    display: block;
+    max-width: 7in;
+    margin: 0 auto;
+    background: var(--paper);
+    color: var(--paper-ink);
+    padding: 40px 48px;
+    text-align: left;
+    min-height: 100%;
+  }
+  .bindery-live h1 { font-size: var(--fs-paper-h1); color: var(--paper-ink); }
+  .bindery-live h2 { font-size: var(--fs-paper-h2); color: var(--paper-ink); margin-top: 2em; }
+  .bindery-live p { line-height: 1.65; margin: 0.8em 0; }
+  .bindery-live .tp-title { text-align: center; font-size: var(--fs-paper-title); margin: 0.6em 0; }
+  .bindery-live .tp-series { text-align: center; letter-spacing: 0.3em; text-transform: uppercase; font-size: var(--fs-paper-body); color: var(--paper-muted); }
+  .bindery-live .tp-author { text-align: center; font-style: italic; }
+  .bindery-live .front-matter { padding: 3in 0 2in; }
+  .bindery-live .front-matter.toc, .bindery-live .dedication { break-before: page; }
+  .bindery-live .dedication { text-align: center; font-style: italic; padding-top: 2.5in; }
+  .bindery-live .toc ul { list-style: none; padding: 0; }
+  .bindery-live .toc-row { display: flex; gap: 6px; align-items: baseline; }
+  .bindery-live .toc-dot { flex: 1; border-bottom: 1px dotted var(--paper-muted-soft); margin-bottom: 4px; }
+  .bindery-live .running-head { float: right; font-size: var(--fs-paper-body); color: var(--paper-muted); }
+  .bindery-live .chapter { break-before: page; }
+  .bindery-live .glossary table { width: 100%; border-collapse: collapse; }
+  .bindery-live .glossary td { border-bottom: 1px dotted var(--paper-muted-soft); padding: 5px 6px; vertical-align: top; }
 }

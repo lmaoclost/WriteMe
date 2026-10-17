@@ -141,10 +141,10 @@ export function ExportTools({ manuscript }: ExportToolsProps) {
 
   return (
     <>
-      <div className="book-export">
+      <div className="flex gap-2 max-w-[760px] border-t border-line pt-3 mt-auto">
         <button
           type="button"
-          className="book-export-btn"
+          className="book-export-btn bg-transparent text-parchment-dim border border-line rounded-sm px-3.5 py-2 text-[13px] transition-colors disabled:opacity-45 disabled:cursor-default enabled:cursor-pointer enabled:hover:text-parchment enabled:hover:border-gold-dim"
           disabled={disabled}
           aria-busy={busy ? "true" : undefined}
           title={title}
@@ -154,7 +154,7 @@ export function ExportTools({ manuscript }: ExportToolsProps) {
         </button>
         <button
           type="button"
-          className="book-export-btn"
+          className="book-export-btn bg-transparent text-parchment-dim border border-line rounded-sm px-3.5 py-2 text-[13px] transition-colors disabled:opacity-45 disabled:cursor-default enabled:cursor-pointer enabled:hover:text-parchment enabled:hover:border-gold-dim"
           disabled={manuscript.chapters.length === 0 || printing}
           title={title}
           onClick={exportPdf}
@@ -163,7 +163,7 @@ export function ExportTools({ manuscript }: ExportToolsProps) {
         </button>
         <button
           type="button"
-          className="book-export-btn"
+          className="book-export-btn bg-transparent text-parchment-dim border border-line rounded-sm px-3.5 py-2 text-[13px] transition-colors disabled:opacity-45 disabled:cursor-default enabled:cursor-pointer enabled:hover:text-parchment enabled:hover:border-gold-dim"
           disabled={disabled}
           title={title}
           onClick={() => void exportDocx()}
@@ -171,7 +171,7 @@ export function ExportTools({ manuscript }: ExportToolsProps) {
           Exportar Word
         </button>
         <a
-          className="book-export-btn bindery-link"
+          className="book-export-btn bindery-link bg-transparent text-parchment-dim border border-line rounded-sm px-3.5 py-2 text-[13px] no-underline hover:text-parchment hover:border-gold-dim"
           href={`../bindery/${manuscript.id}`}
           aria-label="Open Bindery"
         >
