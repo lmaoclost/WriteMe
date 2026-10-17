@@ -726,7 +726,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         set((st) => ({
           manuscripts: st.manuscripts.map((x) => x.id !== manuscriptId ? x : {
             ...x,
-            bindery: { ...defaultBindery(), ...(x.bindery ?? {}), ...patch },
+            bindery: { ...defaultBindery(), ...(x.bindery ?? {}), ...patch } as NonNullable<Manuscript["bindery"]>,
           }),
           projects: touchProject(st.projects, m.projectId),
         }));
