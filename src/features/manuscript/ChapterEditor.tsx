@@ -150,20 +150,20 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
   }, [writing, chapter.content, richTick]);
 
   return (
-    <div className="book-editor">
+    <div className="book-editor flex flex-col gap-2.5 max-w-[860px]">
       <input
         ref={headingRef}
         type="text"
-        className="book-ch-heading-input"
+        className="book-ch-heading-input font-display text-[1.375rem] font-semibold text-parchment bg-none border border-transparent rounded-lg px-1.5 py-0.5 hover:border-line focus:border-gold outline-none"
         aria-label="Chapter title"
         value={headingDraft.draft}
         onChange={(e) => headingDraft.setDraft(e.target.value)}
         onBlur={flush}
       />
-      <div className="book-mode-row">
+      <div className="flex gap-2">
         <button
           type="button"
-          className="book-mode"
+          className="book-mode bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] cursor-pointer hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold"
           aria-pressed={writing}
           onClick={() => setMode(true)}
         >
@@ -171,7 +171,7 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
         </button>
         <button
           type="button"
-          className="book-mode"
+          className="book-mode bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] cursor-pointer hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold"
           aria-pressed={!writing}
           onClick={() => setMode(false)}
         >
@@ -195,16 +195,16 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
           />
         </>
       ) : chapter.content.trim() === "" ? (
-        <p className="book-md-empty">No content yet.</p>
+        <p className="mx-1 my-1 text-slate text-sm italic">No content yet.</p>
       ) : (
         <div className="md-view" dangerouslySetInnerHTML={{ __html: renderMarkdown(chapter.content) }} />
       )}
       <NotesAndLinks chapter={chapter} />
-      <footer className="book-footer">
-        <span className="book-words">{formatWords(words)}</span>
+      <footer className="flex items-center justify-between gap-2">
+        <span className="book-words text-xs text-slate">{formatWords(words)}</span>
         <button
           type="button"
-          className={"book-delete" + (armed ? " armed" : "")}
+          className={"book-delete bg-none border border-[var(--ember)] text-[var(--ember)] rounded-lg py-1.5 px-2.5 text-[13px] hover:bg-[color-mix(in_srgb,var(--ember)_18%,transparent)]" + (armed ? " armed bg-[color-mix(in_srgb,var(--ember)_20%,transparent)]" : "")}
           onClick={confirmOrDelete}
         >
           {armed ? "Confirmar?" : "Delete chapter"}
@@ -217,25 +217,25 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
 function RichToolbar({ onExec }: { onExec(cmd: string, value?: string): void }) {
   const [blocksOpen, setBlocksOpen] = useState(false);
   return (
-    <div className="rich-toolbar" role="toolbar" aria-label="Formatting">
-      <div className="rt-group">
-        <button type="button" aria-label="Negrito" onClick={() => onExec("bold")}><b>B</b></button>
-        <button type="button" aria-label="Italic" onClick={() => onExec("italic")}><i>I</i></button>
-        <button type="button" aria-label="Sublinhado" onClick={() => onExec("underline")}><u>U</u></button>
+    <div className="sticky top-0 z-2 flex items-center gap-0.5 w-fit max-w-[860px] bg-night-2 border border-line rounded-lg px-1.5 py-0.5 shadow-[0_4px_14px_var(--scrim-canvas)]" role="toolbar" aria-label="Formatting">
+      <div className="rt-group relative flex gap-0.5 px-1">
+        <button type="button" aria-label="Negrito" className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("bold")}><b>B</b></button>
+        <button type="button" aria-label="Italic" className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("italic")}><i>I</i></button>
+        <button type="button" aria-label="Sublinhado" className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("underline")}><u>U</u></button>
       </div>
-      <div className="rt-group">
-        <button type="button" aria-label="Lista com marcadores" onClick={() => onExec("insertUnorderedList")}>•</button>
-        <button type="button" aria-label="Lista numerada" onClick={() => onExec("insertOrderedList")}>1.</button>
+      <div className="rt-group relative flex gap-0.5 px-1 border-l border-line">
+        <button type="button" aria-label="Lista com marcadores" className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("insertUnorderedList")}>•</button>
+        <button type="button" aria-label="Lista numerada" className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("insertOrderedList")}>1.</button>
       </div>
-      <div className="rt-group">
-        <button type="button" aria-label="Align left" onClick={() => onExec("justifyLeft")}>⇤</button>
-        <button type="button" aria-label="Alinhar ao centro" onClick={() => onExec("justifyCenter")}>↔</button>
-        <button type="button" aria-label="Align right" onClick={() => onExec("justifyRight")}>⇥</button>
-        <button type="button" aria-label="Justificar" onClick={() => onExec("justifyFull")}>≡</button>
+      <div className="rt-group relative flex gap-0.5 px-1 border-l border-line">
+        <button type="button" aria-label="Align left" className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("justifyLeft")}>⇤</button>
+        <button type="button" aria-label="Alinhar ao centro" className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("justifyCenter")}>↔</button>
+        <button type="button" aria-label="Align right" className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("justifyRight")}>⇥</button>
+        <button type="button" aria-label="Justificar" className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("justifyFull")}>≡</button>
       </div>
-      <button type="button" className="rich-blocks" aria-expanded={blocksOpen} onClick={() => setBlocksOpen((v) => !v)}>Blocos ▾</button>
+      <button type="button" className="rich-blocks relative w-auto bg-transparent border-0 rounded-sm text-[#b9b3c9] text-xs cursor-pointer px-2.5 py-1 hover:text-parchment" aria-expanded={blocksOpen} onClick={() => setBlocksOpen((v) => !v)}>Blocos ▾</button>
       {blocksOpen ? (
-        <div className="rich-blocks-pop" role="menu">
+        <div className="rich-blocks-pop absolute top-[30px] left-0 z-10 min-w-[170px] bg-night-2 border border-line rounded-md p-1 shadow-[0_8px_22px_var(--scrim-canvas)]" role="menu">
           {[
             ["Heading 1 (H1)", "h1"],
             ["Heading 2 (H2)", "h2"],
@@ -248,6 +248,7 @@ function RichToolbar({ onExec }: { onExec(cmd: string, value?: string): void }) 
               type="button"
               role="menuitem"
               onClick={() => { onExec("formatBlock", tag); setBlocksOpen(false); }}
+              className="w-full text-left py-1.5 px-2 rounded-sm text-xs text-parchment hover:bg-accent"
             >{label}</button>
           ))}
         </div>
@@ -272,8 +273,8 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
 
   return (
     <>
-      <label className="book-note-field">
-        <span className="field-label">Prologue</span>
+      <div className="book-note-field flex flex-col gap-1.5">
+        <span className="field-label text-xs font-semibold uppercase tracking-[0.08em] text-slate">Prologue</span>
         <RichNoteField
           testid="rich-note-top"
           ariaLabel="Prologue"
@@ -281,9 +282,9 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
           value={chapter.noteTop ?? ""}
           onCommit={(v) => store().updateChapter(chapter.id, { noteTop: v || undefined })}
         />
-      </label>
-      <label className="book-note-field">
-        <span className="field-label">Epilogue</span>
+      </div>
+      <div className="book-note-field flex flex-col gap-1.5">
+        <span className="field-label text-xs font-semibold uppercase tracking-[0.08em] text-slate">Epilogue</span>
         <RichNoteField
           testid="rich-note-end"
           ariaLabel="Epilogue"
@@ -291,9 +292,9 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
           value={chapter.noteEnd ?? ""}
           onCommit={(v) => store().updateChapter(chapter.id, { noteEnd: v || undefined })}
         />
-      </label>
+      </div>
       {chapter.noteEnd || endMarker.draft ? (
-        <div className="book-end-marker">
+        <div className="book-end-marker flex items-center gap-2 text-gold">
           <span aria-hidden="true">✦</span>
           <input
             aria-label="End-of-chapter marker"
@@ -302,36 +303,36 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
             onChange={(e) => endMarker.setDraft(e.target.value)}
             onBlur={() => endMarker.flush()}
           />
-          <button type="button" className="book-mode" aria-pressed={false}
+          <button type="button" className="book-mode bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] cursor-pointer hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold" aria-pressed={false}
             aria-label="Remover marcador do fim"
             onClick={() => { endMarker.flush(); store().updateChapter(chapter.id, { endMarker: undefined }); }}>remover marcador</button>
         </div>
       ) : (
-        <div className="book-end-marker book-end-marker-off">
+        <div className="book-end-marker flex items-center justify-start gap-2 text-gold">
           <button
             type="button"
-            className="book-mode"
+            className="book-mode bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] cursor-pointer hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold"
             aria-label="Adicionar marcador do fim"
             onClick={() => store().updateChapter(chapter.id, { endMarker: `Fim do ${chapter.heading || "chapter"}` })}
           >+ marcador do fim</button>
         </div>
       )}
 
-      <div className="book-cal-link" data-testid="book-cal-link">
+      <div className="flex items-center gap-2" data-testid="book-cal-link">
         {chapter.linkedCalendarId && cal ? (
           <>
-            <span className="book-cal-label">Data: {labelDay(chapter.calendarDayKey, cal)}</span>
-            <button type="button" className="book-mode" aria-label="Unlink calendar"
+            <span className="text-xs text-slate">Data: {labelDay(chapter.calendarDayKey, cal)}</span>
+            <button type="button" className="book-mode bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] cursor-pointer hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold" aria-label="Unlink calendar"
               onClick={() => { setCalId(""); store().setChapterCalendar(chapter.id, undefined); }}>desvincular</button>
           </>
         ) : (
-          <button type="button" className="book-mode" aria-expanded={calendarPickOpen}
+          <button type="button" className="book-mode bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] cursor-pointer hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold" aria-expanded={calendarPickOpen}
             onClick={() => setCalendarPickOpen((v) => !v)}>
             {calendars.length ? "Link calendar" : "Sem calendários no mundo"}
           </button>
         )}
         {calendarPickOpen && calendars.length ? (
-          <div className="book-cal-picker">
+          <div className="book-cal-picker flex gap-2 items-end flex-wrap bg-night-2 border border-line rounded-lg p-2.5">
             <select aria-label="Calendário" value={calId} onChange={(e) => setCalId(e.target.value)}>
               <option value="">Escolha…</option>
               {calendars.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -339,13 +340,14 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
             <select aria-label="Month" value={mm} disabled={!cal} onChange={(e) => setMm(e.target.value)}>
               {(cal?.months ?? []).map((m, i) => <option key={i} value={i}>{m.name}</option>)}
             </select>
-            <label className="field"><span className="field-label">Ano do evento</span>
-              <input type="number" aria-label="Ano do evento" value={yy} onChange={(e) => setYy(e.target.value)} /></label>
-            <label className="field"><span className="field-label">Dia</span>
-              <input type="number" aria-label="Dia" value={dd} onChange={(e) => setDd(e.target.value)} /></label>
+            <div className="flex flex-col gap-1"><span className="field-label text-xs font-semibold uppercase tracking-[0.08em] text-slate">Ano do evento</span>
+              <input type="number" aria-label="Ano do evento" value={yy} onChange={(e) => setYy(e.target.value)} className="bg-ink border border-line rounded-sm text-parchment px-2 py-1.5 text-xs w-24" /></div>
+            <div className="flex flex-col gap-1"><span className="field-label text-xs font-semibold uppercase tracking-[0.08em] text-slate">Dia</span>
+              <input type="number" aria-label="Dia" value={dd} onChange={(e) => setDd(e.target.value)} className="bg-ink border border-line rounded-sm text-parchment px-2 py-1.5 text-xs w-20" /></div>
             <button
               type="button"
               disabled={!cal}
+              className="bg-gold text-wax border-0 rounded-sm px-2.5 py-1.5 font-semibold text-xs cursor-pointer hover:brightness-[1.08] disabled:opacity-40"
               onClick={() => {
                 const mIdx = Number(mm);
                 const dayIdx = Number(dd) - 1;
