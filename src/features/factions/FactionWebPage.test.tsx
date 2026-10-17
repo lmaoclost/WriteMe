@@ -128,7 +128,7 @@ describe("FactionWebPage", () => {
     vi.useFakeTimers();
     const { w } = seedWeb();
     render(<FactionWebPage webId={w.id} />);
-    fireEvent.click(screen.getByRole("button", { name: "Notes" }));
+    fireEvent.click(screen.getByRole("button", { name: /notes/i }));
     fireEvent.change(screen.getByLabelText("Web notes"), { target: { value: "A paz durou até o inverno." } });
     act(() => vi.advanceTimersByTime(320));
     expect(store().factionWebs![0].notes).toBe("A paz durou até o inverno.");

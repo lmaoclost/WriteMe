@@ -72,6 +72,20 @@ describe("WellSpringPage", () => {
     expect(panel).toBeTruthy();
     expect(panel.textContent).toMatch(/pick a note/i);
   });
+
+  it("notepad opens via the Notes button (pressed state) and via the N hotkey", () => {
+    const w = seed();
+    render(<WellSpringPage wellId={w.id} />);
+    const btn = screen.getByRole("button", { name: /notes/i }) as HTMLButtonElement;
+    expect(btn.getAttribute("aria-pressed")).toBe("false");
+    expect(screen.queryByTestId("well-notepad")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /notes/i }));
+    expect(screen.getByTestId("well-notepad")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /notes/i }));
+    expect(screen.queryByTestId("well-notepad")).toBeNull();
+    fireEvent.keyDown(document, { key: "n" });
+    expect(screen.getByTestId("well-notepad")).toBeInTheDocument();
+  });
   it("placing nodes by kind, moving them, panel edits text", () => {
     const w = seed();
     render(<WellSpringPage wellId={w.id} />);

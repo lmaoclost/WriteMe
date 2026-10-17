@@ -7,7 +7,8 @@ import { LinkPicker } from "../atlas/panels/LinkPicker";
 import { EntryPreview, entryBlurb } from "../entries/EntryPreview";
 import { categoryIcon, categoryLabel } from "../entries/categories";
 import type { TimelineWire, TimelineBead } from "../../domain/types";
-import "./timelinecanvas.css";
+import "./timelinecanvas.css";import { useBoardNotesHotkey } from "../../ui/boardNotes";
+
 
 export const BEAD_PRESET_COLORS = [
   "#e67e22", "#e74c3c", "#2ecc71", "#3498db", "#9b59b6",
@@ -30,6 +31,7 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
   const markDirty = () => { viewTick.current++; setDraw((t) => t + 1); };
   const [selectedBeadId, setSelectedBeadId] = useState<string | null>(null);
   const [notesOpen, setNotesOpen] = useState(false);
+  useBoardNotesHotkey(notesOpen, setNotesOpen);
   const beadDrag = useRef<{ id: string; sx: number; beadX: number; startBeadY?: number } | null>(null);
   const pan = useRef<{ x: number; basePanX: number; y: number; basePanY: number } | null>(null);
 
@@ -53,7 +55,7 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
           <button type="button" aria-label="Redo" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoTL(timelineId)}>↷</button>
           <button type="button" onClick={() => { pushTLHistory(timelineId); const el = stageRef.current; const x = el && el.clientWidth ? (el.clientWidth / 2 - view.current.panX) / view.current.s : 4000; const created = useScriptorium.getState().addBead(timelineId, { x, y: 200 }); if (created) { setSelectedBeadId(created.id); markDirty(); } }}>Add event</button>
           <button type="button" onClick={() => { pushTLHistory(timelineId); useScriptorium.getState().addSegment(timelineId, 1000, 3000, "New era"); }}>Add segment</button>
-          <button type="button" onClick={() => setNotesOpen((v) => !v)}>Notas</button>
+          <button type="button" aria-pressed={notesOpen} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
         </div>
       </header>
       <div className="bl-body">

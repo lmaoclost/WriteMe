@@ -173,7 +173,7 @@ describe("Find + Notepad", () => {
     vi.useFakeTimers();
     const { b } = seed();
     mountCanvas(b.id);
-    fireEvent.click(screen.getByRole("button", { name: "Notas" }));
+    fireEvent.click(screen.getByRole("button", { name: /notes/i }));
     const ta = screen.getByLabelText("Notas da linhagem") as HTMLTextAreaElement;
     fireEvent.change(ta, { target: { value: "Aldric fundou a casa no rio." } });
     act(() => vi.advanceTimersByTime(320));
@@ -184,7 +184,7 @@ describe("Find + Notepad", () => {
   it("notepad closes on close button", () => {
     const { b } = seed();
     mountCanvas(b.id);
-    fireEvent.click(screen.getByRole("button", { name: "Notas" }));
+    fireEvent.click(screen.getByRole("button", { name: /notes/i }));
     fireEvent.click(screen.getByRole("button", { name: "Fechar notas" }));
     expect(screen.queryByTestId("bl-notepad")).toBeNull();
   });

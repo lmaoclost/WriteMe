@@ -3,7 +3,8 @@ import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { PlotBoardPanel } from "./PlotBoardPanel";
 import { BoardNotepad } from "./BoardNotepad";
-import "./plotboard.css";
+import "./plotboard.css";import { useBoardNotesHotkey } from "../../ui/boardNotes";
+
 
 export function PlotBoardPage({ boardId }: { boardId: string }) {
   const board = useScriptorium((s) => (s.plotBoards ?? []).find((b) => b.id === boardId));
@@ -20,6 +21,7 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
   const [connecting, setConnecting] = useState<string | null>(null);
   const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
   const [notesOpen, setNotesOpen] = useState(false);
+  useBoardNotesHotkey(notesOpen, setNotesOpen);
   const cardDrag = useRef<{ id: string; sx: number; sy: number; baseX: number; baseY: number; pushed: boolean } | null>(null);
   const pan = useRef<{ x: number; basePanX: number; y: number; basePanY: number } | null>(null);
 
@@ -63,7 +65,7 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
           >
             + Add scene
           </button>
-          <button type="button" onClick={() => setNotesOpen((v) => !v)}>Notes</button>
+          <button type="button" aria-pressed={notesOpen} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
         </div>
       </header>
       <div className="bl-body">

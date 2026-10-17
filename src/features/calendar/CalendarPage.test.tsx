@@ -170,9 +170,6 @@ describe("CalendarPage — configurable calendar", () => {
   });
 });
 
-function monthZeroName(): string {
-  return store().calendars![0].months[0]?.name ?? "";
-}
 
 describe("CalendarPage — config popover", () => {
   it("weekday rename, weekend toggle and + Month flow from the popover", () => {

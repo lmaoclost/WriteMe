@@ -3,7 +3,8 @@ import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { tidyOathsChart } from "../../domain/oaths";
 import type { OathsChart, OathLink } from "../../domain/types";
-import "./oaths.css";
+import "./oaths.css";import { useBoardNotesHotkey } from "../../ui/boardNotes";
+
 
 export const OATH_LINK_STYLE: Record<OathLink["status"], { label: string; color: string; dash: string }> = {
   sworn: { label: "Sworn", color: "#7c5cbf", dash: "" },
@@ -20,6 +21,7 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
   }));
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [notesOpen, setNotesOpen] = useState(false);
+  useBoardNotesHotkey(notesOpen, setNotesOpen);
 
   useEffect(() => {
     if (!chart) pushToast("error", "Chain of command not found.");
@@ -47,7 +49,7 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
             const m = useScriptorium.getState().addOathMember(chartId, undefined, { name: "Fundador" });
             void m; void rect;
           }}>Fundador</button>
-          <button type="button" onClick={() => setNotesOpen((v) => !v)}>Notes</button>
+          <button type="button" aria-pressed={notesOpen} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
         </div>
       </header>
       <div className="bl-body">

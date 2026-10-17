@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { pathFrom, alphabetSheetSvg, type Pt } from "../../domain/conlang";
-import "./conlang.css";
+import "./conlang.css";import { useBoardNotesHotkey } from "../../ui/boardNotes";
+
 
 export function ConlangPage({ conlangId }: { conlangId: string }) {
   const conlang = useScriptorium((s) => (s.conlangs ?? []).find((c) => c.id === conlangId));
@@ -14,6 +15,7 @@ export function ConlangPage({ conlangId }: { conlangId: string }) {
   const [tab, setTab] = useState<"alphabet" | "lexicon">("alphabet");
   const [selectedGlyph, setSelectedGlyph] = useState<string | null>(null);
   const [notesOpen, setNotesOpen] = useState(false);
+  useBoardNotesHotkey(notesOpen, setNotesOpen);
 
   useEffect(() => {
     if (!conlang) pushToast("error", "Conlang not found.");
@@ -33,7 +35,7 @@ export function ConlangPage({ conlangId }: { conlangId: string }) {
         <div className="bl-actions">
           <button type="button" aria-label="Undo" disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoCN(conlangId)}>↶</button>
           <button type="button" aria-label="Redo" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoCN(conlangId)}>↷</button>
-          <button type="button" onClick={() => setNotesOpen((v) => !v)}>Notes</button>
+          <button type="button" aria-pressed={notesOpen} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
         </div>
       </header>
       <nav className="conlang-tabs" aria-label="Conlang sections">

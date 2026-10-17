@@ -5,7 +5,8 @@ import { FACTION_CONNECTION_STYLES } from "./connectionStyles";
 import { FactionPanel } from "./FactionPanel";
 import { WebNotepad } from "./WebNotepad";
 import type { Faction } from "../../domain/types";
-import "./factions.css";
+import "./factions.css";import { useBoardNotesHotkey } from "../../ui/boardNotes";
+
 
 export function FactionWebPage({ webId }: { webId: string }) {
   const web = useScriptorium((s) => (s.factionWebs ?? []).find((w) => w.id === webId));
@@ -26,6 +27,7 @@ export function FactionWebPage({ webId }: { webId: string }) {
   scaleRef.current = scale;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [notesOpen, setNotesOpen] = useState(false);
+  useBoardNotesHotkey(notesOpen, setNotesOpen);
   const [pendingFrom, setPendingFrom] = useState<{ id: string; x: number; y: number } | null>(null);
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
   const [typePicker, setTypePicker] = useState<{ connId: string; left: number; top: number } | null>(null);
@@ -159,7 +161,7 @@ export function FactionWebPage({ webId }: { webId: string }) {
           <button type="button" onClick={() => { pushFWHistory(webId); const el = stageRef.current; const f = addFaction(webId, { x: el ? (el.clientWidth / 2 - scaleRef.current.panX) / scaleRef.current.s : 4000, y: el ? (el.clientHeight / 2 - scaleRef.current.panY) / scaleRef.current.s : 4000 }); if (f) setSelectedId(f.id); }}>
             New Faction
           </button>
-          <button type="button" onClick={() => setNotesOpen((v) => !v)}>Notes</button>
+          <button type="button" aria-pressed={notesOpen} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
         </div>
       </header>
       <div className="bl-body">

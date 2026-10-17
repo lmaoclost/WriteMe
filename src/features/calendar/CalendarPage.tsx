@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import type { CustomCalendar } from "../../domain/types";
-import "./calendar.css";
+import "./calendar.css";import { useBoardNotesHotkey } from "../../ui/boardNotes";
+
 
 export const EVENT_CATEGORIES = ["Events", "Festivals", "Notes"] as const;
 export const EVENT_PRESET_COLORS = ["#e74c3c", "#e67e22", "#f1c40f", "#2ecc71", "#3498db", "#9b59b6", "#1abc9c", "#e84393", "#636e72", "#b2bec3"];
@@ -18,6 +19,7 @@ export function CalendarPage({ calendarId }: { calendarId: string }) {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [configOpen, setConfigOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
+  useBoardNotesHotkey(notesOpen, setNotesOpen);
 
   useEffect(() => {
     if (!cal) pushToast("error", "Calendar not found.");
@@ -47,7 +49,7 @@ export function CalendarPage({ calendarId }: { calendarId: string }) {
           <button type="button" aria-label="Desfazer" disabled={!flags.canUndo} onClick={() => store().undoCL(calendarId)}>↶</button>
           <button type="button" aria-label="Refazer" disabled={!flags.canRedo} onClick={() => store().redoCL(calendarId)}>↷</button>
           <button type="button" onClick={() => setConfigOpen(true)}>Edit Calendar Settings</button>
-          <button type="button" onClick={() => setNotesOpen((v) => !v)}>Notas</button>
+          <button type="button" aria-pressed={notesOpen} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
         </div>
       </header>
       <div className="bl-body">

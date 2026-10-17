@@ -141,7 +141,7 @@ describe("PlotBoardPage", () => {
     vi.useFakeTimers();
     const b = seedBoard();
     render(<PlotBoardPage boardId={b.id} />);
-    fireEvent.click(screen.getByRole("button", { name: "Notes" }));
+    fireEvent.click(screen.getByRole("button", { name: /notes/i }));
     fireEvent.change(screen.getByLabelText("Board notes"), { target: { value: "O fio do selo quebra no ato 2." } });
     act(() => vi.advanceTimersByTime(320));
     expect(store().plotBoards![0].notes).toBe("O fio do selo quebra no ato 2.");

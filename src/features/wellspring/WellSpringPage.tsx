@@ -3,7 +3,8 @@ import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { WellNotepad } from "./WellNotepad";
 import type { WellSpring, WellKind } from "../../domain/types";
-import "./wellspring.css";
+import "./wellspring.css";import { useBoardNotesHotkey } from "../../ui/boardNotes";
+
 
 export const WELL_KIND_META: Record<WellKind, { label: string; icon: string; color: string }> = {
   character: { label: "Character", icon: "👤", color: "#e74c3c" },
@@ -28,6 +29,7 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [placingKind, setPlacingKind] = useState<WellKind | null>(null);
   const [notesOpen, setNotesOpen] = useState(false);
+  useBoardNotesHotkey(notesOpen, setNotesOpen);
   const nodeDrag = useRef<{ id: string; sx: number; sy: number; baseX: number; baseY: number; pushed: boolean } | null>(null);
   const pan = useRef<{ x: number; basePanX: number; y: number; basePanY: number } | null>(null);
 
@@ -65,7 +67,7 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
         <div className="bl-actions">
           <button type="button" aria-label="Undo" disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoWS(wellId)}>↶</button>
           <button type="button" aria-label="Redo" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoWS(wellId)}>↷</button>
-          <button type="button" onClick={() => setNotesOpen((v) => !v)}>Notes</button>
+          <button type="button" aria-pressed={notesOpen} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
         </div>
       </header>
       <div className="bl-body">

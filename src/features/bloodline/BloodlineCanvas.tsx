@@ -6,7 +6,8 @@ import { EdgesLayer, HouseNode, PersonNode } from "./NodesLayer";
 import { BloodlinePanel } from "./BloodlinePanel";
 import { FindBar } from "./FindBar";
 import { Notepad } from "./Notepad";
-import "./bloodline.css";
+import "./bloodline.css";import { useBoardNotesHotkey } from "../../ui/boardNotes";
+
 
 export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
   const bloodline = useScriptorium((s) => s.bloodlines.find((b) => b.id === bloodlineId));
@@ -17,6 +18,7 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [findOpen, setFindOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
+  useBoardNotesHotkey(notesOpen, setNotesOpen);
   const flags = useScriptorium(useShallow((s) => {
     const h = s.histories[`bl_${bloodlineId}`];
     return { canUndo: !!h?.undo.length, canRedo: !!h?.redo.length };
@@ -95,7 +97,7 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
             if (h) setSelectedId(h.id);
           }}>Nova casa</button>
           <button type="button" onClick={() => setFindOpen((v) => !v)} aria-label="Buscar pessoa">Buscar</button>
-          <button type="button" onClick={() => setNotesOpen((v) => !v)} aria-label="Notas">Notas</button>
+          <button type="button" aria-pressed={notesOpen} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
         </div>
       </header>
       <div className="bl-body">
