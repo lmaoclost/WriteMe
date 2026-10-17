@@ -87,6 +87,11 @@ export function TimelinePage({ projectId }: { projectId: string }) {
                 key={row.id}
               >
                 <span className="font-mono font-bold text-[13px] text-parchment-dim text-right pr-3.5 whitespace-nowrap" aria-hidden="true">{formatDate(row.date)}</span>
+                <span
+                  className="timeline-dot size-2.5 rounded-full justify-self-center"
+                  aria-hidden="true"
+                  style={{ backgroundColor: categoryDot(row.category) }}
+                />
                 <button
                   type="button"
                   className="timeline-card flex flex-col gap-0.5 text-left bg-night border border-line rounded-lg text-parchment px-3 py-2 min-w-0 hover:border-gold-dim"
@@ -96,11 +101,6 @@ export function TimelinePage({ projectId }: { projectId: string }) {
                   <span className="timeline-card-title font-display font-semibold text-[15px]">{row.title}</span>
                   <span className="timeline-card-body text-parchment-dim text-xs overflow-hidden text-ellipsis whitespace-nowrap">{snippet(row.body)}</span>
                 </button>
-                <span
-                  className="timeline-dot size-2.5 rounded-full justify-self-center"
-                  aria-hidden="true"
-                  style={{ backgroundColor: categoryDot(row.category) }}
-                />
               </li>
             );
           })}

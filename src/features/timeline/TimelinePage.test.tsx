@@ -71,6 +71,16 @@ describe("TimelinePage", () => {
     ).toBeNull();
   });
 
+  it("timeline row places date, then dot, then card (card takes the wide column)", () => {
+    const projectId = seedProject([{ title: "Guerra", category: "event", date: "1200-05-01" }]);
+    render(timelineRoute(projectId));
+    const item = document.querySelector(".timeline-item") as HTMLElement;
+    const kids = Array.from(item.children).map((c) =>
+      c.classList.contains("timeline-dot") ? "dot" : c.tagName === "BUTTON" ? "card" : "date"
+    );
+    expect(kids).toEqual(["date", "dot", "card"]);
+  });
+
   it("renders the formatted date column and card snippet from the first body line", () => {
     const projectId = seedProject([
       {
