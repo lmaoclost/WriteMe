@@ -149,3 +149,51 @@ describe("CalendarIndexPage", () => {
     expect(store().calendars).toHaveLength(0);
   });
 });
+
+describe("CalendarPage — configurable calendar", () => {
+  it("store edits weekdays, weekend days, months; removeMonth prunes orphan events", () => {
+    const cal = seed();
+    act(() => { store().setWeekdays(cal.id, ["Dawn", "Market", "Candle", "Rest"]); });
+    expect(store().calendars![0].weekdays).toEqual(["Dawn", "Market", "Candle", "Rest"]);
+    act(() => { store().setWeekendDays(cal.id, [3]); });
+    expect(store().calendars![0].weekendDays).toEqual([3]);
+    act(() => { store().addCalendarEvent(cal.id, "0:1:1", { text: "Dia da Ceira", category: "Notes" }); });
+    act(() => { store().addMonth(cal.id, "Ceira", 25); });
+    const removedName = store().calendars![0].months[0].name;
+    act(() => { store().removeMonth(cal.id, 0); });
+    const after = store().calendars![0];
+    expect(after.months.some((m) => m.name === "Ceira")).toBe(true);
+    expect(after.months.some((m) => m.name === removedName)).toBe(false);
+    const orphan = Object.keys(after.events ?? {}).find((k) => Number(k.split(":")[1]) >= after.months.length);
+    expect(orphan).toBeUndefined();
+    expect(after.events).not.toHaveProperty("0:1:1");
+  });
+});
+
+function monthZeroName(): string {
+  return store().calendars![0].months[0]?.name ?? "";
+}
+
+describe("CalendarPage — config popover", () => {
+  it("weekday rename, weekend toggle and + Month flow from the popover", () => {
+    const cal = seed();
+    render(<CalendarPage calendarId={cal.id} />);
+    fireEvent.click(screen.getByRole("button", { name: "Edit Calendar Settings" }));
+    expect(screen.getByTestId("cal-weekdays-config")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Weekday 1"), { target: { value: "Alvor" } });
+    fireEvent.blur(screen.getByLabelText("Weekday 1"));
+    expect(store().calendars![0].weekdays[0]).toBe("Alvor");
+    fireEvent.click(screen.getByLabelText("Weekend day 3"));
+    expect(store().calendars![0].weekendDays).toContain(2);
+    fireEvent.change(screen.getByLabelText("New month name"), { target: { value: "Ceira" } });
+    fireEvent.click(screen.getByRole("button", { name: "+ Month" }));
+    const after = store().calendars![0];
+    expect(after.months).toHaveLength(13);
+    expect(after.months[12]).toMatchObject({ name: "Ceira", days: 30 });
+    // the popover closed after adding; reopen and check the month list + remove flow
+    fireEvent.click(screen.getByRole("button", { name: "Edit Calendar Settings" }));
+    expect(screen.getByLabelText(`Days of ${after.months.length}`)).toBeTruthy();
+    fireEvent.click(screen.getByLabelText(`Remove month ${after.months.length}`));
+    expect(store().calendars![0].months).toHaveLength(12);
+  });
+});

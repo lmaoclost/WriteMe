@@ -47,3 +47,12 @@
 .cal-months-config { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .cal-months-config li { display: grid; grid-template-columns: 1fr 64px; gap: 6px; }
 .cal-months-config input { background: var(--ink); border: 1px solid var(--line); border-radius: 4px; color: var(--parchment); padding: 4px 6px; font-size: 12px; }
+.cal-months-config li:has(+ .cal-month-remove), .cal-months-config li { align-items: center; }
+.cal-months-config li { grid-template-columns: 1.4fr 64px auto; }
+.cal-weekdays-config li { grid-template-columns: 28px 1fr auto; }
+.cal-weekdays-config .check-row { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--slate); }
+.cal-month-remove { background: none; border: 0; color: var(--slate); cursor: pointer; padding: 4px 6px; font-size: 12px; }
+.cal-month-remove:hover { color: var(--ember); }
+.cal-month-add { display: grid; grid-template-columns: 1.4fr 64px auto; gap: 6px; margin-top: 8px; }
+.cal-month-add button { background: var(--ink); border: 1px solid var(--line); border-radius: 4px; color: var(--parchment); cursor: pointer; padding: 5px 10px; font-size: 12px; }
+.cal-month-add button:hover { color: var(--gold); border-color: var(--gold-dim); }

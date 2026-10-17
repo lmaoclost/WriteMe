@@ -254,6 +254,10 @@ interface ScriptoriumState extends ProjectData {
   setStartingWeekday(id: string, weekday: number): void;
   setMonth(id: string, index: number, patch: { name?: string; days?: number }): void;
   addCalendarEvent(id: string, dayKey: string, ev: { text: string; category: string; color?: string }): CalendarEvent | null;
+  setWeekdays(id: string, weekdays: string[]): void;
+  setWeekendDays(id: string, weekendDays: number[]): void;
+  addMonth(id: string, name: string, days: number): void;
+  removeMonth(id: string, index: number): void;
   updateCalendarEvent(id: string, dayKey: string, eventId: string, patch: { text?: string; category?: string; color?: string }): void;
   removeCalendarEvent(id: string, dayKey: string, eventId: string): void;
   setCalendarNotes(id: string, notes: string): void;
@@ -1573,6 +1577,77 @@ export const useScriptorium = create<ScriptoriumState>()(
             if (remaining.length) events[dayKey] = remaining;
             else delete events[dayKey];
             return { ...c, events };
+          }),
+          projects: touchProject(st.projects, cal.projectId),
+        }));
+      },
+
+      setWeekdays(id, weekdays) {
+        const cal = (get().calendars ?? []).find((c) => c.id === id);
+        if (!cal) return;
+        const clean = weekdays.map((w) => w.trim()).filter(Boolean);
+        if (clean.length === 0) return;
+        get().pushCLHistory(id);
+        set((st) => ({
+          calendars: (st.calendars ?? []).map((c) => (c.id === id ? { ...c, weekdays: clean } : c)),
+          projects: touchProject(st.projects, cal.projectId),
+        }));
+      },
+
+      setWeekendDays(id, weekendDays) {
+        const cal = (get().calendars ?? []).find((c) => c.id === id);
+        if (!cal) return;
+        const clean = [...new Set(weekendDays.filter((n) => Number.isInteger(n) && n >= 0))].sort((a, b) => a - b);
+        get().pushCLHistory(id);
+        set((st) => ({
+          calendars: (st.calendars ?? []).map((c) => (c.id === id ? { ...c, weekendDays: clean } : c)),
+          projects: touchProject(st.projects, cal.projectId),
+        }));
+      },
+
+      addMonth(id, name, days) {
+        const cal = (get().calendars ?? []).find((c) => c.id === id);
+        if (!cal || !name.trim()) return;
+        const d = Math.max(1, Math.round(days) || 30);
+        get().pushCLHistory(id);
+        set((st) => ({
+          calendars: (st.calendars ?? []).map((c) => (c.id === id
+            ? { ...c, months: [...c.months, { name: name.trim(), days: d }] }
+            : c)),
+          projects: touchProject(st.projects, cal.projectId),
+        }));
+      },
+
+      removeMonth(id, index) {
+        const cal = (get().calendars ?? []).find((c) => c.id === id);
+        if (!cal || index < 0 || index >= cal.months.length) return;
+        if (cal.months.length === 1) return; // um ano sem meses não faz sentido
+        get().pushCLHistory(id);
+        set((st) => ({
+          calendars: (st.calendars ?? []).map((c) => {
+            if (c.id !== id) return c;
+            const months = c.months.filter((_, j) => j !== index);
+            // rekey: eventos do mês removido somem; os demais voltam um índice se vinham depois
+            const rekey = (key: string): string | null => {
+              const parts = key.split(":");
+              if (parts.length !== 3) return key; // chaves fora do padrão ficam intactas
+              const [y, mStr, dStr] = parts;
+              const mi = Number(mStr);
+              const di = Number(dStr);
+              if (!Number.isInteger(mi) || !Number.isInteger(di)) return key;
+              if (mi === index) return null;
+              const shifted = mi > index ? mi - 1 : mi;
+              if (shifted < 0 || shifted >= months.length) return null;
+              if (di < 0 || di >= months[shifted].days) return null;
+              return `${Number(y)}:${shifted}:${di}`;
+            };
+            const events: Record<string, CalendarEvent[]> = {};
+            for (const [key, list] of Object.entries(c.events ?? {})) {
+              const newKey = rekey(key);
+              if (!newKey) continue;
+              events[newKey] = [...(events[newKey] ?? []), ...list];
+            }
+            return { ...c, months, events };
           }),
           projects: touchProject(st.projects, cal.projectId),
         }));

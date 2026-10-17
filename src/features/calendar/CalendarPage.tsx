@@ -213,6 +213,39 @@ function ConfigPopover({ cal, onClose }: { cal: CustomCalendar; onClose(): void 
         </select>
       </label>
       <section>
+        <h3 style={{ fontSize: 13, color: "var(--text-muted)" }}>Weekdays</h3>
+        <ul className="cal-months-config cal-weekdays-config" data-testid="cal-weekdays-config">
+          {cal.weekdays.map((w, i) => (
+            <li key={i}>
+              <span className="dim">{i + 1}º</span>
+              <input
+                aria-label={`Weekday ${i + 1}`}
+                placeholder="Weekday name..."
+                defaultValue={w}
+                onBlur={(e) => {
+                  const next = cal.weekdays.slice();
+                  next[i] = e.target.value.trim();
+                  store().setWeekdays(cal.id, next);
+                }}
+              />
+              <label className="check-row" title="Marcar como fim de semana">
+                <input
+                  type="checkbox"
+                  aria-label={`Weekend day ${i + 1}`}
+                  checked={(cal.weekendDays ?? [0, 6]).includes(i)}
+                  onChange={(e) => {
+                    const cur = new Set(cal.weekendDays ?? [0, 6]);
+                    if (e.target.checked) cur.add(i); else cur.delete(i);
+                    store().setWeekendDays(cal.id, [...cur]);
+                  }}
+                />
+                <span>Weekend</span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      </section>
+      <section>
         <h3 style={{ fontSize: 13, color: "var(--text-muted)" }}>Months</h3>
         <ul className="cal-months-config">
           {cal.months.map((m, i) => (
@@ -230,9 +263,27 @@ function ConfigPopover({ cal, onClose }: { cal: CustomCalendar; onClose(): void 
                 defaultValue={m.days}
                 onBlur={(e) => store().setMonth(cal.id, i, { days: Number(e.target.value) })}
               />
+              {cal.months.length > 1 ? (
+                <button type="button" aria-label={`Remove month ${i + 1}`} className="cal-month-remove"
+                  onClick={() => { store().removeMonth(cal.id, i); onClose(); }}>✕</button>
+              ) : null}
             </li>
           ))}
         </ul>
+        <div className="cal-month-add" data-testid="cal-month-add">
+          <input aria-label="New month name" placeholder="New month..." defaultValue=""
+            onBlur={(e) => { if (e.target.value.trim()) { store().addMonth(cal.id, e.target.value.trim(), 30); e.target.value = ""; } }} />
+          <input aria-label="New month days" type="number" min={1} placeholder="Days" defaultValue={30}
+            onBlur={(e) => { void Number(e.target.value); }} />
+          <button
+            type="button"
+            onClick={() => {
+              const name = (document.querySelector('[aria-label="New month name"]') as HTMLInputElement)?.value ?? "";
+              const days = Number((document.querySelector('[aria-label="New month days"]') as HTMLInputElement)?.value ?? 30) || 30;
+              if (name.trim()) { store().addMonth(cal.id, name.trim(), days); onClose(); }
+            }}
+          >+ Month</button>
+        </div>
       </section>
     </div>
   );
