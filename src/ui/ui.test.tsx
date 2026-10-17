@@ -38,6 +38,25 @@ describe("Field / Modal", () => {
     fireEvent.keyDown(document, { key: "Escape" });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+  it("modal closes on scrim click", async () => {
+    const onClose = vi.fn();
+    const { container } = render(
+      <Modal title="Excluir projeto" onClose={onClose}><p>confirmar</p></Modal>
+    );
+    const overlay = (container.ownerDocument as Document).querySelector("[data-slot='dialog-overlay']");
+    expect(overlay).not.toBeNull();
+    // radix attaches its outside-press listener on a macrotask and defers
+    // the dismissal to the follow-up click; jsdom lacks PointerEvent → raw events
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const down = new Event("pointerdown", { bubbles: true, cancelable: true }) as
+      Event & { pointerType: string; button: number };
+    down.pointerType = "mouse";
+    down.button = 0;
+    const click = new Event("click", { bubbles: true, cancelable: true });
+    (overlay as Element).dispatchEvent(down);
+    (overlay as Element).dispatchEvent(click);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("Toasts", () => {

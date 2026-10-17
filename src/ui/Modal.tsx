@@ -1,4 +1,5 @@
-import { useEffect, type ReactNode } from "react";
+import type { ReactNode } from "react";
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export function Modal({
   title,
@@ -11,28 +12,20 @@ export function Modal({
   children?: ReactNode | undefined;
   closeLabel?: string;
 }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
   return (
-    <div className="modal-scrim" onClick={onClose} role="presentation">
-      <div
-        className="modal"
-        role="dialog"
-        aria-modal="true"
-        aria-label={typeof title === "string" ? title : closeLabel}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="modal-head">
-          <h2 className="modal-title">{title}</h2>
-          <button className="modal-close" onClick={onClose} aria-label={closeLabel}>✕</button>
-        </header>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="w-[min(440px,92vw)] rounded-lg bg-card p-4.5 sm:max-w-[min(440px,92vw)]">
+        <DialogHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
+          <DialogTitle className="font-display">{title}</DialogTitle>
+          <DialogClose
+            aria-label={closeLabel}
+            className="border-0 bg-transparent text-sm text-slate hover:text-parchment"
+          >
+            ✕
+          </DialogClose>
+        </DialogHeader>
         <div className="modal-body">{children}</div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
