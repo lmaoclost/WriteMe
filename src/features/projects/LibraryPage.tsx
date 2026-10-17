@@ -5,8 +5,8 @@ import { Button } from "../../ui/Button";
 import { Field } from "../../ui/Field";
 import { Modal } from "../../ui/Modal";
 import { Seal } from "../../ui/Seal";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Project } from "../../domain/types";
-import "./projects.css";
 
 interface ForgeDef {
   name: string;
@@ -95,69 +95,80 @@ export function LibraryPage() {
   }, [projects, query, sortKey]);
 
   return (
-    <div className="hub">
-      <header className="hub-head">
-        <div className="hub-brand">
-          <Seal letter="S" />
-          <span className="hub-wordmark">Scriptorium</span>
+    <div className="relative mx-auto flex max-w-[1080px] flex-col">
+      <header className="grid justify-items-start gap-2.5">
+        <div className="flex items-center gap-2.5">
+          <Seal letter="S" className="size-7 text-sm" />
+          <span className="font-display text-[15px] uppercase tracking-[0.14em] text-parchment">Scriptorium</span>
         </div>
-        <div className="hub-welcome-row">
-          <h1 className="hub-welcome">Welcome back</h1>
+        <div className="flex w-full flex-wrap items-baseline gap-[18px]">
+          <h1 className="font-display font-semibold text-[clamp(2rem,4.5vw,2.75rem)] tracking-[-0.02em] leading-[1.15] text-parchment-strong">Welcome back</h1>
           {showSelector && (
-            <select
-              className="hub-world-select"
-              aria-label="Active world"
-              value={activeWorld?.id ?? ""}
-              onChange={(e) => setChosenWorld(e.target.value)}
-            >
-              {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
+            <Select value={activeWorld?.id ?? ""} onValueChange={(v) => setChosenWorld(v)}>
+              <SelectTrigger
+                aria-label="Active world"
+                className="ml-auto max-w-[300px] justify-between rounded-sm border-line bg-night px-2.5 py-2 text-[15px] text-parchment font-[inherit] hover:border-gold-dim data-[size=default]:h-auto truncate"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="border-line bg-night text-parchment">
+                {projects.map((p) => (
+                  <SelectItem key={p.id} value={p.id} className="text-[15px] focus:bg-[#24233f] focus:text-parchment">
+                    {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
         </div>
-        <nav className="hub-pillars" aria-label="Site pages">
-          <Link to="/chronicles" className="hub-link">Chronicles</Link>
-          <Link to="/updates" className="hub-link">Updates</Link>
-          <Link to="/settings" className="hub-link">Settings</Link>
-          <Link to="/profile" className="hub-link">Profile</Link>
+        <nav className="flex flex-wrap gap-3.5" aria-label="Site pages">
+          <Link to="/chronicles" className="rounded-full border border-line px-2.5 py-1 text-sm text-lilac no-underline hover:border-[var(--accent)]">Chronicles</Link>
+          <Link to="/updates" className="rounded-full border border-line px-2.5 py-1 text-sm text-lilac no-underline hover:border-[var(--accent)]">Updates</Link>
+          <Link to="/settings" className="rounded-full border border-line px-2.5 py-1 text-sm text-lilac no-underline hover:border-[var(--accent)]">Settings</Link>
+          <Link to="/profile" className="rounded-full border border-line px-2.5 py-1 text-sm text-lilac no-underline hover:border-[var(--accent)]">Profile</Link>
         </nav>
       </header>
 
-      <hr className="hub-rule" />
+      <hr className="w-full border-0 border-t border-line my-9" />
 
       <section aria-label="Forges">
-        <div className="forge-grid">
+        <div className="grid grid-cols-3 gap-4 max-w-[960px]">
           {FORGES.map((f) => {
             const live = activeWorld !== null;
+            const wide = f.name === "Bindery Scriptorium";
             const inner = (
               <>
-                <span className="forge-side"><Seal letter={f.letter.slice(0, 1)} /></span>
-                <span className="forge-name">{f.name}</span>
-                <span className="forge-desc">{f.desc}</span>
+                <span className="[grid-area:seal]"><Seal letter={f.letter.slice(0, 1)} /></span>
+                <span className="[grid-area:name] font-display text-[1.375rem] font-semibold text-parchment-strong">{f.name}</span>
+                <span className={"[grid-area:desc] text-slate text-sm leading-[1.5]" + (wide ? " self-center" : "")}>{f.desc}</span>
                 {live && f.double && (
-                  <span className="forge-sublinks">
-                    <Link className="forge-sublink" to={f.path(activeWorld.id)}>Bloodline</Link>
+                  <span className="[grid-area:sub] mt-1 flex items-center gap-2 text-sm text-slate">
+                    <Link className="text-lilac no-underline" to={f.path(activeWorld.id)}>Bloodline</Link>
                     <span aria-hidden>·</span>
-                    <Link className="forge-sublink" to={f.double.path(activeWorld.id)}>{f.double.label}</Link>
+                    <Link className="text-lilac no-underline" to={f.double.path(activeWorld.id)}>{f.double.label}</Link>
                   </span>
                 )}
               </>
             );
+            const cardCls = wide
+              ? "col-span-full [grid-template-columns:40px_1fr_1fr] [grid-template-areas:'seal_name_desc'_'seal_sub_desc']"
+              : "[grid-template-columns:40px_1fr] [grid-template-areas:'seal_name'_'seal_desc'_'sub_sub']";
+            const baseCls = "grid min-h-[148px] content-center gap-x-3.5 gap-y-1 rounded-lg border bg-night-2 px-5 py-[22px] transition-[border-color] duration-[180ms]";
             if (!live) {
               return (
-                <div className="forge-card forge-ghost" aria-disabled="true" key={f.name}>
+                <div className={`${baseCls} cursor-not-allowed opacity-55 border-line hover:border-line ${cardCls}`} aria-disabled="true" key={f.name}>
                   {inner}
                 </div>
               );
             }
             if (f.double) {
-              return <div className="forge-card" key={f.name}>{inner}</div>;
+              return <div className={`${baseCls} border-line hover:border-gold-dim ${cardCls}`} key={f.name}>{inner}</div>;
             }
-            const wide = f.name === "Bindery Scriptorium";
             return (
               <Link
                 key={f.name}
                 to={activeWorld ? f.path(activeWorld.id) : "#"}
-                className={"forge-card forge-link" + (wide ? " forge-wide" : "")}
+                className={`${baseCls} border-line hover:border-gold-dim no-underline ${cardCls}`}
                 aria-label={f.name}
               >
                 {inner}
@@ -166,54 +177,66 @@ export function LibraryPage() {
           })}
         </div>
         {projects.length === 0 && (
-          <p className="forge-note">Create a world to enable the forges.</p>
+          <p className="text-slate text-sm mt-3.5">Create a world to enable the forges.</p>
         )}
       </section>
 
-      <hr className="hub-rule" />
+      <hr className="w-full border-0 border-t border-line my-9" />
 
       <section aria-label="My worlds">
-        <div className="hub-worlds-head">
-          <h2 className="hub-section-title">My worlds</h2>
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <h2 className="font-display text-[1.375rem] font-semibold text-parchment-strong">My worlds</h2>
           {projects.length >= 3 && (
-            <div className="worlds-tools">
+            <div className="flex gap-2.5">
               <input
                 type="search"
-                className="worlds-search"
+                className="w-[200px] rounded-sm border border-line bg-night px-2.5 py-[7px] text-sm text-parchment placeholder:text-slate outline-none focus-visible:border-gold-dim"
                 placeholder="Search worlds…"
                 aria-label="Search worlds"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
-              <select className="worlds-sort" aria-label="Sort worlds" value={sortKey} onChange={(e) => setSortKey(e.target.value as "recent" | "name")}>
-                <option value="recent">Recently updated</option>
-                <option value="name">Name A–Z</option>
-              </select>
+              <Select value={sortKey} onValueChange={(v) => setSortKey(v as "recent" | "name")}>
+                <SelectTrigger
+                  aria-label="Sort worlds"
+                  className="justify-between rounded-sm border-line bg-night px-2.5 py-1.5 text-sm text-parchment hover:border-gold-dim data-[size=default]:h-auto"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="border-line bg-night text-parchment">
+                  <SelectItem value="recent" className="text-sm focus:bg-[#24233f] focus:text-parchment">Recently updated</SelectItem>
+                  <SelectItem value="name" className="text-sm focus:bg-[#24233f] focus:text-parchment">Name A–Z</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           )}
-          <Button className="worlds-new" onClick={() => setCreating(true)}>New world</Button>
+          <Button className="flex-none" onClick={() => setCreating(true)}>New world</Button>
         </div>
 
         {projects.length === 0 ? (
-          <div className="empty">
+          <div className="grid justify-items-center gap-3.5 rounded-lg border border-dashed border-line p-[42px] text-center text-parchment-dim">
             <p>Create your first world or load the sample project.</p>
             <Button kind="ghost" onClick={doSeed}>Load the sample project</Button>
           </div>
         ) : worldList.length === 0 ? (
-          <p className="worlds-none">No worlds match “{query.trim()}”.</p>
+          <p className="text-slate text-sm">No worlds match “{query.trim()}”.</p>
         ) : (
-          <div className="library-grid">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
             {worldList.map((p) => (
-              <article key={p.id} className="project-card">
-                <Link to={`/p/${p.id}`} className="project-link">
+              <article key={p.id} className="relative flex flex-col min-h-[120px] overflow-hidden rounded-lg border border-line bg-night transition-[border-color] duration-[180ms] hover:border-gold-dim">
+                <Link to={`/p/${p.id}`} className="grid gap-1.5 p-4 text-inherit no-underline">
                   {p.coverImageKey && images[p.coverImageKey] && (
-                    <img className="project-cover" src={images[p.coverImageKey]} alt="" />
+                    <img className="h-[120px] w-full object-cover" src={images[p.coverImageKey]} alt="" />
                   )}
-                  <h3 className="project-name">{p.name}</h3>
-                  {p.description && <p className="project-desc">{p.description}</p>}
-                  <p className="project-updated">Updated {updatedStamp(p.updatedAt)}</p>
+                  <h3 className="font-display text-[1.25rem] font-semibold">{p.name}</h3>
+                  {p.description && <p className="text-slate text-[0.8125rem] m-0">{p.description}</p>}
+                  <p className="text-[var(--text-faint)] text-xs m-0">Updated {updatedStamp(p.updatedAt)}</p>
                 </Link>
-                <button aria-label="Delete world" className="project-delete" onClick={() => setToDelete(p.id)}>
+                <button
+                  aria-label="Delete world"
+                  className="absolute top-2 right-2 flex size-[26px] items-center justify-center rounded-sm border border-line bg-ink text-xs text-slate transition-colors hover:border-danger hover:text-danger"
+                  onClick={() => setToDelete(p.id)}
+                >
                   ✕
                 </button>
               </article>
@@ -224,10 +247,10 @@ export function LibraryPage() {
 
       {creating && (
         <Modal title="New world" onClose={() => setCreating(false)} closeLabel="Close">
-          <div className="form-stack">
+          <div className="grid gap-3">
             <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
             <Field label="Description"><textarea aria-label="Description" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} /></Field>
-            <div className="form-actions">
+            <div className="mt-2 flex justify-end gap-2.5">
               <Button onClick={submitCreate}>Create</Button>
               <Button kind="ghost" onClick={() => setCreating(false)}>Cancel</Button>
             </div>
@@ -237,10 +260,10 @@ export function LibraryPage() {
 
       {target && (
         <Modal title={`Delete "${target.name}"?`} onClose={() => setToDelete(null)} closeLabel="Close">
-          <p className="modal-warning">
+          <p className="text-parchment-dim">
             This removes the world, its entries, atlas and manuscripts. No going back.
           </p>
-          <div className="form-actions">
+          <div className="mt-2 flex justify-end gap-2.5">
             <Button kind="danger" onClick={() => { deleteProject(target.id); setToDelete(null); pushToast("success", "World deleted."); }}>
               Delete
             </Button>

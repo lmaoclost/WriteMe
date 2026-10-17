@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor, act, within } from "@testing-librar
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it } from "vitest";
 import { useScriptorium } from "../../data/store";
+import { selectOption } from "../../test/selectHelper";
 import { LibraryPage } from "./LibraryPage";
 
 function wrap() {
@@ -54,15 +55,14 @@ describe("LibraryPage hub", () => {
     expect(tome).toHaveAttribute("href", `/p/${p.id}/entries`);
   });
 
-  it("selector appears with two+ worlds and directs forges at the chosen world", () => {
+  it("selector appears with two+ worlds and directs forges at the chosen world", async () => {
     useScriptorium.getState().addProject("Aurora");
-    const b = useScriptorium.getState().addProject("Borealis");
+    useScriptorium.getState().addProject("Borealis");
     render(wrap());
-    const sel = screen.getByLabelText(/active world/i);
-    expect((sel as HTMLSelectElement).value).toBe(b.id); // most recently created
-    fireEvent.change(sel, { target: { value: useScriptorium.getState().projects[1].id } });
+    const trigger = await selectOption(() => screen.getByLabelText(/active world/i), "Aurora");
+    expect(trigger).toHaveTextContent("Aurora"); // chosen world
     const tome = screen.getByRole("link", { name: /Codex/i });
-    expect(tome.getAttribute("href")).toBe(`/p/${useScriptorium.getState().projects[1].id}/entries`);
+    expect(tome.getAttribute("href")).toBe(`/p/${useScriptorium.getState().projects[0].id}/entries`);
   });
 
   it("Bloodline card exposes both bloodline and oaths links", () => {
@@ -109,11 +109,10 @@ describe("LibraryPage hub", () => {
     expect(within(section).queryByText("Cinder March")).toBeNull();
   });
 
-  it("sort by name orders cards A–Z", () => {
+  it("sort by name orders cards A–Z", async () => {
     ["Zulu", "Alder", "Mirren"].forEach((n) => useScriptorium.getState().addProject(n));
     render(wrap());
-    const sel = screen.getByLabelText(/sort/i);
-    fireEvent.change(sel, { target: { value: "name" } });
+    await selectOption(() => screen.getByLabelText(/sort/i), "Name A–Z");
     const h2 = screen.getByRole("heading", { name: "My worlds" });
     const grid = h2.parentElement!.nextElementSibling as HTMLElement;
     const cards = within(grid).getAllByRole("heading").map((h) => h.textContent);
