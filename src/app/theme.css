@@ -1,16 +1,22 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
 :root {
+  /* ===== legacy tokens — kept exact (feature CSS depends on exact values) ===== */
   --bg: #1a1a2e;
   --bg-header: #16162a;
   --bg-raised: #2a2a4a;
   --panel: #2a2a44;
-  --card: #333360;
+  --card: #333360; /* legacy card token; shadcn card maps to --card-well below */
   --line: #3a3a55;
   --line-strong: #3d3d5c;
   --text: #e0e0e0;
   --text-strong: #ffffff;
   --text-muted: #a0a0b8;
   --text-faint: #888888;
-  --accent: #7c5cbf;
+  --accent: #7c5cbf; /* legacy accent; shadcn accent maps to --accent-soft below */
   --lilac: #b89eef;
   --gold: #e0c264;
   --gold-dim: #b39642;
@@ -21,9 +27,6 @@
   --info: #3498db;
   --danger: #f44336;
   --warn: #e74c3c;
-  --font-display: "Fraunces Variable", Georgia, serif;
-  --font-body: "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
   --ink: var(--bg);
   --night: var(--bg-header);
@@ -33,6 +36,7 @@
   --parchment-dim: var(--text-muted);
   --slate: var(--text-muted);
   --ember: var(--warn);
+  --wax: #17131f;
 
   --scrim: rgb(10 10 18 / 0.7);
   --scrim-canvas: rgb(0 0 0 / 0.5);
@@ -51,27 +55,87 @@
   --paper-muted-soft: #9a8d6a;
   --print-ink: #000;
   --print-paper: #fff;
+
+  /* ===== shadcn semantic tokens (mapped from DESIGN.md; dark-only) ===== */
+  --background: #1a1a2e;
+  --foreground: #e0e0e0;
+  --card-well: #16162a;
+  --card-well-foreground: #e0e0e0;
+  --popover: #2a2a44;
+  --popover-foreground: #e0e0e0;
+  --primary: #e0c264;
+  --primary-foreground: #17131f;
+  --secondary: #2a2a44;
+  --secondary-foreground: #e0e0e0;
+  --muted: #2a2a44;
+  --muted-foreground: #a0a0b8;
+  --accent-soft: #31314e;
+  --accent-foreground: #e0e0e0;
+  --destructive: #f44336;
+  --border: #3a3a55;
+  --input: #3a3a55;
+  --ring: #b39642;
+  --radius: 0.5rem;
 }
-* { box-sizing: border-box; }
-html, body, #root { height: 100%; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-body);
-  -webkit-font-smoothing: antialiased;
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card-well);
+  --color-card-foreground: var(--card-well-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent-soft);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* named palette utilities */
+  --color-ink: var(--ink);
+  --color-night: var(--night);
+  --color-night-2: var(--night-2);
+  --color-panel: var(--panel);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-parchment: var(--parchment);
+  --color-parchment-strong: var(--parchment-strong);
+  --color-parchment-dim: var(--parchment-dim);
+  --color-slate: var(--slate);
+  --color-gold: var(--gold);
+  --color-gold-dim: var(--gold-dim);
+  --color-lilac: var(--lilac);
+  --color-teal: var(--teal);
+  --color-rose: var(--rose);
+  --color-success: var(--success);
+  --color-wax: var(--wax);
+  --color-danger: var(--danger);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Fraunces Variable", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
-h1, h2, h3 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  margin: 0;
-}
-button {
-  font-family: var(--font-body);
-  cursor: pointer;
-}
-button:focus-visible, [tabindex]:focus-visible {
-  outline: 2px solid var(--lilac);
-  outline-offset: 2px;
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body {
+    margin: 0;
+    @apply bg-background text-foreground font-sans;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { @apply font-display font-semibold; letter-spacing: 0.01em; margin: 0; }
+  button { @apply cursor-pointer font-sans; }
+  button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--lilac); outline-offset: 2px; }
 }
