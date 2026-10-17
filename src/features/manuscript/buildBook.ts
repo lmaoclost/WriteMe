@@ -3,7 +3,7 @@ import { renderMarkdown } from "../entries/markdown";
 import { defaultBindery } from "../../data/schema";
 import { useScriptorium } from "../../data/store";
 
-const EMPTY_PARAGRAPH = '<p class="empty">Sem conteúdo ainda.</p>';
+const EMPTY_PARAGRAPH = '<p class="empty">No content yet.</p>';
 
 function escapeText(text: string): string {
   return text
@@ -29,21 +29,45 @@ export function buildBookHtml(manuscript: Manuscript): string {
   const dedication = b.dedication
     ? `<section class="front-matter dedication">${escapeText(b.dedication)}</section>`
     : "";
-  const tocRow = (chapter: Manuscript["chapters"][number]) =>
+  const WORDS = ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+  "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen", "Twenty"];
+
+function chapterNumber(style: NonNullable<Manuscript["bindery"]>["numberingStyle"], n: number): string {
+  if (style === "none") return "";
+  if (style === "chapter") return `Chapter ${n}`;
+  if (style === "word") return WORDS[n - 1] ?? String(n);
+  return String(n);
+}
+
+const tocRow = (chapter: Manuscript["chapters"][number]) =>
     `<li class="toc-row"><span>${escapeText(chapter.heading)}</span><span class="toc-dot" aria-hidden="true"></span></li>`;
   const toc = b.toc
-    ? `<section class="front-matter toc"><h2>Conteúdo</h2><ul>${chapters.map(tocRow).join("")}</ul></section>`
+    ? `<section class="front-matter toc"><h2>Contents</h2><ul>${chapters.map(tocRow).join("")}</ul></section>`
     : "";
   const glossary = b.glossary ? glossaryFor(manuscript) : "";
   const sections = chapters
     .map((chapter, i) => {
-      const body = chapter.content
+      let body = chapter.content
         ? renderMarkdown(chapter.content)
         : EMPTY_PARAGRAPH;
-      const head = b.runningHead
-        ? `<span class="running-head" data-ch-index="${i + 1}">${escapeText(manuscript.title)}</span>`
+      if (chapter.noteTop?.trim()) {
+        body = `<p class="chapter-note top">${escapeText(chapter.noteTop.trim())}</p>` + body;
+      }
+      if (chapter.endMarker?.trim()) {
+        body = body + `<div class="scene-marker">${escapeText(chapter.endMarker.trim())}</div>`;
+      }
+      if (chapter.noteEnd?.trim()) {
+        body = body + `<p class="chapter-note bottom">${escapeText(chapter.noteEnd.trim())}</p>`;
+      }
+      const headText = b.runningHead
+        ? (b.runningHeadMode === "chapter" ? chapter.heading : manuscript.title)
         : "";
-      return `${head}<section class="chapter"><h2>${escapeText(chapter.heading)}</h2>${body}</section>`;
+      const head = b.runningHead
+        ? `<span class="running-head" data-ch-index="${i + 1}">${escapeText(headText)}</span>`
+        : "";
+      const num = chapterNumber(b.numberingStyle ?? "arabic", i + 1);
+      const numHtml = num ? `<span class="ch-num">${escapeText(num)}</span>` : "";
+      return `${head}<section class="chapter"><h2>${numHtml}${escapeText(chapter.heading)}</h2>${body}</section>`;
     })
     .join("");
   return `<article class="book">${front}${dedication}${toc}<h1 class="book-title">${escapeText(manuscript.title)}</h1>${author}${sections}${glossary}</article>`;
@@ -59,5 +83,5 @@ export function glossaryFor(manuscript: Manuscript): string {
     .filter((e) => e.projectId === projectId && (e.summary ?? "").trim())
     .map((e) => `<tr data-glossary="${e.id}"><td>${escapeText(e.title)}</td><td>${escapeText((e.summary ?? "").trim().slice(0, 200))}</td></tr>`);
   if (!entries.length) return "";
-  return `<section class="back-matter glossary"><h2>Glossário</h2><table><tbody>${entries.join("")}</tbody></table></section>`;
+  return `<section class="back-matter glossary"><h2>Glossary</h2><table><tbody>${entries.join("")}</tbody></table></section>`;
 }

@@ -36,16 +36,16 @@ describe("BinderyPage", () => {
   it("renders settings + live preview with front matter", () => {
     const id = seedBook();
     render(<BinderyPage manuscriptId={id} />);
-    expect(screen.getByLabelText("Tipografia")).toBeInTheDocument();
-    expect(screen.getByLabelText("Tamanho do livro")).toBeInTheDocument();
+    expect(screen.getByLabelText("Typography")).toBeInTheDocument();
+    expect(screen.getByLabelText("Book size")).toBeInTheDocument();
     expect(screen.getByTestId("bindery-book").innerHTML).toContain("title-page");
-    expect(screen.getByTestId("bindery-book").innerHTML).toContain("Conteúdo");
+    expect(screen.getByTestId("bindery-book").innerHTML).toContain("Contents");
   });
 
   it("font select updates bindery + preview font", () => {
     const id = seedBook();
     render(<BinderyPage manuscriptId={id} />);
-    const sel = screen.getByLabelText("Tipografia") as HTMLSelectElement;
+    const sel = screen.getByLabelText("Typography") as HTMLSelectElement;
     fireEvent.change(sel, { target: { value: '"Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif' } });
     expect(store().manuscripts[0].bindery!.font).toContain("Palatino");
     act(() => { store().setBindery(id, {}); }); // re-render hook
@@ -66,7 +66,7 @@ describe("BinderyPage", () => {
     fireEvent.blur(ded);
     expect(store().manuscripts[0].bindery!.dedication).toBe("Ao rio.");
     const book = screen.getByTestId("bindery-book");
-    expect(book.innerHTML).toContain("Glossário");
+    expect(book.innerHTML).toContain("Glossary");
     expect(book.innerHTML).toContain("Coroa de Sarnen");
     expect(book.innerHTML).toContain("dedication");
   });
@@ -78,5 +78,38 @@ describe("BinderyPage", () => {
     render(<BinderyPage manuscriptId={id} />);
     fireEvent.click(screen.getByRole("button", { name: "Print preview" }));
     await waitFor(() => expect(printSpy).toHaveBeenCalledTimes(1), { timeout: 2000 });
+  });
+});
+
+describe("Bindery v2 controls", () => {
+  it("chapter numbering select updates config and book prefix", () => {
+    const id = seedBook();
+    act(() => { store().addChapter(id, "Rio fundo"); });
+    render(<BinderyPage manuscriptId={id} />);
+    const sel = screen.getByLabelText("Chapter numbering") as HTMLSelectElement;
+    fireEvent.change(sel, { target: { value: "chapter" } });
+    expect(store().manuscripts[0].bindery!.numberingStyle).toBe("chapter");
+    const book = screen.getByTestId("bindery-book");
+    expect(book.innerHTML).toContain('<span class="ch-num">Chapter 1</span>');
+  });
+
+  it("page numbers toggle drives the print stylesheet", () => {
+    const id = seedBook();
+    render(<BinderyPage manuscriptId={id} />);
+    const box = screen.getByRole("checkbox", { name: "Page numbers" });
+    fireEvent.click(box);
+    expect(store().manuscripts[0].bindery!.pageNumbers).toBe(true);
+    const styleTag = Array.from(document.querySelectorAll("style")).find((t) => t.textContent?.includes("@page"));
+    expect(styleTag?.textContent).toContain("@bottom-center");
+  });
+
+  it("running-head mode select re-labels chapter heads", () => {
+    const id = seedBook();
+    act(() => { store().addChapter(id, "O Tribunal"); });
+    render(<BinderyPage manuscriptId={id} />);
+    const sel = screen.getByLabelText("Running head mode") as HTMLSelectElement;
+    fireEvent.change(sel, { target: { value: "chapter" } });
+    const book = screen.getByTestId("bindery-book").innerHTML;
+    expect(book).toContain('>O Tribunal</span>');
   });
 });

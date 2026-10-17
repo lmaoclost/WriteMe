@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { BINDERY_FONTS, BINDERY_TRIMS, binderyCss, trimToPage } from "./bindery";
+import { BIND_HEAD_MODES } from "../../data/schema";
 import { buildBookHtml } from "./buildBook";
 import "./bindery.css";
 
@@ -44,24 +45,43 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
         <aside className="bl-panel bindery-panel">
           <h2>Bindery</h2>
           <div className="field">
-            <span className="field-label">Tipografia</span>
-            <select aria-label="Tipografia" value={b.font} onChange={(e) => set({ font: e.target.value })}>
+            <span className="field-label">Typography</span>
+            <select aria-label="Typography" value={b.font} onChange={(e) => set({ font: e.target.value })}>
               {BINDERY_FONTS.map((f) => <option key={f.id} value={f.stack}>{f.label}</option>)}
             </select>
           </div>
           <div className="field">
-            <span className="field-label">Tamanho do livro</span>
-            <select aria-label="Tamanho do livro" value={b.trim} onChange={(e) => set({ trim: e.target.value })}>
+            <span className="field-label">Book size</span>
+            <select aria-label="Book size" value={b.trim} onChange={(e) => set({ trim: e.target.value })}>
               {BINDERY_TRIMS.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
             </select>
           </div>
           <label className="check-row">
             <input type="checkbox" aria-label="Capitulares" checked={b.dropCaps} onChange={(e) => set({ dropCaps: e.target.checked })} />
-            <span>Capitulares (drop caps)</span>
+            <span>Drop caps</span>
           </label>
           <label className="check-row">
             <input type="checkbox" aria-label="Running headers" checked={b.runningHead} onChange={(e) => set({ runningHead: e.target.checked })} />
             <span>Running headers</span>
+          </label>
+          <div className="field">
+            <span className="field-label">Chapter numbering</span>
+            <select aria-label="Chapter numbering" value={b.numberingStyle ?? "arabic"} onChange={(e) => set({ numberingStyle: e.target.value as NonNullable<typeof b>["numberingStyle"] })}>
+              <option value="arabic">1</option>
+              <option value="chapter">Chapter 1</option>
+              <option value="word">One</option>
+              <option value="none">None</option>
+            </select>
+          </div>
+          <div className="field">
+            <span className="field-label">Running head mode</span>
+            <select aria-label="Running head mode" value={b.runningHeadMode ?? "book"} onChange={(e) => set({ runningHeadMode: e.target.value as NonNullable<typeof b>["runningHeadMode"] })}>
+              {BIND_HEAD_MODES.map((m) => <option key={m} value={m}>{m === "book" ? "Book title" : "Chapter title"}</option>)}
+            </select>
+          </div>
+          <label className="check-row">
+            <input type="checkbox" aria-label="Page numbers" checked={b.pageNumbers ?? false} onChange={(e) => set({ pageNumbers: e.target.checked })} />
+            <span>Page numbers</span>
           </label>
           <label className="check-row">
             <input type="checkbox" aria-label="Title page" checked={b.titlePage} onChange={(e) => set({ titlePage: e.target.checked })} />
@@ -79,7 +99,7 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
             <span className="field-label">Dedication</span>
             <textarea aria-label="Dedication" rows={3} defaultValue={b.dedication ?? ""} onBlur={(e) => set({ dedication: e.target.value.trim() || undefined })} />
           </label>
-          <p className="bl-panel-note">Impressão: {trimToPage(b.trim)} — confira no diálogo.</p>
+          <p className="bl-panel-note">Print at: {trimToPage(b.trim)} — check it in the dialog.</p>
         </aside>
         <div className="bindery-preview" data-testid="bindery-preview">
           <style>{binderyCss(b.font, b.trim, b)}</style>

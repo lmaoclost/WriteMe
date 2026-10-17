@@ -5,6 +5,7 @@ import { AppRouter } from "../../app/router";
 import { useScriptorium } from "../../data/store";
 import type { Manuscript } from "../../domain/types";
 import { buildBookHtml } from "./buildBook";
+import { binderyCss } from "./bindery";
 
 // Real package shape: { EPub (class), default (fn), chapterDefaults, optionsDefaults }.
 // The app path instantiates EPub and awaits genEpub() (render() runs inside genEpub).
@@ -137,7 +138,7 @@ describe("buildBookHtml", () => {
     expect(html).toContain('<h1 class="book-title">Cantar de Vellmora</h1>');
     expect(html).toContain('<p class="book-author">Renan</p>');
     expect(html.indexOf("Prólogo")).toBeLessThan(html.indexOf("Fim"));
-    expect(html).toContain('<h2>Prólogo</h2>');
+    expect(html).toContain('<h2><span class="ch-num">1</span>Prólogo</h2>');
     expect(html).toContain("<strong>Negrito</strong>");
   });
 
@@ -160,7 +161,7 @@ describe("buildBookHtml", () => {
       author: "A",
       chapters: [{ id: "c1", heading: "Vazio", content: "", order: 0 }],
     };
-    expect(buildBookHtml(book)).toContain('<p class="empty">Sem conteúdo ainda.</p>');
+    expect(buildBookHtml(book)).toContain('<p class="empty">No content yet.</p>');
   });
 
   it("escapes book title, author and heading text", () => {
@@ -175,6 +176,59 @@ describe("buildBookHtml", () => {
     expect(html).toContain("Livro &lt;b&gt;X&lt;/b&gt;");
     expect(html).toContain("An &amp; Co");
     expect(html).toContain("Cap &gt; 1");
+  });
+});
+
+describe("buildBookHtml v2", () => {
+  const mkBook = (patch: Partial<Manuscript> & { chapters?: Manuscript["chapters"] }): Manuscript => ({
+    id: "b2", projectId: "p2", title: "A Coroa e o Rio", author: "Renan",
+    chapters: [{ id: "c1", heading: "Prólogo", content: "corpo um.", order: 0 }, { id: "c2", heading: "Fim", content: "corpo dois.", order: 1 }],
+    ...patch,
+  });
+
+  it("numbers chapters in arabic by default", () => {
+    const html = buildBookHtml(mkBook({}));
+    expect(html).toContain('<h2><span class="ch-num">1</span>Prólogo</h2>');
+    expect(html).toContain('<h2><span class="ch-num">2</span>Fim</h2>');
+  });
+
+  it("numbering styles: none, chapter, word", () => {
+    const none = buildBookHtml(mkBook({ bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: false, numberingStyle: "none" } }));
+    expect(none).not.toContain('ch-num');
+    const chap = buildBookHtml(mkBook({ bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: false, numberingStyle: "chapter" } }));
+    expect(chap).toContain('<span class="ch-num">Chapter 1</span>');
+    const word = buildBookHtml(mkBook({ bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: false, numberingStyle: "word" } }));
+    expect(word).toContain('<span class="ch-num">One</span>');
+    expect(word).toContain('<span class="ch-num">Two</span>');
+  });
+
+  it("renders scene markers: endMarker between paragraphs, noteTop/noteEnd around the body", () => {
+    const html = buildBookHtml(mkBook({ chapters: [{ id: "c1", heading: "Um", content: "para um.\n\npara dois.", order: 0, endMarker: "⁂", noteTop: "Drafted 1204", noteEnd: "End of draft" }] }));
+    expect(html).toContain('<div class="scene-marker">⁂</div>');
+    expect(html).toContain('<p class="chapter-note top">Drafted 1204</p>');
+    expect(html).toContain('<p class="chapter-note bottom">End of draft</p>');
+  });
+
+  it("running-head mode chapter uses the chapter title per section", () => {
+    const html = buildBookHtml(mkBook({ bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: false, runningHeadMode: "chapter" } }));
+    expect(html).toContain('<span class="running-head" data-ch-index="1">Prólogo</span>');
+    expect(html).toContain('<span class="running-head" data-ch-index="2">Fim</span>');
+    const book = buildBookHtml(mkBook({}));
+    expect(book).toContain('<span class="running-head" data-ch-index="1">A Coroa e o Rio</span>');
+  });
+
+  it("book strings are EN: Contents, Glossary, No content yet", () => {
+    const html = buildBookHtml(mkBook({ bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: true, dedication: "To the river." } }));
+    expect(html).toContain("<h2>Contents</h2>");
+    const emptyBody = buildBookHtml(mkBook({ chapters: [{ id: "c9", heading: "Vazio", content: "", order: 0 }] }));
+    expect(emptyBody).toContain("No content yet.");
+  });
+
+  it("pageNumbers only affects the print stylesheet, not the book markup", () => {
+    const on = binderyCss("Georgia, serif", "6x9", { dropCaps: false, runningHead: true, pageNumbers: true });
+    expect(on).toContain("@bottom-center");
+    const off = binderyCss("Georgia, serif", "6x9", { dropCaps: false, runningHead: true, pageNumbers: false });
+    expect(off).not.toContain("@bottom-center");
   });
 });
 
@@ -313,7 +367,8 @@ describe("PDF export", () => {
     expect(printBook.closest(".workspace")).toBeNull();
     // TOC (front matter) renders its own h2 first; chapter h2s come after
     expect(printBook.querySelector("h1")?.textContent).toBe("Cantar de Vellmora");
-    expect(printBook.querySelector(".toc h2")?.textContent).toBe("Conteúdo");
+    expect(printBook.querySelector(".toc h2")?.textContent).toBe("Contents");
+    expect(printBook.querySelector(".chapter h2 .ch-num")?.textContent).toBe("1");
     expect(printBook.querySelector(".chapter h2")?.textContent).toBe("Prólogo");
     await waitFor(() => expect(printSpy).toHaveBeenCalled());
   });

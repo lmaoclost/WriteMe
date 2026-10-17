@@ -25,10 +25,10 @@ export function trimToPage(trim: string): string {
 }
 
 /** Live book stylesheet driven by the bindery config. */
-export function binderyCss(font: string, trim: string, opts: { dropCaps: boolean; runningHead: boolean } | undefined): string {
+export function binderyCss(font: string, trim: string, opts: { dropCaps: boolean; runningHead: boolean; pageNumbers?: boolean } | undefined): string {
   const page = trimToPage(trim);
   return [
-    `@page { size: ${page}; margin: 0.75in 0.7in; }`,
+    `@page { size: ${page}; margin: 0.75in 0.7in;${opts?.pageNumbers ? " @bottom-center { content: counter(page); font-family: Georgia, serif; font-size: 10pt; color: #241c08; }" : ""} }`,
     `.print-book { font-family: ${font}; }`,
     opts?.dropCaps ? `.print-book .chapter > p:first-child::first-letter { font-size: 2.6em; float: left; line-height: 0.8; padding: 0 6px 0 0; font-family: var(--font-display, Georgia, serif); color: #241c08; }` : "",
     opts?.runningHead ? "" : "",
