@@ -1,17 +1,25 @@
 import { useState } from "react";
 import type { WorldEntry, EntryCategory } from "../../domain/types";
-import { CATEGORY_COLORS, CODEX_CATEGORY_CHIPS, CATEGORY_CANONICAL } from "./categories";
+import { useShallow } from "zustand/react/shallow";
+import { useScriptorium } from "../../data/store";
+import { CODEX_CATEGORY_CHIPS, CATEGORY_CANONICAL, categoryDot } from "./categories";
+import type { EntryKind } from "../../domain/types";
+
+const NO_KINDS: EntryKind[] = [];
 
 export interface EntryListProps {
   entries: WorldEntry[];
   selectedId: string | null;
   onSelect(id: string): void;
   onCreate(): void;
+  onCreateKind?(): void;
 }
 
-export function EntryList({ entries, selectedId, onSelect, onCreate }: EntryListProps) {
-  const [chip, setChip] = useState<EntryCategory | null>(null);
+export function EntryList({ entries, selectedId, onSelect, onCreate, onCreateKind }: EntryListProps) {
+  const [chip, setChip] = useState<EntryCategory | string | null>(null);
   const [query, setQuery] = useState("");
+  const customKinds = useScriptorium(useShallow((s) =>
+    s.projects.find((p) => p.id === entries[0]?.projectId)?.customCategories ?? NO_KINDS));
 
   const needle = query.trim().toLowerCase();
   const canonical = (c: string) => CATEGORY_CANONICAL[c] ?? c;
@@ -25,6 +33,9 @@ export function EntryList({ entries, selectedId, onSelect, onCreate }: EntryList
         <button type="button" className="btn-primary codex-new" onClick={onCreate}>
           New entry
         </button>
+        {onCreateKind ? (
+          <button type="button" className="codex-kind-add" onClick={onCreateKind}>+ New kind</button>
+        ) : null}
         <input
           type="text"
           className="codex-search"
@@ -47,6 +58,18 @@ export function EntryList({ entries, selectedId, onSelect, onCreate }: EntryList
             <span className="codex-chip-label">{c.label}</span>
           </button>
         ))}
+        {customKinds.map((k) => (
+          <button
+            type="button"
+            key={k.key}
+            aria-pressed={chip === k.key}
+            onClick={() => setChip(k.key)}
+            title={k.label}
+          >
+            <span aria-hidden="true">{k.icon}</span>
+            <span className="codex-chip-label">{k.label}</span>
+          </button>
+        ))}
       </div>
       {entries.length === 0 ? (
         <p className="codex-empty">The codex is empty — register the first entry.</p>
@@ -64,7 +87,7 @@ export function EntryList({ entries, selectedId, onSelect, onCreate }: EntryList
                 <span
                   className="codex-dot"
                   aria-hidden="true"
-                  style={{ backgroundColor: CATEGORY_COLORS[e.category] }}
+                  style={{ backgroundColor: categoryDot(e.category, customKinds) }}
                 />
                 <span className="codex-row-title">{e.title}</span>
               </button>

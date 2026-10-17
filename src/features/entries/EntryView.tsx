@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback, type ChangeEvent, type MutableRefObject } from "react";
 import { useShallow } from "zustand/react/shallow";
-import type { EntryCategory, WorldEntry, EntrySection } from "../../domain/types";
+import type { WorldEntry, EntrySection } from "../../domain/types";
 import { ENTRY_CATEGORIES } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
 import { fileToDataUrl } from "../../data/image";
@@ -21,6 +21,7 @@ export interface EntryViewProps {
 const CONFIRM_RESET_MS = 3000;
 
 export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryViewProps) {
+  const project = useScriptorium((s) => s.projects.find((p) => p.id === entry.projectId));
   const images = useScriptorium((s) => s.images);
   const siblings = useScriptorium(
     useShallow((s) => s.entries.filter((e) => e.projectId === entry.projectId)),
@@ -146,6 +147,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
   const coveredSiblings = siblings.filter(
     (e) => e.id !== entry.id && e.imageKey !== undefined && images[e.imageKey] !== undefined,
   );
+  const coverEl = useRef<HTMLImageElement | null>(null);
   const cover = entry.imageKey ? images[entry.imageKey] : undefined;
   const entryDate = dateIsEmpty(entry.date ?? "") ? null : sanitizeDate(entry.date ?? "");
   const dateInvalid = !dateIsEmpty(dateDraft.draft) && !isValidDate(dateDraft.draft);
@@ -153,7 +155,32 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
   return (
     <div className="codex-view">
       {cover ? (
-        <img className="codex-cover" src={cover} alt={`Cover of ${entry.title}`} />
+        <img
+          ref={coverEl}
+          className="codex-cover"
+          src={cover}
+          alt={`Cover of ${entry.title}`}
+          style={entry.focal ? { objectPosition: `${entry.focal[0] * 100}% ${entry.focal[1] * 100}%` } : undefined}
+          title="Drag to reframe"
+          onPointerDown={(e) => {
+            if (e.button !== 0) return;
+            const start = { x: e.clientX, y: e.clientY };
+            const step = (ev: PointerEvent) => {
+              const r = coverEl.current?.getBoundingClientRect();
+              if (!r || r.width === 0 || r.height === 0) return;
+              const fx = Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width));
+              const fy = Math.min(1, Math.max(0, (ev.clientY - r.top) / r.height));
+              useScriptorium.getState().updateEntry(entry.id, { focal: [fx, fy] });
+              void start;
+            };
+            const up = () => {
+              window.removeEventListener("pointermove", step);
+              window.removeEventListener("pointerup", up);
+            };
+            window.addEventListener("pointermove", step);
+            window.addEventListener("pointerup", up);
+          }}
+        />
       ) : null}
       {entryDate ? <span className="codex-eyebrow">{formatDate(entryDate)}</span> : null}
       <div className="codex-view-head">
@@ -173,22 +200,26 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           onChange={(e) => {
             useScriptorium.getState().updateEntry(
               entry.id,
-              { category: e.target.value as EntryCategory },
+              { category: e.target.value },
             );
           }}
         >
           {ENTRY_CATEGORIES.map((c) => (
             <option key={c} value={c}>{categoryIcon(c)} {CATEGORY_LABELS[c]}</option>
           ))}
+          {(project?.customCategories ?? []).length ? <option disabled>— custom kinds —</option> : null}
+          {(project?.customCategories ?? []).map((k) => (
+            <option key={k.key} value={k.key}>{k.icon} {k.label}</option>
+          ))}
         </select>
       </div>
       <button
         type="button"
-        className="codex-summary-toggle"
+        className={"codex-summary-toggle" + (summaryDraft.draft.trim() ? " filled" : "")}
         aria-expanded={summaryOpen}
         onClick={() => { flush(); setSummaryOpen((v) => !v); }}
       >
-        <span>Summary</span>
+        <span className="codex-summary-label">Summary</span>
         <span className="codex-summary-hint">{summaryDraft.draft.trim() || "Add a short blurb..."}</span>
         <span aria-hidden="true">{summaryOpen ? "▾" : "▸"}</span>
       </button>

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
-import type { EntryCategory } from "../../domain/types";
 import { dateIsEmpty, dateKey, formatDate, sanitizeDate } from "../../domain/dates";
 import { CATEGORY_COLORS } from "../entries/categories";
 import "./timeline.css";
@@ -10,7 +9,7 @@ import "./timeline.css";
 interface DatedRow {
   id: string;
   title: string;
-  category: EntryCategory;
+  category: string;
   date: string;
   body: string;
 }

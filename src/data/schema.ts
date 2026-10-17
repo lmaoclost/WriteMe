@@ -9,7 +9,7 @@ import type {
   WellSpring, WellNode, WellBorder,
   Conlang, ConlangGlyph, ConlangWord,
 } from "../domain/types";
-import { ENTRY_CATEGORIES, PIN_TYPES } from "../domain/types";
+import { PIN_TYPES } from "../domain/types";
 
 const isStr = (v: unknown): v is string => typeof v === "string";
 const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
@@ -19,11 +19,15 @@ const norm01 = (v: unknown): boolean => isNum(v) && v >= 0 && v <= 1;
 const optionalStr = (v: unknown): boolean => v === undefined || isStr(v);
 const optionalNum = (v: unknown): boolean => v === undefined || isNum(v);
 
+const optionalFocal = (v: unknown): boolean =>
+  v === undefined || (Array.isArray(v) && v.length === 2 && v.every((n) => typeof n === "number" && n >= 0 && n <= 1));
+
 const isEntry = (v: unknown): v is WorldEntry => {
   const e = v as WorldEntry;
   return !!e && isStr(e.id) && isStr(e.projectId) && isStr(e.title)
-    && (ENTRY_CATEGORIES as readonly string[]).includes(e.category)
+    && isStr(e.category) // categories may be user-defined kinds
     && isStr(e.body) && isArr(e.links) && e.links.every(isStr) && optionalStr(e.imageKey)
+    && optionalFocal(e.focal)
     && optionalStr(e.summary) && optionalStr(e.date)
     && (e.sections === undefined
       || (isArr(e.sections) && e.sections.every((sec) =>
@@ -89,7 +93,11 @@ const isManuscript = (v: unknown): v is Manuscript => {
 const isProject = (v: unknown): v is Project => {
   const p = v as Project;
   return !!p && isStr(p.id) && isStr(p.name) && isStr(p.description)
-    && isNum(p.createdAt) && isNum(p.updatedAt) && optionalStr(p.coverImageKey);
+    && isNum(p.createdAt) && isNum(p.updatedAt) && optionalStr(p.coverImageKey)
+    && (p.customCategories === undefined
+      || (Array.isArray(p.customCategories) && p.customCategories.every((k) =>
+        !!k && isStr((k as { key: string }).key) && isStr((k as { label: string }).label)
+        && isStr((k as { icon: string }).icon))));
 };
 
 const isBloodlineTitle = (v: unknown): v is BloodlineTitle => {

@@ -169,7 +169,7 @@ interface ScriptoriumState extends ProjectData {
   histories: Record<string, AnyHistory>;
 
   addProject(name: string, description?: string): Project;
-  updateProject(id: string, patch: { name?: string; description?: string; coverImageKey?: string }): void;
+  updateProject(id: string, patch: { name?: string; description?: string; coverImageKey?: string; customCategories?: Project["customCategories"] }): void;
   deleteProject(id: string): void;
   putImage(dataUrl: string, kind: ImageKind): string;
   removeImage(key: string): void;

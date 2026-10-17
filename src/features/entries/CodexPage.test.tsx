@@ -347,3 +347,74 @@ describe("CodexPage — sections and summary (codex-15)", () => {
     vi.useRealTimers();
   });
 });
+
+describe("CodexPage — cover framing, summary presentation, custom kinds", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    useScriptorium.setState(useScriptorium.getInitialState());
+  });
+
+  it("cover respects the saved focal point; dragging the cover sets it", () => {
+    const pid = useScriptorium.getState().addProject("V").id;
+    const e = useScriptorium.getState().addEntry(pid, "place")!;
+    useScriptorium.getState().putEntryImage(e.id, "data:image/svg+xml,%3Csvg/%3E");
+    useScriptorium.getState().updateEntry(e.id, { focal: [0.25, 0.7] });
+    render(codexRoute(pid));
+    const cover = screen.getByAltText(`Cover of ${e.title}`) as HTMLElement;
+    expect(cover.style.objectPosition).toBe("25% 70%");
+    // drag from the top edge to the bottom edge → focal follows the pointer
+    const rect = cover.getBoundingClientRect();
+    Object.defineProperty(cover, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ left: 0, top: 0, width: 200, height: 100, right: 200, bottom: 100, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect,
+    });
+    void rect;
+    const fire = (type: string, x: number, y: number) => {
+      const ev = new Event(type, { bubbles: true });
+      Object.defineProperties(ev, { clientX: { value: x }, clientY: { value: y }, pointerId: { value: 1 }, pointerType: { value: "mouse" }, button: { value: 0 }, buttons: { value: 1 }, isPrimary: { value: true } });
+      cover.dispatchEvent(ev);
+    };
+    act(() => {
+      fire("pointerdown", 100, 10);
+      fire("pointermove", 100, 90);
+      fire("pointermove", 100, 120);
+      fire("pointerup", 100, 120);
+    });
+    const saved = useScriptorium.getState().entries.find((x) => x.id === e.id)!;
+    expect(saved.focal).toEqual([0.5, 1]);
+    expect(cover.style.objectPosition).toBe("50% 100%");
+  });
+
+  it("user-created entry kinds join the chips, the selector and persist", () => {
+    const pid = useScriptorium.getState().addProject("V").id;
+    useScriptorium.getState().addEntry(pid, "lore");
+    render(codexRoute(pid));
+    fireEvent.click(screen.getByRole("button", { name: /new kind/i }));
+    fireEvent.change(screen.getByLabelText("Kind name"), { target: { value: "Religion" } });
+    fireEvent.change(screen.getByLabelText("Kind emoji"), { target: { value: "🕯️" } });
+    fireEvent.click(screen.getByRole("button", { name: /^Create kind$/i }));
+    const proj = useScriptorium.getState().projects.find((p) => p.id === pid)!;
+    const kind = proj.customCategories?.[0];
+    expect(kind).toMatchObject({ key: "religion", label: "Religion", icon: "🕯️" });
+    // chip filter includes the new kind
+    expect(screen.getByTitle("Religion")).toBeInTheDocument();
+    // the category selector offers it
+    const cat = screen.getByLabelText("Category") as HTMLSelectElement;
+    const opts = Array.from(cat.options).map((o) => ({ v: o.value, t: o.textContent }));
+    expect(opts.some((o) => o.v === "religion" && o.t?.includes("Religion"))).toBe(true);
+    // assigning the kind persists (schema accepts it)
+    fireEvent.change(cat, { target: { value: "religion" } });
+    expect(useScriptorium.getState().entries[0].category).toBe("religion");
+  });
+
+  it("summary block presents the filled blurb as content, not as a prompt", () => {
+    const pid = useScriptorium.getState().addProject("V").id;
+    const e = useScriptorium.getState().addEntry(pid, "lore")!;
+    useScriptorium.getState().updateEntry(e.id, { summary: "O aviso do rio." });
+    render(codexRoute(pid));
+    const toggle = screen.getByText("O aviso do rio.").closest("button")!;
+    expect(toggle.className).toContain("filled"); // styled differently when non-empty
+    expect(toggle.textContent).not.toContain("Add a short blurb");
+    void pid;
+  });
+});

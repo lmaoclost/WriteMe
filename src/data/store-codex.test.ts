@@ -3,7 +3,7 @@ import { act } from "@testing-library/react";
 import { useScriptorium } from "./store";
 import { STORE_KEY } from "./storage";
 import { validateProjectData } from "./schema";
-import type { Project, WorldEntry } from "../domain/types";
+import type { Project, WorldEntry, EntryCategory } from "../domain/types";
 
 const store = () => useScriptorium.getState();
 const DATA_URL = "data:image/png;base64,AAA";
@@ -19,10 +19,10 @@ function makeProject(): Project {
   return p;
 }
 
-function makeEntry(category: WorldEntry["category"] = "lore"): WorldEntry {
+function makeEntry(category: WorldEntry["category"] = "lore" as WorldEntry["category"]): WorldEntry {
   const project = makeProject();
   let entry!: WorldEntry;
-  act(() => { entry = store().addEntry(project.id, category); });
+  act(() => { entry = store().addEntry(project.id, category as EntryCategory); });
   return entry;
 }
 

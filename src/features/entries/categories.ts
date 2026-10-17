@@ -129,6 +129,22 @@ export function categoryDef(key: string): CodexCategoryDef | undefined {
   return CODEX_CATEGORIES.find((c) => c.key === key);
 }
 
+/** Display def for ANY category key, including user-defined kinds. */
+export function kindDef(key: string, customs?: { key: string; label: string; icon: string; color?: string }[]): { label: string; icon: string; color: string } {
+  const custom = customs?.find((k) => k.key === key);
+  if (custom) return { label: custom.label, icon: custom.icon, color: custom.color ?? "#e0c264" };
+  const def = categoryDef(key);
+  if (def) return { label: def.label, icon: def.icon, color: CATEGORY_COLORS[key] ?? "#e0c264" };
+  const legacy = LEGACY_CATEGORY_LABELS[key];
+  if (legacy) return { label: legacy, icon: "📖", color: CATEGORY_COLORS[key] ?? "#e0c264" };
+  return { label: key, icon: "📜", color: "#e0c264" };
+}
+
+/** Dot color that falls back to gold for user-defined kinds. */
+export function categoryDot(key: string, customs?: { key: string; label: string; icon: string; color?: string }[]): string {
+  return kindDef(key, customs).color;
+}
+
 export function categoryLabel(key: string): string {
   return categoryDef(key)?.label ?? LEGACY_CATEGORY_LABELS[key] ?? "General Lore";
 }

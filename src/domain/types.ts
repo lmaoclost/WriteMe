@@ -9,11 +9,20 @@ export type EntryCategory =
 export interface EntrySectionField { label: string; content: string }
 export interface EntrySection { name: string; fields: EntrySectionField[] }
 
+export type EntryKind = {
+  key: string;
+  label: string;
+  icon: string;
+  color?: string;
+};
+
 export interface Project {
   id: Id;
   name: string;
   description: string;
   coverImageKey?: string;
+  /** user-defined entry kinds (label + emoji) — category key = slug(label) */
+  customCategories?: EntryKind[];
   createdAt: number;
   updatedAt: number;
 }
@@ -22,9 +31,10 @@ export interface WorldEntry {
   id: Id;
   projectId: Id;
   title: string;
-  category: EntryCategory;
+  category: string;
   body: string;
   imageKey?: string;
+  focal?: [number, number]; // object-position enquadramento (0..1)
   links: Id[];
   date?: string;
   summary?: string;

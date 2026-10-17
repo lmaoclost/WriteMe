@@ -18,7 +18,7 @@ describe("validateProjectData", () => {
     expect(validateProjectData(null)).toBe(false);
     expect(validateProjectData({})).toBe(false);
     expect(validateProjectData({ ...valid, projects: "nope" })).toBe(false);
-    expect(validateProjectData({ ...valid, entries: [{ ...valid.entries[0], category: "bogus" }] })).toBe(false);
+    expect(validateProjectData({ ...valid, entries: [{ ...valid.entries[0], category: 123 as unknown as string }] })).toBe(false);
     expect(validateProjectData({ ...valid, atlases: [{ ...valid.atlases[0], regions: [{ id: "r", points: [{ x: "a", y: 0 }], color: "#fff", fillOpacity: 0.5, label: "" }] }] })).toBe(false);
     expect(validateProjectData({ ...valid, images: { k: 42 } })).toBe(false);
   });
