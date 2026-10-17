@@ -4,7 +4,7 @@ import { useScriptorium } from "../../data/store";
 import { Button } from "../../ui/Button";
 import { Modal } from "../../ui/Modal";
 import { Field } from "../../ui/Field";
-import "./conlang.css";
+import { CARD_GRID, WORLD_CARD, CARD_LINK, CARD_NAME, CARD_DESC, DELETE_CHIP, EMPTY_STATE } from "../../ui/pageBits";
 
 export function ConlangIndexPage({ projectId }: { projectId: string }) {
   const conlangs = useScriptorium((s) => s.conlangs ?? []);
@@ -16,27 +16,27 @@ export function ConlangIndexPage({ projectId }: { projectId: string }) {
   const target = mine.find((c) => c.id === toDelete);
 
   return (
-    <div className="bloodline-index">
-      <header className="library-head">
+    <div className="mx-auto max-w-[900px] px-6 py-8">
+      <header className="grid gap-1.5 justify-items-start mb-5">
         <h1>Conlang & Lexicon</h1>
-        <p className="library-sub">Build a language with its own script and lexicon.</p>
+        <p className="text-slate text-sm">Build a language with its own script and lexicon.</p>
         <Button onClick={() => setCreating(true)}>Forge Conlang</Button>
       </header>
 
       {mine.length === 0 ? (
-        <div className="empty">
+        <div className={EMPTY_STATE}>
           <p>No saved conlangs found. Create a new one first!</p>
-          <p className="empty-hint">Invented letters, too.</p>
+          <p className="text-slate text-sm">Invented letters, too.</p>
         </div>
       ) : (
-        <div className="library-grid">
+        <div className={CARD_GRID}>
           {mine.map((c) => (
-            <article key={c.id} className="project-card">
-              <Link className="project-link" to={`/p/${projectId}/conlang/${c.id}`}>
-                <h2 className="project-name">{c.name}</h2>
-                <p className="project-desc">{c.glyphs.length} glyphs · {c.words.length} words</p>
+            <article key={c.id} className={WORLD_CARD}>
+              <Link className={CARD_LINK} to={`/p/${projectId}/conlang/${c.id}`}>
+                <h2 className={CARD_NAME}>{c.name}</h2>
+                <p className={CARD_DESC}>{c.glyphs.length} glyphs · {c.words.length} words</p>
               </Link>
-              <button title="Delete conlang" className="project-delete" onClick={() => setToDelete(c.id)}>✕</button>
+              <button title="Delete conlang" className={DELETE_CHIP} onClick={() => setToDelete(c.id)}>✕</button>
             </article>
           ))}
         </div>
@@ -44,9 +44,9 @@ export function ConlangIndexPage({ projectId }: { projectId: string }) {
 
       {creating ? (
         <Modal title="Forge Conlang" onClose={() => setCreating(false)}>
-          <div className="form-stack">
+          <div className="grid gap-3">
             <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
-            <div className="form-actions">
+            <div className="mt-2 flex justify-end gap-2.5">
               <Button onClick={() => {
                 const n = name.trim();
                 if (!n) { pushToast("error", "Please enter a conlang name."); return; }
@@ -62,8 +62,8 @@ export function ConlangIndexPage({ projectId }: { projectId: string }) {
 
       {target ? (
         <Modal title={`Excluir "${target.name}"?`} onClose={() => setToDelete(null)}>
-          <p className="modal-warning">Removes glyphs and words. No undo.</p>
-          <div className="form-actions">
+          <p className="text-parchment-dim">Removes glyphs and words. No undo.</p>
+          <div className="mt-2 flex justify-end gap-2.5">
             <Button kind="danger" onClick={() => {
               useScriptorium.getState().deleteConlang(target.id);
               pushToast("success", "Conlang deleted.");

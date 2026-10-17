@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { pathFrom, alphabetSheetSvg, type Pt } from "../../domain/conlang";
-import "./conlang.css";import { useBoardNotesHotkey } from "../../ui/boardNotes";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Field } from "../../ui/Field";
+import { Button } from "../../ui/Button";
+import { BOARD_HEADER, BOARD_NAME_INPUT, BOARD_ACTIONS, BOARD_ACTION_BTN, BOARD_NOTEPAD, BOARD_NOTEPAD_HEAD, BOARD_NOTEPAD_TXT } from "../../ui/board";
+import { useBoardNotesHotkey } from "../../ui/boardNotes";
 
 
 export function ConlangPage({ conlangId }: { conlangId: string }) {
@@ -24,25 +28,25 @@ export function ConlangPage({ conlangId }: { conlangId: string }) {
   if (!conlang) return null;
 
   return (
-    <div className="conlang-page" data-testid="conlang-page">
-      <header className="bl-header">
+    <div className="grid grid-rows-[auto_auto_1fr] h-full" data-testid="conlang-page">
+      <header className={BOARD_HEADER}>
         <input
-          className="bl-name"
+          className={BOARD_NAME_INPUT}
           aria-label="Conlang name"
           value={conlang.name}
           onChange={(e) => useScriptorium.getState().renameConlang(conlangId, e.target.value)}
         />
-        <div className="bl-actions">
-          <button type="button" aria-label="Undo" disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoCN(conlangId)}>↶</button>
-          <button type="button" aria-label="Redo" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoCN(conlangId)}>↷</button>
-          <button type="button" aria-pressed={notesOpen} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
+        <div className={BOARD_ACTIONS}>
+          <button type="button" aria-label="Undo" className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoCN(conlangId)}>↶</button>
+          <button type="button" aria-label="Redo" className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoCN(conlangId)}>↷</button>
+          <button type="button" aria-pressed={notesOpen} className={BOARD_ACTION_BTN} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
         </div>
       </header>
-      <nav className="conlang-tabs" aria-label="Conlang sections">
-        <button type="button" aria-pressed={tab === "alphabet"} onClick={() => setTab("alphabet")}>Alphabet</button>
-        <button type="button" aria-pressed={tab === "lexicon"} onClick={() => setTab("lexicon")}>Lexicon</button>
+      <nav className="flex gap-2 px-[18px] pt-2.5" aria-label="Conlang sections">
+        <button type="button" aria-pressed={tab === "alphabet"} onClick={() => setTab("alphabet")} className="bg-night border border-line text-slate rounded-t-sm px-4 py-2 font-display font-semibold aria-pressed:text-gold aria-pressed:border-b-gold">Alphabet</button>
+        <button type="button" aria-pressed={tab === "lexicon"} onClick={() => setTab("lexicon")} className="bg-night border border-line text-slate rounded-t-sm px-4 py-2 font-display font-semibold aria-pressed:text-gold aria-pressed:border-b-gold">Lexicon</button>
       </nav>
-      <div className="bl-body bl-body-full">
+      <div className="block border-t border-line">
         {tab === "alphabet" ? (
           <AlphabetTab conlang={conlang} selectedGlyph={selectedGlyph} onSelect={setSelectedGlyph} />
         ) : (
@@ -98,33 +102,31 @@ function AlphabetTab({ conlang, selectedGlyph, onSelect }: {
 
   return (
     <div className="conlang-alphabet">
-      <div className="conlang-actions-row">
-        <button
-          type="button"
-          className="btn-primary"
+      <div className="flex flex-wrap items-center gap-2.5 py-2.5">
+        <Button
           onClick={() => {
             const g = store().addGlyph(conlang.id, nextLetter());
             if (g) onSelect(g.id);
           }}
-        >New glyph</button>
-        <button type="button" className="btn-ghost" disabled={conlang.glyphs.length === 0} onClick={exportPng}>
+        >New glyph</Button>
+        <Button kind="ghost" disabled={conlang.glyphs.length === 0} onClick={exportPng}>
           Exportar folha (PNG)
-        </button>
+        </Button>
       </div>
-      <div className="conlang-grid" ref={gridRef} data-testid="glyph-grid">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3 pb-5" ref={gridRef} data-testid="glyph-grid">
         {conlang.glyphs.map((g) => (
           <button
             key={g.id}
             type="button"
-            className={"glyph-cell" + (g.id === selectedGlyph ? " selected" : "")}
+            className={"w-full bg-night border border-slate rounded-lg p-2 grid gap-1.5 cursor-pointer" + (g.id === selectedGlyph ? " border-gold outline outline-1 outline-gold" : "")}
             onClick={() => onSelect(g.id)}
             aria-label={`Glifo ${g.char}`}
           >
-            <span className="glyph-char">{g.char}</span>
-            <svg viewBox="0 0 100 100" className="glyph-preview"><path d={g.svgPath} /></svg>
+            <span className="font-mono text-base text-gold">{g.char}</span>
+            <svg viewBox="0 0 100 100" className="w-full aspect-square rounded-sm bg-[#12121e] [&_path]:fill-none [&_path]:stroke-parchment [&_path]:[stroke-width:3] [&_path]:[stroke-linecap:round]"><path d={g.svgPath} /></svg>
           </button>
         ))}
-        {conlang.glyphs.length === 0 ? <p className="dim">Sem glifos — adicione e desenhe.</p> : null}
+        {conlang.glyphs.length === 0 ? <p className="text-slate">Sem glifos — adicione e desenhe.</p> : null}
       </div>
       {selectedGlyph ? <GlyphEditor key={selectedGlyph} conlang={conlang} glyphId={selectedGlyph} onDone={() => onSelect(null)} /> : null}
     </div>
@@ -169,15 +171,14 @@ function GlyphEditor({ conlang, glyphId, onDone }: {
   };
 
   return (
-    <div className="glyph-editor" data-testid="glyph-editor">
-      <div className="conlang-actions-row">
-        <span className="dim">Glifo {glyph.char} — desenhe com o mouse</span>
-        <button type="button" className="btn-ghost" onClick={() => useScriptorium.getState().deleteGlyph(glyph.id)} aria-label={`Delete glyph ${glyph.char}`}>Delete glyph</button>
-        <button type="button" aria-label="Close glyph editor" onClick={onDone}>✕</button>
+    <div className="grid gap-2.5 p-4 border border-line rounded-lg mb-5" data-testid="glyph-editor">
+      <div className="flex flex-wrap items-center gap-2.5 py-2.5">
+        <span className="text-slate">Glifo {glyph.char} — desenhe com o mouse</span>
+        <Button kind="ghost" onClick={() => useScriptorium.getState().deleteGlyph(glyph.id)} aria-label={`Delete glyph ${glyph.char}`}>Delete glyph</Button>
+        <button type="button" aria-label="Close glyph editor" onClick={onDone} className={BOARD_ACTION_BTN}>✕</button>
       </div>
-      <div className="glyph-letter-row">
-        <label className="field">
-          <span className="field-label">Represents letter</span>
+      <div className="flex items-end gap-3">
+        <Field label="Represents letter">
           <input
             aria-label="Represents letter"
             defaultValue={glyph.char}
@@ -190,13 +191,13 @@ function GlyphEditor({ conlang, glyphId, onDone }: {
               s.updateGlyph(glyph.id, { char: v });
             }}
           />
-        </label>
-        <p className="dim">Point which letter (or sound) this glyph stands for.</p>
+        </Field>
+        <p className="text-slate">Point which letter (or sound) this glyph stands for.</p>
       </div>
       <svg
         ref={svgRef}
         viewBox="0 0 100 100"
-        className="glyph-canvas"
+        className="glyph-canvas w-[min(360px,80vw)] aspect-square rounded-lg cursor-crosshair [touch-action:none]"
         onPointerDown={onDown}
         onPointerMove={onMove}
         onPointerUp={onUp}
@@ -204,10 +205,10 @@ function GlyphEditor({ conlang, glyphId, onDone }: {
         <rect width="100" height="100" fill="#12121e" />
         <line x1="50" y1="0" x2="50" y2="100" stroke="#2a2a44" strokeWidth="0.3" />
         <line x1="0" y1="50" x2="100" y2="50" stroke="#2a2a44" strokeWidth="0.3" />
-        {glyph.svgPath ? <path d={glyph.svgPath} className="glyph-path" /> : null}
-        {livePath ? <path d={livePath} className="glyph-path glyph-live" /> : null}
+        {glyph.svgPath ? <path d={glyph.svgPath} className="[fill:none] [stroke:var(--parchment)] [stroke-width:3] [stroke-linecap:round] [stroke-linejoin:round]" /> : null}
+        {livePath ? <path d={livePath} className="[fill:none] [stroke:var(--gold)] [stroke-width:3] [stroke-linecap:round] [stroke-linejoin:round]" /> : null}
       </svg>
-      {glyph.svgPath ? <button type="button" className="btn-ghost" onClick={() => useScriptorium.getState().updateGlyph(glyph.id, { svgPath: "" })}>Clear stroke</button> : null}
+      {glyph.svgPath ? <Button kind="ghost" onClick={() => useScriptorium.getState().updateGlyph(glyph.id, { svgPath: "" })}>Clear stroke</Button> : null}
     </div>
   );
 }
@@ -230,9 +231,9 @@ function LexiconTab({ conlang }: { conlang: NonNullable<ReturnType<typeof useScr
   );
 
   return (
-    <div className="conlang-lexicon">
+    <div className="grid gap-3 pb-10 content-start">
       <form
-        className="conlang-word-form"
+        className="grid grid-cols-[1fr_1.4fr_0.8fr_0.8fr_auto] gap-2 max-[900px]:grid-cols-2"
         onSubmit={(e) => {
           e.preventDefault();
           if (!word.trim()) return;
@@ -241,43 +242,49 @@ function LexiconTab({ conlang }: { conlang: NonNullable<ReturnType<typeof useScr
           else pushToast("error", "Escreva a palavra.");
         }}
       >
-        <input aria-label="New word" placeholder="Word..." value={word} onChange={(e) => setWord(e.target.value)} />
-        <input aria-label="Meaning" placeholder="Meaning..." value={meaning} onChange={(e) => setMeaning(e.target.value)} />
-        <select aria-label="Part of speech" value={pos} onChange={(e) => setPos(e.target.value)}>
-          {POS_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
-        </select>
-        <input aria-label="Theme group" placeholder="Theme..." value={theme} onChange={(e) => setTheme(e.target.value)} />
-        <button type="submit" className="btn-primary">Add</button>
+        <input aria-label="New word" placeholder="Word..." value={word} onChange={(e) => setWord(e.target.value)} className="bg-ink border border-line text-parchment rounded-sm px-2.5 py-2" />
+        <input aria-label="Meaning" placeholder="Meaning..." value={meaning} onChange={(e) => setMeaning(e.target.value)} className="bg-ink border border-line text-parchment rounded-sm px-2.5 py-2" />
+        <Select aria-label="Part of speech" value={pos} onValueChange={(v) => setPos(v)}>
+          <SelectTrigger aria-label="Part of speech" className="h-auto rounded-sm border-line bg-ink px-2.5 py-2 text-[15px] text-parchment hover:border-gold-dim data-[size=default]:h-auto min-w-0"><SelectValue /></SelectTrigger>
+          <SelectContent className="border-line bg-night text-parchment">
+            {POS_OPTIONS.map((p) => <SelectItem key={p} value={p} className="text-[15px] focus:bg-[#24233f] focus:text-parchment">{p}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <input aria-label="Theme group" placeholder="Theme..." value={theme} onChange={(e) => setTheme(e.target.value)} className="bg-ink border border-line text-parchment rounded-sm px-2.5 py-2" />
+        <Button type="submit"><span>Add</span></Button>
       </form>
       {themes.length ? (
-        <div className="conlang-themes">
+        <div className="flex gap-1.5 flex-wrap">
           {themes.map((t) => (
-            <button key={t} type="button" className="codex-chip-button" onClick={() => setFilter((f) => (f === t ? "" : t))}>
+            <button key={t} type="button" className="bg-night border border-line text-parchment-dim rounded-sm py-1 px-2.5 hover:text-gold hover:border-gold-dim" onClick={() => setFilter((f) => (f === t ? "" : t))}>
               {t}
             </button>
           ))}
         </div>
       ) : null}
       <input aria-label="Search the lexicon" placeholder="Search the lexicon..." value={filter} onChange={(e) => setFilter(e.target.value)} className="codex-search" />
-      <table className="conlang-table" data-testid="lexicon-table">
+      <table className="w-full border-collapse text-[13px]" data-testid="lexicon-table">
         <thead>
-          <tr><th>Word</th><th>Meaning</th><th>Part of speech</th><th>Theme</th><th /></tr>
+          <tr className="text-left text-slate font-semibold [&_th]:py-1.5 [&_th]:px-2 [&_th]:border-b [&_th]:border-line"><th>Word</th><th>Meaning</th><th>Part of speech</th><th>Theme</th><th /></tr>
         </thead>
         <tbody>
           {rows.map((w) => (
-            <tr key={w.id}>
+            <tr key={w.id} className="[&_td]:py-1 [&_td]:px-2 [&_td]:border-b [&_td]:border-line [&_input]:w-full [&_input]:bg-transparent [&_input]:border [&_input]:border-transparent [&_input]:text-parchment [&_input]:px-1.5 [&_input]:py-1 [&_input]:rounded-sm hover:[&_input]:border-line hover:[&_input]:bg-ink">
               <td><input aria-label={`Palavra ${w.word}`} defaultValue={w.word} onBlur={(e) => store().updateWord(w.id, { word: e.target.value })} /></td>
               <td><input aria-label={`Meaning of ${w.word}`} defaultValue={w.meaning} onBlur={(e) => store().updateWord(w.id, { meaning: e.target.value })} /></td>
               <td>
-                <select aria-label={`Classe de ${w.word}`} defaultValue={w.pos} onChange={(e) => store().updateWord(w.id, { pos: e.target.value })}>
-                  {POS_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
-                </select>
+                <Select defaultValue={w.pos} onValueChange={(v) => store().updateWord(w.id, { pos: v })}>
+                  <SelectTrigger aria-label={`Classe de ${w.word}`} className="w-full h-auto justify-between rounded-sm border border-transparent bg-transparent px-1.5 py-1 text-[13px] text-parchment hover:border-line hover:bg-ink data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
+                  <SelectContent className="border-line bg-night text-parchment">
+                    {POS_OPTIONS.map((p) => <SelectItem key={p} value={p} className="text-[13px] focus:bg-[#24233f] focus:text-parchment">{p}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </td>
               <td><input aria-label={`Tema de ${w.word}`} defaultValue={w.theme} onBlur={(e) => store().updateWord(w.id, { theme: e.target.value })} /></td>
-              <td><button type="button" className="btn-danger" aria-label={`Remover ${w.word}`} onClick={() => store().deleteWord(w.id)}>✕</button></td>
+              <td><Button kind="danger" className="px-1.5 py-0.5 text-xs" aria-label={`Remover ${w.word}`} onClick={() => store().deleteWord(w.id)}>✕</Button></td>
             </tr>
           ))}
-          {rows.length === 0 ? <tr><td colSpan={5} className="dim">The lexicon is empty — add the first word.</td></tr> : null}
+          {rows.length === 0 ? <tr><td colSpan={5} className="text-slate">The lexicon is empty — add the first word.</td></tr> : null}
         </tbody>
       </table>
     </div>
@@ -291,12 +298,12 @@ function ConlangNotepad({ notes, onNotes, onClose }: { notes: string; onNotes(v:
     return () => clearTimeout(id);
   }, [draft, notes, onNotes]);
   return (
-    <div className="bl-notepad" data-testid="conlang-notepad">
-      <header className="bl-notepad-head">
+    <div className={BOARD_NOTEPAD} data-testid="conlang-notepad">
+      <header className={BOARD_NOTEPAD_HEAD}>
         <span>Notes</span>
-        <button type="button" aria-label="Fechar notas" onClick={onClose}>✕</button>
+        <button type="button" aria-label="Fechar notas" onClick={onClose} className="bg-none border-0 text-slate">✕</button>
       </header>
-      <textarea aria-label="Conlang notes" value={draft} onChange={(e) => setDraft(e.target.value)} rows={5} />
+      <textarea aria-label="Conlang notes" value={draft} onChange={(e) => setDraft(e.target.value)} rows={5} className={BOARD_NOTEPAD_TXT} />
     </div>
   );
 }
