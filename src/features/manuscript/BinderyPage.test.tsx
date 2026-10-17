@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { useScriptorium } from "../../data/store";
 import { BinderyPage } from "./BinderyPage";
 import { binderyCss, trimToPage, BINDERY_FONTS, BINDERY_TRIMS } from "./bindery";
@@ -35,7 +36,7 @@ describe("bindery utils", () => {
 describe("BinderyPage", () => {
   it("renders settings + live preview with front matter", () => {
     const id = seedBook();
-    render(<BinderyPage manuscriptId={id} />);
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
     expect(screen.getByLabelText("Typography")).toBeInTheDocument();
     expect(screen.getByLabelText("Book size")).toBeInTheDocument();
     expect(screen.getByTestId("bindery-book").innerHTML).toContain("title-page");
@@ -44,7 +45,7 @@ describe("BinderyPage", () => {
 
   it("font select updates bindery + preview font", () => {
     const id = seedBook();
-    render(<BinderyPage manuscriptId={id} />);
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
     const sel = screen.getByLabelText("Typography") as HTMLSelectElement;
     fireEvent.change(sel, { target: { value: '"Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif' } });
     expect(store().manuscripts[0].bindery!.font).toContain("Palatino");
@@ -60,7 +61,7 @@ describe("BinderyPage", () => {
       store().addEntry(prj, "artifact");
       store().updateEntry(store().entries[0].id, { title: "Coroa de Sarnen", summary: "Coroa perdida no rio." });
     });
-    render(<BinderyPage manuscriptId={id} />);
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
     const ded = screen.getByLabelText("Dedication");
     fireEvent.change(ded, { target: { value: "Ao rio." } });
     fireEvent.blur(ded);
@@ -71,11 +72,33 @@ describe("BinderyPage", () => {
     expect(book.innerHTML).toContain("dedication");
   });
 
+  it("glossary rows navigate to the codex deep link on click", () => {
+    const id = seedBook();
+    act(() => { store().setBindery(id, { glossary: true }); });
+    const prj = store().manuscripts[0].projectId;
+    act(() => {
+      store().updateEntry(store().addEntry(prj, "artifact").id, { title: "Coroa de Sarnen", summary: "Coroa perdida no rio." });
+    });
+    const entryId = store().entries[0].id;
+    render(
+      <MemoryRouter initialEntries={[`/p/prj_1/bindery/${id}`]}>
+        <Routes>
+          <Route path="/p/:projectId/bindery/:manuscriptId" element={<BinderyPage manuscriptId={id} />} />
+          <Route path="/p/:projectId/entries" element={<div data-testid="codex-dest" data-entry={entryId} />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    const row = document.querySelector("tr[data-glossary]") as HTMLElement;
+    expect(row).toBeTruthy();
+    fireEvent.click(row);
+    expect(screen.getByTestId("codex-dest")).toBeInTheDocument();
+  });
+
   it("print preview triggers window.print once", async () => {
     const id = seedBook();
     const printSpy = vi.fn();
     Object.defineProperty(window, "print", { value: printSpy, configurable: true });
-    render(<BinderyPage manuscriptId={id} />);
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
     fireEvent.click(screen.getByRole("button", { name: "Print preview" }));
     await waitFor(() => expect(printSpy).toHaveBeenCalledTimes(1), { timeout: 2000 });
   });
@@ -85,7 +108,7 @@ describe("Bindery v2 controls", () => {
   it("chapter numbering select updates config and book prefix", () => {
     const id = seedBook();
     act(() => { store().addChapter(id, "Rio fundo"); });
-    render(<BinderyPage manuscriptId={id} />);
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
     const sel = screen.getByLabelText("Chapter numbering") as HTMLSelectElement;
     fireEvent.change(sel, { target: { value: "chapter" } });
     expect(store().manuscripts[0].bindery!.numberingStyle).toBe("chapter");
@@ -95,7 +118,7 @@ describe("Bindery v2 controls", () => {
 
   it("page numbers toggle drives the print stylesheet", () => {
     const id = seedBook();
-    render(<BinderyPage manuscriptId={id} />);
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
     const box = screen.getByRole("checkbox", { name: "Page numbers" });
     fireEvent.click(box);
     expect(store().manuscripts[0].bindery!.pageNumbers).toBe(true);
@@ -106,7 +129,7 @@ describe("Bindery v2 controls", () => {
   it("running-head mode select re-labels chapter heads", () => {
     const id = seedBook();
     act(() => { store().addChapter(id, "O Tribunal"); });
-    render(<BinderyPage manuscriptId={id} />);
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
     const sel = screen.getByLabelText("Running head mode") as HTMLSelectElement;
     fireEvent.change(sel, { target: { value: "chapter" } });
     const book = screen.getByTestId("bindery-book").innerHTML;

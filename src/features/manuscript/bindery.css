@@ -27,6 +27,7 @@
 .bindery-live .chapter { break-before: page; }
 .bindery-live .glossary table { width: 100%; border-collapse: collapse; }
 .bindery-live .glossary td { border-bottom: 1px dotted var(--paper-muted-soft); padding: 5px 6px; vertical-align: top; }
+@media screen { .bindery-page .print-book .glossary tr[data-glossary] { cursor: pointer; } }
 .bindery-link { display: inline-grid; place-items: center; text-decoration: none; }
 .bindery-link:hover { filter: brightness(1.1); }
 .bl-title { font-family: var(--font-display); font-size: 1.375rem; color: var(--parchment-strong); margin: 0; }

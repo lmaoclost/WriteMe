@@ -324,7 +324,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
       ) : bodyDraft.draft.trim() === "" ? (
         <p className="codex-md-empty">No content yet.</p>
       ) : (
-        <MarkdownView body={bodyDraft.draft} />
+        <MarkdownView body={bodyDraft.draft} onSelectEntry={onSelectEntry} />
       )}
       <section className="codex-links" aria-label="Links">
         <span className="codex-links-title">Links</span>

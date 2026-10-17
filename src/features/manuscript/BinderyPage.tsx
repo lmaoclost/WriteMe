@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { BINDERY_FONTS, BINDERY_TRIMS, binderyCss, trimToPage } from "./bindery";
@@ -11,6 +11,7 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
   const manuscript = useScriptorium(useShallow((s) =>
     s.manuscripts.find((m) => m.id === manuscriptId)));
   const pushToast = useScriptorium((s) => s.pushToast);
+  const navigate = useNavigate();
   const [printing, setPrinting] = useState(false);
 
   useEffect(() => {
@@ -107,6 +108,12 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
           <div
             className="print-book bindery-live"
             data-testid="bindery-book"
+            onClick={(e) => {
+              // glossary rows link straight into the codex on screen
+              const row = (e.target as HTMLElement).closest?.("tr[data-glossary]") as HTMLElement | null;
+              const id = row?.getAttribute("data-glossary");
+              if (id) navigate(`/p/${manuscript.projectId}/entries?e=${id}`);
+            }}
             dangerouslySetInnerHTML={{ __html: html }}
           />
         </div>

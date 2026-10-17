@@ -40,4 +40,12 @@ describe("MarkdownView with wiki links", () => {
     expect(card.textContent).toContain("Casa Vellmor");
     expect(card.textContent).toContain("Dinastia, rio, três pontes.");
   });
+
+  it("clicking a wiki link navigates to the codex with the entry selected", () => {
+    seedEntries();
+    const picked: string[] = [];
+    render(<MarkdownView body="A [[Casa Vellmor]] governa." onSelectEntry={(id) => picked.push(id)} />);
+    fireEvent.click(screen.getByText("Casa Vellmor", { selector: "a.wiki-link" }));
+    expect(picked).toEqual([store().entries[0].id]);
+  });
 });

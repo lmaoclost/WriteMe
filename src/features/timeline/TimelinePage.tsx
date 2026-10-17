@@ -54,7 +54,7 @@ export function TimelinePage({ projectId }: { projectId: string }) {
   dated.sort((a, b) => dateKey(a.date) - dateKey(b.date));
 
   const openEntry = (id: string) => {
-    navigate("../entries", { state: { select: id } });
+    navigate(`/p/${projectId}/entries?e=${id}`);
   };
 
   return (

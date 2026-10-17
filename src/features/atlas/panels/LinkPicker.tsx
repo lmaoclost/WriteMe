@@ -12,7 +12,7 @@ function LinkTarget({ entry }: { entry: WorldEntry }) {
       type="button"
       className="link-current"
       title="Open in codex"
-      onClick={() => navigate("../entries", { state: { select: entry.id } })}
+      onClick={() => navigate(`/p/${entry.projectId}/entries?e=${entry.id}`)}
     >
       {entry.title}
     </button>

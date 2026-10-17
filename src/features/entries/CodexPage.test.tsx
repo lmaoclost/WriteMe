@@ -287,6 +287,20 @@ describe("entries route wiring", () => {
     expect(screen.getByRole("button", { name: "New entry" })).toBeInTheDocument();
     expect(screen.queryByText(/sub-projeto 3/i)).not.toBeInTheDocument();
   });
+
+  it("opens straight into the linked entry via ?e=", () => {
+    const projectId = seedProject([
+      { title: "Rio Sarnen", category: "place" },
+      { title: "Guerra dos Cinco Invernos", category: "event" },
+    ]);
+    const war = projectEntries(projectId).find((e) => e.title === "Guerra dos Cinco Invernos")!.id;
+    render(
+      <MemoryRouter initialEntries={[`/p/${projectId}/entries?e=${war}`]}>
+        <AppRouter />
+      </MemoryRouter>,
+    );
+    expect(screen.getByLabelText("Title")).toHaveValue("Guerra dos Cinco Invernos");
+  });
 });
 
 describe("CodexPage — sections and summary (codex-15)", () => {
