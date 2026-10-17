@@ -46,7 +46,7 @@ export function UpdatesPage() {
       </header>
       <main className="mt-[34px]">
         <section className="max-w-[880px] mx-auto grid" aria-label="Release ledger">
-          {SAMPLE_UPDATES.map((u, i) => (
+          {SAMPLE_UPDATES.map((u) => (
             <article
               key={u.id}
               className="border-t border-line pt-4 pb-[15px] grid grid-cols-[1fr_auto] gap-x-6 content-center min-h-24 first:border-t-0 first:pt-0 max-[660px]:grid-cols-1 max-[660px]:min-h-0 [grid-template-areas:'title_meta-head'_'title_meta-tail'_'title_readmore'] max-[660px]:min-h-0 max-[660px]:[grid-template-areas:'meta-head'_'meta-tail'_'title'_'readmore']"
