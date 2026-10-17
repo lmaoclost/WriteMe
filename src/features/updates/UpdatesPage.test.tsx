@@ -26,7 +26,7 @@ describe("UpdatesPage", () => {
     const ledger = screen.getByRole("region", { name: "Release ledger" });
     expect(within(ledger).getAllByRole("article")).toHaveLength(SAMPLE_UPDATES.length);
     for (const row of within(ledger).getAllByRole("article")) {
-      expect(row.className).toBe("update-row");
+      expect(row.className).toContain("border-t");
     }
     expect(within(ledger).getAllByText("by Scriptorium")).toHaveLength(SAMPLE_UPDATES.length);
     expect(within(ledger).getAllByText("Read more →")).toHaveLength(SAMPLE_UPDATES.length);

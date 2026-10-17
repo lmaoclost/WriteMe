@@ -36,7 +36,7 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("heading", { level: 3, name: "Public Profile" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Back to Feed" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Scriptorium" })).toBeTruthy();
-    expect(document.querySelector(".profile-settings header .seal")).toBeTruthy();
+    expect(document.querySelector("header .seal")).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Join our Discord" })).toBeNull();
   });
 

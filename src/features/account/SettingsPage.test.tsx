@@ -63,7 +63,7 @@ describe("SettingsPage", () => {
     expect(s.subscriptionStatus).toBe("active");
     expect(s.billingCycle).toBe("yearly");
     expect(screen.getByText("Mythic")).toBeTruthy();
-    expect(document.querySelector(".billing-cycle-label")?.textContent).toBe(" — Yearly");
+    expect(document.querySelector("[data-slot=settings-cycle]")?.textContent).toBe(" — Yearly");
     expect(screen.getByText("Your Mythic subscription is active.")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Cancel Subscription" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Upgrade to Mythic" })).toBeNull();
