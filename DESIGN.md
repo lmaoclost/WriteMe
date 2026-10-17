@@ -113,6 +113,8 @@ components:
 
 ## Overview
 
+> **Stack note (2026-10):** styling now runs on **Tailwind CSS v4 + shadcn/ui**. Tokens live in `src/app/theme.css` (`@theme inline`); semantic shadcn variables (`--primary`, `--card-well`, `--border`, …) are mapped 1:1 from this palette, and the legacy CSS variable names (`--gold`, `--line`, `--night`, …) remain defined as aliases so feature CSS keeps working while it migrates.
+
 **Creative North Star: "The Scriptor's Archive"**
 
 The system reads like a well-kept private archive at night: deep ink-navy surfaces with parchment text, gold seals marking what matters. The incumbent palette stays; the archive identity comes from composition — serif display type, hairline rules, and stamped seals instead of glow and gradients. Density is calm; sections breathe and are separated by thin ink rules rather than boxes-in-boxes.

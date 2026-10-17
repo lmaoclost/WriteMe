@@ -7,6 +7,10 @@ Worldbuilding e escrita local: mundos, atlas de mapa com regiões e pins, códex
     npm install
     npm run dev
 
+## Stack
+
+React 18 + Vite + TypeScript · Tailwind CSS v4 + shadcn/ui · Zustand.
+
 ## Testes
 
     npm test
