@@ -13,9 +13,11 @@ describe("Button", () => {
     fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
     expect(onClick).toHaveBeenCalledTimes(1);
   });
-  it("danger gets ember accent class", () => {
+  it("danger gets ember accent classes", () => {
     render(<Button kind="danger">Excluir</Button>);
-    expect(screen.getByRole("button")).toHaveClass("btn-danger");
+    const btn = screen.getByRole("button");
+    expect(btn).toHaveClass("border-destructive");
+    expect(btn).toHaveClass("text-destructive");
   });
 });
 
