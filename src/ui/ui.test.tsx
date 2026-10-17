@@ -19,6 +19,11 @@ describe("Button", () => {
     expect(btn).toHaveClass("border-destructive");
     expect(btn).toHaveClass("text-destructive");
   });
+  it("dialog content keeps hairline border token", () => {
+    render(<Modal title="T" onClose={() => {}}><p>x</p></Modal>);
+    const content = document.querySelector("[data-slot='dialog-content']");
+    expect(content).toHaveClass("border-line");
+  });
 });
 
 describe("Field / Modal", () => {

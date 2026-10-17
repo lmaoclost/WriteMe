@@ -130,6 +130,8 @@
 
 @layer base {
   html, body, #root { height: 100%; }
+  /* master default: UA normal line-height (Tailwind preflight sets 1.5 — restored to match master) */
+  html { line-height: normal; }
   body {
     margin: 0;
     @apply bg-background text-foreground font-sans;
