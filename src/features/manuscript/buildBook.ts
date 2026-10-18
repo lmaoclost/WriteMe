@@ -1,4 +1,4 @@
-import type { Manuscript } from "../../domain/types";
+import type { Chapter, Manuscript, Part } from "../../domain/types";
 import { renderMarkdown } from "../entries/markdown";
 import { defaultBindery } from "../../data/schema";
 import { useScriptorium } from "../../data/store";
@@ -31,53 +31,113 @@ function escapeText(text: string): string {
     .replaceAll("'", "&#39;");
 }
 
-/** Whole-book HTML: title + optional author + every chapter sorted by order.
- *  Content flows through renderMarkdown (already sanitized); the plain-string
- *  pieces (title/author/headings) are escaped here. */
-export function buildBookHtml(manuscript: Manuscript): string {
+/** Book body plan: the ungrouped run first (by order), then one block per
+ *  part (parts by order, chapters by order). Chapter numbers, data-ch, the
+ *  chN named pages and the TOC all walk this same sequence. A chapter whose
+ *  partId names a missing part counts as ungrouped so no text drops out. */
+export function bookSections(manuscript: Manuscript): { part: Part | null; chapters: Chapter[] }[] {
+  const parts = [...(manuscript.parts ?? [])].sort((a, b) => a.order - b.order);
   const chapters = [...manuscript.chapters].sort((a, b) => a.order - b.order);
+  const partIds = new Set(parts.map((p) => p.id));
+  return [
+    { part: null, chapters: chapters.filter((c) => !c.partId || !partIds.has(c.partId)) },
+    ...parts.map((part) => ({ part, chapters: chapters.filter((c) => c.partId === part.id) })),
+  ];
+}
+
+/** Copyright page: only the lines that have content ever print. */
+function copyrightPage(manuscript: Manuscript, config: NonNullable<Manuscript["bindery"]>): string {
+  const info = config.frontMatter?.copyrightInfo ?? {};
+  const holder = info.holder?.trim() || manuscript.author;
+  const lines = [
+    info.year && holder ? `© ${escapeText(info.year)} ${escapeText(holder)}` : "",
+    escapeText(info.rights?.trim() || "All rights reserved."),
+    info.edition ? `${escapeText(info.edition)} edition` : "",
+    info.isbn ? `ISBN ${escapeText(info.isbn)}` : "",
+    "Cover and interior set in Scriptorium.",
+  ].filter(Boolean).map((line) => `<p>${line}</p>`).join("");
+  return `<section class="front-matter copyright display">${lines}</section>`;
+}
+
+/** Whole-book HTML: front matter (half title, title, copyright, dedication,
+ *  epigraph, TOC with part rows), then the body plan's sections, then the
+ *  glossary. Content flows through renderMarkdown (already sanitized); the
+ *  plain-string pieces (title/author/headings) are escaped here. */
+export function buildBookHtml(manuscript: Manuscript): string {
   const b = { ...defaultBindery(), ...(manuscript.bindery ?? {}) } as NonNullable<Manuscript["bindery"]>;
-  const author = manuscript.author
-    ? `<p class="book-author">${escapeText(manuscript.author)}</p>`
+  const fm = b.frontMatter ?? { halfTitle: false, copyright: false, romanNumerals: false };
+  const numbering = b.numberingStyle ?? "arabic";
+  const halfTitle = fm.halfTitle
+    ? `<section class="front-matter half-title display"><h1 class="ht-title">${escapeText(manuscript.title)}</h1></section>`
     : "";
   // The title always opens the book on its own sheet: with the title page on,
   // the branded page carries it (no second book-title before the chapters);
   // without it, a centered book-title page stands in.
   const titleBlock = b.titlePage
-    ? `<section class="front-matter title-page"><p class="tp-series">Scriptorium</p><h1 class="tp-title">${escapeText(manuscript.title)}</h1>${manuscript.author ? `<p class="tp-author">${escapeText(manuscript.author)}</p>` : ""}</section>`
-    : `<section class="front-matter book-title-page"><h1 class="book-title">${escapeText(manuscript.title)}</h1>${author}</section>`;
+    ? `<section class="front-matter title-page display"><p class="tp-series">Scriptorium</p><h1 class="tp-title">${escapeText(manuscript.title)}</h1>${manuscript.author ? `<p class="tp-author">${escapeText(manuscript.author)}</p>` : ""}</section>`
+    : `<section class="front-matter book-title-page display"><h1 class="book-title">${escapeText(manuscript.title)}</h1>${manuscript.author ? `<p class="book-author">${escapeText(manuscript.author)}</p>` : ""}</section>`;
+  const copyright = fm.copyright ? copyrightPage(manuscript, b) : "";
   const dedication = b.dedication
-    ? `<section class="front-matter dedication">${escapeText(b.dedication)}</section>`
+    ? `<section class="front-matter dedication display">${escapeText(b.dedication)}</section>`
     : "";
-  const tocRow = (chapter: Manuscript["chapters"][number], i: number) => {
-    const num = chapterNumber(b.numberingStyle ?? "arabic", i + 1);
+  const epigraph = fm.epigraph?.trim()
+    ? `<section class="front-matter epigraph display">${renderMarkdown(fm.epigraph.trim())}</section>`
+    : "";
+  const sections = bookSections(manuscript);
+  const tocRow = (chapter: Chapter, n: number) => {
+    const num = chapterNumber(numbering, n);
     const numHtml = num ? `<span class="toc-num">${escapeText(num)}</span>` : "";
     return `<li class="toc-row">${numHtml}<span>${escapeText(chapter.heading)}</span><span class="toc-dot" aria-hidden="true"></span></li>`;
   };
+  const chapterSection = (chapter: Chapter, n: number): string => {
+    let body = chapter.content
+      ? renderMarkdown(chapter.content)
+      : EMPTY_PARAGRAPH;
+    if (chapter.noteTop?.trim()) {
+      body = `<div class="chapter-note top">${renderMarkdown(chapter.noteTop.trim())}</div>` + body;
+    }
+    if (chapter.endMarker?.trim()) {
+      body = body + `<div class="scene-marker">${escapeText(chapter.endMarker.trim())}</div>`;
+    }
+    if (chapter.noteEnd?.trim()) {
+      body = body + `<div class="chapter-note bottom">${renderMarkdown(chapter.noteEnd.trim())}</div>`;
+    }
+    const num = chapterNumber(numbering, n);
+    const numHtml = num ? `<span class="ch-num">${escapeText(num)}</span>` : "";
+    return `<section class="chapter" data-ch="${n}"><h2>${numHtml}${escapeText(chapter.heading)}</h2>${body}</section>`;
+  };
+  // one walk keeps the three chapter consumers in agreement: the flat chapter
+  // number feeds data-ch (and the chN named pages built from the same list),
+  // the TOC rows and the divider numbering feeds both divider and TOC row
+  const tocRows: string[] = [];
+  const body: string[] = [];
+  let chapterNo = 0;
+  let partNo = 0;
+  sections.forEach(({ part, chapters }) => {
+    if (part) {
+      partNo += 1;
+      const num = chapterNumber(numbering, partNo);
+      const numHtml = num ? `<span class="toc-num">${escapeText(num)}</span>` : "";
+      tocRows.push(`<li class="toc-row toc-part">${numHtml}<span>${escapeText(part.title)}</span></li>`);
+      body.push(
+        `<section class="part-divider" data-part="${partNo}">` +
+        (num ? `<p class="part-num">${escapeText(num)}</p>` : "") +
+        `<h1 class="part-title">${escapeText(part.title)}</h1>` +
+        (part.epigraph?.trim() ? `<div class="part-epigraph">${renderMarkdown(part.epigraph.trim())}</div>` : "") +
+        `</section>`,
+      );
+    }
+    chapters.forEach((c) => {
+      chapterNo += 1;
+      tocRows.push(tocRow(c, chapterNo));
+      body.push(chapterSection(c, chapterNo));
+    });
+  });
   const toc = b.toc
-    ? `<section class="front-matter toc"><h2>Contents</h2><ul>${chapters.map(tocRow).join("")}</ul></section>`
+    ? `<section class="front-matter toc"><h2>Contents</h2><ul>${tocRows.join("")}</ul></section>`
     : "";
   const glossary = b.glossary ? glossaryFor(manuscript) : "";
-  const sections = chapters
-    .map((chapter, i) => {
-      let body = chapter.content
-        ? renderMarkdown(chapter.content)
-        : EMPTY_PARAGRAPH;
-      if (chapter.noteTop?.trim()) {
-        body = `<div class="chapter-note top">${renderMarkdown(chapter.noteTop.trim())}</div>` + body;
-      }
-      if (chapter.endMarker?.trim()) {
-        body = body + `<div class="scene-marker">${escapeText(chapter.endMarker.trim())}</div>`;
-      }
-      if (chapter.noteEnd?.trim()) {
-        body = body + `<div class="chapter-note bottom">${renderMarkdown(chapter.noteEnd.trim())}</div>`;
-      }
-      const num = chapterNumber(b.numberingStyle ?? "arabic", i + 1);
-      const numHtml = num ? `<span class="ch-num">${escapeText(num)}</span>` : "";
-      return `<section class="chapter" data-ch="${i + 1}"><h2>${numHtml}${escapeText(chapter.heading)}</h2>${body}</section>`;
-    })
-    .join("");
-  return `<article class="book">${titleBlock}${dedication}${toc}${sections}${glossary}</article>`;
+  return `<article class="book">${halfTitle}${titleBlock}${copyright}${dedication}${epigraph}${toc}${body.join("")}${glossary}</article>`;
 }
 
 

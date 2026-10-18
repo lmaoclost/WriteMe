@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppRouter } from "../../app/router";
 import { useScriptorium } from "../../data/store";
 import type { Manuscript } from "../../domain/types";
-import { buildBookHtml } from "./buildBook";
+import { bookSections, buildBookHtml } from "./buildBook";
 import { defaultBindery } from "../../data/schema";
 
 // Real package shape: { EPub (class), default (fn), chapterDefaults, optionsDefaults }.
@@ -161,7 +161,7 @@ describe("buildBookHtml", () => {
       chapters: [{ id: "c1", heading: "Um", content: "x.", order: 0 }],
     };
     const html = buildBookHtml(book);
-    expect(html).toContain('<section class="front-matter book-title-page"><h1 class="book-title">T</h1>');
+    expect(html).toContain('<section class="front-matter book-title-page display"><h1 class="book-title">T</h1>');
     expect(html).toContain('<p class="book-author">A</p>');
     expect(html.indexOf("book-title-page")).toBeLessThan(html.indexOf("front-matter toc"));
     expect(html.indexOf('<h1 class="book-title">')).toBeLessThan(html.indexOf('<section class="chapter"'));
@@ -321,6 +321,140 @@ describe("buildBookHtml v2", () => {
     expect(on).toContain("counter(page)");
     const off = buildBookCss({ ...defaultBindery()!, pageNumbers: false }, ctx);
     expect(off).not.toContain("counter(page)");
+  });
+});
+
+describe("buildBookHtml front matter + parts", () => {
+  const plainBook = (): Manuscript => ({
+    id: "b3", projectId: "p3", title: "A Coroa e o Rio", author: "Renan",
+    bindery: { ...defaultBindery()!, frontMatter: { halfTitle: false, copyright: false, romanNumerals: false } },
+    chapters: [{ id: "c1", heading: "Um", content: "corpo um.", order: 0 }],
+  });
+
+  const frontMatterBook = (
+    frontMatter: NonNullable<NonNullable<Manuscript["bindery"]>["frontMatter"]>,
+    extra: Partial<NonNullable<Manuscript["bindery"]>> = {},
+  ): Manuscript => ({
+    id: "b3", projectId: "p3", title: "A Coroa e o Rio", author: "Renan",
+    bindery: { ...defaultBindery()!, ...extra, frontMatter },
+    chapters: [
+      { id: "c1", heading: "Um", content: "corpo um.", order: 0 },
+      { id: "c2", heading: "Dois", content: "corpo dois.", order: 1 },
+    ],
+  });
+
+  // stored order interleaves parts and ungrouped chapters on purpose:
+  // render order must regroup so ungrouped chapters come first
+  const mixedBook = (): Manuscript => ({
+    id: "b4", projectId: "p3", title: "Aldoria", author: "Renan",
+    bindery: { ...defaultBindery()!, frontMatter: { halfTitle: false, copyright: false, romanNumerals: false } },
+    parts: [
+      { id: "p1", title: "Primeira parte", order: 0 },
+      { id: "p2", title: "Segunda parte", order: 1 },
+    ],
+    chapters: [
+      { id: "c1", heading: "Um", content: "corpo.", order: 0 },
+      { id: "c2", heading: "Dois", content: "corpo.", order: 1, partId: "p2" },
+      { id: "c3", heading: "Três", content: "corpo.", order: 2, partId: "p1" },
+      { id: "c4", heading: "Quatro", content: "corpo.", order: 3 },
+    ],
+  });
+
+  it("renders the canonical front matter order", () => {
+    const html = buildBookHtml(frontMatterBook(
+      { halfTitle: true, copyright: true, romanNumerals: true, copyrightInfo: { year: "2026", holder: "Ana" }, epigraph: "*Leve, como fumo.*" },
+      { dedication: "Ao rio." },
+    ));
+    const order = ["half-title", "title-page", "copyright", "dedication", "epigraph", "front-matter toc"]
+      .map((cls) => html.indexOf(cls));
+    expect(order.every((i) => i >= 0)).toBe(true);
+    expect(order).toEqual([...order].sort((a, b) => a - b));
+    expect(html).toContain("© 2026 Ana");
+    expect(html).toContain("All rights reserved.");
+    expect(html).toContain('class="front-matter half-title display"');
+  });
+
+  it("copyright omits empty optional lines", () => {
+    const html = buildBookHtml(frontMatterBook(
+      { halfTitle: false, copyright: true, romanNumerals: false, copyrightInfo: { holder: "Ana" } },
+    ));
+    expect(html).not.toContain("ISBN");
+    expect(html).not.toContain("edition");
+    expect(html).not.toContain("©");
+    expect(html).toContain("Cover and interior set in Scriptorium.");
+  });
+
+  it("a chapter whose part no longer exists renders with the ungrouped ones", () => {
+    const book = plainBook();
+    book.chapters.push({ id: "c9", heading: "Órfã", content: "corpo.", order: 1, partId: "deleted-part" });
+    const html = buildBookHtml(book);
+    expect(html).toContain('<section class="chapter" data-ch="2"><h2><span class="ch-num">2</span>Órfã</h2>');
+  });
+
+  it("a part opens its own divider and groups its chapters", () => {
+    const html = buildBookHtml(mixedBook());
+    expect(html).toContain('<section class="part-divider" data-part="1"><p class="part-num">1</p><h1 class="part-title">Primeira parte</h1>');
+    expect(html.indexOf("Primeira parte")).toBeLessThan(html.indexOf("data-ch="));
+  });
+
+  it("front matter off and no parts keeps the pre-parts markup", () => {
+    const html = buildBookHtml(plainBook());
+    expect(html).not.toContain("part-divider");
+    expect(html).not.toContain("half-title");
+    expect(html).not.toContain("copyright");
+    expect(html).toContain('<section class="chapter" data-ch="1">');
+  });
+
+  it("data-ch and the TOC follow the render order: ungrouped chapters first, then each part's chapters", () => {
+    const html = buildBookHtml(mixedBook());
+    // flat numbering over the render order, not per part
+    const renderOrder = ["Um", "Quatro", "Três", "Dois"];
+    renderOrder.forEach((heading, i) => {
+      expect(html).toContain(`<section class="chapter" data-ch="${i + 1}"><h2><span class="ch-num">${i + 1}</span>${heading}</h2>`);
+    });
+    const rows = [
+      '<li class="toc-row"><span class="toc-num">1</span><span>Um</span>',
+      '<li class="toc-row"><span class="toc-num">2</span><span>Quatro</span>',
+      '<li class="toc-row toc-part"><span class="toc-num">1</span><span>Primeira parte</span>',
+      '<li class="toc-row"><span class="toc-num">3</span><span>Três</span>',
+      '<li class="toc-row toc-part"><span class="toc-num">2</span><span>Segunda parte</span>',
+      '<li class="toc-row"><span class="toc-num">4</span><span>Dois</span>',
+    ];
+    const positions = rows.map((r) => html.indexOf(r));
+    expect(positions.every((p) => p >= 0)).toBe(true);
+    expect(positions).toEqual([...positions].sort((a, b) => a - b));
+  });
+
+  it("bookSections is the render order both the markup and buildBookCss read", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const book = mixedBook();
+    const sections = bookSections(book);
+    expect(sections.map((s) => s.part?.title ?? null)).toEqual([null, "Primeira parte", "Segunda parte"]);
+    expect(sections.flatMap((s) => s.chapters).map((c) => c.heading)).toEqual(["Um", "Quatro", "Três", "Dois"]);
+    const css = buildBookCss({ ...defaultBindery()!, runningHead: true, runningHeadMode: "chapter" }, {
+      title: book.title,
+      chapters: sections.flatMap((s) => s.chapters).map((c) => ({ heading: c.heading, partId: c.partId })),
+      parts: book.parts ?? [],
+      pageCount: 200,
+    });
+    expect(css).toContain('@page ch1 { @top-center { content: "Um";');
+    expect(css).toContain('@page ch2 { @top-center { content: "Quatro";');
+    expect(css).toContain('@page ch3 { @top-center { content: "Três";');
+    expect(css).toContain('@page ch4 { @top-center { content: "Dois";');
+  });
+
+  it("display pages carry no folio; the TOC keeps the roman numeral", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const ctx = { title: "Aldoria", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
+    const on = buildBookCss({ ...defaultBindery()!, pageNumbers: true, frontMatter: { halfTitle: true, copyright: true, romanNumerals: true } }, ctx);
+    expect(on).toContain("@page display { @bottom-center { content: none; } @top-center { content: none; } }");
+    expect(on).toContain(".print-book .front-matter.display { page: display; }");
+    expect(on).toContain("@page frontmatter { @bottom-center { content: counter(page, lower-roman); } }");
+    expect(on).toContain(".print-book .front-matter { page: frontmatter; }");
+    const noRoman = buildBookCss({ ...defaultBindery()!, pageNumbers: true, frontMatter: { halfTitle: true, copyright: true, romanNumerals: false } }, ctx);
+    expect(noRoman).not.toContain("@page frontmatter");
+    const noFolio = buildBookCss({ ...defaultBindery()!, pageNumbers: false, frontMatter: { halfTitle: true, copyright: true, romanNumerals: true } }, ctx);
+    expect(noFolio).not.toContain("@page frontmatter");
   });
 });
 

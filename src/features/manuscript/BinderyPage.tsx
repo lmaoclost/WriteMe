@@ -10,7 +10,7 @@ import { BIND_HEAD_MODES, defaultBindery } from "../../data/schema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field } from "../../ui/Field";
 import { BOARD_HEADER, BOARD_ACTIONS, BOARD_ACTION_BTN, BOARD_PANEL } from "../../ui/board";
-import { buildBookHtml } from "./buildBook";
+import { buildBookHtml, bookSections } from "./buildBook";
 
 export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
   const manuscript = useScriptorium(useShallow((s) =>
@@ -51,7 +51,8 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
   const css = useMemo(
     () => (manuscript ? buildBookCss(b, {
       title: manuscript.title,
-      chapters: manuscript.chapters.map((c) => ({ heading: c.heading, partId: c.partId })),
+      // render order keeps the chN named pages in step with data-ch
+      chapters: bookSections(manuscript).flatMap((s) => s.chapters).map((c) => ({ heading: c.heading, partId: c.partId })),
       parts: manuscript.parts ?? [],
       pageCount: estimatePageCount(manuscript),
     }) : ""),

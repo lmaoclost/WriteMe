@@ -326,4 +326,22 @@ describe("Bindery v2 controls", () => {
     expect(book).toContain('<section class="chapter" data-ch="2">');
     expect(book).not.toContain("running-head");
   });
+
+  it("named pages follow the part render order, not the stored chapter order", () => {
+    const id = seedBook();
+    act(() => { store().addChapter(id, "Rio fundo"); });
+    act(() => { store().addChapter(id, "O Tribunal"); });
+    act(() => { store().addPart(id, "Parte um"); });
+    const m = store().manuscripts[0];
+    const rio = m.chapters.find((c) => c.heading === "Rio fundo")!;
+    // middle chapter joins the part, so render order moves it after the ungrouped ones
+    act(() => { store().setChapterPart(rio.id, m.parts![0].id); });
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    const styleTag = Array.from(document.querySelectorAll("style")).find((t) => t.textContent?.includes("@page ch2"));
+    expect(styleTag?.textContent).toContain('content: "O Tribunal"');
+    expect(styleTag?.textContent).not.toContain('@page ch2 { @top-center { content: "Rio fundo"');
+    const book = screen.getByTestId("bindery-book").innerHTML;
+    expect(book).toContain('<section class="chapter" data-ch="2"><h2><span class="ch-num">2</span>O Tribunal</h2>');
+    expect(book).toContain('<section class="chapter" data-ch="3"><h2><span class="ch-num">3</span>Rio fundo</h2>');
+  });
 });

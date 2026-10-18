@@ -49,6 +49,19 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
       `@page :right { margin-left: ${inches(m.inner)}; margin-right: ${inches(m.outer)}; }`,
     );
   }
+  // display pages (half title, title, copyright, dedication, epigraph) carry
+  // no folio and no running head; other front matter (the TOC) keeps the
+  // roman folio when roman numerals are on
+  rules.push(
+    `@page display { @bottom-center { content: none; } @top-center { content: none; } }`,
+    `.print-book .front-matter.display { page: display; }`,
+  );
+  if (config.frontMatter?.romanNumerals && config.pageNumbers) {
+    rules.push(
+      `@page frontmatter { @bottom-center { content: counter(page, lower-roman); } }`,
+      `.print-book .front-matter { page: frontmatter; }`,
+    );
+  }
   rules.push(`.print-book { font-family: ${config.font}; font-size: ${t.bodyPt}pt; line-height: ${t.leading / t.bodyPt}; }`);
   rules.push(
     `.print-book p { margin: 0; text-align: ${t.justify ? "justify" : "left"}; widows: 2; orphans: 2; }`,
