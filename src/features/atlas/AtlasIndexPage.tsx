@@ -74,7 +74,10 @@ export function AtlasIndexPage() {
   return (
     <div className="px-7 py-6 flex flex-col gap-[18px] overflow-y-auto h-full">
       <header className="flex items-center justify-between gap-3">
-        <h1 className="m-0 text-[22px]">Atlas</h1>
+        <div className="grid gap-1">
+          <h1 className="m-0 text-[22px]">Atlas</h1>
+          <p className="m-0 text-slate text-sm">Map regions and drop pins for places.</p>
+        </div>
         <Button onClick={() => setCreating(true)}>New atlas</Button>
       </header>
       {projectAtlases.length === 0 ? (

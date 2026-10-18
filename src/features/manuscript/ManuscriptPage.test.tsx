@@ -71,15 +71,15 @@ describe("ManuscriptPage books", () => {
     const projectId = seedProject();
     seedBook(projectId, { chapters: [{ heading: "Prólogo", content: "Uma noite." }] });
     render(manuscriptRoute(projectId));
-    expect(screen.getByRole("button", { name: "Novo livro" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "New book" })).toBeInTheDocument();
     expect(screen.queryByText(/sub-projeto 4/i)).not.toBeInTheDocument();
   });
 
   it("shows the empty-state copy and creates the first book", () => {
     const projectId = seedProject();
     render(manuscriptRoute(projectId));
-    expect(screen.getByText("Comece o seu livro — crie o primeiro.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Novo livro" }));
+    expect(screen.getByText("Start your book — create the first one.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "New book" }));
     const books = projectBooks(projectId);
     expect(books).toHaveLength(1);
     expect(books[0].title).toBe("Untitled Manuscript");
@@ -113,9 +113,9 @@ describe("ManuscriptPage books", () => {
       chapters: [{ heading: "Capítulo A", content: "Aqui." }],
     });
     render(manuscriptRoute(projectId));
-    const select = screen.getByLabelText("Livro");
+    const select = screen.getByLabelText("Book");
     expect(select).toHaveTextContent("Cantar de Vellmora"); // most recent book
-    await pickSelectOptionSync(() => screen.getByLabelText("Livro"), "Segundo Livro");
+    await pickSelectOptionSync(() => screen.getByLabelText("Book"), "Segundo Livro");
     expect(screen.queryByRole("heading", { name: "Cantar de Vellmora" })).toBeNull();
     expect(screen.getByLabelText("Manuscript title")).toHaveValue("Segundo Livro");
     expect(screen.getByLabelText("Chapter title")).toHaveValue("Capítulo A");
@@ -149,7 +149,7 @@ describe("ManuscriptPage books", () => {
     seedBook(projectId, { title: "B" });
     render(manuscriptRoute(projectId));
     fireEvent.change(screen.getByLabelText("Manuscript title"), { target: { value: "A editado" } });
-    pickSelectOptionSync(() => screen.getByLabelText("Livro"), "B");
+    pickSelectOptionSync(() => screen.getByLabelText("Book"), "B");
     expect(screen.getByLabelText("Manuscript title")).toHaveValue("B");
     expect(projectBooks(projectId).find((m) => m.title === "A editado")).toBeTruthy();
     act(() => {
@@ -164,7 +164,7 @@ describe("ManuscriptPage books", () => {
     seedBook(projectId, { title: "A", chapters: [{ heading: "Um" }] });
     seedBook(projectId, { title: "B", chapters: [{ heading: "Dois" }] });
     render(manuscriptRoute(projectId));
-    pickSelectOptionSync(() => screen.getByLabelText("Livro"), "B");
+    pickSelectOptionSync(() => screen.getByLabelText("Book"), "B");
     fireEvent.click(screen.getByRole("button", { name: "Excluir livro" }));
     expect(screen.getByRole("button", { name: "Confirmar?" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Confirmar?" }));
@@ -173,7 +173,7 @@ describe("ManuscriptPage books", () => {
     fireEvent.click(screen.getByRole("button", { name: "Excluir livro" }));
     fireEvent.click(screen.getByRole("button", { name: "Confirmar?" }));
     expect(projectBooks(projectId)).toHaveLength(0);
-    expect(screen.getByText("Comece o seu livro — crie o primeiro.")).toBeInTheDocument();
+    expect(screen.getByText("Start your book — create the first one.")).toBeInTheDocument();
   });
 
   it("resets the book delete confirmation after 3s", () => {

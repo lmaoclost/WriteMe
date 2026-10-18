@@ -148,7 +148,10 @@ export function BinderyIndex({ projectId }: { projectId: string }) {
   return (
     <div className="grid grid-rows-[auto_1fr] h-full" data-testid="bindery-index">
       <header className={BOARD_HEADER}>
-        <h1 className="bl-title font-display text-[1.375rem] text-parchment-strong m-0">Publishing</h1>
+        <div className="grid gap-1">
+          <h1 className="bl-title font-display text-[1.375rem] text-parchment-strong m-0">Publishing</h1>
+          <p className="text-slate text-sm m-0">Trim the manuscript for export.</p>
+        </div>
       </header>
       {manuscripts.length === 0 ? (
         <p className="text-slate text-[0.9375rem] mt-2">

@@ -137,9 +137,11 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
     return (
       <div className="grid grid-rows-[auto_auto_1fr] h-full min-h-0">
         <div className="flex flex-col items-center justify-center gap-3.5 p-6">
-          <p className="m-0 text-parchment-dim text-sm">Comece o seu livro — crie o primeiro.</p>
+          <h1 className="m-0 font-display text-[22px] font-semibold text-parchment-strong">Manuscript</h1>
+          <p className="m-0 text-slate text-sm">Write the chapters.</p>
+          <p className="m-0 text-parchment-dim text-sm">Start your book — create the first one.</p>
           <Button onClick={createBook}>
-            Novo livro
+            New book
           </Button>
         </div>
       </div>
@@ -153,7 +155,7 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
       <header className="flex items-center gap-2.5 px-4 pt-3">
         {books.length > 1 ? (
           <Select value={book.id} onValueChange={(v) => onBookSelected(v)}>
-            <SelectTrigger aria-label="Livro" className="min-w-[180px] justify-between rounded-lg border-line bg-night-2 px-2 py-1.5 text-[13px] text-parchment hover:border-gold data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
+            <SelectTrigger aria-label="Book" className="min-w-[180px] justify-between rounded-lg border-line bg-night-2 px-2 py-1.5 text-[13px] text-parchment hover:border-gold data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
             <SelectContent className="border-line bg-night text-parchment">
               {books.map((m) => <SelectItem key={m.id} value={m.id} className="text-[13px] focus:bg-[#24233f] focus:text-parchment">{m.title}</SelectItem>)}
             </SelectContent>
@@ -163,7 +165,7 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
         )}
         <div className="flex gap-2 ml-auto">
           <Button onClick={createBook}>
-            Novo livro
+            New book
           </Button>
           <button
             type="button"

@@ -368,7 +368,7 @@ describe("EPUB export", () => {
       const created = state.addManuscript(projectId, "Açúcar & Sal");
       state.addChapter(created.id, "Um");
     });
-    await pickSelectOptionSync(() => screen.getByRole("combobox", { name: "Livro" }), "Açúcar & Sal");
+    await pickSelectOptionSync(() => screen.getByRole("combobox", { name: "Book" }), "Açúcar & Sal");
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(2));
     expect(anchorDownload).toBe("acucar-sal.epub");

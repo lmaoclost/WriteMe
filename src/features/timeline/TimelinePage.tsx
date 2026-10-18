@@ -65,6 +65,10 @@ export function TimelinePage({ projectId }: { projectId: string }) {
 
   return (
     <div className="h-full overflow-y-auto py-[22px] px-7 max-w-[920px] max-[720px]:p-[18px] max-[720px]:px-3.5">
+      <div className="grid gap-1 mb-4">
+        <h1 className="m-0 font-display text-[22px] font-semibold text-parchment-strong">Chronology</h1>
+        <p className="m-0 text-slate text-sm">Dated events in world order.</p>
+      </div>
       <div className="flex flex-wrap items-center gap-1.5 mb-5">
         {calendar?.era ? <span className="timeline-era font-mono text-[11px] tracking-[0.06em] uppercase text-slate border border-line rounded-full py-[3px] px-2.5" data-testid="timeline-era">{calendar.era}</span> : null}
         <button
