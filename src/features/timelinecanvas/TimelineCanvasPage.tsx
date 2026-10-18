@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
@@ -12,6 +12,47 @@ import { BOARD_HEADER, BOARD_NAME_INPUT, BOARD_ACTIONS, BOARD_ACTION_BTN, BOARD_
 import type { TimelineWire, TimelineBead } from "../../domain/types";
 import { withCurrentColor } from "../../ui/colors";
 import { useBoardNotesHotkey } from "../../ui/boardNotes";
+import { useRafCallback } from "../../ui/useRaf";
+
+const TLSegmentsLayer = memo(function TLSegmentsLayer({ segments, handleSegDown }: {
+  segments: TimelineWire["segments"];
+  handleSegDown(g: TimelineWire["segments"][number], e: React.PointerEvent): void;
+}) {
+  return (
+    <>
+      {segments.map((g) => (
+        <g key={g.id} data-testid="tl-seg" className="tl-seg" onPointerDown={(e) => handleSegDown(g, e)}>
+          <line x1={g.fromX} y1={200} x2={g.toX} y2={200} stroke={g.lineColor} strokeWidth={4} />
+          <text x={(g.fromX + g.toX) / 2} y={186} className="tl-seg-label text-sm font-display" fill={g.lineColor} textAnchor="middle">{g.label}</text>
+        </g>
+      ))}
+    </>
+  );
+});
+
+const TLBeadsLayer = memo(function TLBeadsLayer({ beads, handleBeadDown, handleBeadDoubleClick }: {
+  beads: TimelineBead[];
+  handleBeadDown(b: TimelineBead, e: React.PointerEvent): void;
+  handleBeadDoubleClick(b: TimelineBead): void;
+}) {
+  return (
+    <>
+      {beads.map((b) => (
+        <g key={b.id} data-testid="tl-bead" className="tl-bead"
+          onPointerDown={(e) => handleBeadDown(b, e)}
+          onDoubleClick={() => handleBeadDoubleClick(b)}
+          transform={`translate(${b.x}, ${b.y})`}>
+          {b.entryId ? <title>Abre no codex</title> : null}
+          <line x1={0} y1={0} x2={0} y2={200 - b.y} className="tl-bead-stem [stroke:var(--line)] [stroke-width:1.5]" />
+          <circle cx={0} cy={0} r={8} fill={b.color} className="tl-bead-dot cursor-pointer" />
+          <text x={0} y={-18} className="tl-bead-label text-sm fill-parchment font-semibold" textAnchor="middle">{b.label}</text>
+          {b.dateText ? <text x={0} y={-34} className="tl-bead-date text-[11px] fill-gold font-mono" textAnchor="middle">{b.dateText}</text> : null}
+          {b.summary ? <text x={0} y={14} className="tl-bead-summary text-[0.6875rem] fill-slate" textAnchor="middle">{b.summary.slice(0, 40)}</text> : null}
+        </g>
+      ))}
+    </>
+  );
+});
 
 
 export const BEAD_PRESET_COLORS = [
@@ -33,12 +74,18 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
   const view = useRef({ s: 0.4, panX: 100, panY: 0 });
   const viewTick = useRef(0);
   const [, setDraw] = useState(0);
-  const markDirty = () => { viewTick.current++; setDraw((t) => t + 1); };
+  // markDirty coalesced: a pointermove/wheel burst re-renders once per frame
+  const markDirty = useRafCallback(() => { viewTick.current++; setDraw((t) => t + 1); });
   const [selectedBeadId, setSelectedBeadId] = useState<string | null>(null);
   const [notesOpen, setNotesOpen] = useState(false);
   useBoardNotesHotkey(notesOpen, setNotesOpen);
   const beadDrag = useRef<{ id: string; sx: number; beadX: number; startBeadY?: number } | null>(null);
   const pan = useRef<{ x: number; basePanX: number; y: number; basePanY: number } | null>(null);
+
+  // Coalesced drag: at most one moveBead per frame; pointerup flushes.
+  const moveBeadRaf = useRafCallback((id: string, x: number, y: number) => {
+    useScriptorium.getState().moveBead(id, x, y);
+  });
 
   useEffect(() => {
     if (!timeline) pushToast("error", "Timeline not found.");
@@ -47,19 +94,30 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
   const fitToContentNow = () => {
     const el = stageRef.current;
     if (!el || !el.clientWidth || !timeline) return;
-    const xs: number[] = [];
-    const ys: number[] = [];
-    for (const b of timeline.beads) { xs.push(b.x); ys.push(b.y); }
-    for (const g of timeline.segments) { xs.push(g.fromX, g.toX); ys.push(200); }
-    if (xs.length === 0) return; // keep the default view for an empty wire
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const b of timeline.beads) {
+      if (b.x < minX) minX = b.x;
+      if (b.x > maxX) maxX = b.x;
+      if (b.y < minY) minY = b.y;
+      if (b.y > maxY) maxY = b.y;
+    }
+    for (const g of timeline.segments) {
+      if (g.fromX < minX) minX = g.fromX;
+      if (g.toX < minX) minX = g.toX;
+      if (g.fromX > maxX) maxX = g.fromX;
+      if (g.toX > maxX) maxX = g.toX;
+    }
+    if (minX === Infinity) return; // keep the default view for an empty wire
     const PAD = 80;
     const WIRE_Y = 200;
-    const minX = Math.min(...xs) - PAD, maxX = Math.max(...xs) + PAD;
-    const minY = Math.min(...ys) - PAD, maxY = Math.max(WIRE_Y, ...ys) + PAD;
+    minY = Math.min(minY, WIRE_Y);
+    maxY = Math.max(maxY, WIRE_Y);
+    minX -= PAD; maxX += PAD; minY -= PAD; maxY += PAD;
     const s = Math.min(1, Math.max(0.1, Math.min(el.clientWidth / (maxX - minX), el.clientHeight / (maxY - minY))));
     const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
     view.current = { s, panX: el.clientWidth / 2 - cx * s, panY: el.clientHeight / 2 - cy * s };
-    markDirty();
+    markDirty();   // schedule the render
+    markDirty.flush(); // single-shot fit: commit synchronously
   };
 
   // fit once per timeline mount — content must be ON-SCREEN (beads sit above
@@ -77,7 +135,54 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
     return { s, panX: cx - relX * s, panY: cy - relY * s };
   };
 
+  // Wheel zoom on a native non-passive listener; view ref is the sync source
+  // of truth, markDirty coalesces the re-render.
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const handler = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+      const s = Math.min(8, Math.max(0.1, view.current.s * (e.deltaY < 0 ? 1.1 : 1 / 1.1)));
+      const relX = (sx - view.current.panX) / view.current.s;
+      const relY = (sy - view.current.panY) / view.current.s;
+      view.current = { s, panX: sx - relX * s, panY: sy - relY * s };
+      markDirty();
+    };
+    el.addEventListener("wheel", handler, { passive: false });
+    return () => el.removeEventListener("wheel", handler);
+  }, [markDirty]);
+
   if (!timeline) return null;
+
+  // Stable delegates for the memoized layers (resolved at event time).
+  const layerHandlersRef = useRef<{
+    beadDown(b: TimelineBead, e: React.PointerEvent): void;
+    beadDoubleClick(b: TimelineBead): void;
+    segDown(g: TimelineWire["segments"][number], e: React.PointerEvent): void;
+  } | null>(null);
+  layerHandlersRef.current = {
+    beadDown: (b, e) => {
+      if (e.button !== 0) return;
+      e.stopPropagation();
+      setSelectedBeadId(b.id);
+      beadDrag.current = { id: b.id, sx: e.clientX, beadX: b.x, startBeadY: b.y };
+      pushTLHistory(timelineId);
+    },
+    beadDoubleClick: (b) => {
+      if (!b.entryId) return;
+      navigate(`/p/${timeline.projectId}/entries?e=${b.entryId}`);
+    },
+    segDown: (g, e) => {
+      if (e.button !== 0) return;
+      e.stopPropagation();
+      setSelectedBeadId(g.id);
+    },
+  };
+  const handleBeadDown = useCallback((b: TimelineBead, e: React.PointerEvent) => layerHandlersRef.current?.beadDown(b, e), []);
+  const handleBeadDoubleClick = useCallback((b: TimelineBead) => layerHandlersRef.current?.beadDoubleClick(b), []);
+  const handleSegDown = useCallback((g: TimelineWire["segments"][number], e: React.PointerEvent) => layerHandlersRef.current?.segDown(g, e), []);
 
   return (
     <div className="grid grid-rows-[auto_1fr] h-full" data-testid="timelinecanvas-page">
@@ -91,11 +196,11 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
         <div className={BOARD_ACTIONS}>
           <button type="button" aria-label="Undo" className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoTL(timelineId)}>↶</button>
           <button type="button" aria-label="Redo" className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoTL(timelineId)}>↷</button>
-          <button type="button" aria-label="Zoom out" className={BOARD_ACTION_BTN} onClick={() => { view.current = zoomAt({ ...view.current }, 1 / 1.25, elWidth() / 2, elHeight() / 2); markDirty(); }}>−</button>
+          <button type="button" aria-label="Zoom out" className={BOARD_ACTION_BTN} onClick={() => { view.current = zoomAt({ ...view.current }, 1 / 1.25, elWidth() / 2, elHeight() / 2); markDirty.flush(); }}>−</button>
           <span className="text-slate text-xs font-mono self-center" data-testid="tlc-zoom">{Math.round(view.current.s * 100)}%</span>
-          <button type="button" aria-label="Zoom in" className={BOARD_ACTION_BTN} onClick={() => { view.current = zoomAt({ ...view.current }, 1.25, elWidth() / 2, elHeight() / 2); markDirty(); }}>+</button>
+          <button type="button" aria-label="Zoom in" className={BOARD_ACTION_BTN} onClick={() => { view.current = zoomAt({ ...view.current }, 1.25, elWidth() / 2, elHeight() / 2); markDirty.flush(); }}>+</button>
           <button type="button" className={BOARD_ACTION_BTN} onClick={() => fitToContentNow()}>Ajustar</button>
-          <button type="button" className={BOARD_ACTION_BTN} onClick={() => { pushTLHistory(timelineId); const el = stageRef.current; const x = el && el.clientWidth ? (el.clientWidth / 2 - view.current.panX) / view.current.s : 4000; const created = useScriptorium.getState().addBead(timelineId, { x, y: -60 }); if (created) { setSelectedBeadId(created.id); markDirty(); } }}>Add event</button>
+          <button type="button" className={BOARD_ACTION_BTN} onClick={() => { pushTLHistory(timelineId); const el = stageRef.current; const x = el && el.clientWidth ? (el.clientWidth / 2 - view.current.panX) / view.current.s : 4000; const created = useScriptorium.getState().addBead(timelineId, { x, y: -60 }); if (created) { setSelectedBeadId(created.id); markDirty.flush(); } }}>Add event</button>
           <button type="button" className={BOARD_ACTION_BTN} onClick={() => { pushTLHistory(timelineId); useScriptorium.getState().addSegment(timelineId, 1000, 3000, "New era"); }}>Add segment</button>
           <button type="button" aria-pressed={notesOpen} className={BOARD_ACTION_BTN} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
         </div>
@@ -118,7 +223,7 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
               const dx = (e.clientX - d.sx) / view.current.s;
               const rect = stageRef.current?.getBoundingClientRect();
               const y = rect ? (e.clientY - rect.top - view.current.panY) / view.current.s : d.startBeadY ?? 0;
-              useScriptorium.getState().moveBead(d.id, d.beadX + dx, y);
+              moveBeadRaf(d.id, d.beadX + dx, y);
               markDirty();
               return;
             }
@@ -128,18 +233,7 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
               markDirty();
             }
           }}
-          onPointerUp={() => { beadDrag.current = null; pan.current = null; markDirty(); }}
-          onWheel={(e: React.WheelEvent) => {
-            e.preventDefault();
-            const rect = stageRef.current?.getBoundingClientRect();
-            if (!rect) return;
-            const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
-            const s = Math.min(8, Math.max(0.1, view.current.s * (e.deltaY < 0 ? 1.1 : 1 / 1.1)));
-            const relX = (sx - view.current.panX) / view.current.s;
-            const relY = (sy - view.current.panY) / view.current.s;
-            view.current = { s, panX: sx - relX * s, panY: sy - relY * s };
-            markDirty();
-          }}
+          onPointerUp={() => { moveBeadRaf.flush(); beadDrag.current = null; pan.current = null; markDirty.flush(); }}
         >
           <div
             className="absolute bg-[radial-gradient(circle_at_25%_25%,#17162a,var(--ink)_65%)] shadow-[inset_0_0_0_1px_var(--line)]"
@@ -153,39 +247,8 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
             <svg data-testid="tl-wire-svg" className="edges-layer overflow-visible absolute left-2 top-2 w-full h-full pointer-events-none [&_.tl-bead]:pointer-events-auto [&_.tl-seg]:pointer-events-auto" width="100%" height="100%">
               {/* segments draw over the base wire */}
               <line data-testid="tl-wire-base" x1={0} y1={200} x2={20000} y2={200} className="tl-wire-base [stroke:var(--gold-dim)] [stroke-width:3]" />
-              {timeline.segments.map((g) => (
-                <g key={g.id} data-testid="tl-seg" className="tl-seg"
-                  onPointerDown={(e) => {
-                    if (e.button !== 0) return;
-                    e.stopPropagation();
-                    setSelectedBeadId(g.id);
-                  }}>
-                  <line x1={g.fromX} y1={200} x2={g.toX} y2={200} stroke={g.lineColor} strokeWidth={4} />
-                  <text x={(g.fromX + g.toX) / 2} y={186} className="tl-seg-label text-sm font-display" fill={g.lineColor} textAnchor="middle">{g.label}</text>
-                </g>
-              ))}
-              {timeline.beads.map((b) => (
-                <g key={b.id} data-testid="tl-bead" className="tl-bead"
-                  onPointerDown={(e) => {
-                    if (e.button !== 0) return;
-                    e.stopPropagation();
-                    setSelectedBeadId(b.id);
-                    beadDrag.current = { id: b.id, sx: e.clientX, beadX: b.x, startBeadY: b.y };
-                    pushTLHistory(timelineId);
-                  }}
-                  onDoubleClick={() => {
-                    if (!b.entryId) return;
-                    navigate(`/p/${timeline.projectId}/entries?e=${b.entryId}`);
-                  }}
-                  transform={`translate(${b.x}, ${b.y})`}>
-                  {b.entryId ? <title>Abre no codex</title> : null}
-                  <line x1={0} y1={0} x2={0} y2={200 - b.y} className="tl-bead-stem [stroke:var(--line)] [stroke-width:1.5]" />
-                  <circle cx={0} cy={0} r={8} fill={b.color} className="tl-bead-dot cursor-pointer" />
-                  <text x={0} y={-18} className="tl-bead-label text-sm fill-parchment font-semibold" textAnchor="middle">{b.label}</text>
-                  {b.dateText ? <text x={0} y={-34} className="tl-bead-date text-[11px] fill-gold font-mono" textAnchor="middle">{b.dateText}</text> : null}
-                  {b.summary ? <text x={0} y={14} className="tl-bead-summary text-[0.6875rem] fill-slate" textAnchor="middle">{b.summary.slice(0, 40)}</text> : null}
-                </g>
-              ))}
+              <TLSegmentsLayer segments={timeline.segments} handleSegDown={handleSegDown} />
+              <TLBeadsLayer beads={timeline.beads} handleBeadDown={handleBeadDown} handleBeadDoubleClick={handleBeadDoubleClick} />
             </svg>
           </div>
           {timeline.beads.length === 0 ? (
