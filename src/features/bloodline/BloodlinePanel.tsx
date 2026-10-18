@@ -325,6 +325,7 @@ function HousePanel({ bloodline, house, onSelect }: {
     pushToast("success", "Casa removida.");
     onSelect(null);
   };
+  const members = bloodline.persons.filter((p) => p.houseId === house.id);
   return (
     <div className="grid gap-3">
       <header className={BOARD_PANEL_HEAD}>
@@ -346,6 +347,21 @@ function HousePanel({ bloodline, house, onSelect }: {
         <input type="checkbox" checked={house.isMonarch} onChange={(e) => update({ isMonarch: e.target.checked })} />
         <span>Monarch House</span>
       </label>
+      <section className="border-t border-line mt-3.5 pt-2.5 grid gap-2">
+        <h3>Membros da casa</h3>
+        {members.length === 0 ? <p className="text-slate text-[13px] italic">Nenhum membro.</p> : null}
+        <ul className="titles-list list-none m-0 p-0 grid gap-1 [&_li]:flex [&_li]:items-center [&_li]:gap-2 [&_li]:text-[13px]">
+          {members.map((p) => (
+            <li key={p.id}>
+              <button
+                type="button"
+                className="bg-none border-0 text-parchment-dim text-[13px] py-0.5 cursor-pointer hover:text-gold"
+                onClick={() => onSelect(p.id)}
+              >{p.name || "Sem nome"}</button>
+            </li>
+          ))}
+        </ul>
+      </section>
       <p className="text-slate text-xs" aria-hidden="true">
         {bloodline.persons.length} {bloodline.persons.length === 1 ? "pessoa" : "pessoas"} · {bloodline.houses.length} {bloodline.houses.length === 1 ? "casa" : "casas"}
       </p>

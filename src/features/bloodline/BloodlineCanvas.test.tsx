@@ -170,4 +170,18 @@ describe("BloodlineCanvasPage", () => {
     const node = screen.getByTestId("person-node");
     expect(node.textContent).toContain("Casa Vellmor");
   });
+
+  it("house node shows its member count", () => {
+    const b = makeBloodline();
+    const h = store().addHouse(b.id, { x: 4300, y: 3700, name: "Casa Vellmor" })!;
+    const p1 = addPersonAt(b.id, 4000, 4000);
+    const p2 = addPersonAt(b.id, 4000, 4400, "Segundo");
+    act(() => {
+      store().updatePerson(p1.id, { houseId: h.id });
+      store().updatePerson(p2.id, { houseId: h.id });
+    });
+    mount(b);
+    const house = screen.getByTestId("house-node");
+    expect(house.textContent).toContain("2 membros");
+  });
 });

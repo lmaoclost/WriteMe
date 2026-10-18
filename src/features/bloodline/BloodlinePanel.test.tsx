@@ -138,6 +138,21 @@ describe("BloodlinePanel — house", () => {
     firePointer(screen.getByTestId("house-node"), "pointerdown", { clientX: 0, clientY: 0 });
     expect(screen.getByText("2 pessoas · 1 casa")).toBeInTheDocument();
   });
+
+  it("house panel lists the persons belonging to the house and focuses them", () => {
+    const { b, p1, p2 } = seed();
+    const h = store().addHouse(b.id, { x: 4200, y: 3700, name: "Casa Vellmor" })!;
+    act(() => {
+      store().updatePerson(p1, { houseId: h.id });
+      store().updatePerson(p2, { houseId: h.id });
+    });
+    mountCanvas(b.id);
+    firePointer(screen.getByTestId("house-node"), "pointerdown", { clientX: 0, clientY: 0 });
+    expect(screen.getByTestId("bl-panel").textContent).toContain("Membros da casa");
+    expect(screen.getByRole("button", { name: "Aldric" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Roderick" }));
+    expect(document.querySelector("[data-selected-id]")?.getAttribute("data-selected-id")).toBe(p2);
+  });
 });
 
 describe("BloodlinePanel — house picker", () => {

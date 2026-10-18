@@ -120,6 +120,7 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
             <EdgesLayer persons={bloodline.persons} selected={selectedId} />
             {bloodline.houses.map((h) => (
               <HouseNode key={h.id} house={h} selected={h.id === selectedId}
+                memberCount={bloodline.persons.filter((p) => p.houseId === h.id).length}
                 onSelect={() => selectNode(h.id)} />
             ))}
             {bloodline.persons.map((p) => (

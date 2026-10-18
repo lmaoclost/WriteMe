@@ -64,9 +64,10 @@ export function PersonNode({
   );
 }
 
-export function HouseNode({ house, selected, onSelect }: {
+export function HouseNode({ house, selected, memberCount, onSelect }: {
   house: BloodlineHouse;
   selected: boolean;
+  memberCount: number;
   onSelect(): void;
 }) {
   return (
@@ -81,6 +82,7 @@ export function HouseNode({ house, selected, onSelect }: {
     >
       <span className="house-name text-sm font-semibold text-parchment">{house.name}</span>
       {house.subtitle ? <span className="house-subtitle text-[11px] text-slate">{house.subtitle}</span> : null}
+      <span className="house-count text-[10px] text-slate" data-testid="house-member-count">{memberCount} {memberCount === 1 ? "membro" : "membros"}</span>
       {house.isMonarch ? <span className="house-crown absolute -top-4 right-1.5 text-gold" aria-hidden="true">♛</span> : null}
     </div>
   );
