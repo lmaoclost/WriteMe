@@ -41,6 +41,42 @@ describe("BloodlinePanel — person", () => {
     void p1; void c;
   });
 
+  it("blood-bond picker applies the person chosen from the pop", () => {
+    const { b, p1, p2 } = seed();
+    mountCanvas(b.id);
+    firePointer(screen.getAllByTestId("person-node")[0], "pointerdown", { clientX: 0, clientY: 0 });
+    fireEvent.click(screen.getByLabelText("Pick Blood bond (parent)"));
+    fireEvent.click(screen.getByRole("button", { name: "Roderick" }));
+    expect(store().bloodlines[0].persons.find((p) => p.id === p1)!.connectedTo).toBe(p2);
+  });
+
+  it("partner picker applies and clears the partnership", () => {
+    const { b, p1, p2 } = seed();
+    mountCanvas(b.id);
+    firePointer(screen.getAllByTestId("person-node")[0], "pointerdown", { clientX: 0, clientY: 0 });
+    fireEvent.click(screen.getByLabelText("Pick Partner"));
+    fireEvent.click(screen.getByRole("button", { name: "Roderick" }));
+    expect(store().bloodlines[0].persons.find((p) => p.id === p1)!.partnerId).toBe(p2);
+    fireEvent.click(screen.getByLabelText("Remove Partner"));
+    expect(store().bloodlines[0].persons.find((p) => p.id === p1)!.partnerId).toBeUndefined();
+  });
+
+  it("sibling picker applies the sibling relation", () => {
+    const { b, p1, p2 } = seed();
+    mountCanvas(b.id);
+    firePointer(screen.getAllByTestId("person-node")[0], "pointerdown", { clientX: 0, clientY: 0 });
+    fireEvent.click(screen.getByLabelText("Pick Sibling / Cousin of"));
+    fireEvent.click(screen.getByRole("button", { name: "Roderick" }));
+    expect(store().bloodlines[0].persons.find((p) => p.id === p1)!.siblingId).toBe(p2);
+  });
+
+  it("twin control is gone from the panel", () => {
+    const { b } = seed();
+    mountCanvas(b.id);
+    firePointer(screen.getAllByTestId("person-node")[0], "pointerdown", { clientX: 0, clientY: 0 });
+    expect(screen.queryByLabelText("Twin")).toBeNull();
+  });
+
   it("name commits via debounced field", async () => {
     vi.useFakeTimers();
     const { b, p1 } = seed();

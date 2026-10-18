@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useScriptorium } from "../../data/store";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { fileToDataUrl } from "../../data/image";
@@ -146,7 +146,7 @@ function PersonPanel({ bloodline, person, onSelect }: {
       <PersonField label="Birth Date" placeholder="e.g. 12th of Joremein, Year 250" value={person.birthDate ?? ""} onCommit={(v) => update({ birthDate: v.trim() || undefined })} />
       <PersonField label="Death Date" placeholder="e.g. 5th of Forun, Year 312" value={person.deathDate ?? ""} onCommit={(v) => update({ deathDate: v.trim() || undefined })} />
 
-      <section className="border-t border-line mt-3.5 pt-2.5 grid gap-2">
+      <section className="border-t border-line mt-3.5 pt-2.5 grid grid-cols-1 gap-2">
         <h3>Additional titles</h3>
         <ul className="titles-list list-none m-0 p-0 grid gap-1 [&_li]:flex [&_li]:justify-between [&_li]:items-center [&_li]:gap-2 [&_li]:text-[13px] [&_li]:text-parchment-dim [&_button]:bg-none [&_button]:border-0 [&_button]:text-slate [&_button]:text-xs">
           {person.additionalTitles.map((t, i) => (
@@ -159,7 +159,7 @@ function PersonPanel({ bloodline, person, onSelect }: {
         </ul>
         <div className="flex gap-1.5">
           <input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} aria-label="New title" placeholder="New title" className="flex-1 min-w-0 bg-ink border border-line rounded-sm text-parchment px-2 py-1.5" />
-          <Button kind="ghost" className="px-2 py-1 text-xs" aria-label="Add title" onClick={() => {
+          <Button kind="ghost" className="shrink-0 px-2 py-1 text-xs" aria-label="Add title" onClick={() => {
             const t = newTitle.trim();
             if (!t) return;
             update({ additionalTitles: [...person.additionalTitles, { title: t }] });
@@ -168,7 +168,7 @@ function PersonPanel({ bloodline, person, onSelect }: {
         </div>
       </section>
 
-      <section className="border-t border-line mt-3.5 pt-2.5 grid gap-2">
+      <section className="border-t border-line mt-3.5 pt-2.5 grid grid-cols-1 gap-2">
         <h3>Reigns / tenures</h3>
         <ul className="list-none m-0 p-0 grid gap-1.5">
           {person.tenures.map((t, i) => (
@@ -191,7 +191,7 @@ function PersonPanel({ bloodline, person, onSelect }: {
         }}>+ Tenure</Button>
       </section>
 
-      <section className="border-t border-line mt-3.5 pt-2.5 grid gap-2">
+      <section className="border-t border-line mt-3.5 pt-2.5 grid grid-cols-1 gap-2">
         <h3>Blood bonds</h3>
         <ConnectionPicker
           label="Blood bond (parent)"
@@ -229,22 +229,18 @@ function PersonPanel({ bloodline, person, onSelect }: {
             onPick={(id) => update({ siblingId: id })}
             onClear={() => update({ siblingId: undefined })}
           />
-          <Field label="Ordem de nascimento">
+          <Field label="Birth order">
             <input
               type="number"
-              aria-label="Ordem de nascimento"
+              aria-label="Birth order"
               value={person.birthOrder ?? ""}
               onChange={(e) => update({ birthOrder: e.target.value === "" ? undefined : Number(e.target.value) })}
           />
           </Field>
         </div>
-        <label className="flex gap-2 items-center text-[13px] text-parchment-dim">
-          <input type="checkbox" checked={person.isTwin} onChange={(e) => update({ isTwin: e.target.checked })} />
-          <span>Twin</span>
-        </label>
       </section>
 
-      <section className="border-t border-line mt-3.5 pt-2.5 grid gap-2">
+      <section className="border-t border-line mt-3.5 pt-2.5 grid grid-cols-1 gap-2">
         <h3>Badge</h3>
         <label className="flex gap-2 items-center text-[13px] text-parchment-dim">
           <input type="checkbox" checked={person.showBadge} onChange={(e) => update({ showBadge: e.target.checked, ...(e.target.checked ? {} : { badgeText: person.badgeText }) })} />
@@ -273,22 +269,25 @@ function ConnectionPicker({ label, persons, currentId, onPick, onClear }: {
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const boxRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    const onClick = () => setOpen(false);
+    const onPointerDown = (e: PointerEvent) => {
+      if (!boxRef.current?.contains(e.target as Node)) setOpen(false);
+    };
     document.addEventListener("keydown", onKey);
-    document.addEventListener("click", onClick, { capture: true });
+    document.addEventListener("pointerdown", onPointerDown, { capture: true });
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.removeEventListener("click", onClick, { capture: true });
+      document.removeEventListener("pointerdown", onPointerDown, { capture: true });
     };
   }, [open]);
   const current = useMemo(() => persons.find((p) => p.id === currentId), [persons, currentId]);
   const q = query.trim().toLowerCase();
   const matches = persons.filter((p) => p.name.toLowerCase().includes(q)).slice(0, 8);
   return (
-    <div className="relative flex flex-col gap-1.5 connection-picker">
+    <div ref={boxRef} className="relative flex flex-col gap-1.5 connection-picker">
       <span className="field-label text-xs font-semibold uppercase tracking-[0.08em] text-slate">{label}</span>
       <div className="flex items-center gap-2">
         {current ? (
@@ -353,7 +352,7 @@ function HousePanel({ bloodline, house, onSelect }: {
         <input type="checkbox" checked={house.isMonarch} onChange={(e) => update({ isMonarch: e.target.checked })} />
         <span>Monarch House</span>
       </label>
-      <section className="border-t border-line mt-3.5 pt-2.5 grid gap-2">
+      <section className="border-t border-line mt-3.5 pt-2.5 grid grid-cols-1 gap-2">
         <h3>House members</h3>
         {members.length === 0 ? <p className="text-slate text-[13px] italic">No members yet.</p> : null}
         <ul className="titles-list list-none m-0 p-0 grid gap-1 [&_li]:flex [&_li]:items-center [&_li]:gap-2 [&_li]:text-[13px]">
