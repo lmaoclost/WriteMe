@@ -44,6 +44,16 @@ describe("BinderyPage", () => {
     expect(screen.getByTestId("bindery-book").innerHTML).toContain("Contents");
   });
 
+  it("keeps hook order stable when the manuscript is removed while mounted", () => {
+    const id = seedBook();
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    expect(screen.getByTestId("bindery-page")).toBeInTheDocument();
+    expect(() =>
+      act(() => { store().deleteManuscript(id); }),
+    ).not.toThrow();
+    expect(screen.queryByTestId("bindery-page")).not.toBeInTheDocument();
+  });
+
   it("font select updates bindery + preview font", async () => {
     const id = seedBook();
     render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);

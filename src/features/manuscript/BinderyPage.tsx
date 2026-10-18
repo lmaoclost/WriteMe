@@ -28,13 +28,16 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
     return () => { window.cancelAnimationFrame(frame); window.clearTimeout(stop); };
   }, [printing]);
 
-  if (!manuscript) return null;
-
-  const b = manuscript.bindery ?? {
-    font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: false,
-  };
+  const b = useMemo(
+    () => manuscript?.bindery ?? {
+      font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: false,
+    },
+    [manuscript],
+  );
   const set = (patch: Partial<NonNullable<typeof b>>) => useScriptorium.getState().setBindery(manuscriptId, patch);
-  const html = useMemo(() => buildBookHtml(manuscript), [manuscript]);
+  const html = useMemo(() => (manuscript ? buildBookHtml(manuscript) : ""), [manuscript]);
+
+  if (!manuscript) return null;
 
   return (
     <div className="bindery-page grid grid-rows-[auto_1fr] h-full" data-testid="bindery-page">
