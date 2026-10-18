@@ -194,7 +194,7 @@ describe("carve mode", () => {
     expect(parent.points[4]).toEqual({ x: 0.2, y: 0.8 });
     expect(parent.points[5]).toEqual({ x: 1, y: 0.8 });
     expect(parent.points[6]).toEqual({ x: 1, y: 0.2 });
-    expect(store().toasts[store().toasts.length - 1].message).toBe("Região recortada — nomeie.");
+    expect(store().toasts[store().toasts.length - 1].message).toBe("Region carved — name it.");
     expect(container.querySelector("polygon.carve-preview")).toBeNull();
     expect(container.querySelector(".atlas-editor")?.getAttribute("data-tool")).toBe("select");
   });
@@ -235,7 +235,7 @@ describe("carve mode", () => {
     act(() => {
       fireEvent.keyDown(document, { key: "Enter" });
     });
-    expect(store().toasts.some((t) => t.kind === "error" && t.message === "Mova as extremidades para a borda do Estado.")).toBe(true);
+    expect(store().toasts.some((t) => t.kind === "error" && t.message === "Move the endpoints to the parent region's edge.")).toBe(true);
     expect(store().atlases[0].regions).toHaveLength(1); // nothing committed
   });
 
@@ -259,7 +259,7 @@ describe("carve mode", () => {
     act(() => {
       fireEvent.keyDown(document, { key: "Enter" });
     });
-    expect(store().toasts.some((t) => t.kind === "error" && t.message === "Mova as extremidades para a borda do Estado.")).toBe(true);
+    expect(store().toasts.some((t) => t.kind === "error" && t.message === "Move the endpoints to the parent region's edge.")).toBe(true);
   });
 
   it("Escape clears preview and draw state but the carve mode stays armed", () => {
@@ -287,7 +287,7 @@ describe("carve mode", () => {
     expect(container.querySelector("polygon.carve-preview")).toBeTruthy();
     const before = store().atlases[0].regions;
     expect(before).toHaveLength(1);
-    pickButton("Encaixe");
+    pickButton("Fit");
     expect(container.querySelector("polygon.carve-preview")).toBeNull();
     expect(container.querySelectorAll(".carve-snap-marker")).toHaveLength(0);
     expect(parentPoly(container).classList.contains("carve-parent")).toBe(false);
@@ -307,7 +307,7 @@ describe("neighbor mode", () => {
       { points: PARENT, color: PARENT_COLOR, label: "Estado" },
       { points: DECOY, color: "#654321", label: "Longe" },
     ]);
-    const { container } = setupCarve("Vizinho", atlas);
+    const { container } = setupCarve("Neighbor", atlas);
     expect(parentPoly(container).classList.contains("carve-parent")).toBe(true);
     const decoyPoly = Array.from(container.querySelectorAll("polygon.region-poly")).find(
       (p) => p.getAttribute("fill") === "#654321",
@@ -325,7 +325,7 @@ describe("neighbor mode", () => {
     expect(child.points.length).toBeGreaterThanOrEqual(4);
     expect(child.points[0].x).toBeCloseTo(0.2075, 12);
     expect(child.points[1].x).toBeCloseTo(0.4, 12);
-    expect(store().toasts[store().toasts.length - 1].message).toBe("Região vizinha — nomeie.");
+    expect(store().toasts[store().toasts.length - 1].message).toBe("Neighbor region carved — name it.");
   });
 });
 
@@ -337,7 +337,7 @@ describe("fit mode", () => {
     ]);
     const { container, stageEl } = mountEditor(atlas);
     pickButton("Draw region");
-    pickButton("Encaixe");
+    pickButton("Fit");
     clickStage(stageEl, 376, 120, 11); // (0.47,0.2)
     clickStage(stageEl, 424, 120, 12); // (0.53,0.2)
     clickStage(stageEl, 424, 480, 13); // (0.53,0.8)
@@ -350,7 +350,7 @@ describe("fit mode", () => {
     const fitted = regions[2];
     expect(polygonArea(fitted.points)).toBeCloseTo(0.06 * 0.6, 5);
     expect(fitted.points.every((p) => p.x >= 0.47 - 1e-9 && p.x <= 0.53 + 1e-9)).toBe(true);
-    expect(store().toasts[store().toasts.length - 1].message).toBe("Região encaixada — nomeie.");
+    expect(store().toasts[store().toasts.length - 1].message).toBe("Region fitted — name it.");
     expect(container.querySelector("polygon.draw-preview")).toBeNull();
   });
 
@@ -361,7 +361,7 @@ describe("fit mode", () => {
     ]);
     const { stageEl } = mountEditor(atlas);
     pickButton("Draw region");
-    pickButton("Encaixe");
+    pickButton("Fit");
     clickStage(stageEl, 80, 120, 11); // (0.1,0.2)
     clickStage(stageEl, 240, 120, 12); // (0.3,0.2)
     clickStage(stageEl, 240, 480, 13); // (0.3,0.8)
@@ -370,7 +370,7 @@ describe("fit mode", () => {
       fireEvent.keyDown(document, { key: "Enter" });
     });
     expect(store().atlases[0].regions).toHaveLength(2);
-    expect(store().toasts[store().toasts.length - 1].message).toBe("Não sobrou área para encaixar.");
+    expect(store().toasts[store().toasts.length - 1].message).toBe("No area left to fit.");
   });
 });
 
@@ -381,14 +381,14 @@ describe("mode toggles", () => {
     expect(screen.queryByRole("button", { name: "Carve" })).toBeNull();
     pickButton("Draw region");
     expect(screen.getByRole("button", { name: "Carve" })).toBeTruthy();
-    pickButton("Vizinho");
-    expect(pressed("Vizinho")).toBe(true);
+    pickButton("Neighbor");
+    expect(pressed("Neighbor")).toBe(true);
     expect(pressed("Carve")).toBe(false);
-    pickButton("Encaixe");
-    expect(pressed("Encaixe")).toBe(true);
-    expect(pressed("Vizinho")).toBe(false);
-    pickButton("Encaixe");
-    expect(pressed("Encaixe")).toBe(false);
+    pickButton("Fit");
+    expect(pressed("Fit")).toBe(true);
+    expect(pressed("Neighbor")).toBe(false);
+    pickButton("Fit");
+    expect(pressed("Fit")).toBe(false);
   });
 });
 

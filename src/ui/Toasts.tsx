@@ -28,7 +28,7 @@ export function Toasts() {
           data-kind={t.kind}
         >
           <span className="toast-message">{t.message}</span>
-          <button className="toast-dismiss border-0 bg-transparent text-xs text-slate hover:text-parchment" onClick={() => dismiss(t.id)} aria-label="Dispensar">✕</button>
+          <button className="toast-dismiss border-0 bg-transparent text-xs text-slate hover:text-parchment" onClick={() => dismiss(t.id)} aria-label="Dismiss">✕</button>
         </div>
       ))}
     </div>

@@ -2185,7 +2185,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         const dup = chart.oathLinks.some(
           (l) => (l.subordinateId === subordinateId && l.superiorId === superiorId));
         if (dup) {
-          get().pushToast("error", "Esse oath já existe entre os dois.");
+          get().pushToast("error", "That oath already exists between the two.");
           return null;
         }
         get().pushOCHistory(chartId);

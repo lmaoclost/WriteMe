@@ -33,8 +33,8 @@ const ZOOM_OUT = 0.8;
 
 const DRAW_MODES: Array<{ value: Exclude<DrawMode, "none">; label: string }> = [
   { value: "carve", label: "Carve" },
-  { value: "neighbor", label: "Vizinho" },
-  { value: "fit", label: "Encaixe" },
+  { value: "neighbor", label: "Neighbor" },
+  { value: "fit", label: "Fit" },
 ];
 
 function isEditableTarget(t: EventTarget | null): boolean {
@@ -283,7 +283,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
       <header className="flex items-center gap-2.5 px-3 py-2 bg-night border-b border-line flex-wrap">
         <input
           className="editor-name-input w-[190px] min-w-[120px] font-mono text-base text-parchment bg-none border border-transparent rounded-lg px-1.5 py-1 hover:border-line focus:border-gold outline-none"
-          aria-label="Nome do atlas"
+          aria-label="Atlas name"
           value={nameDraft}
           onChange={(e) => setNameDraft(e.target.value)}
           onKeyDown={(e) => {
@@ -327,7 +327,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
             </>
           ) : null}
         </div>
-        <div className="flex items-center gap-1.5 ml-auto" role="toolbar" aria-label="Zoom do mapa">
+        <div className="flex items-center gap-1.5 ml-auto" role="toolbar" aria-label="Map zoom">
           <button type="button" aria-label="Reduzir" className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold w-7 text-center" onClick={() => apiRef.current?.zoomBy(ZOOM_OUT)}>−</button>
           <output className="font-mono text-xs text-parchment-dim min-w-[44px] text-center" aria-label="Zoom level">{Math.round(zoom * 100)}%</output>
           <button type="button" aria-label="Ampliar" className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold w-7 text-center" onClick={() => apiRef.current?.zoomBy(ZOOM_IN)}>+</button>
@@ -370,7 +370,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
           type="file"
           accept="image/*"
           className="sr-only"
-          aria-label="Arquivo do mapa"
+          aria-label="Map file"
           onChange={onReplaceFile}
         />
       </header>
@@ -496,7 +496,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
         <div className="mode-actions absolute left-1/2 bottom-4 -translate-x-1/2 flex gap-2 z-20 px-2 py-1.5 bg-night-2 border border-line rounded-lg" role="toolbar" aria-label="Carve actions">
           <button type="button" className="mode-actions-btn bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] hover:border-gold-dim" onClick={draw.flipCarvePreview}>Outro lado</button>
           <button type="button" className="mode-actions-btn bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] hover:border-gold-dim" onClick={confirmPreview}>Aplicar recorte</button>
-          <button type="button" className="mode-actions-btn bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] hover:border-gold-dim" onClick={cancelDraw}>Cancelar</button>
+          <button type="button" className="mode-actions-btn bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] hover:border-gold-dim" onClick={cancelDraw}>Cancel</button>
         </div>
       ) : null}
       {chooser ? (

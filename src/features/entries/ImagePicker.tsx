@@ -13,7 +13,7 @@ export function ImagePicker({ entries, onPick }: ImagePickerProps) {
   return (
     <div className="relative z-30 bg-ink border border-line rounded-lg p-2" role="group" aria-label="Entry images">
       {covered.length === 0 ? (
-        <p className="m-1 text-parchment-dim text-[13px]">Nenhuma imagem no códex.</p>
+        <p className="m-1 text-parchment-dim text-[13px]">No lore images yet.</p>
       ) : (
         <ul className="list-none m-0 p-0 grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2">
           {covered.map((entry) => (

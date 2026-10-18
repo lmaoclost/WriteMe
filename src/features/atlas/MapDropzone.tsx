@@ -59,13 +59,13 @@ export function MapDropzone({ atlasId }: { atlasId: string }) {
       onDrop={onDrop}
     >
       <p className="m-0 text-parchment-dim text-[15px] group-[.drag-over]:text-gold">Arraste um mapa…</p>
-      <p className="m-0 text-slate text-[13px]">ou clique para escolher o arquivo.</p>
+      <p className="m-0 text-slate text-[13px]">or click to choose a file.</p>
       <input
         ref={inputRef}
         type="file"
         accept="image/*"
         className="sr-only"
-        aria-label="Arquivo do mapa"
+        aria-label="Map file"
         onChange={pick}
       />
     </div>

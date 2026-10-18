@@ -236,7 +236,7 @@ describe("MapDropzone", () => {
     const prevKey = atlas.mapImageKey!;
     expect(container.querySelector(".map-dropzone")).toBeNull();
     expect(screen.getByRole("button", { name: "Replace map" })).toBeTruthy();
-    const input = container.querySelector('input[aria-label="Arquivo do mapa"]') as HTMLInputElement;
+    const input = container.querySelector('input[aria-label="Map file"]') as HTMLInputElement;
     expect(input).toBeTruthy();
     const file = new File(["y"], "map2.png", { type: "image/png" });
     await act(async () => {
@@ -288,7 +288,7 @@ describe("EntryImagePicker", () => {
       fireEvent.click(screen.getByRole("button", { name: "Entry image" }));
     });
     const dialog = screen.getByRole("dialog", { name: "Entry image" });
-    expect(within(dialog).getByText("Nenhuma entrada com imagem.")).toBeTruthy();
+    expect(within(dialog).getByText("No entries with images.")).toBeTruthy();
   });
 
   it("toasts an error when the store cannot apply the entry image", async () => {
@@ -343,7 +343,7 @@ describe("editor header", () => {
     const pid = seedProject();
     const atlas = seedAtlas(pid, { withMap: true });
     mountEditor(pid, atlas.id);
-    const input = screen.getByRole("textbox", { name: "Nome do atlas" }) as HTMLInputElement;
+    const input = screen.getByRole("textbox", { name: "Atlas name" }) as HTMLInputElement;
     expect(input.value).toBe("Terras do Véu");
     act(() => {
       fireEvent.change(input, { target: { value: "Vale Sombrio" } });
@@ -358,7 +358,7 @@ describe("editor header", () => {
     const pid = seedProject();
     const atlas = seedAtlas(pid, { withMap: true });
     mountEditor(pid, atlas.id);
-    const input = screen.getByRole("textbox", { name: "Nome do atlas" }) as HTMLInputElement;
+    const input = screen.getByRole("textbox", { name: "Atlas name" }) as HTMLInputElement;
     act(() => {
       fireEvent.change(input, { target: { value: "Outro Nome" } });
     });

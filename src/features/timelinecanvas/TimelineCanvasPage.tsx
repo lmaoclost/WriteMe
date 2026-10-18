@@ -252,7 +252,7 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
             </svg>
           </div>
           {timeline.beads.length === 0 ? (
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[calc(1/var(--bl-scale,0.1))] text-slate whitespace-nowrap">Coloque o primeiro evento no fio — botão "Add event" cria no centro do view.</div>
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[calc(1/var(--bl-scale,0.1))] text-slate whitespace-nowrap">Place the first event on the wire — the “Add event” button creates it at the center of the view.</div>
           ) : null}
           {notesOpen ? <TLNotepad notes={timeline.notes} onNotes={(v) => useScriptorium.getState().setTimelineNotes(timelineId, v)} onClose={() => setNotesOpen(false)} /> : null}
           {/* invisible selection guard for tests */}

@@ -71,7 +71,7 @@ describe("Toasts", () => {
     act(() => { id = useScriptorium.getState().pushToast("error", "Falhou"); });
     const el = screen.getByText("Falhou").closest(toastKindAttr("error"));
     expect(el).not.toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Dispensar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
     const t = useScriptorium.getState().toasts;
     expect(t.map((x) => x.id)).not.toContain(id);
   });

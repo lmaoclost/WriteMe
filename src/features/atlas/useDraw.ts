@@ -174,24 +174,24 @@ export function useDraw({ atlasId, transformApi, tool, mode, onFinish }: UseDraw
     const store = useScriptorium.getState();
     if (preview.points.length < 3) {
       clear();
-      store.pushToast("error", "Mova as extremidades para a borda do Estado.");
+      store.pushToast("error", "Move the endpoints to the parent region's edge.");
       return null;
     }
     const region = store.addRegion(atlasIdRef.current, { points: preview.points });
     if (!region) {
       clear();
-      store.pushToast("error", "Região pequena demais — desenho descartado.");
+      store.pushToast("error", "Region too small — drawing discarded.");
       return null;
     }
     const opposite = preview.useForward ? preview.backward : preview.forward;
     if (!isNeighbor && preview.inside) {
       if (opposite.length < 3) {
-        store.pushToast("error", "Mova as extremidades para a borda do Estado.");
+        store.pushToast("error", "Move the endpoints to the parent region's edge.");
       } else {
         store.updateRegion(parentId, { points: opposite });
       }
     }
-    store.pushToast("success", isNeighbor ? "Região vizinha — nomeie." : "Região recortada — nomeie.");
+    store.pushToast("success", isNeighbor ? "Neighbor region carved — name it." : "Region carved — name it.");
     onFinishRef.current?.(region);
     clear();
     return region;
@@ -205,7 +205,7 @@ export function useDraw({ atlasId, transformApi, tool, mode, onFinish }: UseDraw
     if (region) {
       onFinishRef.current?.(region);
     } else {
-      store.pushToast("error", "Região pequena demais — desenho descartado.");
+      store.pushToast("error", "Region too small — drawing discarded.");
     }
     clear();
     return region;
@@ -220,11 +220,11 @@ export function useDraw({ atlasId, transformApi, tool, mode, onFinish }: UseDraw
     const region = store.fitRegionIntoGap(atlasIdRef.current, points);
     clear();
     if (region) {
-      store.pushToast("success", "Região encaixada — nomeie.");
+      store.pushToast("success", "Region fitted — name it.");
       onFinishRef.current?.(region);
       return true;
     }
-    store.pushToast("error", "Não sobrou área para encaixar.");
+    store.pushToast("error", "No area left to fit.");
     return false;
   }, [clear]);
 
@@ -238,7 +238,7 @@ export function useDraw({ atlasId, transformApi, tool, mode, onFinish }: UseDraw
       if (!entryRef.current) return finishRegion() !== null;
       // Armed entry without a snapped exit must not be a silent dead end (S2):
       // legacy §7 toast fires and the carve stays armed for a better exit click.
-      useScriptorium.getState().pushToast("error", "Mova as extremidades para a borda do Estado.");
+      useScriptorium.getState().pushToast("error", "Move the endpoints to the parent region's edge.");
       return false;
     }
     if (current === "fit") return commitFit();

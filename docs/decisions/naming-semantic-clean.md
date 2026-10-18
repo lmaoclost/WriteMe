@@ -21,7 +21,8 @@ One human-facing name per surface, aligned to function. Routes, keys, folder and
 | `/p/:id/calendar` | Calendar / Calendar / Calendar | Calendar |
 | `/p/:id/oaths` | Oaths / Oaths / Oaths Hierarchy | Oaths (entity: "oath chart") |
 
-- Modal confirm "Forge" → "Create"; "Forge New X" buttons → "New X".
+- Modal confirm "Forge" → "Create"; "Forge New X" → "New X".
+- PT copy sweep same day: toasts, aria labels, tool labels (Neighbor/Fit), placeholders and block menu went full EN across ui, atlas, bloodline, entries, manuscript, oaths, timelinecanvas and the store. Test data and comments keep PT (data is user content; comments are dev-facing).
 - New ledger row "Chronology" (counter: entries with a valid date) — the row was missing while the rail had the page.
 - Scriptorium brand vocabulary stays only in history docs and export strings; UI copy is plain English.
 

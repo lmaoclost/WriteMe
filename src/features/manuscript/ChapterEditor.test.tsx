@@ -168,7 +168,7 @@ describe("ChapterEditor rich", () => {
     const cal = store().addCalendar("prj_1", "Selo Anual");
     render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
     fireEvent.click(screen.getByRole("button", { name: "Link calendar" }));
-    await pickSelectOptionSync(() => screen.getByLabelText("Calendário"), "Selo Anual");
+    await pickSelectOptionSync(() => screen.getByLabelText("Calendar"), "Selo Anual");
     await pickSelectOptionSync(() => screen.getByLabelText("Month"), "Month 3");
     // controlled number inputs: TL fireEvent.change is unreliable here; use the native setter (repo pattern)
     const setVal = (el: HTMLElement, v: string) => {

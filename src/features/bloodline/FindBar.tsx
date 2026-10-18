@@ -24,7 +24,7 @@ export function FindBar({ persons, onPick, onClose }: {
       <input
         autoFocus
         aria-label="Buscar"
-        placeholder="Nome, sufixo, título…"
+        placeholder="Name, suffix, title…"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         className="w-full bg-ink border border-line text-parchment rounded-sm px-2 py-1.5"

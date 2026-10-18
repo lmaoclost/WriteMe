@@ -36,7 +36,7 @@ export function EntryImagePicker({ atlasId, entries, onClose }: EntryImagePicker
       <div className="chooser-backdrop fixed inset-0 z-29 bg-transparent" onPointerDown={onClose} aria-hidden="true" />
       <div className="fixed top-[52px] right-3 z-30 w-[340px] max-h-[70vh] overflow-y-auto p-2.5 bg-night-2 border border-line rounded-lg" role="dialog" aria-label="Entry image">
         {candidates.length === 0 ? (
-          <p className="m-0 text-parchment-dim text-[13px]">Nenhuma entrada com imagem.</p>
+          <p className="m-0 text-parchment-dim text-[13px]">No entries with images.</p>
         ) : (
           <ul className="list-none m-0 p-0 grid grid-cols-2 gap-2">
             {candidates.map((e) => (

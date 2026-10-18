@@ -117,7 +117,7 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
       <header className={BOARD_HEADER}>
         <input
           className={BOARD_NAME_INPUT}
-          aria-label="Nome da linhagem"
+          aria-label="Bloodline name"
           value={bloodline.name}
           onChange={(e) => useScriptorium.getState().renameBloodline(bloodlineId, e.target.value)}
         />

@@ -232,8 +232,8 @@ function RichToolbar({ onExec }: { onExec(cmd: string, value?: string): void }) 
             ["Heading 1 (H1)", "h1"],
             ["Heading 2 (H2)", "h2"],
             ["Heading 3 (H3)", "h3"],
-            ["Parágrafo", "p"],
-            ["Citação", "blockquote"],
+            ["Paragraph", "p"],
+            ["Quote", "blockquote"],
           ].map(([label, tag]) => (
             <button
               key={tag}
@@ -366,13 +366,13 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
         ) : (
           <button type="button" className="book-mode bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] cursor-pointer hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold" aria-expanded={calendarPickOpen}
             onClick={() => setCalendarPickOpen((v) => !v)}>
-            {calendars.length ? "Link calendar" : "Sem calendários no mundo"}
+            {calendars.length ? "Link calendar" : "No calendars in this world"}
           </button>
         )}
         {calendarPickOpen && calendars.length ? (
           <div className="book-cal-picker flex gap-2 items-end flex-wrap bg-night-2 border border-line rounded-lg p-2.5">
             <Select value={calId} onValueChange={(v) => setCalId(v)}>
-              <SelectTrigger aria-label="Calendário" className="justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto min-w-0"><SelectValue placeholder="Escolha…" /></SelectTrigger>
+              <SelectTrigger aria-label="Calendar" className="justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto min-w-0"><SelectValue placeholder="Choose…" /></SelectTrigger>
               <SelectContent className="border-line bg-night text-parchment">
                 {calendars.map((c) => <SelectItem key={c.id} value={c.id} className="text-xs focus:bg-[#24233f] focus:text-parchment">{c.name}</SelectItem>)}
               </SelectContent>
