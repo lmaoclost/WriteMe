@@ -92,6 +92,16 @@ describe("store — oaths", () => {
     void chart;
   });
 
+  it("moveOathMember persists the position", () => {
+    const { chart } = seed();
+    const root = store().oathsCharts![0].members[0];
+    act(() => { store().moveOathMember(root.id, 512, 300); });
+    const got = store().oathsCharts![0].members[0];
+    expect(got.x).toBe(512);
+    expect(got.y).toBe(300);
+    void chart;
+  });
+
   it("round-trips through export", () => {
     seed();
     const json = store().exportData();
