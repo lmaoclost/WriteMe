@@ -170,6 +170,20 @@ describe("library backup", () => {
     expect(screen.getByRole("button", { name: "Download backup" })).toBeInTheDocument();
   });
 
+  it("restore tells the user when the file cannot be read at all", async () => {
+    render(wrap());
+    fireEvent.click(screen.getByRole("button", { name: "Restore backup" }));
+    const readSpy = vi.spyOn(FileReader.prototype, "readAsText").mockImplementation(function broken(this: FileReader) {
+      window.setTimeout(() => { (this.onerror as ((e: Event) => void) | null)?.(new Event("error")); }, 0);
+    });
+    const input = screen.getByLabelText(/Restore from backup file/i) as HTMLInputElement;
+    const file = new File([""], "unreadable.json", { type: "application/json" });
+    await act(async () => { fireEvent.change(input, { target: { files: [file] } }); });
+    readSpy.mockRestore();
+    await waitFor(() => expect(useScriptorium.getState().toasts.some((t) => t.message.includes("read"))).toBe(true));
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
   it("restore needs a confirmation before replacing the library", async () => {
     const exportBefore = useScriptorium.getState().exportData();
     render(wrap());

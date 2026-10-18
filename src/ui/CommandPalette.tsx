@@ -72,6 +72,11 @@ export function CommandPalette() {
   const needle = query.trim().toLowerCase();
   const results = needle ? items.filter((i) => i.label.toLowerCase().includes(needle)) : items;
   const safeActive = Math.min(active, Math.max(0, results.length - 1));
+  const rows: Array<{ type: "group"; key: string; label: string } | { type: "option"; key: string; item: Item; index: number }> = [];
+  results.forEach((item, i) => {
+    if (i === 0 || results[i - 1].group !== item.group) rows.push({ type: "group", key: `grp-${item.key}`, label: item.group });
+    rows.push({ type: "option", key: item.key, item, index: i });
+  });
 
   const close = () => setOpen(false);
   const choose = (item: Item) => {
@@ -87,6 +92,8 @@ export function CommandPalette() {
           <input
             ref={inputRef}
             aria-label="Search"
+            aria-controls="palette-list"
+            aria-activedescendant={results[safeActive] ? `palette-opt-${results[safeActive].key}` : undefined}
             placeholder="Jump to anything — sections, entries, chapters…"
             className="w-full bg-transparent border-b border-line px-4 py-3 text-sm text-parchment placeholder:text-slate outline-none"
             value={query}
@@ -100,31 +107,29 @@ export function CommandPalette() {
           {results.length === 0 ? (
             <p className="px-4 py-6 text-sm text-slate">No matches.</p>
           ) : (
-            <ul className="max-h-[52vh] overflow-y-auto py-1.5 m-0 list-none p-0" role="listbox" aria-label="Search results">
-              {results.map((item, i) => {
-                const showGroup = i === 0 || results[i - 1].group !== item.group;
-                return (
-                  <li key={item.key}>
-                    {showGroup && (
-                      <p className="px-4 pt-2 pb-1 m-0 text-[9px] uppercase tracking-[0.22em] text-[var(--text-faint)]" aria-hidden="true">{item.group}</p>
-                    )}
-                    <button
-                      type="button"
-                      role="option"
-                      aria-selected={i === safeActive}
-                      className={
-                        "flex w-full items-center justify-between gap-3 border-0 bg-none px-4 py-1.5 text-left no-underline text-sm text-parchment cursor-pointer " +
-                        (i === safeActive ? "bg-[color-mix(in_srgb,var(--gold)_10%,transparent)]" : "hover:bg-[color-mix(in_srgb,var(--gold)_6%,transparent)]")
-                      }
-                      onMouseEnter={() => setActive(i)}
-                      onClick={() => choose(item)}
-                    >
-                      <span className="truncate">{item.label}</span>
-                      <span className="text-[10px] uppercase tracking-[0.08em] text-slate whitespace-nowrap">{item.group}</span>
-                    </button>
-                  </li>
-                );
-              })}
+            <ul id="palette-list" className="max-h-[52vh] overflow-y-auto py-1.5 m-0 list-none p-0" role="listbox" aria-label="Search results">
+              {rows.map((row) => row.type === "group" ? (
+                <li key={row.key} role="presentation" aria-hidden="true" className="px-4 pt-2 pb-1 m-0 text-[9px] uppercase tracking-[0.22em] text-[var(--text-faint)]">{row.label}</li>
+              ) : (
+                <li
+                  key={row.key}
+                  id={`palette-opt-${row.key}`}
+                  role="option"
+                  aria-selected={row.index === safeActive}
+                  ref={(el) => {
+                    if (el && row.index === safeActive) el.scrollIntoView?.({ block: "nearest" });
+                  }}
+                  className={
+                    "flex w-full cursor-default list-none items-center justify-between gap-3 border-0 bg-none px-4 py-1.5 text-left no-underline text-sm text-parchment " +
+                    (row.index === safeActive ? "bg-[color-mix(in_srgb,var(--gold)_10%,transparent)]" : "")
+                  }
+                  onMouseEnter={() => setActive(row.index)}
+                  onClick={() => choose(row.item)}
+                >
+                  <span className="truncate">{row.item.label}</span>
+                  <span className="text-[10px] uppercase tracking-[0.08em] text-slate whitespace-nowrap">{row.item.group}</span>
+                </li>
+              ))}
             </ul>
           )}
         </DialogContent>

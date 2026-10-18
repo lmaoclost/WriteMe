@@ -40,6 +40,27 @@ describe("undoable entity deletes", () => {
     expect(useScriptorium.getState().conlangs ?? []).toHaveLength(1);
   });
 
+  it("stale nonce cannot consume a newer slot", () => {
+    let firstNonce = 0;
+    let secondNonce = 0;
+    actInner(() => {
+      const s = useScriptorium.getState();
+      const p = s.projects[0]?.id ?? s.addProject("P");
+      s.addWellSpring(p, "First");
+      s.addConlang(p, "Tongue");
+      s.deleteWellSpring((useScriptorium.getState().wellsprings ?? [])[0]!.id);
+      firstNonce = useScriptorium.getState().undoNonce ?? 0;
+      s.deleteConlang((useScriptorium.getState().conlangs ?? [])[0]!.id);
+      secondNonce = useScriptorium.getState().undoNonce ?? 0;
+    });
+    actInner(() => {
+      expect(useScriptorium.getState().undoDelete(firstNonce)).toBe(false);
+      expect(useScriptorium.getState().undoDelete(secondNonce)).toBe(true);
+    });
+    expect(useScriptorium.getState().wellsprings ?? []).toHaveLength(0);
+    expect(useScriptorium.getState().conlangs ?? []).toHaveLength(1);
+  });
+
   it("deleteAtlas and deleteManuscript arm undo too", () => {
     actInner(() => {
       const s = useScriptorium.getState();
@@ -54,6 +75,61 @@ describe("undoable entity deletes", () => {
 
   it("undoDelete with nothing to undo returns false", () => {
     actInner(() => { expect(useScriptorium.getState().undoDelete()).toBe(false); });
+  });
+
+  it("undo restores the atlas map image GC'd by the delete", () => {
+    let atlasId = "";
+    let mkey = "";
+    actInner(() => {
+      const s = useScriptorium.getState();
+      const p = s.projects[0]?.id ?? s.addProject("P");
+      atlasId = s.addAtlas(p, "Main map").id;
+      mkey = `img_map_test_${atlasId}`;
+      useScriptorium.setState((st) => ({
+        images: { ...st.images, [mkey]: "data:image/png;base64,MAPDATA" },
+        atlases: st.atlases.map((a) => (a.id === atlasId ? { ...a, mapImageKey: mkey } : a)),
+      }));
+      s.deleteAtlas(atlasId);
+    });
+    expect((useScriptorium.getState().images ?? {})[mkey]).toBeUndefined();
+    actInner(() => { expect(useScriptorium.getState().undoDelete()).toBe(true); });
+    expect(useScriptorium.getState().images?.[mkey]).toBe("data:image/png;base64,MAPDATA");
+    expect(useScriptorium.getState().atlases.find((a) => a.id === atlasId)?.mapImageKey).toBe(mkey);
+  });
+
+  it("undo restores chapter calendar links severed by calendar delete", () => {
+    let channelId = "";
+    actInner(() => {
+      const s = useScriptorium.getState();
+      const p = s.projects[0]?.id ?? s.addProject("P");
+      const cal = s.addCalendar(p, "Years of Ash");
+      const man = s.addManuscript(p, "Book");
+      const ch = s.addChapter(man.id, "One")!;
+      channelId = ch.id;
+      s.updateChapter(ch.id, { linkedCalendarId: cal.id, calendarDayKey: "y1_d4" });
+      s.deleteCalendar(cal.id);
+    });
+    const chapter = () => useScriptorium.getState().manuscripts.flatMap((m) => m.chapters).find((c) => c.id === channelId);
+    expect(chapter()?.linkedCalendarId).toBeUndefined();
+    actInner(() => { expect(useScriptorium.getState().undoDelete()).toBe(true); });
+    expect(chapter()?.linkedCalendarId).toBeDefined();
+    expect(chapter()?.calendarDayKey).toBe("y1_d4");
+  });
+
+  it("undo restores bloodline portrait images GC'd by the delete", () => {
+    let portraitKey = "";
+    actInner(() => {
+      const s = useScriptorium.getState();
+      const p = s.projects[0]?.id ?? s.addProject("P");
+      const bl = s.addBloodline(p, "Houses of Ashfall");
+      const person = s.addPerson(bl.id, { x: 0.5, y: 0.5, name: "Aldric" })!;
+      portraitKey = s.putImage("data:image/png;base64,FACE", "person");
+      s.updatePerson(person.id, { portraitKey });
+      s.deleteBloodline(bl.id);
+    });
+    expect((useScriptorium.getState().images ?? {})[portraitKey]).toBeUndefined();
+    actInner(() => { expect(useScriptorium.getState().undoDelete()).toBe(true); });
+    expect(useScriptorium.getState().images?.[portraitKey]).toBe("data:image/png;base64,FACE");
   });
 });
 

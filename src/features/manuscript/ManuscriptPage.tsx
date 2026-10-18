@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import type { Manuscript } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
+import { undoToastAction } from "../../ui/undoAction";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { ChapterList } from "./ChapterList";
 import { ChapterEditor } from "./ChapterEditor";
@@ -35,7 +36,7 @@ function BookInputs({ manuscript }: { manuscript: Manuscript }) {
       <input
         type="text"
         className="book-author-input w-[220px] text-[13px] text-parchment bg-ink border border-line rounded-lg px-2.5 py-1.5 outline-none focus:border-gold"
-        aria-label="Autor"
+        aria-label="Author"
         value={authorDraft.draft}
         onChange={(e) => authorDraft.setDraft(e.target.value)}
         onBlur={authorDraft.flush}
@@ -106,6 +107,7 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
       const remaining = useScriptorium.getState().manuscripts
         .filter((m) => m.projectId === projectId && m.id !== bookId);
       useScriptorium.getState().deleteManuscript(bookId);
+      useScriptorium.getState().pushToast("success", "Book deleted.", undoToastAction());
       setBookId(remaining[0]?.id ?? null);
       setChapterId(null);
       return;
@@ -172,7 +174,7 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
             className={"book-delete bg-none border border-[var(--ember)] text-[var(--ember)] rounded-lg py-1.5 px-2.5 text-[13px] hover:bg-[color-mix(in_srgb,var(--ember)_18%,transparent)]" + (armed ? " armed bg-[color-mix(in_srgb,var(--ember)_20%,transparent)]" : "")}
             onClick={confirmOrDeleteBook}
           >
-            {armed ? "Confirmar?" : "Excluir livro"}
+            {armed ? "Confirm?" : "Delete book"}
           </button>
         </div>
       </header>

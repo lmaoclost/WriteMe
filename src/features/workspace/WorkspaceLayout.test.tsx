@@ -47,6 +47,14 @@ describe("workspace rail", () => {
     expect(icon).toHaveAttribute("aria-hidden", "true");
   });
 
+  it("rail scrolls instead of clipping on short viewports", () => {
+    const p = useScriptorium.getState().addProject("Tall");
+    render(at(`/p/${p.id}`));
+    const nav = screen.getByRole("navigation", { name: /world sections/i });
+    expect(nav.className).toContain("overflow-y-auto");
+    expect(nav.className).not.toContain("overflow-y-hidden");
+  });
+
   it("keeps every section label and route", () => {
     const p = useScriptorium.getState().addProject("R");
     render(at(`/p/${p.id}`));

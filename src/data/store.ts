@@ -31,6 +31,11 @@ export type UndoCollection =
   | "atlases" | "bloodlines" | "factionWebs" | "calendars" | "plotBoards"
   | "timelines" | "oathsCharts" | "wellsprings" | "conlangs" | "manuscripts";
 
+interface UndoSatellites {
+  images?: Record<string, string>;
+  chapters?: Array<{ id: string; calendarId: string; dayKey?: string }>;
+}
+
 export type ImageKind = "cover" | "entry" | "map" | "person";
 
 export const CORRUPTION_TOAST = "Corrupted data was preserved in a backup; the app opened empty.";
@@ -183,8 +188,9 @@ interface ScriptoriumState extends ProjectData {
   dismissToast(id: string): void;
   paletteOpen: boolean;
   setPaletteOpen(open: boolean): void;
-  undoItem?: { collection: UndoCollection; item: unknown };
-  undoDelete(): boolean;
+  undoNonce?: number;
+  undoItem?: { collection: UndoCollection; item: unknown; satellites?: UndoSatellites };
+  undoDelete(nonce?: number): boolean;
   seedDemo(): string | null;
   exportData(): string;
   importData(text: string): { ok: true } | { ok: false; error: string };
@@ -357,8 +363,8 @@ interface ScriptoriumState extends ProjectData {
 export const useScriptorium = create<ScriptoriumState>()(
   persist(
     (set, get) => {
-    const armUndo = (collection: UndoCollection, item: unknown) => {
-      set({ undoItem: { collection, item } });
+    const armUndo = (collection: UndoCollection, item: unknown, satellites?: UndoSatellites) => {
+      set({ undoItem: { collection, item, satellites }, undoNonce: (get().undoNonce ?? 0) + 1 });
     };
     return {
       ...emptyProjectData(),
@@ -371,17 +377,37 @@ export const useScriptorium = create<ScriptoriumState>()(
         set({ paletteOpen: open });
       },
 
-      undoDelete() {
+      undoDelete(nonce) {
         const undo = get().undoItem;
         if (!undo) return false;
+        if (typeof nonce === "number" && nonce !== get().undoNonce) return false;
         const collection = get()[undo.collection] as unknown[] | undefined;
         if (collection?.some((x) => (x as { id: string }).id === (undo.item as { id: string }).id)) {
           set({ undoItem: undefined });
           return false;
         }
+        const chapterSats = undo.satellites?.chapters ?? [];
+        const satById = new Map(chapterSats.map((c) => [c.id, c]));
         set((s) => ({
           [undo.collection]: [...((s[undo.collection] as unknown[] | undefined) ?? []), undo.item],
           undoItem: undefined,
+          ...(undo.satellites?.images
+            ? { images: { ...(s.images ?? {}), ...undo.satellites.images } }
+            : {}),
+          ...(chapterSats.length > 0
+            ? {
+                manuscripts: (s.manuscripts ?? []).map((m) => ({
+                  ...m,
+                  chapters: m.chapters.map((c) => {
+                    const sat = satById.get(c.id);
+                    // a chapter already re-linked to another calendar keeps its new link
+                    return sat && !c.linkedCalendarId
+                      ? { ...c, linkedCalendarId: sat.calendarId, calendarDayKey: sat.dayKey }
+                      : c;
+                  }),
+                })),
+              }
+            : {}),
           projects: touchProject(s.projects, (undo.item as { projectId?: string }).projectId ?? s.projects[0]?.id ?? ""),
         }) as never);
         return true;
@@ -560,16 +586,18 @@ export const useScriptorium = create<ScriptoriumState>()(
         const s = get();
         const atlas = s.atlases.find((a) => a.id === atlasId);
         if (!atlas) return;
-        armUndo("atlases", atlas);
         const kept = s.atlases.filter((a) => a.id !== atlasId);
         if (kept.length === s.atlases.length) return;
         const images = { ...s.images };
+        const removedImages: Record<string, string> = {};
         if (atlas.mapImageKey
           && !kept.some((a) => a.mapImageKey === atlas.mapImageKey)) {
+          if (s.images[atlas.mapImageKey]) removedImages[atlas.mapImageKey] = s.images[atlas.mapImageKey];
           delete images[atlas.mapImageKey];
         }
         const histories = { ...s.histories };
         delete histories[atlasId];
+        armUndo("atlases", atlas, Object.keys(removedImages).length ? { images: removedImages } : undefined);
         set({ atlases: kept, images, histories });
       },
 
@@ -1109,17 +1137,19 @@ export const useScriptorium = create<ScriptoriumState>()(
         const bloodline = s.bloodlines.find((b) => b.id === id);
         if (!bloodline) return;
         const kept = s.bloodlines.filter((b) => b.id !== id);
-        armUndo("bloodlines", bloodline);
         if (kept.length === s.bloodlines.length) return;
         const images = { ...s.images };
+        const removedImages: Record<string, string> = {};
         for (const p of bloodline.persons) {
           if (p.portraitKey
             && !imageReferenced({ projects: s.projects, entries: s.entries, atlases: s.atlases, bloodlines: kept }, p.portraitKey)) {
+            if (s.images[p.portraitKey]) removedImages[p.portraitKey] = s.images[p.portraitKey];
             delete images[p.portraitKey];
           }
         }
         const histories = { ...s.histories };
         delete histories[blKey(id)];
+        armUndo("bloodlines", bloodline, Object.keys(removedImages).length ? { images: removedImages } : undefined);
         set({
           bloodlines: kept,
           images,
@@ -1511,9 +1541,13 @@ export const useScriptorium = create<ScriptoriumState>()(
         const s = get();
         const cal = (s.calendars ?? []).find((c) => c.id === id);
         if (!cal) return;
-        armUndo("calendars", cal);
+        const severed = (s.manuscripts ?? []).flatMap((m) =>
+          m.chapters
+            .filter((c) => c.linkedCalendarId === id)
+            .map((c) => ({ id: c.id, calendarId: c.linkedCalendarId as string, dayKey: c.calendarDayKey })));
         const histories = { ...s.histories };
         delete histories[clKey(id)];
+        armUndo("calendars", cal, severed.length ? { chapters: severed } : undefined);
         set({
           calendars: (s.calendars ?? []).filter((c) => c.id !== id),
           histories,

@@ -62,8 +62,8 @@ export function CalendarIndexPage({ projectId }: { projectId: string }) {
       ) : null}
 
       {target ? (
-        <Modal title={`Excluir "${target.name}"?`} onClose={() => setToDelete(null)}>
-          <p className="text-parchment-dim">Removes months, days and events. No undo.</p>
+        <Modal title={`Delete "${target.name}"?`} onClose={() => setToDelete(null)}>
+          <p className="text-parchment-dim">Removes months, days and events. Undo right after works, from the notification.</p>
           <div className="mt-2 flex justify-end gap-2.5">
             <Button kind="danger" onClick={() => {
               useScriptorium.getState().deleteCalendar(target.id);

@@ -87,4 +87,16 @@ describe("Toasts", () => {
     expect(ran).toBe(1);
     expect(useScriptorium.getState().toasts).toHaveLength(0); // action dismisses the toast
   });
+
+  it("action that fails to undo surfaces why instead of failing silently", () => {
+    render(<Toasts />);
+    act(() => {
+      useScriptorium.getState().pushToast("success", "Idea board deleted.", { label: "Undo", run: () => {
+        const ok = useScriptorium.getState().undoDelete(999);
+        if (!ok) useScriptorium.getState().pushToast("info", "Nothing left to undo.");
+      } });
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+    expect(useScriptorium.getState().toasts.some((t) => t.message === "Nothing left to undo.")).toBe(true);
+  });
 });

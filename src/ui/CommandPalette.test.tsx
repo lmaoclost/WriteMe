@@ -76,6 +76,18 @@ describe("command palette", () => {
     expect(screen.queryByDisplayValue("King Aldric")).toBeNull();
   });
 
+  it("palette listbox is ARIA-correct and scrollable to the active option", () => {
+    workspaceAt();
+    act(() => { fireEvent.keyDown(window, { key: "k", ctrlKey: true }); });
+    const dialog = screen.getByRole("dialog");
+    const input = within(dialog).getByPlaceholderText(/jump to/i) as HTMLInputElement;
+    expect(input).toHaveAttribute("aria-controls", "palette-list");
+    expect(input).toHaveAttribute("aria-activedescendant");
+    const directOption = dialog.querySelectorAll('[role="listbox"] > [role="option"]');
+    expect(directOption.length).toBeGreaterThan(0);
+    expect(directOption[0].getAttribute("aria-selected")).toBe("true");
+  });
+
   it("rail search affordance opens the palette", () => {
     workspaceAt();
     fireEvent.click(screen.getByRole("button", { name: /search/i }));

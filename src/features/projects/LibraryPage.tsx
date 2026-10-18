@@ -61,7 +61,15 @@ export function LibraryPage() {
   });
 
   const onRestoreFile = async (file: File) => {
-    const text = await readFileText(file);
+    let text: string;
+    try {
+      text = await readFileText(file);
+    } catch {
+      pushToast("error", "That file could not be read.");
+      setRestoring(false);
+      setPendingRestore(null);
+      return;
+    }
     try {
       JSON.parse(text);
     } catch {

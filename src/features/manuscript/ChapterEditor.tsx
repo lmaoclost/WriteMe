@@ -277,7 +277,7 @@ const WordCountFooter = memo(function WordCountFooter({ writing, content, richTi
         className={"book-delete bg-none border border-[var(--ember)] text-[var(--ember)] rounded-lg py-1.5 px-2.5 text-[13px] hover:bg-[color-mix(in_srgb,var(--ember)_18%,transparent)]" + (armed ? " armed bg-[color-mix(in_srgb,var(--ember)_20%,transparent)]" : "")}
         onClick={onConfirmDelete}
       >
-        {armed ? "Confirmar?" : "Delete chapter"}
+        {armed ? "Confirm?" : "Delete chapter"}
       </button>
     </footer>
   );

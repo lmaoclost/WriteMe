@@ -63,7 +63,7 @@ export function TimelineIndexPage({ projectId }: { projectId: string }) {
 
       {target ? (
         <Modal title={`Delete "${target.name}"?`} onClose={() => setToDelete(null)}>
-          <p className="text-parchment-dim">Removes events and eras from the timeline. No undo.</p>
+          <p className="text-parchment-dim">Removes events and eras from the timeline. Undo right after works, from the notification.</p>
           <div className="mt-2 flex justify-end gap-2.5">
             <Button kind="danger" onClick={() => {
               useScriptorium.getState().deleteTimeline(target.id);

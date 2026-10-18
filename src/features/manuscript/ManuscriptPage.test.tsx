@@ -97,7 +97,7 @@ describe("ManuscriptPage books", () => {
     expect(screen.queryByLabelText("Livro")).toBeNull();
     expect(screen.getByRole("heading", { name: "Cantar de Vellmora" })).toBeInTheDocument();
     expect(screen.getByLabelText("Manuscript title")).toHaveValue("Cantar de Vellmora");
-    expect(screen.getByLabelText("Autor")).toHaveValue("");
+    expect(screen.getByLabelText("Author")).toHaveValue("");
     expect(screen.getByLabelText("Chapter title")).toHaveValue("Prólogo");
     expect(screen.getByRole("button", { name: /Prólogo/ })).toHaveClass("active");
   });
@@ -127,7 +127,7 @@ describe("ManuscriptPage books", () => {
     seedBook(projectId, { title: "Cantar", author: "Renan" });
     render(manuscriptRoute(projectId));
     fireEvent.change(screen.getByLabelText("Manuscript title"), { target: { value: "Cantar Completo" } });
-    fireEvent.change(screen.getByLabelText("Autor"), { target: { value: "Outro" } });
+    fireEvent.change(screen.getByLabelText("Author"), { target: { value: "Outro" } });
     expect(projectBooks(projectId)[0].title).toBe("Cantar");
     expect(projectBooks(projectId)[0].author).toBe("Renan");
     expect(screen.getByRole("heading", { name: "Cantar" })).toBeInTheDocument();
@@ -137,8 +137,8 @@ describe("ManuscriptPage books", () => {
     expect(projectBooks(projectId)[0].title).toBe("Cantar Completo");
     expect(projectBooks(projectId)[0].author).toBe("Outro");
     expect(screen.getByRole("heading", { name: "Cantar Completo" })).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Autor"), { target: { value: "Nova" } });
-    fireEvent.blur(screen.getByLabelText("Autor"));
+    fireEvent.change(screen.getByLabelText("Author"), { target: { value: "Nova" } });
+    fireEvent.blur(screen.getByLabelText("Author"));
     expect(projectBooks(projectId)[0].author).toBe("Nova");
   });
 
@@ -165,13 +165,13 @@ describe("ManuscriptPage books", () => {
     seedBook(projectId, { title: "B", chapters: [{ heading: "Dois" }] });
     render(manuscriptRoute(projectId));
     pickSelectOptionSync(() => screen.getByLabelText("Book"), "B");
-    fireEvent.click(screen.getByRole("button", { name: "Excluir livro" }));
-    expect(screen.getByRole("button", { name: "Confirmar?" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Confirmar?" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete book" }));
+    expect(screen.getByRole("button", { name: "Confirm?" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Confirm?" }));
     expect(projectBooks(projectId).map((m) => m.title)).toEqual(["A"]);
     expect(screen.getByLabelText("Manuscript title")).toHaveValue("A");
-    fireEvent.click(screen.getByRole("button", { name: "Excluir livro" }));
-    fireEvent.click(screen.getByRole("button", { name: "Confirmar?" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete book" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm?" }));
     expect(projectBooks(projectId)).toHaveLength(0);
     expect(screen.getByText("Start your book — create the first one.")).toBeInTheDocument();
   });
@@ -181,12 +181,12 @@ describe("ManuscriptPage books", () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A" });
     render(manuscriptRoute(projectId));
-    fireEvent.click(screen.getByRole("button", { name: "Excluir livro" }));
-    expect(screen.getByRole("button", { name: "Confirmar?" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Delete book" }));
+    expect(screen.getByRole("button", { name: "Confirm?" })).toBeInTheDocument();
     act(() => {
       vi.advanceTimersByTime(3000);
     });
-    expect(screen.getByRole("button", { name: "Excluir livro" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Delete book" })).toBeInTheDocument();
     vi.useRealTimers();
   });
 });
@@ -355,14 +355,14 @@ describe("ManuscriptPage chapters", () => {
     seedBook(projectId, { title: "A", chapters: [{ heading: "Um" }, { heading: "Dois" }] });
     render(manuscriptRoute(projectId));
     fireEvent.click(screen.getByRole("button", { name: "Delete chapter" }));
-    expect(screen.getByRole("button", { name: "Confirmar?" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Confirmar?" }));
+    expect(screen.getByRole("button", { name: "Confirm?" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Confirm?" }));
     const chapters = bookOf("A").chapters;
     expect(chapters).toHaveLength(1);
     expect(chapters[0].heading).toBe("Dois");
     expect(screen.getByLabelText("Chapter title")).toHaveValue("Dois");
     fireEvent.click(screen.getByRole("button", { name: "Delete chapter" }));
-    fireEvent.click(screen.getByRole("button", { name: "Confirmar?" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm?" }));
     expect(bookOf("A").chapters).toHaveLength(0);
     expect(screen.getByText("Add the first chapter.")).toBeInTheDocument();
     expect(screen.queryByLabelText("Content")).toBeNull();
