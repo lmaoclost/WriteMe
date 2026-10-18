@@ -217,7 +217,7 @@ function ConfigPopover({ cal, onClose }: { cal: CustomCalendar; onClose(): void 
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
   return (
-    <div className="absolute top-[60px] right-[320px] z-45 w-[280px] max-h-[70vh] overflow-y-auto bg-night-2 border border-line rounded-lg p-3.5 grid gap-2.5" data-testid="cal-config" role="dialog" aria-label="Edit Calendar Settings">
+    <div className="absolute top-[60px] right-[320px] z-45 w-[280px] max-w-[calc(100vw-1.5rem)] max-[720px]:inset-x-3 max-[720px]:top-[52px] max-h-[70vh] overflow-y-auto bg-night-2 border border-line rounded-lg p-3.5 grid gap-2.5" data-testid="cal-config" role="dialog" aria-label="Edit Calendar Settings">
       <header className={BOARD_PANEL_HEAD}>
         <h2>Era</h2>
         <button type="button" aria-label="Close settings" onClick={onClose} className="bg-none border-0 text-slate">✕</button>
@@ -242,6 +242,7 @@ function ConfigPopover({ cal, onClose }: { cal: CustomCalendar; onClose(): void 
                 aria-label={`Weekday ${i + 1}`}
                 placeholder="Weekday name..."
                 defaultValue={w}
+                className="bg-ink border border-line text-parchment px-1.5 py-1 text-xs w-full min-w-0"
                 onBlur={(e) => {
                   const next = cal.weekdays.slice();
                   next[i] = e.target.value.trim();
@@ -274,6 +275,7 @@ function ConfigPopover({ cal, onClose }: { cal: CustomCalendar; onClose(): void 
                 aria-label={`Month name ${i + 1}`}
                 placeholder="Month name..."
                 defaultValue={m.name}
+                className="bg-ink border border-line text-parchment px-1.5 py-1 text-xs w-full min-w-0"
                 onBlur={(e) => store().setMonth(cal.id, i, { name: e.target.value })}
               />
               <input
@@ -281,6 +283,7 @@ function ConfigPopover({ cal, onClose }: { cal: CustomCalendar; onClose(): void 
                 min={1}
                 aria-label={`Days of ${i + 1}`}
                 defaultValue={m.days}
+                className="bg-ink border border-line text-parchment px-1.5 py-1 text-xs w-full min-w-0"
                 onBlur={(e) => store().setMonth(cal.id, i, { days: Number(e.target.value) })}
               />
               {cal.months.length > 1 ? (
@@ -290,7 +293,7 @@ function ConfigPopover({ cal, onClose }: { cal: CustomCalendar; onClose(): void 
             </li>
           ))}
         </ul>
-        <div className="grid grid-cols-[1.4fr_64px_auto] gap-1.5 mt-2" data-testid="cal-month-add">
+        <div className="grid grid-cols-[1.4fr_64px_auto] gap-1.5 mt-2 [&>input]:w-full [&>input]:min-w-0 [&>input]:bg-ink [&>input]:border [&>input]:border-line [&>input]:text-parchment [&>input]:px-1.5 [&>input]:py-1 [&>input]:text-xs" data-testid="cal-month-add">
           <input aria-label="New month name" placeholder="New month..." defaultValue=""
             onBlur={(e) => { if (e.target.value.trim()) { store().addMonth(cal.id, e.target.value.trim(), 30); e.target.value = ""; } }} />
           <input aria-label="New month days" type="number" min={1} placeholder="Days" defaultValue={30} />

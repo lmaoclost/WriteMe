@@ -148,6 +148,20 @@ describe("CalendarPage", () => {
     // firstWeekday = 2 → 2 leading blanks; (5 - ((2+9) % 5)) % 5 = 4 trailing
     expect(screen.getAllByTestId("cal-blank")).toHaveLength(6);
   });
+
+  it("config popover fits narrow viewports and inputs shrink", () => {
+    const c = seed();
+    render(<CalendarPage calendarId={c.id} />);
+    fireEvent.click(screen.getByRole("button", { name: "Edit Calendar Settings" }));
+    const pop = screen.getByTestId("cal-config") as HTMLElement;
+    expect(pop.className).toContain("max-[720px]:inset-x-3");
+    expect(pop.className).toContain("max-w-[calc(100vw-1.5rem)]");
+    const monthInput = screen.getByLabelText("Days of 1") as HTMLInputElement;
+    expect(monthInput.className).toContain("w-full");
+    expect(monthInput.className).toContain("min-w-0");
+    const nameInput = screen.getByLabelText("Month name 1") as HTMLInputElement;
+    expect(nameInput.className).toContain("w-full");
+  });
 });
 function fireDay(monthIndex: number, dayNumber: number) {
   const buttons = Array.from(document.querySelectorAll('[data-testid="cal-day"]'));
