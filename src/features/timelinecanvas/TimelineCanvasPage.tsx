@@ -150,7 +150,7 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
               transformOrigin: "0 0",
             }}
           >
-            <svg data-testid="tl-wire-svg" className="edges-layer absolute left-2 top-2 w-full h-full pointer-events-none" width="100%" height="100%">
+            <svg data-testid="tl-wire-svg" className="edges-layer absolute left-2 top-2 w-full h-full pointer-events-none [&_.tl-bead]:pointer-events-auto [&_.tl-seg]:pointer-events-auto" width="100%" height="100%">
               {/* segments draw over the base wire */}
               <line data-testid="tl-wire-base" x1={0} y1={200} x2={20000} y2={200} className="tl-wire-base [stroke:var(--gold-dim)] [stroke-width:3]" />
               {timeline.segments.map((g) => (

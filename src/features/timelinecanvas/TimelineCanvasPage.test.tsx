@@ -123,6 +123,16 @@ describe("TimelineCanvasPage", () => {
     expect(screen.queryByTestId("codex-dest")).toBeNull();
   });
 
+  it("bead groups take pointer events (svg layer must not swallow real clicks)", () => {
+    const prj = store().addProject("V").id;
+    const tl = store().addTimeline(prj, "Fio");
+    store().addBead(tl.id, { x: 620, y: -40, label: "A" });
+    render(<MemoryRouter><TimelineCanvasPage timelineId={tl.id} /></MemoryRouter>);
+    const svg = document.querySelector("[data-testid=tl-wire-svg]") as SVGSVGElement;
+    expect(svg.getAttribute("class")).toContain("[&_.tl-bead]:pointer-events-auto");
+    expect(svg.getAttribute("class")).toContain("[&_.tl-seg]:pointer-events-auto");
+  });
+
   it("fits content on mount so beads above the wire are on-screen", () => {
     const prj = store().addProject("V").id;
     const tl = store().addTimeline(prj, "Fio");
