@@ -20,7 +20,7 @@ export function CalendarIndexPage({ projectId }: { projectId: string }) {
       <header className="grid gap-1.5 justify-items-start mb-5">
         <h1>Calendar</h1>
         <p className="text-slate text-sm">Build the calendar your world actually runs on.</p>
-        <Button onClick={() => setCreating(true)}>Forge New Calendar</Button>
+        <Button onClick={() => setCreating(true)}>New calendar</Button>
       </header>
 
       {mine.length === 0 ? (
@@ -43,7 +43,7 @@ export function CalendarIndexPage({ projectId }: { projectId: string }) {
       )}
 
       {creating ? (
-        <Modal title="Forge New Calendar" onClose={() => setCreating(false)}>
+        <Modal title="New calendar" onClose={() => setCreating(false)}>
           <div className="grid gap-3">
             <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
             <div className="mt-2 flex justify-end gap-2.5">
@@ -53,7 +53,7 @@ export function CalendarIndexPage({ projectId }: { projectId: string }) {
                 useScriptorium.getState().addCalendar(projectId, n);
                 setCreating(false);
                 setName("");
-              }}>Forge</Button>
+              }}>Create</Button>
               <Button kind="ghost" onClick={() => setCreating(false)}>Cancel</Button>
             </div>
           </div>

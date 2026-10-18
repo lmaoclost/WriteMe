@@ -18,14 +18,14 @@ export function WellSpringIndexPage({ projectId }: { projectId: string }) {
   return (
     <div className="mx-auto max-w-[900px] px-6 py-8">
       <header className="grid gap-1.5 justify-items-start mb-5">
-        <h1>The Wellspring</h1>
+        <h1>Ideas</h1>
         <p className="text-slate text-sm">Somewhere to put an idea before it has a home.</p>
-        <Button onClick={() => setCreating(true)}>Forge New Wellspring</Button>
+        <Button onClick={() => setCreating(true)}>New idea board</Button>
       </header>
 
       {mine.length === 0 ? (
         <div className={EMPTY_STATE}>
-          <p>No saved wellsprings found. Create a new one first!</p>
+          <p>No idea boards found. Create a new one first!</p>
           <p className="text-slate text-sm">Loose ideas, before they have a home.</p>
         </div>
       ) : (
@@ -36,24 +36,24 @@ export function WellSpringIndexPage({ projectId }: { projectId: string }) {
                 <h2 className={CARD_NAME}>{w.name}</h2>
                 <p className={CARD_DESC}>{w.nodes.length} circles · {w.borders.length} lines</p>
               </Link>
-              <button title="Delete wellspring" className={DELETE_CHIP} onClick={() => setToDelete(w.id)}>✕</button>
+              <button title="Delete idea board" className={DELETE_CHIP} onClick={() => setToDelete(w.id)}>✕</button>
             </article>
           ))}
         </div>
       )}
 
       {creating ? (
-        <Modal title="Forge New Wellspring" onClose={() => setCreating(false)}>
+        <Modal title="New idea board" onClose={() => setCreating(false)}>
           <div className="grid gap-3">
             <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
             <div className="mt-2 flex justify-end gap-2.5">
               <Button onClick={() => {
                 const n = name.trim();
-                if (!n) { pushToast("error", "Please enter a wellspring name."); return; }
+                if (!n) { pushToast("error", "Please enter a name."); return; }
                 useScriptorium.getState().addWellSpring(projectId, n);
                 setCreating(false);
                 setName("");
-              }}>Forge</Button>
+              }}>Create</Button>
               <Button kind="ghost" onClick={() => setCreating(false)}>Cancel</Button>
             </div>
           </div>
@@ -66,7 +66,7 @@ export function WellSpringIndexPage({ projectId }: { projectId: string }) {
           <div className="mt-2 flex justify-end gap-2.5">
             <Button kind="danger" onClick={() => {
               useScriptorium.getState().deleteWellSpring(target.id);
-              pushToast("success", "Wellspring deleted.");
+              pushToast("success", "Idea board deleted.");
               setToDelete(null);
             }}>Delete</Button>
             <Button kind="ghost" onClick={() => setToDelete(null)}>Cancel</Button>

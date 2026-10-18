@@ -12,6 +12,7 @@ import type {
   Conlang, ConlangGlyph, ConlangWord,
 } from "../domain/types";
 import { newId } from "../domain/id";
+import { dateIsEmpty, sanitizeDate } from "../domain/dates";
 import type { Pt } from "../domain/geometry";
 import { isMeaningful } from "../domain/geometry";
 import { emptyProjectData, serialize, parseExport } from "./schema";
@@ -2918,6 +2919,7 @@ export interface ProjectCounts {
   bloodlinePersons: number; oathMembers: number; factions: number;
   calendarEvents: number; plotCards: number; timelineBeads: number;
   wellspringNodes: number; conlangWords: number;
+  chronologyEvents: number;
 }
 
 const byProjectFirst = <T extends { projectId: string }>(rows: readonly T[] | undefined, projectId: string): T | undefined =>
@@ -2951,6 +2953,11 @@ export const selectCounts = (projectId: string) => (s: ScriptoriumState): Projec
     timelineBeads: timeline?.beads.length ?? 0,
     wellspringNodes: wellspring?.nodes.length ?? 0,
     conlangWords: conlang?.words.length ?? 0,
+    chronologyEvents: s.entries.filter((e) => {
+      if (e.projectId !== projectId) return false;
+      const raw = e.date ?? "";
+      return !dateIsEmpty(raw) && sanitizeDate(raw) !== null;
+    }).length,
   };
 };
 

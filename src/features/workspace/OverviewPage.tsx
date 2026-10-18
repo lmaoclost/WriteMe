@@ -18,18 +18,19 @@ interface LedgerDef {
 }
 
 const LEDGER: LedgerDef[] = [
-  { letter: "T", name: "Codex", path: "entries", counter: "Codex entries", read: (c) => c.entries > 0 ? String(c.entries) : "\u2014" },
+  { letter: "T", name: "Lore", path: "entries", counter: "Lore entries", read: (c) => c.entries > 0 ? String(c.entries) : "\u2014" },
   { letter: "A", name: "Atlas", path: "atlas", counter: "Atlas pins", read: (c) => c.atlasPins > 0 ? `${c.atlasRegions} regions · ${c.atlasPins} pins` : "\u2014" },
+  { letter: "D", name: "Chronology", path: "timeline", counter: "Chronology events", read: (c) => c.chronologyEvents > 0 ? String(c.chronologyEvents) : "\u2014" },
   { letter: "B", name: "Bloodline", path: "bloodline", counter: "Bloodline persons", read: (c) => c.bloodlinePersons > 0 ? String(c.bloodlinePersons) : "\u2014" },
   { letter: "O", name: "Oaths", path: "oaths", counter: "Oaths members", read: (c) => c.oathMembers > 0 ? String(c.oathMembers) : "\u2014" },
   { letter: "F", name: "Factions", path: "factions", counter: "Factions", read: (c) => c.factions > 0 ? String(c.factions) : "\u2014" },
   { letter: "C", name: "Calendar", path: "calendar", counter: "Calendar events", read: (c) => c.calendarEvents > 0 ? String(c.calendarEvents) : "\u2014" },
   { letter: "L", name: "Plot board", path: "plotboard", counter: "Plot board cards", read: (c) => c.plotCards > 0 ? String(c.plotCards) : "\u2014" },
-  { letter: "W", name: "Timeline wheel", path: "linewheel", counter: "Timeline beads", read: (c) => c.timelineBeads > 0 ? String(c.timelineBeads) : "\u2014" },
-  { letter: "K", name: "Wellspring", path: "wellspring", counter: "Wellspring nodes", read: (c) => c.wellspringNodes > 0 ? String(c.wellspringNodes) : "\u2014" },
-  { letter: "K2", name: "Conlang", path: "conlang", counter: "Conlang words", read: (c) => c.conlangWords > 0 ? String(c.conlangWords) : "\u2014" },
+  { letter: "W", name: "Timeline", path: "linewheel", counter: "Timeline beads", read: (c) => c.timelineBeads > 0 ? String(c.timelineBeads) : "\u2014" },
+  { letter: "K", name: "Ideas", path: "wellspring", counter: "Ideas", read: (c) => c.wellspringNodes > 0 ? String(c.wellspringNodes) : "\u2014" },
+  { letter: "X", name: "Language", path: "conlang", counter: "Lexicon words", read: (c) => c.conlangWords > 0 ? String(c.conlangWords) : "\u2014" },
   { letter: "M", name: "Manuscript", path: "manuscript", counter: "Manuscript chapters", read: (c) => c.chapters > 0 ? String(c.chapters) : "\u2014" },
-  { letter: "S", name: "Bindery", path: "bindery", counter: "Bindery trims", read: () => "\u2726" },
+  { letter: "S", name: "Publishing", path: "bindery", counter: "Publishing trims", read: () => "✦" },
 ];
 
 export function OverviewPage() {

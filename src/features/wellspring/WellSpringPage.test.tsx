@@ -140,7 +140,7 @@ describe("WellSpringIndexPage", () => {
     seed();
     render(<MemoryRouter><WellSpringIndexPage projectId="prj_1" /></MemoryRouter>);
     expect(screen.getByText("A Guerra do Selo")).toBeInTheDocument();
-    fireEvent.click(screen.getByTitle("Delete wellspring"));
+    fireEvent.click(screen.getByTitle("Delete idea board"));
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     expect(store().wellsprings).toHaveLength(0);
   });

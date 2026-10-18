@@ -39,9 +39,9 @@ describe("BloodlineIndexPage", () => {
 
   it("creates a bloodline via modal", async () => {
     render(<MemoryRouter><BloodlineIndexPage projectId="prj_1" /></MemoryRouter>);
-    fireEvent.click(screen.getByRole("button", { name: "Forge New Bloodline" }));
+    fireEvent.click(screen.getByRole("button", { name: "New bloodline" }));
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Vellmor" } });
-    fireEvent.click(screen.getByRole("button", { name: "Forge" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create" }));
     expect(store().bloodlines.map((b) => b.name)).toEqual(["Vellmor"]);
   });
 

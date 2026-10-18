@@ -18,14 +18,14 @@ export function OathsIndexPage({ projectId }: { projectId: string }) {
   return (
     <div className="mx-auto max-w-[900px] px-6 py-8">
       <header className="grid gap-1.5 justify-items-start mb-5">
-        <h1>Oaths Hierarchy</h1>
+        <h1>Oaths</h1>
         <p className="text-slate text-sm">Chart who answers to whom — courts, orders, armies and guilds.</p>
-        <Button onClick={() => setCreating(true)}>Forge New Oaths Hierarchy</Button>
+        <Button onClick={() => setCreating(true)}>New oath chart</Button>
       </header>
 
       {mine.length === 0 ? (
         <div className={EMPTY_STATE}>
-          <p>No saved chains of command found. Create a new one first!</p>
+          <p>No saved oath charts found. Create a new one first!</p>
           <p className="text-slate text-sm">A primary chain sets the rank.</p>
         </div>
       ) : (
@@ -36,14 +36,14 @@ export function OathsIndexPage({ projectId }: { projectId: string }) {
                 <h2 className={CARD_NAME}>{c.name}</h2>
                 <p className={CARD_DESC}>{c.members.length} members · {c.oathLinks.length} oaths</p>
               </Link>
-              <button title="Delete oaths hierarchy" className={DELETE_CHIP} onClick={() => setToDelete(c.id)}>✕</button>
+              <button title="Delete oath chart" className={DELETE_CHIP} onClick={() => setToDelete(c.id)}>✕</button>
             </article>
           ))}
         </div>
       )}
 
       {creating ? (
-        <Modal title="Forge New Oaths Hierarchy" onClose={() => setCreating(false)}>
+        <Modal title="New oath chart" onClose={() => setCreating(false)}>
           <div className="grid gap-3">
             <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
             <div className="mt-2 flex justify-end gap-2.5">
@@ -53,7 +53,7 @@ export function OathsIndexPage({ projectId }: { projectId: string }) {
                 useScriptorium.getState().addOathsChart(projectId, n);
                 setCreating(false);
                 setName("");
-              }}>Forge</Button>
+              }}>Create</Button>
               <Button kind="ghost" onClick={() => setCreating(false)}>Cancel</Button>
             </div>
           </div>

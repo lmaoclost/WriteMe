@@ -75,7 +75,7 @@ export function AtlasIndexPage() {
     <div className="px-7 py-6 flex flex-col gap-[18px] overflow-y-auto h-full">
       <header className="flex items-center justify-between gap-3">
         <h1 className="m-0 text-[22px]">Atlas</h1>
-        <Button onClick={() => setCreating(true)}>Forge New Atlas</Button>
+        <Button onClick={() => setCreating(true)}>New atlas</Button>
       </header>
       {projectAtlases.length === 0 ? (
         <p className="text-parchment-dim text-[15px]">No saved atlases found. Create a new one first!</p>
@@ -93,7 +93,7 @@ export function AtlasIndexPage() {
         </div>
       )}
       {creating ? (
-        <Modal title="Forge New Atlas" onClose={() => setCreating(false)}>
+        <Modal title="New atlas" onClose={() => setCreating(false)}>
           <div className="flex flex-col gap-3.5 min-w-[260px]">
             <Field label="Name">
               <input
@@ -106,7 +106,7 @@ export function AtlasIndexPage() {
             </Field>
             <div className="flex justify-end gap-2">
               <Button kind="ghost" onClick={() => setCreating(false)}>Cancel</Button>
-              <Button onClick={create}>Forge</Button>
+              <Button onClick={create}>Create</Button>
             </div>
           </div>
         </Modal>

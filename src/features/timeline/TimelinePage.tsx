@@ -120,8 +120,8 @@ export function TimelinePage({ projectId }: { projectId: string }) {
         </p>
       )}
       {undated.length > 0 ? (
-        <section className="timeline-undated mt-[26px] border-t border-line pt-3.5" aria-label="Sem data">
-          <h2 className="font-semibold text-[11px] tracking-[0.08em] uppercase text-slate">Sem data</h2>
+        <section className="timeline-undated mt-[26px] border-t border-line pt-3.5" aria-label="Undated">
+          <h2 className="font-semibold text-[11px] tracking-[0.08em] uppercase text-slate">Undated</h2>
           <ul className="list-none mt-2 mb-0 p-0 flex flex-col">
             {undated.map((row) => (
               <li key={row.id}>

@@ -18,14 +18,14 @@ export function ConlangIndexPage({ projectId }: { projectId: string }) {
   return (
     <div className="mx-auto max-w-[900px] px-6 py-8">
       <header className="grid gap-1.5 justify-items-start mb-5">
-        <h1>Conlang & Lexicon</h1>
+        <h1>Language</h1>
         <p className="text-slate text-sm">Build a language with its own script and lexicon.</p>
-        <Button onClick={() => setCreating(true)}>Forge Conlang</Button>
+        <Button onClick={() => setCreating(true)}>New language</Button>
       </header>
 
       {mine.length === 0 ? (
         <div className={EMPTY_STATE}>
-          <p>No saved conlangs found. Create a new one first!</p>
+          <p>No languages found. Create a new one first!</p>
           <p className="text-slate text-sm">Invented letters, too.</p>
         </div>
       ) : (
@@ -36,24 +36,24 @@ export function ConlangIndexPage({ projectId }: { projectId: string }) {
                 <h2 className={CARD_NAME}>{c.name}</h2>
                 <p className={CARD_DESC}>{c.glyphs.length} glyphs · {c.words.length} words</p>
               </Link>
-              <button title="Delete conlang" className={DELETE_CHIP} onClick={() => setToDelete(c.id)}>✕</button>
+              <button title="Delete language" className={DELETE_CHIP} onClick={() => setToDelete(c.id)}>✕</button>
             </article>
           ))}
         </div>
       )}
 
       {creating ? (
-        <Modal title="Forge Conlang" onClose={() => setCreating(false)}>
+        <Modal title="New language" onClose={() => setCreating(false)}>
           <div className="grid gap-3">
             <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
             <div className="mt-2 flex justify-end gap-2.5">
               <Button onClick={() => {
                 const n = name.trim();
-                if (!n) { pushToast("error", "Please enter a conlang name."); return; }
+                if (!n) { pushToast("error", "Please enter a name."); return; }
                 useScriptorium.getState().addConlang(projectId, n);
                 setCreating(false);
                 setName("");
-              }}>Forge</Button>
+              }}>Create</Button>
               <Button kind="ghost" onClick={() => setCreating(false)}>Cancel</Button>
             </div>
           </div>
@@ -66,7 +66,7 @@ export function ConlangIndexPage({ projectId }: { projectId: string }) {
           <div className="mt-2 flex justify-end gap-2.5">
             <Button kind="danger" onClick={() => {
               useScriptorium.getState().deleteConlang(target.id);
-              pushToast("success", "Conlang deleted.");
+              pushToast("success", "Language deleted.");
               setToDelete(null);
             }}>Delete</Button>
             <Button kind="ghost" onClick={() => setToDelete(null)}>Cancel</Button>

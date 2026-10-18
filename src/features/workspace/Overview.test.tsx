@@ -43,7 +43,7 @@ describe("shell routes", () => {
     const rail = within(screen.getByRole("navigation", { name: /World sections/i }));
     expect(rail.getByRole("link", { name: /Overview/i })).toHaveAttribute("href", `/p/${p.id}`);
     expect(rail.getByRole("link", { name: /Atlas/i })).toHaveAttribute("href", `/p/${p.id}/atlas`);
-    expect(rail.getByRole("link", { name: /Codex/i })).toHaveAttribute("href", `/p/${p.id}/entries`);
+    expect(rail.getByRole("link", { name: /Lore/i })).toHaveAttribute("href", `/p/${p.id}/entries`);
     expect(rail.getByRole("link", { name: /Manuscript/i })).toHaveAttribute("href", `/p/${p.id}/manuscript`);
     expect(rail.getByRole("link", { name: /My worlds/i })).toHaveAttribute("href", "/");
   });
@@ -114,13 +114,13 @@ describe("overview dashboard", () => {
     return id;
   }
 
-  it("ledger lists all 11 forge rows with counters after seeding", () => {
+  it("ledger lists all 13 forge rows with counters after seeding", () => {
     const pid = seeded();
     render(at(`/p/${pid}`));
     const ledger = within(screen.getByRole("region", { name: "Forge ledger" }));
-    expect(ledger.getAllByRole("listitem")).toHaveLength(12);
-    ["Codex", "Atlas", "Bloodline", "Oaths", "Factions", "Calendar",
-     "Plot board", "Timeline wheel", "Wellspring", "Conlang", "Manuscript", "Bindery"]
+    expect(ledger.getAllByRole("listitem")).toHaveLength(13);
+    ["Lore", "Atlas", "Chronology", "Bloodline", "Oaths", "Factions",
+     "Calendar", "Plot board", "Timeline", "Ideas", "Language", "Manuscript", "Publishing"]
       .forEach((n) => expect(ledger.getByText(n)).toBeInTheDocument());
   });
 
@@ -128,10 +128,11 @@ describe("overview dashboard", () => {
     const pid = seeded();
     render(at(`/p/${pid}`));
     const ledger = within(screen.getByRole("region", { name: "Forge ledger" }));
-    expect(ledger.getByLabelText("Codex entries")).toHaveTextContent("16");
+    expect(ledger.getByLabelText("Lore entries")).toHaveTextContent("16");
+    expect(ledger.getByLabelText("Chronology events")).toHaveTextContent("1");
     expect(ledger.getByLabelText("Bloodline persons")).toHaveTextContent("6");
     expect(ledger.getByLabelText("Calendar events")).toHaveTextContent("9");
-    expect(ledger.getByLabelText("Conlang words")).toHaveTextContent("12");
+    expect(ledger.getByLabelText("Lexicon words")).toHaveTextContent("12");
     expect(ledger.getByLabelText("Plot board cards")).toHaveTextContent("7");
   });
 
@@ -140,9 +141,10 @@ describe("overview dashboard", () => {
     render(at(`/p/${pid}`));
     const ledger = within(screen.getByRole("region", { name: "Forge ledger" }));
     expect(ledger.getByRole("link", { name: /Plot board/i })).toHaveAttribute("href", `/p/${pid}/plotboard`);
-    expect(ledger.getByRole("link", { name: /Wellspring/i })).toHaveAttribute("href", `/p/${pid}/wellspring`);
+    expect(ledger.getByRole("link", { name: /Ideas/i })).toHaveAttribute("href", `/p/${pid}/wellspring`);
     expect(ledger.getByRole("link", { name: /Oaths/i })).toHaveAttribute("href", `/p/${pid}/oaths`);
-    expect(ledger.getByRole("link", { name: /Codex/i })).toHaveAttribute("href", `/p/${pid}/entries`);
+    expect(ledger.getByRole("link", { name: /Lore/i })).toHaveAttribute("href", `/p/${pid}/entries`);
+    expect(ledger.getByRole("link", { name: /Chronology/i })).toHaveAttribute("href", `/p/${pid}/timeline`);
   });
 
   it("portability actions are gone from the overview", () => {
@@ -165,17 +167,18 @@ describe("overview dashboard", () => {
     render(at(`/p/${pid}`));
     const ledger = within(screen.getByRole("region", { name: "Forge ledger" }));
     expect(ledger.getByLabelText("Bloodline persons")).toHaveTextContent("—");
-    expect(ledger.getByLabelText("Conlang words")).toHaveTextContent("—");
+    expect(ledger.getByLabelText("Lexicon words")).toHaveTextContent("—");
+    expect(ledger.getByLabelText("Chronology events")).toHaveTextContent("—");
   });
 });
 describe("Bindery index", () => {
-  it("rail gains a Bindery item and the ledger row points at the index", () => {
+  it("rail gains a Publishing item and the ledger row points at the index", () => {
     const p = useScriptorium.getState().addProject("Shimradis");
     render(at(`/p/${p.id}`));
     const rail = within(screen.getByRole("navigation", { name: /world sections/i }));
-    expect(rail.getByRole("link", { name: "Bindery" })).toHaveAttribute("href", `/p/${p.id}/bindery`);
+    expect(rail.getByRole("link", { name: "Publishing" })).toHaveAttribute("href", `/p/${p.id}/bindery`);
     const ledger = within(screen.getByRole("region", { name: "Forge ledger" }));
-    expect(ledger.getByRole("link", { name: /Bindery/i })).toHaveAttribute("href", `/p/${p.id}/bindery`);
+    expect(ledger.getByRole("link", { name: /Publishing/i })).toHaveAttribute("href", `/p/${p.id}/bindery`);
   });
 
   it("index lists manuscripts with chapter counts and links into the deep route", () => {
@@ -184,7 +187,7 @@ describe("Bindery index", () => {
     act(() => { useScriptorium.getState().addChapter(useScriptorium.getState().manuscripts[0].id, "Arco da Coroa"); });
     act(() => { useScriptorium.getState().setBindery(useScriptorium.getState().manuscripts[0].id, { trim: "5x8" }); });
     render(at(`/p/${p.id}/bindery`));
-    expect(screen.getByRole("heading", { name: "Bindery" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Publishing" })).toBeInTheDocument();
     const row = screen.getByRole("link", { name: /Cantar de Vellmora/i });
     expect(row.getAttribute("href")).toBe(`/p/${p.id}/bindery/${useScriptorium.getState().manuscripts[0].id}`);
     expect(screen.getByText(/1 chapter/i)).toBeInTheDocument();

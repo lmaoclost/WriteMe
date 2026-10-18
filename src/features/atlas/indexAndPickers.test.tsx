@@ -161,15 +161,15 @@ describe("AtlasIndexPage", () => {
     const pid = seedProject();
     render(at(`/p/${pid}/atlas`));
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Forge New Atlas" }));
+      fireEvent.click(screen.getByRole("button", { name: "New atlas" }));
     });
-    const dialog = screen.getByRole("dialog", { name: "Forge New Atlas" });
+    const dialog = screen.getByRole("dialog", { name: "New atlas" });
     const input = within(dialog).getByRole("textbox", { name: "Name" }) as HTMLInputElement;
     act(() => {
       fireEvent.change(input, { target: { value: "Novo Mundo" } });
     });
     act(() => {
-      fireEvent.click(within(dialog).getByRole("button", { name: "Forge" }));
+      fireEvent.click(within(dialog).getByRole("button", { name: "Create" }));
     });
     const created = store().atlases.find((a) => a.projectId === pid && a.name === "Novo Mundo");
     expect(created).toBeTruthy();

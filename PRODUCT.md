@@ -6,6 +6,7 @@
 
 **Product truth:**
 - Multi-project: the Library is the launcher (welcome + worlds list). The legacy `/feed` forges grid was removed 2026-10-18 — users pick a world from the cards; forge access happens inside the workspace.
+- Section names are semantic (Lore, Chronology, Timeline, Ideas, Language, Publishing…) per `docs/decisions/naming-semantic-clean.md`. Routes and component names keep the historical vocabulary (entries, linewheel, wellspring, conlang, bindery).
 - Project workspace = forge pages: Codex, Atlas, Bloodline, Factions, Calendar, Plot board, Timeline (wheel), Oaths, Wellspring, Conlang, Manuscript (Bindery).
 - Forge name mapping (legacy name → canonical page): Codex → Codex; Atlas → Atlas; Calendar → Calendar; Plot board → Plot board; Bloodline → Bloodline + Oaths (double card); Manuscript → Manuscript; Bindery Scriptorium → Bindery/export.
 - No monetization surfaces: no Unlock banner, no survey modal.

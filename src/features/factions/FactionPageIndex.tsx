@@ -18,9 +18,9 @@ export function FactionWebServicePage({ projectId }: { projectId: string }) {
   return (
     <div className="mx-auto max-w-[900px] px-6 py-8">
       <header className="grid gap-1.5 justify-items-start mb-5">
-        <h1>Faction Webs</h1>
+        <h1>Factions</h1>
         <p className="text-slate text-sm">How the powers in your world regard one another.</p>
-        <Button onClick={() => setCreating(true)}>Forge New Faction Web</Button>
+        <Button onClick={() => setCreating(true)}>New faction web</Button>
       </header>
 
       {mine.length === 0 ? (
@@ -43,7 +43,7 @@ export function FactionWebServicePage({ projectId }: { projectId: string }) {
       )}
 
       {creating ? (
-        <Modal title="Forge New Faction Web" onClose={() => setCreating(false)}>
+        <Modal title="New faction web" onClose={() => setCreating(false)}>
           <div className="grid gap-3">
             <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
             <div className="mt-2 flex justify-end gap-2.5">
@@ -53,7 +53,7 @@ export function FactionWebServicePage({ projectId }: { projectId: string }) {
                 useScriptorium.getState().addFactionWeb(projectId, n);
                 setCreating(false);
                 setName("");
-              }}>Forge</Button>
+              }}>Create</Button>
               <Button kind="ghost" onClick={() => setCreating(false)}>Cancel</Button>
             </div>
           </div>

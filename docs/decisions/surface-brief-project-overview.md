@@ -8,5 +8,6 @@
   - Counters: Codex entries, Atlas regions+pins, Bloodline persons, Oaths members, Factions factions, Calendar events, Plot board cards, Timeline beads, Wellspring nodes, Conlang words, Manuscript chapters.
 - **States:** zero counters → "—"; missing cover → placeholder panel with change prompt; deleted world mid-view → redirect (existing behavior).
 - **Out of scope here:** Export/Import copy ("Backup" in Settings per ADR-0002), demo seed (Library empty state only), recents (decided no).
+- **Update 2026-10-18:** ledger now has 13 rows (naming-semantic-clean.md renamed Codex→Lore, Timeline wheel→Timeline, Wellspring→Ideas, Conlang→Language, Bindery→Publishing, and added the missing Chronology row with an "events with date" counter).
 - **Copy:** full EN. Error/ success toasts for cover change in EN.
 - **Craft floor notes:** no eyebrow labels on hero; name heading carries weight; rows are lists, not cards; no nested panels.

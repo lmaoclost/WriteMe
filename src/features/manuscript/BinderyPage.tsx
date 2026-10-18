@@ -50,7 +50,7 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
       </header>
       <div className="grid grid-cols-[300px_1fr] min-h-0 overflow-hidden">
         <aside className={`${BOARD_PANEL} [&_h2]:text-[1.125rem] [&_h2]:mb-2.5`}>
-          <h2>Bindery</h2>
+          <h2>Publishing</h2>
           <Field label="Typography">
             <Select value={b.font} onValueChange={(v) => set({ font: v })}>
               <SelectTrigger aria-label="Typography" className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
@@ -148,12 +148,12 @@ export function BinderyIndex({ projectId }: { projectId: string }) {
   return (
     <div className="grid grid-rows-[auto_1fr] h-full" data-testid="bindery-index">
       <header className={BOARD_HEADER}>
-        <h1 className="bl-title font-display text-[1.375rem] text-parchment-strong m-0">Bindery</h1>
+        <h1 className="bl-title font-display text-[1.375rem] text-parchment-strong m-0">Publishing</h1>
       </header>
       {manuscripts.length === 0 ? (
         <p className="text-slate text-[0.9375rem] mt-2">
           No manuscripts yet.{" "}
-          <Link className="bindery-create-link text-lilac no-underline hover:underline" to={`/p/${projectId}/manuscript`}>Open the Manuscript</Link>{" "}
+          <Link className="bindery-create-link text-lilac no-underline hover:underline" to={`/p/${projectId}/manuscript`}>Open the Manuscript forge</Link>{" "}
           to write one.
         </p>
       ) : (

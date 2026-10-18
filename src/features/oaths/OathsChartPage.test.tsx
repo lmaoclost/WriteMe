@@ -124,7 +124,7 @@ describe("OathsIndexPage", () => {
     store().addOathsChart("prj_1", "Anel");
     render(<MemoryRouter><OathsIndexPage projectId="prj_1" /></MemoryRouter>);
     expect(screen.getByText("Anel")).toBeInTheDocument();
-    fireEvent.click(screen.getByTitle("Delete oaths hierarchy"));
+    fireEvent.click(screen.getByTitle("Delete oath chart"));
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     expect(store().oathsCharts).toHaveLength(0);
   });

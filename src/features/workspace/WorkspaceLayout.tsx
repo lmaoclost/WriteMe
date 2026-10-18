@@ -6,18 +6,18 @@ import { Seal } from "../../ui/Seal";
 const SECTIONS = [
   { key: "overview", label: "Overview", to: "" },
   { key: "atlas", label: "Atlas", to: "atlas" },
-  { key: "entries", label: "Codex", to: "entries" },
-  { key: "timeline", label: "Timeline", to: "timeline" },
+  { key: "entries", label: "Lore", to: "entries" },
+  { key: "timeline", label: "Chronology", to: "timeline" },
   { key: "bloodline", label: "Bloodline", to: "bloodline" },
   { key: "factions", label: "Factions", to: "factions" },
   { key: "calendar", label: "Calendar", to: "calendar" },
   { key: "plotboard", label: "Plot board", to: "plotboard" },
-  { key: "linewheel", label: "Timeline canvas", to: "linewheel" },
+  { key: "linewheel", label: "Timeline", to: "linewheel" },
   { key: "oaths", label: "Oaths", to: "oaths" },
-  { key: "wellspring", label: "Wellspring", to: "wellspring" },
-  { key: "conlang", label: "Conlang", to: "conlang" },
+  { key: "wellspring", label: "Ideas", to: "wellspring" },
+  { key: "conlang", label: "Language", to: "conlang" },
   { key: "manuscript", label: "Manuscript", to: "manuscript" },
-  { key: "bindery", label: "Bindery", to: "bindery" },
+  { key: "bindery", label: "Publishing", to: "bindery" },
 ] as const;
 
 const RAIL_LINK = "px-3 py-[9px] rounded-sm text-xs tracking-[0.1em] uppercase whitespace-nowrap text-ellipsis overflow-hidden no-underline transition-colors max-[720px]:flex-none max-[720px]:overflow-visible max-[720px]:whitespace-nowrap max-[720px]:text-ellipsis max-[720px]:text-clip";

@@ -111,11 +111,11 @@ describe("ConlangPage — léxico", () => {
 describe("ConlangIndexPage", () => {
   it("index creates + deletes", () => {
     render(<MemoryRouter><ConlangIndexPage projectId="prj_1" /></MemoryRouter>);
-    fireEvent.click(screen.getByRole("button", { name: "Forge Conlang" }));
+    fireEvent.click(screen.getByRole("button", { name: "New language" }));
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Fala do Selo" } });
-    fireEvent.click(screen.getByRole("button", { name: "Forge" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create" }));
     expect(screen.getByText("Fala do Selo")).toBeInTheDocument();
-    fireEvent.click(screen.getByTitle("Delete conlang"));
+    fireEvent.click(screen.getByTitle("Delete language"));
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     expect(store().conlangs).toHaveLength(0);
   });

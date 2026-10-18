@@ -106,7 +106,7 @@ describe("TimelinePage", () => {
     render(timelineRoute(projectId));
     fireEvent.click(screen.getByRole("button", { name: "Tratado das Três Pontes — 1200 · Maio" }));
     expect(screen.getByLabelText("Title")).toHaveValue("Tratado das Três Pontes");
-    expect(screen.getByRole("link", { name: "Codex" }).getAttribute("class")).toContain("text-gold");
+    expect(screen.getByRole("link", { name: "Lore" }).getAttribute("class")).toContain("text-gold");
   });
 
   it("uses Tudo as the default chip and Events only narrows the line", () => {
@@ -148,7 +148,7 @@ describe("TimelinePage", () => {
     expect(screen.getByLabelText("Title")).toHaveValue("Portão Sul");
   });
 
-  it("applies the category chip to the Sem data section too", () => {
+  it("applies the category chip to the Undated section too", () => {
     const projectId = seedProject([
       { title: "Guerra dos Cinco Invernos", category: "event" },
       { title: "Rio Sarnen", category: "place" },
@@ -209,7 +209,7 @@ describe("TimelinePage", () => {
     const labels = Array.from(document.querySelectorAll("[aria-label='World sections'] a")).map(
       (el) => el.textContent,
     );
-    expect(labels).toEqual(["← My worlds", "Overview", "Atlas", "Codex", "Timeline", "Bloodline", "Factions", "Calendar", "Plot board", "Timeline canvas", "Oaths", "Wellspring", "Conlang", "Manuscript", "Bindery"]);
-    expect(screen.getByRole("link", { name: "Timeline" }).getAttribute("class")).toContain("text-gold");
+    expect(labels).toEqual(["← My worlds", "Overview", "Atlas", "Lore", "Chronology", "Bloodline", "Factions", "Calendar", "Plot board", "Timeline", "Oaths", "Ideas", "Language", "Manuscript", "Publishing"]);
+    expect(screen.getByRole("link", { name: "Chronology" }).getAttribute("class")).toContain("text-gold");
   });
 });

@@ -32,7 +32,7 @@ describe("hydration gate", () => {
 
     act(() => finishers.forEach((f) => f()));
 
-    await waitFor(() => expect(screen.getByRole("link", { name: "Codex" })).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole("link", { name: "Lore" })).toBeTruthy());
     expect(window.location.pathname).toBe(`/p/${pid}/entries`);
     // no false "world doesn't exist" toast
     expect(useScriptorium.getState().toasts.some((t) => t.kind === "error")).toBe(false);

@@ -23,7 +23,7 @@ export function ConlangPage({ conlangId }: { conlangId: string }) {
   useBoardNotesHotkey(notesOpen, setNotesOpen);
 
   useEffect(() => {
-    if (!conlang) pushToast("error", "Conlang not found.");
+    if (!conlang) pushToast("error", "Language not found.");
   }, [conlang, pushToast]);
 
   if (!conlang) return null;
@@ -33,7 +33,7 @@ export function ConlangPage({ conlangId }: { conlangId: string }) {
       <header className={BOARD_HEADER}>
         <input
           className={BOARD_NAME_INPUT}
-          aria-label="Conlang name"
+          aria-label="Language name"
           value={conlang.name}
           onChange={(e) => useScriptorium.getState().renameConlang(conlangId, e.target.value)}
         />
@@ -43,7 +43,7 @@ export function ConlangPage({ conlangId }: { conlangId: string }) {
           <button type="button" aria-pressed={notesOpen} className={BOARD_ACTION_BTN} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
         </div>
       </header>
-      <nav className="flex gap-2 px-[18px] pt-2.5" aria-label="Conlang sections">
+      <nav className="flex gap-2 px-[18px] pt-2.5" aria-label="Language sections">
         <button type="button" aria-pressed={tab === "alphabet"} onClick={() => setTab("alphabet")} className="bg-night border border-line text-slate rounded-t-sm px-4 py-2 font-display font-semibold aria-pressed:text-gold aria-pressed:border-b-gold">Alphabet</button>
         <button type="button" aria-pressed={tab === "lexicon"} onClick={() => setTab("lexicon")} className="bg-night border border-line text-slate rounded-t-sm px-4 py-2 font-display font-semibold aria-pressed:text-gold aria-pressed:border-b-gold">Lexicon</button>
       </nav>
@@ -303,7 +303,7 @@ function ConlangNotepad({ notes, onNotes, onClose }: { notes: string; onNotes(v:
         <span>Notes</span>
         <button type="button" aria-label="Fechar notas" onClick={() => { flush(); onClose(); }} className="bg-none border-0 text-slate">✕</button>
       </header>
-      <textarea aria-label="Conlang notes" value={draft} onChange={(e) => setDraft(e.target.value)} rows={5} className={BOARD_NOTEPAD_TXT} />
+      <textarea aria-label="Language notes" value={draft} onChange={(e) => setDraft(e.target.value)} rows={5} className={BOARD_NOTEPAD_TXT} />
     </div>
   );
 }

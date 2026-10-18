@@ -185,7 +185,7 @@ export function ExportTools({ manuscript }: ExportToolsProps) {
         <a
           className="book-export-btn bindery-link bg-transparent text-parchment-dim border border-line rounded-sm px-3.5 py-2 text-[13px] no-underline hover:text-parchment hover:border-gold-dim"
           href={`../bindery/${manuscript.id}`}
-          aria-label="Open Bindery"
+          aria-label="Open Publishing"
         >
           Encadernar ✦
         </a>

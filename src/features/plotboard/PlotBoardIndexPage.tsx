@@ -20,7 +20,7 @@ export function PlotBoardIndexPage({ projectId }: { projectId: string }) {
       <header className="grid gap-1.5 justify-items-start mb-5">
         <h1>Plot board</h1>
         <p className="text-slate text-sm">Plan your story as scenes you can move around.</p>
-        <Button onClick={() => setCreating(true)}>Forge New Plot Board</Button>
+        <Button onClick={() => setCreating(true)}>New plot board</Button>
       </header>
 
       {mine.length === 0 ? (
@@ -43,7 +43,7 @@ export function PlotBoardIndexPage({ projectId }: { projectId: string }) {
       )}
 
       {creating ? (
-        <Modal title="Forge New Plot Board" onClose={() => setCreating(false)}>
+        <Modal title="New plot board" onClose={() => setCreating(false)}>
           <div className="grid gap-3">
             <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
             <div className="mt-2 flex justify-end gap-2.5">
@@ -53,7 +53,7 @@ export function PlotBoardIndexPage({ projectId }: { projectId: string }) {
                 useScriptorium.getState().addPlotBoard(projectId, n);
                 setCreating(false);
                 setName("");
-              }}>Forge</Button>
+              }}>Create</Button>
               <Button kind="ghost" onClick={() => setCreating(false)}>Cancel</Button>
             </div>
           </div>

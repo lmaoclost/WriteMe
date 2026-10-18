@@ -140,9 +140,9 @@ describe("FactionWebServicePage (index)", () => {
   it("renders cards + creates via modal", () => {
     render(<MemoryRouter><FactionWebServicePage projectId="prj_1" /></MemoryRouter>);
     expect(screen.getByText(/No saved faction webs found. Create a new one first!/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Forge New Faction Web" }));
+    fireEvent.click(screen.getByRole("button", { name: "New faction web" }));
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Selo" } });
-    fireEvent.click(screen.getByRole("button", { name: "Forge" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create" }));
     expect(store().factionWebs![0].name).toBe("Selo");
     expect(screen.getByText("Selo")).toBeInTheDocument();
   });

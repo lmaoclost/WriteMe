@@ -299,6 +299,7 @@ describe("selectCounts full subsystems", () => {
     expect(c.timelineBeads).toBe(6);
     expect(c.wellspringNodes).toBe(8);
     expect(c.conlangWords).toBe(12);
+    expect(c.chronologyEvents).toBe(1);
     expect(c.atlasPins).toBeGreaterThanOrEqual(4);
     expect(c.atlasRegions).toBe(3);
   });

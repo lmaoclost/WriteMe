@@ -65,7 +65,7 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
   }, [scheduleView]);
 
   useEffect(() => {
-    if (!well) pushToast("error", "Wellspring not found.");
+    if (!well) pushToast("error", "Idea board not found.");
   }, [well, pushToast]);
 
   if (!well) return null;
@@ -78,7 +78,7 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
       <header className={BOARD_HEADER}>
         <input
           className={BOARD_NAME_INPUT}
-          aria-label="Wellspring name"
+          aria-label="Idea board name"
           value={well.name}
           onChange={(e) => useScriptorium.getState().renameWellSpring(wellId, e.target.value)}
         />
