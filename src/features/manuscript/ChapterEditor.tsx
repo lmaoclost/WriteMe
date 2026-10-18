@@ -152,16 +152,16 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
 
   return (
     <div className="book-editor flex flex-col gap-2.5 max-w-[860px]">
-      <input
-        ref={headingRef}
-        type="text"
-        className="book-ch-heading-input font-display text-[1.375rem] font-semibold text-parchment bg-none border border-transparent rounded-lg px-1.5 py-0.5 hover:border-line focus:border-gold outline-none"
-        aria-label="Chapter title"
-        value={headingDraft.draft}
-        onChange={(e) => headingDraft.setDraft(e.target.value)}
-        onBlur={flush}
-      />
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        <input
+          ref={headingRef}
+          type="text"
+          className="book-ch-heading-input flex-1 min-w-0 font-display text-[1.375rem] font-semibold text-parchment bg-none border border-transparent rounded-lg px-1.5 py-0.5 hover:border-line focus:border-gold outline-none"
+          aria-label="Chapter title"
+          value={headingDraft.draft}
+          onChange={(e) => headingDraft.setDraft(e.target.value)}
+          onBlur={flush}
+        />
         <button
           type="button"
           className="book-mode bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] cursor-pointer hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold"
@@ -272,8 +272,18 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
   const [dd, setDd] = useState("1");
   const cal = calendars.find((c) => c.id === (calId || chapter.linkedCalendarId));
 
+  const [notesOpen, setNotesOpen] = useState(true);
   return (
-    <>
+    <section className="book-notes-panel border-t border-line pt-3 mt-1" data-slot="notes-panel">
+      <button
+        type="button"
+        className="book-mode bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] cursor-pointer hover:border-gold-dim self-start"
+        aria-expanded={notesOpen}
+        onClick={() => setNotesOpen((v) => !v)}
+      >
+        Notas e cena <span aria-hidden="true">{notesOpen ? "▾" : "▸"}</span>
+      </button>
+      <div hidden={!notesOpen} className="grid gap-3 pt-2.5">
       <div className="book-note-field flex flex-col gap-1.5">
         <span className="field-label text-xs font-semibold uppercase tracking-[0.08em] text-slate">Prologue</span>
         <RichNoteField
@@ -367,7 +377,8 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
           </div>
         ) : null}
       </div>
-    </>
+      </div>
+    </section>
   );
 }
 

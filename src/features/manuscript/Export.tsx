@@ -28,6 +28,7 @@ export function ExportTools({ manuscript }: ExportToolsProps) {
   const pushToast = useScriptorium((s) => s.pushToast);
   const [busy, setBusy] = useState(false);
   const [printing, setPrinting] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const disabled = manuscript.chapters.length === 0 || busy;
   const title = manuscript.chapters.length === 0 ? "Add chapters first" : undefined;
@@ -140,8 +141,17 @@ export function ExportTools({ manuscript }: ExportToolsProps) {
   };
 
   return (
-    <>
-      <div className="flex gap-2 max-w-[760px] border-t border-line pt-3 mt-auto">
+    <section className="book-export-panel border-t border-line pt-3 mt-auto" data-slot="export-panel">
+      <button
+        type="button"
+        className="book-mode bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] cursor-pointer hover:border-gold-dim self-start"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        {open ? <span aria-hidden="true">▾</span> : <span aria-hidden="true">▸</span>} Exportar
+      </button>
+      <div hidden={!open} className="mt-2.5">
+        <div className="flex gap-2 max-w-[760px]">
         <button
           type="button"
           className="book-export-btn bg-transparent text-parchment-dim border border-line rounded-sm px-3.5 py-2 text-[13px] transition-colors disabled:opacity-45 disabled:cursor-default enabled:cursor-pointer enabled:hover:text-parchment enabled:hover:border-gold-dim"
@@ -177,6 +187,7 @@ export function ExportTools({ manuscript }: ExportToolsProps) {
         >
           Encadernar ✦
         </a>
+        </div>
       </div>
       {/* Portal to body keeps .print-book outside .workspace so print CSS can hide the shell. */}
       {printing
@@ -189,6 +200,6 @@ export function ExportTools({ manuscript }: ExportToolsProps) {
             document.body,
           )
         : null}
-    </>
+    </section>
   );
 }

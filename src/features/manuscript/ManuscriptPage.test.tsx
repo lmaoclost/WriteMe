@@ -4,6 +4,7 @@ import { pickSelectOptionSync } from "../../test/selectHelper";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppRouter } from "../../app/router";
 import { useScriptorium } from "../../data/store";
+import { ChapterEditor } from "./ChapterEditor";
 import type { Manuscript } from "../../domain/types";
 
 type BookSpec = {
@@ -373,6 +374,7 @@ describe("ExportTools slot", () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A" });
     render(manuscriptRoute(projectId));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
     const epub = screen.getByRole("button", { name: "Exportar EPUB" });
     const pdf = screen.getByRole("button", { name: "Exportar PDF" });
     expect(epub).toBeDisabled();
@@ -384,4 +386,42 @@ describe("ExportTools slot", () => {
     expect(pdf).toBeEnabled();
     expect(epub).not.toHaveAttribute("title");
   });
+
+  it("export lives in a collapsible panel (trigger toggles content)", () => {
+    const projectId = seedProject();
+    seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "x" }] });
+    render(manuscriptRoute(projectId));
+    const trigger = screen.getByRole("button", { name: "Exportar" });
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    expect(trigger.textContent).toContain("Exportar");
+    // hidden content is invisible (still mounted, spec: no draft loss)
+    expect(screen.queryByRole("button", { name: "Exportar EPUB" })).toBeNull();
+    fireEvent.click(trigger);
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    const epub = screen.getByRole("button", { name: "Exportar EPUB" });
+    expect(epub.closest("[data-slot='export-panel']")).toBeTruthy();
+  });
 });
+
+const store = useScriptorium.getState;
+
+describe("ChapterEditor — notes panel", () => {
+  it("notes and calendar link live inside ONE collapsible panel, open by default", () => {
+    const m = useScriptorium.getState().addManuscript("prj_1", "Livro A");
+    const ch = useScriptorium.getState().addChapter(m.id, "Um")!;
+    store().updateChapter(ch.id, { noteTop: "Abre a história" });
+    render(<ChapterEditor chapterId={ch.id} onDeleted={() => {}} />);
+    const trigger = screen.getByRole("button", { name: /Notas e cena/i });
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    // all notes blocks are inside the panel
+    const panel = trigger.closest("[data-slot='notes-panel']") as HTMLElement;
+    expect(panel).toBeTruthy();
+    expect(within(panel).queryByLabelText("Prologue")).toBeTruthy();
+    expect(within(panel).queryByLabelText("Epilogue")).toBeTruthy();
+    fireEvent.click(trigger);
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(within(panel).queryByLabelText("Prologue")).not.toBeVisible();
+  });
+});
+
+// panel helper stays in this file; ChapterEditor imported at top

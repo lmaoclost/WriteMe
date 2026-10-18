@@ -273,6 +273,7 @@ describe("EPUB export", () => {
     act(() => { useScriptorium.getState().updateProject(projectId, { coverImageKey: key }); });
     seedBook(projectId, { title: "Livro Com Capa", chapters: [{ heading: "Um", content: "x." }] });
     render(manuscriptRoute(projectId));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
     expect((epubMock.calls[0].options as { cover?: string }).cover).toBe("data:image/png;base64,CAPACOVER");
@@ -282,6 +283,7 @@ describe("EPUB export", () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "Livro Sem Capa", chapters: [{ heading: "Um", content: "x." }] });
     render(manuscriptRoute(projectId));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
     expect((epubMock.calls[0].options as { cover?: string }).cover).toBeUndefined();
@@ -301,6 +303,7 @@ describe("EPUB export", () => {
     });
     epubMock.expectedOrder = ["Prólogo", "Fim"];
     render(manuscriptRoute(projectId));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
     await waitFor(() => {
       expect(useScriptorium.getState().toasts.some((t) => t.message === "EPUB gerado.")).toBe(true);
@@ -325,6 +328,7 @@ describe("EPUB export", () => {
     useScriptorium.getState().updateProject(projectId, { coverImageKey: key });
     seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "x" }] });
     const covered = render(manuscriptRoute(projectId));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
     expect(lastOptions(0)).toEqual(expect.objectContaining({ cover: "data:image/png;base64,COVER" }));
@@ -334,6 +338,7 @@ describe("EPUB export", () => {
     const bareId = seedProject();
     seedBook(bareId, { title: "B", chapters: [{ heading: "Um", content: "x" }] });
     render(manuscriptRoute(bareId));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(2));
     expect("cover" in lastOptions(1)).toBe(false);
@@ -343,6 +348,7 @@ describe("EPUB export", () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "???", chapters: [{ heading: "Um", content: "x" }] });
     render(manuscriptRoute(projectId));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
     expect(anchorDownload).toBe("livro.epub");
@@ -352,6 +358,7 @@ describe("EPUB export", () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "Época Antiga", chapters: [{ heading: "Um", content: "x" }] });
     render(manuscriptRoute(projectId));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
     expect(anchorDownload).toBe("epoca-antiga.epub");
@@ -375,6 +382,7 @@ describe("EPUB export", () => {
       () => new Promise<never>((res) => { resolve = res; }),
     );
     render(manuscriptRoute(projectId));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
     const button = screen.getByRole("button", { name: "Exportar EPUB" });
     fireEvent.click(button);
     await waitFor(() => expect(button).toBeDisabled());
@@ -390,6 +398,7 @@ describe("EPUB export", () => {
     seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "x" }] });
     epubMock.genEpub.mockRejectedValueOnce(new Error("boom"));
     render(manuscriptRoute(projectId));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
     const button = screen.getByRole("button", { name: "Exportar EPUB" });
     fireEvent.click(button);
     await waitFor(() => {
@@ -413,6 +422,7 @@ describe("PDF export", () => {
     const printSpy = vi.fn();
     stubWindowPrint(printSpy);
     render(manuscriptRoute(projectId));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
     fireEvent.click(screen.getByRole("button", { name: "Exportar PDF" }));
     const printBook = screen.getByTestId("print-book");
     // Portal regression: the print book must live on document.body, outside the app shell.
@@ -436,6 +446,7 @@ describe("PDF export", () => {
     const printSpy = vi.fn();
     stubWindowPrint(printSpy);
     render(manuscriptRoute(projectId));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
     fireEvent.click(screen.getByRole("button", { name: "Exportar PDF" }));
     expect(screen.getByTestId("print-book")).toBeInTheDocument();
     act(() => vi.runAllTimers());
