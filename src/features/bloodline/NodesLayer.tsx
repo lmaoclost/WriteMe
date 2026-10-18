@@ -64,18 +64,42 @@ export function PersonNode({
   );
 }
 
-export function HouseNode({ house, selected, memberCount, onSelect }: {
+export function HouseNode({ house, selected, memberCount, onSelect, onDragStart, onDragMove, onDragEnd }: {
   house: BloodlineHouse;
   selected: boolean;
   memberCount: number;
   onSelect(): void;
+  onDragStart?(): void;
+  onDragMove?(dx: number, dy: number): void;
+  onDragEnd?(): void;
 }) {
+  const drag = { start: { x: 0, y: 0 }, moved: false };
   return (
     <div
       data-testid="house-node"
       className={`bl-node house-node absolute w-32 px-2.5 py-2 rounded-lg bg-night border border-slate grid gap-0.5 cursor-pointer${house.isMainBranch ? " house-main border-gold-dim shadow-[0_0_12px_color-mix(in_srgb,var(--gold)_25%,transparent)]" : ""}${house.isMonarch ? " house-monarch border-gold border-2" : ""}${selected ? " selected border-gold shadow-[0_0_0_2px_color-mix(in_srgb,var(--gold)_40%,transparent)]" : ""}`}
       style={{ left: house.x - 64, top: house.y - 24 }}
-      onPointerDown={(e) => { e.stopPropagation(); onSelect(); }}
+      onPointerDown={(e) => {
+        if (e.button !== 0) return;
+        e.stopPropagation();
+        onSelect();
+        drag.start = { x: e.clientX, y: e.clientY };
+        drag.moved = false;
+        const move = (ev: PointerEvent) => {
+          const dx = ev.clientX - drag.start.x;
+          const dy = ev.clientY - drag.start.y;
+          if (!drag.moved && Math.hypot(dx, dy) <= 5) return;
+          if (!drag.moved) { drag.moved = true; onDragStart?.(); }
+          onDragMove?.(dx, dy);
+        };
+        const up = () => {
+          if (drag.moved) onDragEnd?.();
+          window.removeEventListener("pointermove", move);
+          window.removeEventListener("pointerup", up);
+        };
+        window.addEventListener("pointermove", move);
+        window.addEventListener("pointerup", up);
+      }}
       role="button"
       aria-label={`Casa ${house.name}`}
       tabIndex={0}

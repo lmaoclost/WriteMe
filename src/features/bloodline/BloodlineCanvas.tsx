@@ -62,7 +62,8 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
     ?? bloodline.houses.find((h) => h.id === selectedId);
 
   const selectNode = (id: string | null) => {
-    const sel = bloodline.persons.find((p) => p.id === id);
+    const sel = bloodline.persons.find((p) => p.id === id)
+      ?? bloodline.houses.find((h) => h.id === id);
     if (sel) dragBase = { x: sel.x, y: sel.y };
     setSelectedId(id);
   };
@@ -121,7 +122,13 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
             {bloodline.houses.map((h) => (
               <HouseNode key={h.id} house={h} selected={h.id === selectedId}
                 memberCount={bloodline.persons.filter((p) => p.houseId === h.id).length}
-                onSelect={() => selectNode(h.id)} />
+                onSelect={() => selectNode(h.id)}
+                onDragStart={() => useScriptorium.getState().pushBLHistory(bloodlineId)}
+                onDragMove={(dx, dy) => {
+                  useScriptorium.getState().moveHouse(h.id, dragBase.x + dx / plane.scale, dragBase.y + dy / plane.scale);
+                }}
+                onDragEnd={() => { dragBase = { x: 0, y: 0 }; }}
+              />
             ))}
             {bloodline.persons.map((p) => (
               <PersonNode key={p.id} person={p} images={images} selected={p.id === selectedId}

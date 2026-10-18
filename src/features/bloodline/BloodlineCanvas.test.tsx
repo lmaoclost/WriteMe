@@ -191,4 +191,17 @@ describe("BloodlineCanvasPage", () => {
     const wrapper = document.querySelector("[data-testid=bloodline-page] > div:nth-child(2)") as HTMLElement;
     expect(wrapper.className).toContain("max-[720px]:grid-cols-1");
   });
+
+  it("house node drags and persists the position", () => {
+    const b = makeBloodline();
+    store().addHouse(b.id, { x: 4300, y: 3700, name: "Casa Vellmor" })!;
+    mount(b);
+    const house = screen.getByTestId("house-node");
+    firePointer(house, "pointerdown", { clientX: 100, clientY: 100 });
+    firePointer(document.body, "pointermove", { clientX: 160, clientY: 140 });
+    firePointer(document.body, "pointerup", { clientX: 160, clientY: 140 });
+    const got = store().bloodlines[0].houses[0];
+    expect(got.x).not.toBe(4300);
+    expect(got.y).not.toBe(3700);
+  });
 });
