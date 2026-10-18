@@ -6,12 +6,13 @@ marked.setOptions({ breaks: true, mangle: false, headerIds: false } as never);
 const ALLOWED = new Set([
   "P", "H1", "H2", "H3", "H4", "H5", "H6", "UL", "OL", "LI",
   "BLOCKQUOTE", "CODE", "PRE", "EM", "STRONG", "B", "I", "A", "BR", "IMG",
-  "U", "S", "DIV",
+  "U", "S", "DIV", "SPAN",
 ]);
 const KEEP_ATTRS: Record<string, Set<string>> = {
-  A: new Set(["title"]),
+  A: new Set(["title", "class", "data-entry-link"]),
   IMG: new Set(["src", "alt"]),
   DIV: new Set(["align"]),
+  SPAN: new Set(["class", "aria-hidden"]),
 };
 const DATA_IMAGE_RE = /^data:image\//;
 const TEXT_NODE = 3;
@@ -65,6 +66,14 @@ function serializeChildren(node: Node): string {
 /** Content written in the rich editor arrives as HTML (starts with a tag). */
 export function isHtmlFragment(content: string): boolean {
   return /^\s*<[a-z]/i.test(content ?? "");
+}
+
+/** Sanitize arbitrary rendered HTML through the ALLOWED-tag pipeline.
+ *  Shared by the body renderer and the wikilink renderer (both feed
+ *  dangerouslySetInnerHTML). */
+export function sanitizeFragment(html: string): string {
+  const doc = new DOMParser().parseFromString(html ?? "", "text/html");
+  return doc.body ? serializeChildren(doc.body) : "";
 }
 
 export function renderMarkdown(body: string): string {

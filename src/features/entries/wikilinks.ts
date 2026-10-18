@@ -1,4 +1,5 @@
 import { marked } from "marked";
+import { sanitizeFragment } from "./markdown";
 import type { WorldEntry } from "../../domain/types";
 
 marked.setOptions({ breaks: true } as never);
@@ -17,7 +18,9 @@ export function resolveWikilink(title: string, entries: WorldEntry[]): WorldEntr
   return exact ?? (partial.length === 1 ? partial[0] : null);
 }
 
-/** Render markdown, turning [[Title]] that resolve into internal links. */
+/** Render markdown, turning [[Title]] that resolve into internal links.
+ *  The output runs through the ALLOWED-tag sanitizer — `body` is user
+ *  content and reaches dangerouslySetInnerHTML. */
 export function renderWithLinks(body: string, entries: WorldEntry[]): string {
   let html: string;
   try {
@@ -27,12 +30,13 @@ export function renderWithLinks(body: string, entries: WorldEntry[]): string {
   }
   // mark.wikilink-style: escape happens in the parser; [[Title]] stays literal
   // text (with &-escapes) — replace occurrences with anchor markup.
-  return html.replace(/\[\[([^\]]{1,200})\]\]/g, (_m, rawTitle: string) => {
+  const linked = html.replace(/\[\[([^\]]{1,200})\]\]/g, (_m, rawTitle: string) => {
     const title = unescapeHtml(rawTitle); // marked may have escaped quotes/ampersands
     const e = resolveWikilink(title, entries);
     if (!e) return escapeHtml(title.trim()); // unresolvable: keep the title as plain text
     return `<a class="wiki-link" data-entry-link="${e.id}" title="${escapeAttr(e.title)}"><span class="wiki-link-icon" aria-hidden="true">${iconFor(e.category)}</span>${escapeHtml(e.title)}</a>`;
   });
+  return sanitizeFragment(linked);
 }
 
 function unescapeHtml(s: string): string {

@@ -48,4 +48,13 @@ describe("MarkdownView with wiki links", () => {
     fireEvent.click(screen.getByText("Casa Vellmor", { selector: "a.wiki-link" }));
     expect(picked).toEqual([store().entries[0].id]);
   });
+
+  it("raw HTML in the body is sanitized inline (no script/img handlers live)", () => {
+    seedEntries();
+    render(<MarkdownView body={'Olá <img src="x" onerror="window.__pwned=1"> <script>window.__pwned=2</script> mundo'} />);
+    expect((window as unknown as { __pwned?: number }).__pwned).toBeUndefined();
+    expect(document.querySelector("img")).toBeNull();
+    expect(document.querySelector("script")).toBeNull();
+    expect(screen.getByText("mundo", { exact: false }).textContent).toContain("mundo");
+  });
 });

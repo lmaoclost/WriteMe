@@ -31,13 +31,13 @@ describe("renderMarkdown", () => {
     expect(out).toContain("<img");
     expect(out).toContain("data:image/png;base64,AAA");
   });
-  it("strips style and event attributes from disallowed tags but keeps text", () => {
-    const out = renderMarkdown('<span onerror="x" style="color:red">t</span>');
+  it("strips style/event attrs from spans, keeps only class/aria-hidden, keeps text", () => {
+    const out = renderMarkdown('<span onerror="x" style="color:red" class="wiki-link-icon" aria-hidden="true">t</span>');
     expect(out).not.toContain("onerror");
     expect(out).not.toContain("style");
-    // raw HTML fragments are treated as HTML now (rich editor); the span is
-    // disallowed, so only its text survives
-    expect(out).toBe("t");
+    // the span itself survives (the wikilink icon wrapper needs it), but with
+    // only its allowlisted attributes
+    expect(out).toBe('<span class="wiki-link-icon" aria-hidden="true">t</span>');
   });
   it("drops href from links but keeps text and title", () => {
     const out = renderMarkdown('<a href="https://x.com" title="Ex">texto</a>');
