@@ -464,4 +464,19 @@ describe("EntryView — pickers close (Escape + outside click)", () => {
     expect(screen.getByText("Date")).toBeInTheDocument();
     expect(screen.getByLabelText("Date")).toBeTruthy();
   });
+
+  it("lets the user rename a quick-fact field label", () => {
+    const { entries } = seed([{ title: "Casa" }]);
+    const [casa] = entries;
+    act(() => {
+      store().updateEntry(casa.id, {
+        sections: [{ name: "Quick Facts", fields: [{ label: "Clima", content: "arido" }] }],
+      });
+    });
+    renderView(casa);
+    const input = screen.getByLabelText("Field label Clima") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "Terreno" } });
+    const stored = store().entries.find((e) => e.id === casa.id)!;
+    expect(stored.sections![0].fields[0].label).toBe("Terreno");
+  });
 });

@@ -321,7 +321,13 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
               }}
               onAddField={() => {
                 const sections = (entry.sections ?? []).map((s, j) => j === si
-                  ? { ...s, fields: [...s.fields, { label: "New Field", content: "" }] }
+                  ? { ...s, fields: [...s.fields, { label: "New field", content: "" }] }
+                  : s);
+                useScriptorium.getState().updateEntry(entry.id, { sections });
+              }}
+              onRenameField={(fi, label) => {
+                const sections = (entry.sections ?? []).map((s, j) => j === si
+                  ? { ...s, fields: s.fields.map((f, k) => (k === fi ? { ...f, label } : f)) }
                   : s);
                 useScriptorium.getState().updateEntry(entry.id, { sections });
               }}
@@ -426,12 +432,13 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
   );
 }
 
-function SectionBlock({ sec, onField, onAddField, onRemoveField, onRename }: {
+function SectionBlock({ sec, onField, onAddField, onRemoveField, onRename, onRenameField }: {
   sec: EntrySection;
   onField(fi: number, content: string): void;
   onAddField(): void;
   onRemoveField(fi: number): void;
   onRename(name: string): void;
+  onRenameField(fi: number, label: string): void;
 }) {
   return (
     <section className="bg-night border border-line rounded-lg px-3.5 py-3 grid gap-2.5" aria-label={sec.name}>
@@ -447,8 +454,14 @@ function SectionBlock({ sec, onField, onAddField, onRemoveField, onRename }: {
       {sec.fields.length === 0 ? <p className="text-slate text-[13px] italic px-0.5 py-1">No fields.</p> : null}
       {sec.fields.map((f, fi) => (
         <div className="grid grid-cols-[130px_1fr_auto] gap-1.5 items-start" key={fi}>
-          <div className="codex-field-label-row min-w-0 pt-[7px]">
-            <span className="codex-field-label text-[11px] uppercase tracking-[0.08em] text-slate px-0.5 min-w-0">{f.label}</span>
+          <div className="codex-field-label-row min-w-0 pt-[3px]">
+            <input
+              className="codex-field-label bg-none border border-transparent rounded-md text-[11px] uppercase tracking-[0.08em] text-slate px-0.5 min-w-0 w-full hover:border-line focus:border-gold-dim outline-none"
+              aria-label={`Field label ${f.label}`}
+              placeholder="Label"
+              value={f.label}
+              onChange={(e) => onRenameField(fi, e.target.value)}
+            />
             <button
               type="button"
               className="codex-field-remove bg-none border-0 text-slate px-1.5 py-0.5 text-xs cursor-pointer hover:text-[var(--ember)]"
