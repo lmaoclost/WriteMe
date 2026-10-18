@@ -73,7 +73,24 @@ export function useStageTransform(
   const viewRef = useRef(view);
   const grabRef = useRef<Grab | null>(null);
   const pinchRef = useRef<PinchAnchor | null>(null);
+  const stageRectRef = useRef<{ rect: DOMRect; at: number } | null>(null);
 
+  // getBoundingClientRect per pointermove is a forced layout read; during a
+  // gesture the stage box is stable, so a 100ms TTL cache is enough.
+  const stageRect = useCallback((): DOMRect | null => {
+    const stage = stageRef.current;
+    if (!stage) return null;
+    const cached = stageRectRef.current;
+    const now = performance.now();
+    if (cached && now - cached.at < 100) return cached.rect;
+    const rect = stage.getBoundingClientRect();
+    stageRectRef.current = { rect, at: now };
+    return rect;
+  }, [stageRef]);
+
+  // viewRef is the sync source of truth (readers like fromClient need the
+  // exact current view mid-gesture); browsers coalesce pointermove to frame
+  // rate already, so the commit stays synchronous.
   const applyView = useCallback((next: ViewState) => {
     viewRef.current = next;
     setView(next);
@@ -118,8 +135,8 @@ export function useStageTransform(
       const { w, h } = sizeRef.current;
       if (!stage || !w || !h) return;
       const scale = clampScale(nextScale);
-      if (scale === viewRef.current.scale) return;
-      const rect = stage.getBoundingClientRect();
+      if (scale === viewRef.current.scale && !grabRef.current) return;
+      const rect = stageRect() ?? stage.getBoundingClientRect();
       const sx = clientX - rect.left;
       const sy = clientY - rect.top;
       const v = viewRef.current;
@@ -131,7 +148,7 @@ export function useStageTransform(
         panY: sy - relY * h * scale,
       });
     },
-    [applyView, stageRef],
+    [applyView, stageRect, stageRef],
   );
 
   const setPan = useCallback(
@@ -151,14 +168,14 @@ export function useStageTransform(
     (factor: number) => {
       const stage = stageRef.current;
       if (!stage || !sizeRef.current.w) return;
-      const rect = stage.getBoundingClientRect();
+      const rect = stageRect() ?? stage.getBoundingClientRect();
       zoomAtPoint(
         rect.left + stage.clientWidth / 2,
         rect.top + stage.clientHeight / 2,
         viewRef.current.scale * factor,
       );
     },
-    [stageRef, zoomAtPoint],
+    [stageRect, stageRef, zoomAtPoint],
   );
 
   const fromClient = useCallback(
@@ -166,14 +183,14 @@ export function useStageTransform(
       const stage = stageRef.current;
       const { w, h } = sizeRef.current;
       if (!stage || !w || !h) return null;
-      const rect = stage.getBoundingClientRect();
+      const rect = stageRect() ?? stage.getBoundingClientRect();
       const v = viewRef.current;
       return {
         x: (clientX - rect.left - v.panX) / (w * v.scale),
         y: (clientY - rect.top - v.panY) / (h * v.scale),
       };
     },
-    [stageRef],
+    [stageRect, stageRef],
   );
 
   const toClient = useCallback((pt: Pt) => {
@@ -239,6 +256,7 @@ export function useStageTransform(
       if (!g || (g.pointerId !== undefined && g.pointerId !== e.pointerId) || !isMousePointer(e)) return;
       grabRef.current = null;
       setDragging(false);
+      
       if (typeof stage.hasPointerCapture === "function" && stage.hasPointerCapture(e.pointerId)) {
         try {
           stage.releasePointerCapture(e.pointerId);
@@ -259,7 +277,7 @@ export function useStageTransform(
       setDragging(false);
       const t0 = e.touches[0];
       const t1 = e.touches[1];
-      const rect = stage.getBoundingClientRect();
+      const rect = stageRect() ?? stage.getBoundingClientRect();
       const midX = (t0.clientX + t1.clientX) / 2 - rect.left;
       const midY = (t0.clientY + t1.clientY) / 2 - rect.top;
       const dist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
@@ -275,7 +293,7 @@ export function useStageTransform(
         const t1 = e.touches[1];
         const dist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
         if (!dist || !pinch.dist) return;
-        const rect = stage.getBoundingClientRect();
+        const rect = stageRect() ?? stage.getBoundingClientRect();
         const midX = (t0.clientX + t1.clientX) / 2 - rect.left;
         const midY = (t0.clientY + t1.clientY) / 2 - rect.top;
         const next = clampScale((pinch.scale * dist) / pinch.dist);
@@ -331,7 +349,7 @@ export function useStageTransform(
       stage.removeEventListener("touchend", onTouchEnd);
       stage.removeEventListener("touchcancel", onTouchEnd);
     };
-  }, [applyView, setPan, stageRef, zoomAtPoint]);
+  }, [applyView, setPan, stageRect, stageRef, zoomAtPoint]);
 
   useEffect(() => {
     const img = imgRef.current;

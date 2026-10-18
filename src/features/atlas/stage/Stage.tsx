@@ -36,7 +36,13 @@ export function Stage({
 
   const notifyTransformRef = useRef(onTransformChange);
   notifyTransformRef.current = onTransformChange;
+  const lastPctRef = useRef<number | null>(null);
   useEffect(() => {
+    // pan drifts panX/panY continuously; the consumer only reacts to scale,
+    // so skip notifications until the zoom percentage actually changes
+    const pct = Math.round(transform.scale * 100);
+    if (lastPctRef.current === pct) return;
+    lastPctRef.current = pct;
     notifyTransformRef.current?.(transform);
   }, [transform]);
 

@@ -205,6 +205,8 @@ interface ScriptoriumState extends ProjectData {
   setAtlasMapFromEntry(atlasId: string, entryId: string): boolean;
   addRegion(atlasId: string, input: { points: Pt[]; color?: string; fillOpacity?: number; label?: string; entryId?: string }): Region | null;
   updateRegion(regionId: string, patch: Partial<Omit<Region, "id">>): void;
+  /** Continuous-edit variant without a history snapshot (slider drags). */
+  updateRegionSilent(regionId: string, patch: Partial<Omit<Region, "id">>): void;
   deleteRegion(regionId: string): void;
   addPin(atlasId: string, input: { x: number; y: number; type?: PinType; color?: string; label?: string; entryId?: string }): Pin | null;
   updatePin(pinId: string, patch: Partial<Omit<Pin, "id">>): void;
@@ -855,6 +857,12 @@ export const useScriptorium = create<ScriptoriumState>()(
         if (patch.points
           && (patch.points.length < 3 || !isMeaningful(patch.points))) return;
         get().pushHistory(atlas.id);
+        get().updateRegionSilent(regionId, patch);
+      },
+
+      /** updateRegion without the history snapshot — for continuous edits
+       *  (opacity slider drags) that already pushed a pre-change snapshot. */
+      updateRegionSilent(regionId, patch) {
         const safe = { ...patch };
         if (patch.points) safe.points = clonePoints(patch.points);
         set((st) => ({

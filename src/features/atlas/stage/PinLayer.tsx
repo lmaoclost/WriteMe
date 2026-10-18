@@ -3,6 +3,7 @@ import type { Id, Pin } from "../../../domain/types";
 import { useScriptorium } from "../../../data/store";
 import type { TransformApi } from "./useStageTransform";
 import { PIN_TYPE_META } from "../panels/pinTypes";
+import { useRafCallback } from "../../../ui/useRaf";
 
 export const PIN_SIZE_PX = 18;
 export const PIN_HALF_PX = PIN_SIZE_PX / 2;
@@ -69,6 +70,12 @@ export function PinLayer({
   }
   const dragRef = useRef<Drag | null>(null);
 
+  // movePin writes no history; the layer pushes history itself on the first
+  // real drag move — frame-coalescing keeps those semantics intact.
+  const movePinRaf = useRafCallback((pinId: Id, x: number, y: number) => {
+    useScriptorium.getState().movePin(pinId, x, y);
+  });
+
   const detach = useCallback(() => {
     document.removeEventListener("pointermove", onDocMove);
     document.removeEventListener("pointerup", onDocUp);
@@ -91,17 +98,18 @@ export function PinLayer({
     }
     const nextX = clamp01(drag.origin.x + dx / (api.imgW * api.scale));
     const nextY = clamp01(drag.origin.y + dy / (api.imgH * api.scale));
-    useScriptorium.getState().movePin(drag.pinId, nextX, nextY);
-  }, []);
+    movePinRaf(drag.pinId, nextX, nextY);
+  }, [movePinRaf]);
 
   const onDocUp = useCallback(
     (e: PointerEvent) => {
       const drag = dragRef.current;
       if (!drag || drag.pointerId !== e.pointerId) return;
+      movePinRaf.flush(); // commit the resting position before drag state clears
       dragRef.current = null;
       detach();
     },
-    [detach],
+    [detach, movePinRaf],
   );
 
   useEffect(

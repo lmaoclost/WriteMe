@@ -9,6 +9,7 @@ import {
 } from "../../domain/geometry";
 import { buildCarveChild, detectCarveParent, regionNearestToPoint } from "../../domain/carve";
 import { useScriptorium } from "../../data/store";
+import { useRafState } from "../../ui/useRaf";
 import type { TransformApi } from "./stage/useStageTransform";
 
 export const CLOSE_RADIUS_PX = 14;
@@ -66,10 +67,11 @@ export interface DrawApi {
 
 export function useDraw({ atlasId, transformApi, tool, mode, onFinish }: UseDrawParams): DrawApi {
   const [drawVertices, setDrawVertices] = useState<Pt[]>([]);
-  const [drawCursor, setDrawCursor] = useState<Pt | null>(null);
+  // cursor/snap follow the pointer: commits coalesced to frame rate
+  const [drawCursor, scheduleCursor] = useRafState<Pt | null>(null);
   const [carveParentId, setCarveParentId] = useState<Id | null>(null);
   const [carvePreview, setCarvePreview] = useState<CarvePreview | null>(null);
-  const [snapHint, setSnapHint] = useState<Pt | null>(null);
+  const [snapHint, scheduleSnapHint] = useRafState<Pt | null>(null);
   const verticesRef = useRef<Pt[]>(drawVertices);
   verticesRef.current = drawVertices;
   const previewRef = useRef<CarvePreview | null>(carvePreview);
@@ -114,8 +116,8 @@ export function useDraw({ atlasId, transformApi, tool, mode, onFinish }: UseDraw
 
   const clear = useCallback(() => {
     setDrawVertices([]);
-    setDrawCursor(null);
-    setSnapHint(null);
+    scheduleCursor((prev) => (prev === null ? prev : null));
+    scheduleSnapHint((prev) => (prev === null ? prev : null));
     resetCarve();
   }, [resetCarve]);
 
@@ -351,7 +353,8 @@ export function useDraw({ atlasId, transformApi, tool, mode, onFinish }: UseDraw
       void clientX;
       void clientY;
       if (toolRef.current !== "region") return;
-      setDrawCursor({ x: pt.x, y: pt.y });
+      const cursor = { x: pt.x, y: pt.y };
+      scheduleCursor((prev) => (prev && prev.x === cursor.x && prev.y === cursor.y ? prev : cursor));
       const current = modeRef.current;
       const carving = current === "carve" || current === "neighbor";
       const parentId = carving && entryRef.current ? parentRef.current : null;
@@ -364,7 +367,12 @@ export function useDraw({ atlasId, transformApi, tool, mode, onFinish }: UseDraw
               edgePx: CARVE_EDGE_PX,
             })
           : null;
-      setSnapHint(snap ? snap.point : null);
+      const hint = snap ? snap.point : null;
+      scheduleSnapHint((prev) => {
+        if (prev === null && hint === null) return prev;
+        if (prev && hint && prev.x === hint.x && prev.y === hint.y) return prev;
+        return hint;
+      });
     },
     [parentNow, pxPerUnit],
   );

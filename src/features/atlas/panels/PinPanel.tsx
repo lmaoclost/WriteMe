@@ -36,10 +36,9 @@ export function PinPanel({ pin, entries, onDelete }: PinPanelProps) {
           aria-label="Pin label"
           type="text"
           value={label}
-          onChange={(e) => {
-            setLabel(e.target.value);
-            patch({ label: e.target.value });
-          }}
+          onChange={(e) => setLabel(e.target.value)}
+          onBlur={() => { if (label !== pin.label) patch({ label }); }}
+          onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
         />
       </Field>
       <Field label="Type">

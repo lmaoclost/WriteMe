@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Id, WorldEntry } from "../../../domain/types";
 import type { Region } from "../../../domain/types";
 import { useScriptorium } from "../../../data/store";
@@ -18,6 +18,7 @@ export function RegionPanel({ atlasId, region, entries, onDelete }: RegionPanelP
   const [label, setLabel] = useState(region.label);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const sliderPushedRef = useRef(false);
   // Key on the id only: resetting on every label change would close the link
   // picker and disarm the delete confirm while typing.
   useEffect(() => {
@@ -52,10 +53,9 @@ export function RegionPanel({ atlasId, region, entries, onDelete }: RegionPanelP
             aria-label="Region label"
             type="text"
             value={label}
-            onChange={(e) => {
-              setLabel(e.target.value);
-              patch({ label: e.target.value });
-            }}
+            onChange={(e) => setLabel(e.target.value)}
+            onBlur={() => { if (label !== region.label) patch({ label }); }}
+            onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
           />
       </Field>
       <Field label="Color">
@@ -73,7 +73,17 @@ export function RegionPanel({ atlasId, region, entries, onDelete }: RegionPanelP
             step={0.05}
             value={region.fillOpacity}
             aria-label="Fill opacity"
-            onChange={(e) => patch({ fillOpacity: Number(e.target.value) })}
+            /* slider drag: a snapshot of the pre-drag value once, then
+               silent writes per tick — one undo step per drag, not per tick */
+            onChange={(e) => {
+              if (!sliderPushedRef.current) {
+                sliderPushedRef.current = true;
+                useScriptorium.getState().pushHistory(atlasId);
+              }
+              useScriptorium.getState().updateRegionSilent(region.id, { fillOpacity: Number(e.target.value) });
+            }}
+            onPointerUp={() => { sliderPushedRef.current = false; }}
+            onKeyUp={(e) => { if (e.key === "ArrowLeft" || e.key === "ArrowRight") sliderPushedRef.current = false; }}
           />
           <output data-testid="opacity-value">{Math.round(region.fillOpacity * 100)}%</output>
         </div>

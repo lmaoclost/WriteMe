@@ -162,11 +162,11 @@ describe("pin layer", () => {
     firePointer(btn, "pointerdown", { pointerId: 31, clientX: 200, clientY: 150 });
     expect(btn.getAttribute("aria-pressed")).toBe("true"); // selected on pointerdown
     firePointer(btn, "pointermove", { pointerId: 31, clientX: 240, clientY: 150 });
+    firePointer(btn, "pointerup", { pointerId: 31, clientX: 240, clientY: 150 }); // flush lands the final position
     const pin = store().atlases[0].pins[0];
     expect(pin.x).toBeCloseTo(0.3, 9); // 0.25 + 40/800
     expect(pin.y).toBeCloseTo(0.25, 9);
     expect(pin.id).toBe(id);
-    firePointer(btn, "pointerup", { pointerId: 31, clientX: 240, clientY: 150 });
     act(() => {
       store().undo(atlas.id);
     });
@@ -208,10 +208,10 @@ describe("pin layer", () => {
     const btn = pinDot(container);
     firePointer(btn, "pointerdown", { pointerId: 31, clientX: 400, clientY: 450 });
     firePointer(btn, "pointermove", { pointerId: 31, clientX: 480, clientY: 300 });
+    firePointer(btn, "pointerup", { pointerId: 31, clientX: 480, clientY: 300 }); // flush lands the move
     let pin = store().atlases[0].pins[0];
     expect(pin.x).toBeCloseTo(0.35, 9); // 0.25 + 80/800
     expect(pin.y).toBeCloseTo(0, 9); // 0.25 - 150/300 → clamped at 0
-    firePointer(btn, "pointerup", { pointerId: 31, clientX: 480, clientY: 300 });
     // another drag upward would overshoot → clamped at 0
     firePointer(btn, "pointerdown", { pointerId: 32, clientX: 480, clientY: 300 });
     firePointer(btn, "pointermove", { pointerId: 32, clientX: 480, clientY: 150 });
@@ -333,7 +333,7 @@ describe("Delete key", () => {
 });
 
 describe("PinPanel", () => {
-  it("label input commits through updatePin as you type", () => {
+  it("label input commits through updatePin on blur/Enter", () => {
     const atlas = makeAtlas({ pins: [{ x: 0.25, y: 0.25, label: "Cidade" }] });
     const { container } = mountEditor(atlas);
     selectPinByClick(container);
@@ -341,6 +341,7 @@ describe("PinPanel", () => {
     expect(input).toHaveValue("Cidade");
     act(() => {
       fireEvent.change(input, { target: { value: "Nova Capital" } });
+      fireEvent.blur(input);
     });
     expect(store().atlases[0].pins[0].label).toBe("Nova Capital");
   });
@@ -479,6 +480,7 @@ describe("RegionPanel", () => {
     const input = screen.getByLabelText("Region label") as HTMLInputElement;
     act(() => {
       fireEvent.change(input, { target: { value: "Terras Altas" } });
+      fireEvent.blur(input); // label commits on blur/Enter, not per keystroke
     });
     expect(store().atlases.find((a) => a.id === atlas.id)!.regions[0].label).toBe("Terras Altas");
     void container;
