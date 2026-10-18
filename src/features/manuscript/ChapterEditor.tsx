@@ -281,7 +281,7 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
         aria-expanded={notesOpen}
         onClick={() => setNotesOpen((v) => !v)}
       >
-        Notas e cena <span aria-hidden="true">{notesOpen ? "▾" : "▸"}</span>
+        <span aria-hidden="true">{notesOpen ? "▾" : "▸"}</span> Notas e cena
       </button>
       <div hidden={!notesOpen} className="grid gap-3 pt-2.5">
       <div className="book-note-field flex flex-col gap-1.5">
