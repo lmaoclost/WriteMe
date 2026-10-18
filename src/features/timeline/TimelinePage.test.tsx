@@ -172,6 +172,13 @@ describe("TimelinePage", () => {
     render(timelineRoute(project.id));
     const line = mainLine();
     expect(line.getByRole("button", { name: "Batalha — 10 Vela 1200 · Contagem do Arco" })).toBeTruthy();
+    // era shows ONCE above the line (a long era would overflow the date column);
+    // the date cell itself stays short: day + month + year
+    const eras = screen.getAllByTestId("timeline-era");
+    expect(eras).toHaveLength(1);
+    expect(eras[0].textContent).toBe("Contagem do Arco");
+    const cell = (document.querySelector(".timeline-item > span") as HTMLElement).textContent;
+    expect(cell).toBe("10 Vela 1200");
   });
 
   it("shows the empty copy when no filtered entry has a valid date", () => {

@@ -59,10 +59,14 @@ export function TimelinePage({ projectId }: { projectId: string }) {
     navigate(`/p/${projectId}/entries?e=${id}`);
   };
   const fmt = (date: string) => formatDateWithCalendar(date, calendar as CustomCalendar | undefined);
+  // era is constant for the whole line — shown once above it, not per row
+  // (a long era suffix would overflow the 160px date column)
+  const cellFmt = (date: string) => formatDateWithCalendar(date, calendar ? { months: calendar.months } : undefined);
 
   return (
     <div className="h-full overflow-y-auto py-[22px] px-7 max-w-[920px] max-[720px]:p-[18px] max-[720px]:px-3.5">
-      <div className="flex flex-wrap gap-1.5 mb-5">
+      <div className="flex flex-wrap items-center gap-1.5 mb-5">
+        {calendar?.era ? <span className="timeline-era font-mono text-[11px] tracking-[0.06em] uppercase text-slate border border-line rounded-full py-[3px] px-2.5" data-testid="timeline-era">{calendar.era}</span> : null}
         <button
           type="button"
           aria-pressed={onlyEvents}
@@ -91,7 +95,7 @@ export function TimelinePage({ projectId }: { projectId: string }) {
                 className="timeline-item relative grid grid-cols-[160px_48px_1fr] items-center py-[7px] max-[720px]:grid-cols-[96px_40px_1fr]"
                 key={row.id}
               >
-                <span className="font-mono font-bold text-[13px] text-parchment-dim text-right pr-3.5 whitespace-nowrap" aria-hidden="true">{fmt(row.date)}</span>
+                <span className="font-mono font-bold text-[13px] text-parchment-dim text-right pr-3.5 whitespace-nowrap" aria-hidden="true">{cellFmt(row.date)}</span>
                 <span
                   className="timeline-dot size-2.5 rounded-full justify-self-center"
                   aria-hidden="true"

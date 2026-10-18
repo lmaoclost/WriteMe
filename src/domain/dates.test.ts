@@ -101,4 +101,10 @@ describe("formatDateWithCalendar", () => {
   it("no calendar falls back to the Gregorian format", () => {
     expect(formatDateWithCalendar("1200-05-10")).toBe("10 de Maio de 1200");
   });
+  it("month index wraps modulo the calendar month count", () => {
+    expect(formatDateWithCalendar("1200-07", cal)).toBe("Sela 1200 · Contagem do Arco");
+  });
+  it("negative years keep the - sign with calendar rendering", () => {
+    expect(formatDateWithCalendar("-5-03", cal)).toBe("Cera -5 · Contagem do Arco");
+  });
 });
