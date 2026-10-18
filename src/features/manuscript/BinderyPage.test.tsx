@@ -186,6 +186,7 @@ describe("Bindery v2 controls", () => {
 
   it("page numbers toggle drives the print stylesheet", () => {
     const id = seedBook();
+    act(() => { store().setBindery(id, { pageNumbers: false }); });
     render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
     const box = screen.getByRole("checkbox", { name: "Page numbers" });
     fireEvent.click(box);
@@ -197,6 +198,7 @@ describe("Bindery v2 controls", () => {
   it("running-head mode select re-labels chapter heads", () => {
     const id = seedBook();
     act(() => { store().addChapter(id, "O Tribunal"); });
+    act(() => { store().setBindery(id, { runningHeadMode: "book" }); });
     render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
     const sel = screen.getByLabelText("Running head mode") as HTMLSelectElement;
     fireEvent.change(sel, { target: { value: "chapter" } });

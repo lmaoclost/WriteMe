@@ -295,7 +295,7 @@ describe("buildBookHtml v2", () => {
     const html = buildBookHtml(mkBook({ bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: false, runningHeadMode: "chapter" } }));
     expect(html).toContain('<span class="running-head" data-ch-index="1">Prólogo</span>');
     expect(html).toContain('<span class="running-head" data-ch-index="2">Fim</span>');
-    const book = buildBookHtml(mkBook({}));
+    const book = buildBookHtml(mkBook({ bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: false, runningHeadMode: "book" } }));
     expect(book).toContain('<span class="running-head" data-ch-index="1">A Coroa e o Rio</span>');
   });
 

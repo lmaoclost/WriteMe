@@ -83,11 +83,11 @@ describe("BinderyConfig v2 fields", () => {
       titlePage: true, toc: true, glossary: false, ...patch,
     },
   });
-  it("defaults carry numberingStyle arabic, pageNumbers false, runningHeadMode book", () => {
+  it("defaults carry numberingStyle arabic, pageNumbers true, runningHeadMode chapter", () => {
     const b = defaultBindery() as Record<string, unknown>;
     expect(b.numberingStyle).toBe("arabic");
-    expect(b.pageNumbers).toBe(false);
-    expect(b.runningHeadMode).toBe("book");
+    expect(b.pageNumbers).toBe(true);
+    expect(b.runningHeadMode).toBe("chapter");
   });
   it("accepts the new fields", () => {
     expect(validateProjectData({ projects: [], entries: [], atlases: [], manuscripts: [mk({
@@ -105,5 +105,61 @@ describe("BinderyConfig v2 fields", () => {
     (doc.bindery as Record<string, unknown>).pageNumbers = undefined;
     (doc.bindery as Record<string, unknown>).runningHeadMode = undefined;
     expect(validateProjectData({ projects: [], entries: [], atlases: [], manuscripts: [doc], images: {} })).toBe(true);
+  });
+});
+
+describe("manuscript parts and bindery layout blocks", () => {
+  const doc = (m: unknown): ProjectData => ({ ...valid, manuscripts: [m] }) as unknown as ProjectData;
+  const withBindery = (patch: Record<string, unknown>) =>
+    doc({ ...valid.manuscripts[0], bindery: { ...defaultBindery(), ...patch } });
+
+  it("accepts a manuscript with parts and a v2 bindery", () => {
+    const data = doc({
+      id: "m1", projectId: "p1", title: "Livro", author: "Ana",
+      chapters: [{ id: "c1", heading: "Um", content: "", order: 1, partId: "pt1" }],
+      parts: [{ id: "pt1", title: "A Queda", order: 1 }],
+      bindery: defaultBindery(),
+    });
+    expect(validateProjectData(data)).toBe(true);
+  });
+
+  it("defaultBindery turns front matter on and keeps parts empty", () => {
+    const b = defaultBindery()!;
+    expect(b.frontMatter?.halfTitle).toBe(true);
+    expect(b.frontMatter?.copyright).toBe(true);
+    expect(b.typography?.bodyPt).toBe(11);
+    expect(b.typography?.leading).toBe(14.5);
+    expect(b.geometry?.gutter).toBe("auto");
+    expect(b.opener?.sink).toBe(0.18);
+    expect(b.preset).toBe("classic");
+    expect(b.sceneOrnament).toBe("asterism");
+  });
+
+  it("rejects malformed parts and partIds while accepting absent parts", () => {
+    const ms = (patch: Record<string, unknown>) =>
+      ({ id: "m1", projectId: "p1", title: "L", author: "A", chapters: [{ id: "c1", heading: "Um", content: "", order: 1 }], ...patch });
+    expect(validateProjectData(doc(ms({})))).toBe(true);
+    expect(validateProjectData(doc(ms({ parts: [] })))).toBe(true);
+    expect(validateProjectData(doc(ms({ parts: [{ id: "pt1", title: "P", order: 1, epigraph: "Epi" }] })))).toBe(true);
+    expect(validateProjectData(doc(ms({ parts: [{ id: "pt1", order: 1 }] })))).toBe(false);
+    expect(validateProjectData(doc(ms({ parts: [{ id: "pt1", title: "P", order: "1" }] })))).toBe(false);
+    expect(validateProjectData(doc(ms({ parts: [{ id: "pt1", title: "P", order: 1, epigraph: 7 }] })))).toBe(false);
+    expect(validateProjectData(doc(ms({ parts: "nope" })))).toBe(false);
+    expect(validateProjectData(doc(ms({ chapters: [{ id: "c1", heading: "Um", content: "", order: 1, partId: 7 }] })))).toBe(false);
+  });
+
+  it("validates v2 bindery blocks tolerantly: absent or partial ok, wrong-typed rejected", () => {
+    expect(validateProjectData(withBindery({}))).toBe(true); // full defaultBindery validates
+    expect(validateProjectData(withBindery({ typography: { bodyPt: 12 } }))).toBe(true); // partial block ok
+    expect(validateProjectData(withBindery({ typography: "big" }))).toBe(false);
+    expect(validateProjectData(withBindery({ typography: { ...(defaultBindery()!.typography), bodyPt: "11" } }))).toBe(false);
+    expect(validateProjectData(withBindery({ geometry: { gutter: "wide", mirrored: true } }))).toBe(false);
+    expect(validateProjectData(withBindery({ geometry: { gutter: Number.NaN, mirrored: true } }))).toBe(false);
+    expect(validateProjectData(withBindery({ opener: { sink: "0.18", suppressHead: true, suppressFolio: true } }))).toBe(false);
+    expect(validateProjectData(withBindery({ frontMatter: { halfTitle: "yes", copyright: true, romanNumerals: true } }))).toBe(false);
+    expect(validateProjectData(withBindery({ frontMatter: { halfTitle: true, copyright: true, romanNumerals: true, copyrightInfo: { year: 2024 } } }))).toBe(false);
+    expect(validateProjectData(withBindery({ backMatter: { glossary: false, colophon: "no" } }))).toBe(false);
+    expect(validateProjectData(withBindery({ preset: "gothic" }))).toBe(false);
+    expect(validateProjectData(withBindery({ sceneOrnament: "diamond" }))).toBe(false);
   });
 });

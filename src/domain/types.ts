@@ -73,6 +73,9 @@ export interface Atlas {
   pins: Pin[];
 }
 
+export type BinderPreset = "manuscript" | "classic" | "commercial" | "fantasy";
+export type SceneOrnament = "blank" | "asterisks" | "asterism" | "fleuron" | "rule";
+
 export type BinderyConfig = {
   font: string;           // stack do livro
   trim: string;           // "6x9" etc.
@@ -85,7 +88,28 @@ export type BinderyConfig = {
   numberingStyle?: "none" | "arabic" | "chapter" | "word";
   pageNumbers?: boolean;
   runningHeadMode?: "book" | "chapter";
+  preset?: BinderPreset;
+  typography?: { bodyPt: number; leading: number; indent: number; justify: boolean; hyphens: boolean };
+  geometry?: { gutter: number | "auto"; mirrored: boolean };
+  opener?: { sink: number; suppressHead: boolean; suppressFolio: boolean };
+  frontMatter?: {
+    halfTitle: boolean;
+    copyright: boolean;
+    copyrightInfo?: { year?: string; holder?: string; isbn?: string; edition?: string; rights?: string };
+    epigraph?: string;
+    romanNumerals: boolean;
+  };
+  backMatter?: { glossary: boolean; aboutAuthor?: string; colophon: boolean };
+  sceneOrnament?: SceneOrnament;
 };
+
+/** Part divider of a manuscript: chapters reference it through Chapter.partId. */
+export interface Part {
+  id: Id;
+  title: string;
+  order: number;
+  epigraph?: string;
+}
 
 export interface Chapter {
   id: Id;
@@ -98,6 +122,7 @@ export interface Chapter {
   endMarker?: string;
   linkedCalendarId?: Id;
   calendarDayKey?: string; // "y:m:d" (calendar-relative)
+  partId?: Id;
 }
 
 export interface Manuscript {
@@ -106,6 +131,7 @@ export interface Manuscript {
   title: string;
   author: string;
   chapters: Chapter[];
+  parts?: Part[];
   bindery?: BinderyConfig;
 }
 

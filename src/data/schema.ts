@@ -1,5 +1,5 @@
 import type {
-  ProjectData, WorldEntry, Atlas, Manuscript, Region, Pin, Project,
+  ProjectData, WorldEntry, Atlas, Manuscript, Region, Pin, Project, Part, BinderyConfig,
   Bloodline, BloodlinePerson, BloodlineHouse, BloodlineTitle, BloodlineTenure,
   FactionWeb, Faction, FactionConnection,
   CustomCalendar, CalendarEvent, EntrySection,
@@ -15,9 +15,11 @@ const isStr = (v: unknown): v is string => typeof v === "string";
 const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 const isBool = (v: unknown): v is boolean => typeof v === "boolean";
 const isArr = (v: unknown): v is unknown[] => Array.isArray(v);
+const isObj = (v: unknown): boolean => !!v && typeof v === "object" && !Array.isArray(v);
 const norm01 = (v: unknown): boolean => isNum(v) && v >= 0 && v <= 1;
 const optionalStr = (v: unknown): boolean => v === undefined || isStr(v);
 const optionalNum = (v: unknown): boolean => v === undefined || isNum(v);
+const optionalBool = (v: unknown): boolean => v === undefined || isBool(v);
 
 const optionalFocal = (v: unknown): boolean =>
   v === undefined || (Array.isArray(v) && v.length === 2 && v.every((n) => typeof n === "number" && n >= 0 && n <= 1));
@@ -63,15 +65,80 @@ const isChapter = (v: unknown): boolean => {
   const c = v as Manuscript["chapters"][number];
   return !!c && isStr(c.id) && isStr(c.heading) && isStr(c.content) && isNum(c.order)
     && optionalStr(c.noteTop) && optionalStr(c.noteEnd) && optionalStr(c.endMarker)
-    && optionalStr(c.linkedCalendarId) && optionalStr(c.calendarDayKey);
+    && optionalStr(c.linkedCalendarId) && optionalStr(c.calendarDayKey)
+    && optionalStr(c.partId);
+};
+
+const isPart = (v: unknown): boolean => {
+  const p = v as Part;
+  return !!p && isStr(p.id) && isStr(p.title) && isNum(p.order) && optionalStr(p.epigraph);
 };
 
 export const BIND_TRIMS = ["6x9", "5x8", "5.5x8.5", "5.25x8", "6.14x9.21", "7x10"];
 export const BIND_NUM_STYLES = ["none", "arabic", "chapter", "word"] as const;
 export const BIND_HEAD_MODES = ["book", "chapter"] as const;
+export const BIND_PRESETS = ["manuscript", "classic", "commercial", "fantasy"] as const;
+export const BIND_SCENE_ORNAMENTS = ["blank", "asterisks", "asterism", "fleuron", "rule"] as const;
+
 export function defaultBindery(): Manuscript["bindery"] {
-  return { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: false, numberingStyle: "arabic", pageNumbers: false, runningHeadMode: "book" };
+  return {
+    font: '"EB Garamond", Garamond, "Book Antiqua", serif',
+    trim: "6x9", dropCaps: true, runningHead: true, titlePage: true, toc: true,
+    glossary: false, numberingStyle: "arabic", pageNumbers: true, runningHeadMode: "chapter",
+    preset: "classic",
+    typography: { bodyPt: 11, leading: 14.5, indent: 1, justify: true, hyphens: false },
+    geometry: { gutter: "auto", mirrored: true },
+    opener: { sink: 0.18, suppressHead: true, suppressFolio: true },
+    frontMatter: { halfTitle: true, copyright: true, romanNumerals: true },
+    backMatter: { glossary: false, colophon: false },
+    sceneOrnament: "asterism",
+  };
 }
+
+/** Nested bindery blocks: absent blocks/fields (old saved data) are valid;
+ *  a present field must carry the right type. */
+const isBinderyTypography = (v: unknown): boolean => {
+  if (v === undefined) return true;
+  const t = v as NonNullable<BinderyConfig["typography"]>;
+  return isObj(t)
+    && optionalNum(t.bodyPt) && optionalNum(t.leading) && optionalNum(t.indent)
+    && optionalBool(t.justify) && optionalBool(t.hyphens);
+};
+
+const isBinderyGeometry = (v: unknown): boolean => {
+  if (v === undefined) return true;
+  const g = v as NonNullable<BinderyConfig["geometry"]>;
+  return isObj(g)
+    && (g.gutter === undefined || g.gutter === "auto" || isNum(g.gutter))
+    && optionalBool(g.mirrored);
+};
+
+const isBinderyOpener = (v: unknown): boolean => {
+  if (v === undefined) return true;
+  const o = v as NonNullable<BinderyConfig["opener"]>;
+  return isObj(o)
+    && optionalNum(o.sink) && optionalBool(o.suppressHead) && optionalBool(o.suppressFolio);
+};
+
+const isBinderyFrontMatter = (v: unknown): boolean => {
+  if (v === undefined) return true;
+  const f = v as NonNullable<BinderyConfig["frontMatter"]>;
+  const info = f.copyrightInfo;
+  return isObj(f)
+    && optionalBool(f.halfTitle) && optionalBool(f.copyright) && optionalBool(f.romanNumerals)
+    && optionalStr(f.epigraph)
+    && (info === undefined || (isObj(info)
+      && optionalStr(info.year) && optionalStr(info.holder) && optionalStr(info.isbn)
+      && optionalStr(info.edition) && optionalStr(info.rights)));
+};
+
+const isBinderyBackMatter = (v: unknown): boolean => {
+  if (v === undefined) return true;
+  const b = v as NonNullable<BinderyConfig["backMatter"]>;
+  return isObj(b)
+    && optionalBool(b.glossary) && optionalBool(b.colophon) && optionalStr(b.aboutAuthor);
+};
+
 const isBindery = (v: unknown): boolean => {
   const b = v as Manuscript["bindery"];
   return !!b && isStr(b.font) && isStr(b.trim) && (BIND_TRIMS as string[]).includes(b.trim)
@@ -80,13 +147,18 @@ const isBindery = (v: unknown): boolean => {
     && optionalStr(b.dedication)
     && (b.numberingStyle === undefined || (BIND_NUM_STYLES as readonly string[]).includes(b.numberingStyle))
     && (b.runningHeadMode === undefined || (BIND_HEAD_MODES as readonly string[]).includes(b.runningHeadMode))
-    && (b.pageNumbers === undefined || typeof b.pageNumbers === "boolean");
+    && (b.pageNumbers === undefined || typeof b.pageNumbers === "boolean")
+    && (b.preset === undefined || (BIND_PRESETS as readonly string[]).includes(b.preset))
+    && (b.sceneOrnament === undefined || (BIND_SCENE_ORNAMENTS as readonly string[]).includes(b.sceneOrnament))
+    && isBinderyTypography(b.typography) && isBinderyGeometry(b.geometry) && isBinderyOpener(b.opener)
+    && isBinderyFrontMatter(b.frontMatter) && isBinderyBackMatter(b.backMatter);
 };
 
 const isManuscript = (v: unknown): v is Manuscript => {
   const m = v as Manuscript;
   return !!m && isStr(m.id) && isStr(m.projectId) && isStr(m.title) && isStr(m.author)
     && isArr(m.chapters) && m.chapters.every(isChapter)
+    && (m.parts === undefined || (isArr(m.parts) && m.parts.every(isPart)))
     && (m.bindery === undefined || isBindery(m.bindery));
 };
 
