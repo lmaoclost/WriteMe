@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { act } from "@testing-library/react";
 import { useScriptorium } from "./store";
-import { STORE_KEY } from "./storage";
+import { STORE_KEY, flushPendingPersist } from "./storage";
 import { validateProjectData } from "./schema";
 import type { Project, WorldEntry, EntryCategory } from "../domain/types";
 
@@ -204,6 +204,7 @@ describe("putEntryImage", () => {
     const imageKey = store().entries[0].imageKey!;
     expect(imageKey).toMatch(/^img_entry_/);
     expect(store().images[imageKey]).toBe(DATA_URL);
+    flushPendingPersist();
     const doc = JSON.parse(localStorage.getItem(STORE_KEY)!) as {
       state: { images: Record<string, string> };
     };

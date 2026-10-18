@@ -5,6 +5,36 @@ import type { ProjectData } from "../domain/types";
 const PREFIX = "scriptorium";
 export const STORE_KEY = `${PREFIX}.v1`;
 
+const WRITE_DEBOUNCE_MS = 800;
+
+interface PendingWrite {
+  serialized: string;
+  timer: number;
+}
+/** key → payload queued for a coalesced write; cleared by flush, timer, or rehydration. */
+const pendingWrites = new Map<string, PendingWrite>();
+
+function writeThrough(name: string, serialized: string): void {
+  try {
+    localStorage.setItem(name, serialized);
+  } catch {
+    /* quota: toast surface happens in actions */
+  }
+}
+
+/** Write queued payloads now — used by upload verification and pagehide. */
+export function flushPendingPersist(): void {
+  for (const [name, pending] of pendingWrites) {
+    window.clearTimeout(pending.timer);
+    writeThrough(name, pending.serialized);
+  }
+  pendingWrites.clear();
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("pagehide", flushPendingPersist);
+}
+
 export function corruptBackupKey(): string {
   return `${PREFIX}.corrupt.${new Date().toISOString()}`;
 }
@@ -27,6 +57,12 @@ interface PersistedDoc {
 
 export const localStoragePersistence: PersistStorage<PersistedState> = {
   getItem: (name) => {
+    // rehydration supersedes anything still queued for this key
+    const pending = pendingWrites.get(name);
+    if (pending) {
+      window.clearTimeout(pending.timer);
+      pendingWrites.delete(name);
+    }
     let raw: string | null;
     try {
       raw = localStorage.getItem(name);
@@ -52,13 +88,23 @@ export const localStoragePersistence: PersistStorage<PersistedState> = {
     };
   },
   setItem: (name, value) => {
-    try {
-      localStorage.setItem(name, JSON.stringify(value));
-    } catch {
-      /* quota: toast surface happens in actions */
-    }
+    const serialized = JSON.stringify(value);
+    const prev = pendingWrites.get(name);
+    if (prev) window.clearTimeout(prev.timer);
+    pendingWrites.set(name, {
+      serialized,
+      timer: window.setTimeout(() => {
+        pendingWrites.delete(name);
+        writeThrough(name, serialized);
+      }, WRITE_DEBOUNCE_MS),
+    });
   },
   removeItem: (name) => {
+    const pending = pendingWrites.get(name);
+    if (pending) {
+      window.clearTimeout(pending.timer);
+      pendingWrites.delete(name);
+    }
     try {
       localStorage.removeItem(name);
     } catch {

@@ -20,7 +20,7 @@ import { defaultBindery } from "./schema";
 import { seedDemoProject } from "./seed";
 import { claimRest, fitGap } from "./clip";
 import { getLastRegionColor } from "../features/atlas/panels/recentColors";
-import { STORE_KEY, localStoragePersistence, wipeStore, storageHealth, PersistedState } from "./storage";
+import { STORE_KEY, localStoragePersistence, wipeStore, storageHealth, flushPendingPersist, PersistedState } from "./storage";
 
 export type ToastKind = "info" | "error" | "success";
 export interface Toast { id: string; kind: ToastKind; message: string; }
@@ -540,6 +540,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         if (!atlas) return false;
         const key = `img_map_${newId("")}`;
         set((st) => ({ images: { ...st.images, [key]: dataUrl } }));
+        flushPendingPersist(); // coalesced write must land before the quota readback
         let stored = false;
         try {
           const raw = localStorage.getItem(STORE_KEY);
@@ -645,6 +646,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         if (!entry) return false;
         const key = `img_entry_${newId("")}`;
         set((st) => ({ images: { ...st.images, [key]: dataUrl } }));
+        flushPendingPersist(); // coalesced write must land before the quota readback
         let stored = false;
         try {
           const raw = localStorage.getItem(STORE_KEY);

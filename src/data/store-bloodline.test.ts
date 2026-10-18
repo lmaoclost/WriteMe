@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { act } from "@testing-library/react";
 import { useScriptorium, selectBLHistoryFlags } from "./store";
-import { STORE_KEY } from "./storage";
+import { STORE_KEY, flushPendingPersist } from "./storage";
 import { parseExport, validateProjectData } from "./schema";
 import type { Bloodline, BloodlineHouse, BloodlinePerson, Project } from "../domain/types";
 
@@ -293,6 +293,7 @@ describe("history (cases 7-8)", () => {
   it("histories stay out of persistence (bl_ keys included)", () => {
     const a = addBloodline();
     act(() => { store().pushBLHistory(a); });
+    flushPendingPersist();
     const raw = JSON.parse(localStorage.getItem(STORE_KEY)!) as { state: Record<string, unknown> };
     expect(raw.state.histories).toBeUndefined();
   });
@@ -306,6 +307,7 @@ describe("persistence + export (case 9)", () => {
     const a = addBloodline();
     addPerson(a, { name: "Fundador" });
     addHouse(a, { name: "Solar" });
+    flushPendingPersist();
     const doc = JSON.parse(localStorage.getItem(STORE_KEY)!) as { version: number; state: { bloodlines: Bloodline[] } };
     expect(doc.version).toBe(2);
     expect(doc.state.bloodlines[0].persons).toHaveLength(1);

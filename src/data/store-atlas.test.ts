@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act } from "@testing-library/react";
 import { useScriptorium, selectHistoryFlags } from "./store";
 import type { AtlasHistory } from "./store";
-import { STORE_KEY } from "./storage";
+import { STORE_KEY, flushPendingPersist } from "./storage";
 import { parseExport, validateProjectData } from "./schema";
 import type { Atlas, Pin, Region, WorldEntry } from "../domain/types";
 import { getLastRegionColor, pushRecentColor, resetRecentColors } from "../features/atlas/panels/recentColors";
@@ -315,6 +315,7 @@ describe("persistence boundary", () => {
     const a = addAtlas();
     addRegionDirect(a.id, frame);
     expect(store().histories[a.id].undo.length).toBeGreaterThan(0);
+    flushPendingPersist();
     const raw = JSON.parse(localStorage.getItem(STORE_KEY)!) as { state: Record<string, unknown> };
     expect(raw.state.histories).toBeUndefined();
   });

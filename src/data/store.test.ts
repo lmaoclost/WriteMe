@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { act } from "@testing-library/react";
 import { selectHistoryFlags, selectCounts, useScriptorium } from "./store";
-import { localStoragePersistence, STORE_KEY } from "./storage";
+import { localStoragePersistence, STORE_KEY, flushPendingPersist } from "./storage";
 import type { Project } from "../domain/types";
 
 function storageKeys(): string[] {
@@ -127,6 +127,7 @@ describe("persist + corruption", () => {
   });
   it("persists a valid doc through actions (write path proof)", () => {
     act(() => { useScriptorium.getState().addProject("Persistida"); });
+    flushPendingPersist();
     const raw = localStorage.getItem(STORE_KEY);
     expect(raw).toBeTruthy();
     const doc = JSON.parse(raw!) as { state: { projects: unknown[] }; version: number };
@@ -135,6 +136,7 @@ describe("persist + corruption", () => {
   });
   it("adapter reads back a { state, version: 2 } shaped value for a valid doc", () => {
     act(() => { useScriptorium.getState().addProject("Adaptador"); });
+    flushPendingPersist();
     const doc = localStoragePersistence.getItem(STORE_KEY) as unknown as {
       state: { projects: { name: string }[]; seedFlag: boolean };
       version: number;
@@ -197,6 +199,7 @@ describe("persist + corruption", () => {
     act(() => { useScriptorium.getState().resetAll(); });
     expect(useScriptorium.getState().projects).toHaveLength(0);
     expect(useScriptorium.getState().seedFlag).toBe(false);
+    flushPendingPersist();
     const doc = JSON.parse(localStorage.getItem(STORE_KEY)!) as { state: { projects: unknown[]; seedFlag: boolean } };
     expect(doc.state.projects).toHaveLength(0);
     expect(doc.state.seedFlag).toBe(false);
