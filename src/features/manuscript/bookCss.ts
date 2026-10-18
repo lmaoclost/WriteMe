@@ -37,9 +37,10 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
   const rules: string[] = [
     `@page { size: ${trimToPage(config.trim)}; margin: ${inches(m.top)} ${inches(m.outer)} ${inches(m.bottom)} ${inches(m.inner)}; ${folio} }`,
   ];
-  // book-wide head lives on the base page rule; chapter mode leaves it to the
-  // chN named pages so front matter and the TOC print head-free
-  if (config.runningHead && config.runningHeadMode === "book") {
+  // book-wide head lives on the base page rule; anything that is not chapter
+  // mode (including an undefined one) prints it. Chapter mode leaves the base
+  // rule head-free so front matter and the TOC print without a head
+  if (config.runningHead && config.runningHeadMode !== "chapter") {
     rules.push(`@page { @top-center { content: "${cssStr(ctx.title)}"; font-size: 9pt; letter-spacing: 0.08em; text-transform: uppercase; } }`);
   }
   if (t.mirrored) {
@@ -66,9 +67,11 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
         `.print-book .chapter[data-ch="${i + 1}"] { page: ch${i + 1}; }`,
       );
       if (opener.suppressHead || opener.suppressFolio) {
-        const head = opener.suppressHead ? "@top-center { content: none; }" : "";
-        const foot = opener.suppressFolio ? "@bottom-center { content: none; }" : "";
-        rules.push(`@page ch${i + 1}:first { ${head} ${foot} }`);
+        const suppress = [
+          opener.suppressHead ? "@top-center { content: none; }" : "",
+          opener.suppressFolio ? "@bottom-center { content: none; }" : "",
+        ].filter(Boolean).join(" ");
+        rules.push(`@page ch${i + 1}:first { ${suppress} }`);
       }
     });
   }
@@ -78,7 +81,7 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
     `.print-book .chapter h2 .ch-num { display: block; font-size: 0.8em; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.4em; }`,
   );
   if (config.dropCaps) {
-    rules.push(`.print-book .chapter > p:first-of-type::first-letter { font-size: 2.6em; float: left; line-height: 0.85; padding-right: 0.08em; }`);
+    rules.push(`.print-book .chapter > p:not(.empty):first-of-type::first-letter { font-size: 2.6em; float: left; line-height: 0.85; padding-right: 0.08em; }`);
   }
   return rules.join("\n");
 }

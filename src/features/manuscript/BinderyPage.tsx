@@ -6,7 +6,7 @@ import { useScriptorium } from "../../data/store";
 import { BINDERY_FONTS, BINDERY_TRIMS, estimatePageCount, trimToPage } from "./bindery";
 import { buildBookCss } from "./bookCss";
 import { ExportButtons } from "./Export";
-import { BIND_HEAD_MODES } from "../../data/schema";
+import { BIND_HEAD_MODES, defaultBindery } from "../../data/schema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field } from "../../ui/Field";
 import { BOARD_HEADER, BOARD_ACTIONS, BOARD_ACTION_BTN, BOARD_PANEL } from "../../ui/board";
@@ -43,9 +43,7 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
   }, [printing]);
 
   const b = useMemo(
-    () => manuscript?.bindery ?? {
-      font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: false,
-    },
+    () => manuscript?.bindery ?? { ...defaultBindery()!, runningHeadMode: "book" as const },
     [manuscript],
   );
   const set = (patch: Partial<NonNullable<typeof b>>) => useScriptorium.getState().setBindery(manuscriptId, patch);

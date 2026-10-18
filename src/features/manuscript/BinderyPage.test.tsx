@@ -85,6 +85,14 @@ describe("bindery utils", () => {
     expect(css).not.toContain("@page ch1");
   });
 
+  it("an undefined running head mode falls back to the book title head", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const ctx = { title: "A Coroa e o Rio", chapters: [{ heading: "A Porta" }], parts: [], pageCount: 200 };
+    const css = buildBookCss({ ...defaultBindery()!, runningHead: true, runningHeadMode: undefined }, ctx);
+    expect(css).toContain('@page { @top-center { content: "A Coroa e o Rio";');
+    expect(css).not.toContain("@page ch1");
+  });
+
   it("chapter mode leaves the base page head-free for front matter", async () => {
     const { buildBookCss } = await import("./bookCss");
     const ctx = { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
@@ -109,11 +117,18 @@ describe("bindery utils", () => {
     expect(css).toContain(".print-book .chapter { break-before: page; padding-top: 18%; }");
   });
 
+  it("suppression stays single-spaced when only one margin box is dropped", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const ctx = { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
+    const css = buildBookCss({ ...defaultBindery()!, opener: { sink: 0.18, suppressHead: true, suppressFolio: false } }, ctx);
+    expect(css).toContain("@page ch1:first { @top-center { content: none; } }");
+  });
+
   it("drop cap styles the chapter's opening paragraph only when enabled", async () => {
     const { buildBookCss } = await import("./bookCss");
     const ctx = { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
     const on = buildBookCss({ ...defaultBindery()!, dropCaps: true }, ctx);
-    expect(on).toContain(".print-book .chapter > p:first-of-type::first-letter { font-size: 2.6em; float: left; line-height: 0.85; padding-right: 0.08em; }");
+    expect(on).toContain(".print-book .chapter > p:not(.empty):first-of-type::first-letter { font-size: 2.6em; float: left; line-height: 0.85; padding-right: 0.08em; }");
     const off = buildBookCss({ ...defaultBindery()!, dropCaps: false }, ctx);
     expect(off).not.toContain("::first-letter");
   });
@@ -287,6 +302,16 @@ describe("Bindery v2 controls", () => {
     expect(store().manuscripts[0].bindery!.pageNumbers).toBe(true);
     const styleTag = Array.from(document.querySelectorAll("style")).find((t) => t.textContent?.includes("@page"));
     expect(styleTag?.textContent).toContain("@bottom-center");
+  });
+
+  it("a manuscript without a bindery still prints the head the UI shows", () => {
+    const id = seedBook();
+    act(() => { useScriptorium.setState((s) => ({ manuscripts: s.manuscripts.map((m) => ({ ...m, bindery: undefined })) })); });
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    const styleTag = Array.from(document.querySelectorAll("style")).find((t) => t.textContent?.includes("@page"));
+    expect(styleTag?.textContent).toContain('content: "A Coroa e o Rio"');
+    expect(styleTag?.textContent).toContain("counter(page)");
+    expect(styleTag?.textContent).not.toContain("@page ch1");
   });
 
   it("running-head mode select drives the per-chapter named pages", async () => {
