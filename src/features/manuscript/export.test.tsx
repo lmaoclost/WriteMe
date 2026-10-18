@@ -138,11 +138,43 @@ describe("buildBookHtml", () => {
     };
     const html = buildBookHtml(book);
     expect(html.startsWith('<article class="book">')).toBe(true);
-    expect(html).toContain('<h1 class="book-title">Cantar de Vellmora</h1>');
-    expect(html).toContain('<p class="book-author">Renan</p>');
+    expect(html).toContain('<h1 class="tp-title">Cantar de Vellmora</h1>');
+    expect(html).toContain('<p class="tp-author">Renan</p>');
     expect(html.indexOf("Prólogo")).toBeLessThan(html.indexOf("Fim"));
     expect(html).toContain('<h2><span class="ch-num">1</span>Prólogo</h2>');
     expect(html).toContain("<strong>Negrito</strong>");
+  });
+
+  it("title page is the first page; toc follows it", () => {
+    const book: Manuscript = {
+      id: "b1", projectId: "p1", title: "T", author: "A",
+      chapters: [{ id: "c1", heading: "Um", content: "x.", order: 0 }],
+    };
+    const html = buildBookHtml(book);
+    expect(html.indexOf("title-page")).toBeLessThan(html.indexOf("front-matter toc"));
+  });
+
+  it("dropping the title page still gives the book its own centered title page (not glued to chapter 1)", () => {
+    const book: Manuscript = {
+      id: "b1", projectId: "p1", title: "T", author: "A",
+      bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: false, titlePage: false, toc: true, glossary: false },
+      chapters: [{ id: "c1", heading: "Um", content: "x.", order: 0 }],
+    };
+    const html = buildBookHtml(book);
+    expect(html).toContain('<section class="front-matter book-title-page"><h1 class="book-title">T</h1>');
+    expect(html).toContain('<p class="book-author">A</p>');
+    expect(html.indexOf("book-title-page")).toBeLessThan(html.indexOf("front-matter toc"));
+    expect(html.indexOf('<h1 class="book-title">')).toBeLessThan(html.indexOf('<section class="chapter"'));
+  });
+
+  it("with the title page on, no second book-title is glued before the chapters", () => {
+    const book: Manuscript = {
+      id: "b1", projectId: "p1", title: "Título Página", author: "Renan",
+      chapters: [{ id: "c1", heading: "Um", content: "x.", order: 0 }],
+    };
+    const html = buildBookHtml(book);
+    expect(html).not.toContain('class="book-title"');
+    expect(html.indexOf("tp-title")).toBeLessThan(html.indexOf("front-matter toc"));
   });
 
   it("omits the author paragraph when the author is empty", () => {
@@ -234,7 +266,18 @@ describe("buildBookHtml v2", () => {
     // single-side breaks exist where the document advances a page
     expect(binderyCss).toMatch(/\.print-book \.chapter \{ break-before: page; \}/);
     expect(bookCss).toMatch(/\.print-book \.chapter \{ break-before: page; \}/);
-    expect(binderyCss).toMatch(/\.print-book \.front-matter\.toc,\s*\.print-book \.dedication \{ break-before: page; \}/);
+    expect(binderyCss).toMatch(/\.print-book \.front-matter \{ break-before: page; \}/);
+    expect(bookCss).toMatch(/\.print-book \.front-matter \{ break-before: page; \}/);
+  });
+
+  it("screen sheet geometry (padding/page width) never reaches the print portal", async () => {
+    const fsp = await import("node:fs/promises");
+    const theme = await fsp.readFile("src/app/theme.css", "utf8");
+    // the fixed 7in preview cap was the "large horizontal margins" complaint:
+    // on screen the sheet fills the preview pane, the reading column stays capped
+    expect(theme).toMatch(/@media screen \{\s*\.print-book \{[^}]*max-width: 100%;/s);
+    expect(theme).toMatch(/\.print-book > \.book \{ max-width: 36rem; margin: 0 auto; \}/);
+    expect(theme).not.toContain("7in");
   });
 
   it("renders scene markers: endMarker between paragraphs, noteTop/noteEnd around the body", () => {

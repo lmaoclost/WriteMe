@@ -40,9 +40,12 @@ export function buildBookHtml(manuscript: Manuscript): string {
   const author = manuscript.author
     ? `<p class="book-author">${escapeText(manuscript.author)}</p>`
     : "";
-  const front = b.titlePage
-    ? `<section class="front-matter"><div class="title-page"><p class="tp-series">Scriptorium</p><h1 class="tp-title">${escapeText(manuscript.title)}</h1>${manuscript.author ? `<p class="tp-author">${escapeText(manuscript.author)}</p>` : ""}</div></section>`
-    : "";
+  // The title always opens the book on its own sheet: with the title page on,
+  // the branded page carries it (no second book-title before the chapters);
+  // without it, a centered book-title page stands in.
+  const titleBlock = b.titlePage
+    ? `<section class="front-matter title-page"><p class="tp-series">Scriptorium</p><h1 class="tp-title">${escapeText(manuscript.title)}</h1>${manuscript.author ? `<p class="tp-author">${escapeText(manuscript.author)}</p>` : ""}</section>`
+    : `<section class="front-matter book-title-page"><h1 class="book-title">${escapeText(manuscript.title)}</h1>${author}</section>`;
   const dedication = b.dedication
     ? `<section class="front-matter dedication">${escapeText(b.dedication)}</section>`
     : "";
@@ -80,7 +83,7 @@ export function buildBookHtml(manuscript: Manuscript): string {
       return `${head}<section class="chapter"><h2>${numHtml}${escapeText(chapter.heading)}</h2>${body}</section>`;
     })
     .join("");
-  return `<article class="book">${front}${dedication}${toc}<h1 class="book-title">${escapeText(manuscript.title)}</h1>${author}${sections}${glossary}</article>`;
+  return `<article class="book">${titleBlock}${dedication}${toc}${sections}${glossary}</article>`;
 }
 
 

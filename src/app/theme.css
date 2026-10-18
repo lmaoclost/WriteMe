@@ -263,17 +263,24 @@ input[type="file"].sr-only {
 
 /* Bindery book pages — the SAME selectors must style the on-screen live
    preview AND the body-level print portal, so the scope is .print-book
-   (runtime-injected binderyCss handles typography on top). */
+   (runtime-injected binderyCss handles typography on top). Sheet geometry
+   (paper width/padding) is screen-only: in print the page box comes from
+   @page, and preview padding would over-narrow the printed text area. */
 @layer components {
   .print-book {
     display: block;
-    max-width: 7in;
-    margin: 0 auto;
     background: var(--paper);
     color: var(--paper-ink);
-    padding: 40px 48px;
     text-align: left;
-    min-height: 100%;
+  }
+  @media screen {
+    .print-book {
+      width: 100%;
+      max-width: 100%;
+      min-height: 100%;
+      padding: 40px 48px;
+    }
+    .print-book > .book { max-width: 36rem; margin: 0 auto; }
   }
   .print-book h1 { font-size: var(--fs-paper-h1); color: var(--paper-ink); }
   .print-book h2 { font-size: var(--fs-paper-h2); color: var(--paper-ink); margin-top: 2em; }
@@ -282,8 +289,11 @@ input[type="file"].sr-only {
   .print-book .tp-title { text-align: center; font-size: var(--fs-paper-title); margin: 0.6em 0; }
   .print-book .tp-series { text-align: center; letter-spacing: 0.3em; text-transform: uppercase; font-size: var(--fs-paper-body); color: var(--paper-muted); }
   .print-book .tp-author { text-align: center; font-style: italic; }
+  .print-book .book-title-page { text-align: center; }
+  .print-book .book-title-page .book-title { font-size: var(--fs-paper-title); margin: 0.6em 0; }
+  .print-book .book-title-page .book-author { text-align: center; font-style: italic; }
+  .print-book .front-matter { break-before: page; }
   .print-book .front-matter { padding: 3in 0 2in; }
-  .print-book .front-matter.toc, .print-book .dedication { break-before: page; }
   .print-book .dedication { text-align: center; font-style: italic; padding-top: 2.5in; }
   .print-book .toc ul { list-style: none; padding: 0; }
   .print-book .toc-row { display: flex; gap: 6px; align-items: baseline; }
