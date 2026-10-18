@@ -294,6 +294,8 @@ input[type="file"].sr-only {
   .print-book .book-title-page .book-author { text-align: center; font-style: italic; }
   .print-book .front-matter { break-before: page; }
   .print-book .front-matter { padding: 3in 0 2in; }
+  .print-book .back-matter { break-before: page; }
+  .print-book .back-matter { padding: 3in 0 2in; }
   .print-book .dedication { text-align: center; font-style: italic; padding-top: 2.5in; }
   .print-book .toc ul { list-style: none; padding: 0; }
   .print-book .toc-row { display: flex; gap: 6px; align-items: baseline; }

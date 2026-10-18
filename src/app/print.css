@@ -26,5 +26,6 @@
   /* single-sided page breaks: only break-before, never break-after — adjacent
      forced breaks of both kinds make Chromium print blank pages */
   .print-book .front-matter { break-before: page; }
+  .print-book .back-matter { break-before: page; }
   .print-book .chapter { break-before: page; }
 }

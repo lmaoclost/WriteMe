@@ -268,6 +268,8 @@ describe("buildBookHtml v2", () => {
     expect(bookCss).toMatch(/\.print-book \.chapter \{ break-before: page; \}/);
     expect(binderyCss).toMatch(/\.print-book \.front-matter \{ break-before: page; \}/);
     expect(bookCss).toMatch(/\.print-book \.front-matter \{ break-before: page; \}/);
+    expect(binderyCss).toMatch(/\.print-book \.back-matter \{ break-before: page; \}/);
+    expect(bookCss).toMatch(/\.print-book \.back-matter \{ break-before: page; \}/);
   });
 
   it("screen sheet geometry (padding/page width) never reaches the print portal", async () => {
@@ -277,6 +279,8 @@ describe("buildBookHtml v2", () => {
     // on screen the sheet fills the preview pane, the reading column stays capped
     expect(theme).toMatch(/@media screen \{\s*\.print-book \{[^}]*max-width: 100%;/s);
     expect(theme).toMatch(/\.print-book > \.book \{ max-width: 36rem; margin: 0 auto; \}/);
+    expect(theme).toMatch(/\.print-book \.back-matter \{ break-before: page; \}/);
+    expect(theme).toMatch(/\.print-book \.back-matter \{ padding: 3in 0 2in; \}/);
     expect(theme).not.toContain("7in");
   });
 
