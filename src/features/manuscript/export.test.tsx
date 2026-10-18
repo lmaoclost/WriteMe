@@ -394,7 +394,21 @@ describe("buildBookHtml front matter + parts", () => {
   it("a part opens its own divider and groups its chapters", () => {
     const html = buildBookHtml(mixedBook());
     expect(html).toContain('<section class="part-divider" data-part="1"><p class="part-num">1</p><h1 class="part-title">Primeira parte</h1>');
-    expect(html.indexOf("Primeira parte")).toBeLessThan(html.indexOf("data-ch="));
+    // pin the body, not the TOC (whose part rows precede every chapter):
+    // ungrouped chapters close before the first divider; each part's chapter
+    // sits between its divider and the next one, or the end of the book
+    const divider1 = html.indexOf('<section class="part-divider" data-part="1"');
+    const divider2 = html.indexOf('<section class="part-divider" data-part="2"');
+    const chPos = (n: number) => html.indexOf(`<section class="chapter" data-ch="${n}">`);
+    expect(divider1).toBeGreaterThan(-1);
+    expect(divider2).toBeGreaterThan(divider1);
+    expect(chPos(1)).toBeGreaterThan(-1);
+    expect(chPos(1)).toBeLessThan(divider1); // Um — ungrouped
+    expect(chPos(2)).toBeLessThan(divider1); // Quatro — ungrouped
+    expect(chPos(3)).toBeGreaterThan(divider1); // Três — Primeira parte
+    expect(chPos(3)).toBeLessThan(divider2);
+    expect(chPos(4)).toBeGreaterThan(divider2); // Dois — Segunda parte
+    expect(chPos(4)).toBeLessThan(html.indexOf("</article>"));
   });
 
   it("front matter off and no parts keeps the pre-parts markup", () => {
@@ -441,6 +455,32 @@ describe("buildBookHtml front matter + parts", () => {
     expect(css).toContain('@page ch2 { @top-center { content: "Quatro";');
     expect(css).toContain('@page ch3 { @top-center { content: "Três";');
     expect(css).toContain('@page ch4 { @top-center { content: "Dois";');
+  });
+
+  it("part dividers open their own page: sink, no head, no folio", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    // book mode puts the title head on the base page — the partpage named
+    // page is what keeps it off the divider
+    const css = buildBookCss({ ...defaultBindery()!, runningHead: true, runningHeadMode: "book" }, {
+      title: "Aldoria", chapters: [{ heading: "Um" }],
+      parts: [{ id: "p1", title: "Primeira parte", order: 0 }], pageCount: 100,
+    });
+    expect(css).toContain(".print-book .part-divider { break-before: page; padding-top: 18%; text-align: center; }");
+    expect(css).toContain(".print-book .part-divider { page: partpage; }");
+    expect(css).toContain("@page partpage { @bottom-center { content: none; } @top-center { content: none; } }");
+    expect(css).toContain(".print-book .part-num { font-size: 0.8em; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.4em; }");
+    expect(css).toMatch(/\.print-book \.part-title \{ font-size: 1\.6em;/);
+    expect(css).toMatch(/\.print-book \.part-epigraph \{ font-style: italic;/);
+    expect(css).not.toMatch(/break-after:\s*page/);
+  });
+
+  it("a book without parts emits no part-page rules", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const css = buildBookCss({ ...defaultBindery()!, runningHead: true, runningHeadMode: "book" }, {
+      title: "Aldoria", chapters: [{ heading: "Um" }], parts: [], pageCount: 100,
+    });
+    expect(css).not.toContain("partpage");
+    expect(css).not.toContain("part-divider");
   });
 
   it("display pages carry no folio; the TOC keeps the roman numeral", async () => {

@@ -1,6 +1,8 @@
 /** Generated print stylesheet — page geometry, mirrored margins, folio,
- *  chapter openers (sink, suppressed head/folio) and running heads
- *  (book-wide head on the base page, or per-chapter named pages).
+ *  chapter openers (sink, suppressed head/folio), running heads
+ *  (book-wide head on the base page, or per-chapter named pages) and part
+ *  divider pages (same sink, head/folio suppressed by the partpage named
+ *  page).
  *  Ordered geometry first, then typography; structure rules land here too. */
 
 import type { BinderyConfig, Part } from "../../domain/types";
@@ -93,6 +95,18 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
     `.print-book .chapter h2 { margin: 0 0 1.2em; text-align: center; }`,
     `.print-book .chapter h2 .ch-num { display: block; font-size: 0.8em; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.4em; }`,
   );
+  // a part divider is its own page: same sink knob as chapter openers, and a
+  // named page so the book-mode head and the folio stay off it
+  if (ctx.parts.length > 0) {
+    rules.push(
+      `@page partpage { @bottom-center { content: none; } @top-center { content: none; } }`,
+      `.print-book .part-divider { page: partpage; }`,
+      `.print-book .part-divider { break-before: page; padding-top: ${Math.round(opener.sink * 100)}%; text-align: center; }`,
+      `.print-book .part-num { font-size: 0.8em; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.4em; }`,
+      `.print-book .part-title { font-size: 1.6em; margin: 0 0 1.2em; }`,
+      `.print-book .part-epigraph { font-style: italic; max-width: 60%; margin: 0 auto; }`,
+    );
+  }
   if (config.dropCaps) {
     rules.push(`.print-book .chapter > p:not(.empty):first-of-type::first-letter { font-size: 2.6em; float: left; line-height: 0.85; padding-right: 0.08em; }`);
   }
