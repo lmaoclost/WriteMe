@@ -44,6 +44,39 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
     if (!timeline) pushToast("error", "Timeline not found.");
   }, [timeline, pushToast]);
 
+  const fitToContentNow = () => {
+    const el = stageRef.current;
+    if (!el || !el.clientWidth || !timeline) return;
+    const xs: number[] = [];
+    const ys: number[] = [];
+    for (const b of timeline.beads) { xs.push(b.x); ys.push(b.y); }
+    for (const g of timeline.segments) { xs.push(g.fromX, g.toX); ys.push(200); }
+    if (xs.length === 0) return; // keep the default view for an empty wire
+    const PAD = 80;
+    const WIRE_Y = 200;
+    const minX = Math.min(...xs) - PAD, maxX = Math.max(...xs) + PAD;
+    const minY = Math.min(...ys) - PAD, maxY = Math.max(WIRE_Y, ...ys) + PAD;
+    const s = Math.min(1, Math.max(0.1, Math.min(el.clientWidth / (maxX - minX), el.clientHeight / (maxY - minY))));
+    const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+    view.current = { s, panX: el.clientWidth / 2 - cx * s, panY: el.clientHeight / 2 - cy * s };
+    markDirty();
+  };
+
+  // fit once per timeline mount — content must be ON-SCREEN (beads sit above
+  // the wire at negative y and the default view leaves them above the clip)
+  useEffect(() => {
+    fitToContentNow();
+  }, [timelineId]);
+
+  const elWidth = () => stageRef.current?.clientWidth ?? 1200;
+  const elHeight = () => stageRef.current?.clientHeight ?? 800;
+  const zoomAt = (v: { s: number; panX: number; panY: number }, factor: number, cx: number, cy: number) => {
+    const s = Math.min(8, Math.max(0.05, v.s * factor));
+    const relX = (cx - v.panX) / v.s;
+    const relY = (cy - v.panY) / v.s;
+    return { s, panX: cx - relX * s, panY: cy - relY * s };
+  };
+
   if (!timeline) return null;
 
   return (
@@ -58,6 +91,10 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
         <div className={BOARD_ACTIONS}>
           <button type="button" aria-label="Undo" className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoTL(timelineId)}>↶</button>
           <button type="button" aria-label="Redo" className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoTL(timelineId)}>↷</button>
+          <button type="button" aria-label="Zoom out" className={BOARD_ACTION_BTN} onClick={() => { view.current = zoomAt({ ...view.current }, 1 / 1.25, elWidth() / 2, elHeight() / 2); markDirty(); }}>−</button>
+          <span className="text-slate text-xs font-mono self-center" data-testid="tlc-zoom">{Math.round(view.current.s * 100)}%</span>
+          <button type="button" aria-label="Zoom in" className={BOARD_ACTION_BTN} onClick={() => { view.current = zoomAt({ ...view.current }, 1.25, elWidth() / 2, elHeight() / 2); markDirty(); }}>+</button>
+          <button type="button" className={BOARD_ACTION_BTN} onClick={() => fitToContentNow()}>Ajustar</button>
           <button type="button" className={BOARD_ACTION_BTN} onClick={() => { pushTLHistory(timelineId); const el = stageRef.current; const x = el && el.clientWidth ? (el.clientWidth / 2 - view.current.panX) / view.current.s : 4000; const created = useScriptorium.getState().addBead(timelineId, { x, y: -60 }); if (created) { setSelectedBeadId(created.id); markDirty(); } }}>Add event</button>
           <button type="button" className={BOARD_ACTION_BTN} onClick={() => { pushTLHistory(timelineId); useScriptorium.getState().addSegment(timelineId, 1000, 3000, "New era"); }}>Add segment</button>
           <button type="button" aria-pressed={notesOpen} className={BOARD_ACTION_BTN} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>

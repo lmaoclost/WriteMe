@@ -122,4 +122,30 @@ describe("TimelineCanvasPage", () => {
     fireEvent.doubleClick(screen.getByTestId("tl-bead"));
     expect(screen.queryByTestId("codex-dest")).toBeNull();
   });
+
+  it("fits content on mount so beads above the wire are on-screen", () => {
+    const prj = store().addProject("V").id;
+    const tl = store().addTimeline(prj, "Fio");
+    // seed shape: beads above (negative y) and below the wire at y=200
+    store().addBead(tl.id, { x: 620, y: -40, label: "A" });
+    store().addBead(tl.id, { x: 1580, y: 40, label: "B" });
+    store().addSegment(tl.id, 1080, 1260, "Era");
+    render(<MemoryRouter><TimelineCanvasPage timelineId={tl.id} /></MemoryRouter>);
+    const plane = document.querySelector("[data-testid=tl-plane]") as HTMLElement;
+    const m = /translate\(([-\d.]+)px, ([-\d.]+)px\) scale\(([-\d.]+)\)/.exec(plane.style.transform)!;
+    const panX = Number(m[1]), panY = Number(m[2]), s = Number(m[3]);
+    const dots = Array.from(document.querySelectorAll<SVGCircleElement>(".tl-bead-dot"));
+    expect(dots.length).toBe(2);
+    for (const dot of dots) {
+      const g = dot.closest("[data-testid=tl-bead]")!;
+      const gm = /translate\(([-\d.]+), ([-\d.]+)\)/.exec(g.getAttribute("transform")!)!;
+      const sx = panX + Number(gm[1]) * s;
+      const sy = panY + Number(gm[2]) * s;
+      expect(sx).toBeGreaterThanOrEqual(0);
+      expect(sx).toBeLessThanOrEqual(1200);
+      expect(sy).toBeGreaterThanOrEqual(0);
+      expect(sy).toBeLessThanOrEqual(800);
+    }
+    expect(screen.getByTestId("tlc-zoom").textContent).toBe("100%");
+  });
 });

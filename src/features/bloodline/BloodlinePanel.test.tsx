@@ -155,7 +155,7 @@ describe("BloodlinePanel — house", () => {
   });
 
   it("panel headers truncate long names instead of clipping the action button", () => {
-    const { b, p1 } = seed();
+    const { b } = seed();
     mountCanvas(b.id);
     firePointer(screen.getAllByTestId("person-node")[0], "pointerdown", { clientX: 0, clientY: 0 });
     const h2 = document.querySelector("[data-testid=bl-panel] h2") as HTMLElement;
