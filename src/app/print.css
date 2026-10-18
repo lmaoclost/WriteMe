@@ -1,4 +1,7 @@
-/* Single global print stylesheet (moved out of feature CSS in phase 2). */
+/* Single global print stylesheet (moved out of feature CSS in phase 2).
+   Print targets a body-level .print-book portal: hiding #root removes the
+   whole app shell (rail, headers, panels) with one selector — no per-page
+   shell classes to keep in sync. */
 .print-book {
   display: none;
 }
@@ -11,7 +14,7 @@
 }
 
 @media print {
-  .workspace, .toasts { display: none !important; }
+  #root, .toasts { display: none !important; }
   body { background: #fff; }
   .print-book {
     display: block;

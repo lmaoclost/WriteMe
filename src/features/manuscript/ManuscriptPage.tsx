@@ -6,7 +6,6 @@ import { undoToastAction } from "../../ui/undoAction";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { ChapterList } from "./ChapterList";
 import { ChapterEditor } from "./ChapterEditor";
-import { ExportTools } from "./Export";
 import { Button } from "../../ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -196,7 +195,6 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
               onDeleted={onChapterDeleted}
             />
           ) : null}
-          <ExportTools manuscript={book} />
         </section>
       </div>
     </div>

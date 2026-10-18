@@ -89,7 +89,9 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
     if (richHtml !== null && bodyRef.current && bodyRef.current.innerHTML !== richHtml) {
       bodyRef.current.innerHTML = richHtml;
     }
-  }, [richHtml]);
+    // `writing` dep: re-entering Write remounts the contenteditable empty —
+    // repopulate even when richHtml already holds the committed string.
+  }, [richHtml, writing]);
 
   // Switching chapters (remount) must not lose a dirty rich body — the códex
   // hook flushes drafts the same way. Capture the element in the effect (the

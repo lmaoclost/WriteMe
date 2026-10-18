@@ -1,11 +1,7 @@
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
 import type { Manuscript } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
 import { renderMarkdown } from "../entries/markdown";
-import { buildBookHtml } from "./buildBook";
-
-const PRINT_FALLBACK_MS = 500;
 
 /** Lowercase, accent-folded, runs of non-alnum become one dash, trimmed; empty → "livro". */
 function slugify(text: string): string {
@@ -19,38 +15,18 @@ function slugify(text: string): string {
   );
 }
 
-export interface ExportToolsProps {
+export interface ExportButtonsProps {
   manuscript: Manuscript;
 }
 
-/** EPUB (lazy epub-gen-memory → blob download) + PDF (print-book + window.print). */
-export function ExportTools({ manuscript }: ExportToolsProps) {
+/** EPUB (lazy epub-gen-memory → blob download) + Word (docx) buttons for the
+ *  Publishing header. PDF lives in "Print preview" (bindery-styled print pass). */
+export function ExportButtons({ manuscript }: ExportButtonsProps) {
   const pushToast = useScriptorium((s) => s.pushToast);
   const [busy, setBusy] = useState(false);
-  const [printing, setPrinting] = useState(false);
-  const [open, setOpen] = useState(false);
 
   const disabled = manuscript.chapters.length === 0 || busy;
   const title = manuscript.chapters.length === 0 ? "Add chapters first" : undefined;
-
-  // The print dialog must run AFTER the print-book markup reaches the DOM.
-  useEffect(() => {
-    if (!printing) return;
-    let settled = false;
-    const stop = () => {
-      if (settled) return;
-      settled = true;
-      setPrinting(false);
-    };
-    const frame = window.requestAnimationFrame(() => window.print());
-    window.addEventListener("afterprint", stop);
-    const timeout = window.setTimeout(stop, PRINT_FALLBACK_MS);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.removeEventListener("afterprint", stop);
-      window.clearTimeout(timeout);
-    };
-  }, [printing]);
 
   const exportDocx = async () => {
     if (disabled) return;
@@ -137,71 +113,27 @@ export function ExportTools({ manuscript }: ExportToolsProps) {
     }
   };
 
-  const exportPdf = () => {
-    if (printing || manuscript.chapters.length === 0) return;
-    setPrinting(true);
-  };
-
   return (
-    <section className="book-export-panel border-t border-line pt-3 mt-auto" data-slot="export-panel">
+    <>
       <button
         type="button"
-        className="book-mode bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] cursor-pointer hover:border-gold-dim self-start"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        className="bg-ink text-parchment-dim border border-line rounded-sm px-2.5 py-1.5 text-[13px] transition-colors hover:text-parchment hover:border-gold-dim disabled:opacity-40 disabled:cursor-default enabled:cursor-pointer"
+        disabled={disabled}
+        aria-busy={busy ? "true" : undefined}
+        title={title}
+        onClick={() => void exportEpub()}
       >
-        {open ? <span aria-hidden="true">▾</span> : <span aria-hidden="true">▸</span>} Exportar
+        Exportar EPUB
       </button>
-      <div hidden={!open} className="mt-2.5">
-        <div className="flex gap-2 max-w-[760px]">
-        <button
-          type="button"
-          className="book-export-btn bg-transparent text-parchment-dim border border-line rounded-sm px-3.5 py-2 text-[13px] transition-colors disabled:opacity-45 disabled:cursor-default enabled:cursor-pointer enabled:hover:text-parchment enabled:hover:border-gold-dim"
-          disabled={disabled}
-          aria-busy={busy ? "true" : undefined}
-          title={title}
-          onClick={() => void exportEpub()}
-        >
-          Exportar EPUB
-        </button>
-        <button
-          type="button"
-          className="book-export-btn bg-transparent text-parchment-dim border border-line rounded-sm px-3.5 py-2 text-[13px] transition-colors disabled:opacity-45 disabled:cursor-default enabled:cursor-pointer enabled:hover:text-parchment enabled:hover:border-gold-dim"
-          disabled={manuscript.chapters.length === 0 || printing}
-          title={title}
-          onClick={exportPdf}
-        >
-          Exportar PDF
-        </button>
-        <button
-          type="button"
-          className="book-export-btn bg-transparent text-parchment-dim border border-line rounded-sm px-3.5 py-2 text-[13px] transition-colors disabled:opacity-45 disabled:cursor-default enabled:cursor-pointer enabled:hover:text-parchment enabled:hover:border-gold-dim"
-          disabled={disabled}
-          title={title}
-          onClick={() => void exportDocx()}
-        >
-          Exportar Word
-        </button>
-        <a
-          className="book-export-btn bindery-link bg-transparent text-parchment-dim border border-line rounded-sm px-3.5 py-2 text-[13px] no-underline hover:text-parchment hover:border-gold-dim"
-          href={`../bindery/${manuscript.id}`}
-          aria-label="Open Publishing"
-        >
-          Encadernar ✦
-        </a>
-        </div>
-      </div>
-      {/* Portal to body keeps .print-book outside .workspace so print CSS can hide the shell. */}
-      {printing
-        ? createPortal(
-            <div
-              className="print-book"
-              data-testid="print-book"
-              dangerouslySetInnerHTML={{ __html: buildBookHtml(manuscript) }}
-            />,
-            document.body,
-          )
-        : null}
-    </section>
+      <button
+        type="button"
+        className="bg-ink text-parchment-dim border border-line rounded-sm px-2.5 py-1.5 text-[13px] transition-colors hover:text-parchment hover:border-gold-dim disabled:opacity-40 disabled:cursor-default enabled:cursor-pointer"
+        disabled={disabled}
+        title={title}
+        onClick={() => void exportDocx()}
+      >
+        Exportar Word
+      </button>
+    </>
   );
 }

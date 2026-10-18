@@ -369,37 +369,15 @@ describe("ManuscriptPage chapters", () => {
   });
 });
 
-describe("ExportTools slot", () => {
-  it("disables the export buttons until the book has chapters", () => {
-    const projectId = seedProject();
-    seedBook(projectId, { title: "A" });
-    render(manuscriptRoute(projectId));
-    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
-    const epub = screen.getByRole("button", { name: "Exportar EPUB" });
-    const pdf = screen.getByRole("button", { name: "Exportar PDF" });
-    expect(epub).toBeDisabled();
-    expect(pdf).toBeDisabled();
-    expect(epub).toHaveAttribute("title", "Add chapters first");
-    expect(pdf).toHaveAttribute("title", "Add chapters first");
-    fireEvent.click(screen.getByRole("button", { name: "New chapter" }));
-    expect(epub).toBeEnabled();
-    expect(pdf).toBeEnabled();
-    expect(epub).not.toHaveAttribute("title");
-  });
-
-  it("export lives in a collapsible panel (trigger toggles content)", () => {
+describe("export belongs to Publishing", () => {
+  it("the manuscript page shows no export controls", () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "x" }] });
     render(manuscriptRoute(projectId));
-    const trigger = screen.getByRole("button", { name: "Exportar" });
-    expect(trigger.getAttribute("aria-expanded")).toBe("false");
-    expect(trigger.textContent).toContain("Exportar");
-    // hidden content is invisible (still mounted, spec: no draft loss)
     expect(screen.queryByRole("button", { name: "Exportar EPUB" })).toBeNull();
-    fireEvent.click(trigger);
-    expect(trigger.getAttribute("aria-expanded")).toBe("true");
-    const epub = screen.getByRole("button", { name: "Exportar EPUB" });
-    expect(epub.closest("[data-slot='export-panel']")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Exportar Word" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Exportar PDF" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Exportar" })).toBeNull();
   });
 });
 

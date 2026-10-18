@@ -101,6 +101,18 @@ describe("ChapterEditor rich", () => {
     expect(ch.content).toBe("<p>Um rio, três pontes, um selo.</p>");
   });
 
+  it("keeps the committed body when returning to write mode after preview", () => {
+    seedMS();
+    render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
+    const body = document.querySelector('[data-testid="rich-body"]') as HTMLElement;
+    body.innerHTML = "<p>Um rio, três pontes, um selo.</p>";
+    fireEvent.input(body);
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+    fireEvent.click(screen.getByRole("button", { name: "Escrever" }));
+    const bodyAgain = document.querySelector('[data-testid="rich-body"]') as HTMLElement;
+    expect(bodyAgain.innerHTML).toContain("Um rio, três pontes, um selo.");
+  });
+
   it("markdown content converts to HTML on first edit (one-way)", () => {
     seedMS();
     act(() => { store().addChapter(store().manuscripts[0].id, "MD cap"); });

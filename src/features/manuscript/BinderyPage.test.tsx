@@ -112,6 +112,56 @@ describe("BinderyPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Print preview" }));
     await waitFor(() => expect(printSpy).toHaveBeenCalledTimes(1), { timeout: 2000 });
   });
+
+  it("print preview portals the book to <body>, outside the app shell, with the bindery sheet", async () => {
+    const id = seedBook();
+    const printSpy = vi.fn();
+    Object.defineProperty(window, "print", { value: printSpy, configurable: true });
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    fireEvent.click(screen.getByRole("button", { name: "Print preview" }));
+    const portal = document.querySelector("body > [data-testid='print-book']") as HTMLElement;
+    expect(portal).toBeTruthy(); // lives on <body>, outside #root
+    expect(portal.innerHTML).toContain("Arco");
+    expect(document.querySelector("body > style")?.textContent).toContain("@page");
+    await waitFor(() => expect(printSpy).toHaveBeenCalledTimes(1), { timeout: 2000 });
+  });
+
+  it("unmounts the print portal after the fallback timeout", async () => {
+    vi.useFakeTimers();
+    const id = seedBook();
+    const printSpy = vi.fn();
+    Object.defineProperty(window, "print", { value: printSpy, configurable: true });
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    fireEvent.click(screen.getByRole("button", { name: "Print preview" }));
+    expect(document.querySelector("body > [data-testid='print-book']")).toBeTruthy();
+    act(() => { vi.runAllTimers(); });
+    expect(document.querySelector("body > [data-testid='print-book']")).toBeNull();
+  });
+
+  it("the print stylesheet hides the whole app shell (#root), not a phantom .workspace class", async () => {
+    const fsp = await import("node:fs/promises");
+    const css = await fsp.readFile("src/app/print.css", "utf8");
+    expect(css).toContain("#root, .toasts { display: none !important; }");
+    expect(css).not.toContain(".workspace");
+  });
+});
+
+describe("Bindery export buttons", () => {
+  it("EPUB and Word live in the bindery header and are disabled without chapters", () => {
+    const id = seedBook();
+    act(() => { store().deleteChapter(store().manuscripts[0].chapters[0].id); });
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    expect(screen.getByRole("button", { name: "Exportar EPUB" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Exportar Word" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Exportar PDF" })).toBeNull();
+  });
+
+  it("EPUB and Word enable once the book has chapters", () => {
+    const id = seedBook();
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    expect(screen.getByRole("button", { name: "Exportar EPUB" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Exportar Word" })).toBeEnabled();
+  });
 });
 
 describe("Bindery v2 controls", () => {

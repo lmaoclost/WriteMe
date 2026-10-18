@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { BINDERY_FONTS, BINDERY_TRIMS, binderyCss, trimToPage } from "./bindery";
+import { ExportButtons } from "./Export";
 import { BIND_HEAD_MODES } from "../../data/schema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field } from "../../ui/Field";
@@ -20,12 +22,23 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
     if (!manuscript) pushToast("error", "Load a manuscript first.");
   }, [manuscript, pushToast]);
 
-  // print pass: fires once the preview style is committed
+  // print pass: fires once the body-level print-book portal is in the DOM
   useEffect(() => {
     if (!printing) return;
+    let settled = false;
+    const stop = () => {
+      if (settled) return;
+      settled = true;
+      setPrinting(false);
+    };
     const frame = window.requestAnimationFrame(() => window.print());
-    const stop = window.setTimeout(() => setPrinting(false), PRINT_SETTLE_MS);
-    return () => { window.cancelAnimationFrame(frame); window.clearTimeout(stop); };
+    window.addEventListener("afterprint", stop);
+    const timeout = window.setTimeout(stop, PRINT_SETTLE_MS);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("afterprint", stop);
+      window.clearTimeout(timeout);
+    };
   }, [printing]);
 
   const b = useMemo(
@@ -44,6 +57,7 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
       <header className={BOARD_HEADER}>
         <div className="font-display text-xl font-semibold text-gold">{manuscript.title}</div>
         <div className={BOARD_ACTIONS}>
+          <ExportButtons manuscript={manuscript} />
           <button type="button" className={BOARD_ACTION_BTN} disabled={manuscript.chapters.length === 0} title={manuscript.chapters.length === 0 ? "Add chapters first" : undefined}
             onClick={() => setPrinting(true)}>Print preview</button>
         </div>
@@ -130,11 +144,21 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
           />
         </div>
       </div>
-      {/* Print pass: portal not needed — body-level CSS hides shell when printing. */}
-      <style>{printing ? `${binderyCss(b.font, b.trim, b)}
-        @media print { .workspace, .toasts, .bindery-panel { display: none !important; } .bindery-live { display: block !important; } .print-book { display: block !important; } }
-        @media screen { .bindery-live { display: block; } }
-      ` : ""}</style>
+      {/* Print pass: the app shell (#root) stays on screen; the book prints from a
+          body-level portal so print CSS can wipe everything else with #root. */}
+      {printing
+        ? createPortal(
+            <>
+              <style>{binderyCss(b.font, b.trim, b)}</style>
+              <div
+                className="print-book"
+                data-testid="print-book"
+                dangerouslySetInnerHTML={{ __html: html }}
+              />
+            </>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }

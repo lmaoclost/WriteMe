@@ -3,7 +3,6 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppRouter } from "../../app/router";
 import { useScriptorium } from "../../data/store";
-import { pickSelectOptionSync } from "../../test/selectHelper";
 import type { Manuscript } from "../../domain/types";
 import { buildBookHtml } from "./buildBook";
 import { binderyCss } from "./bindery";
@@ -29,6 +28,19 @@ vi.mock("epub-gen-memory", () => ({
       return epubMock.genEpub();
     }
   },
+}));
+
+const docxMock = vi.hoisted(() => ({
+  toBlob: vi.fn(async () => new Blob(["docx-bytes"])),
+}));
+
+vi.mock("docx", () => ({
+  Document: class { constructor(public options: unknown) {} },
+  Packer: { toBlob: docxMock.toBlob },
+  Paragraph: class { constructor(public options: unknown) {} },
+  TextRun: class { constructor(public options: unknown) {} },
+  HeadingLevel: { HEADING_2: 2, HEADING_3: 3, HEADING_4: 4 },
+  AlignmentType: { CENTER: "center" },
 }));
 
 function lastOptions(index: number): Record<string, unknown> {
@@ -57,9 +69,9 @@ function seedBook(projectId: string, spec: {
   return book as Manuscript;
 }
 
-function manuscriptRoute(projectId: string) {
+function binderyRoute(projectId: string, bookId: string) {
   return (
-    <MemoryRouter initialEntries={[`/p/${projectId}/manuscript`]}>
+    <MemoryRouter initialEntries={[`/p/${projectId}/bindery/${bookId}`]}>
       <AppRouter />
     </MemoryRouter>
   );
@@ -92,21 +104,12 @@ function stubAnchorDownload() {
   };
 }
 
-const ORIGINAL_PRINT = window.print;
-let restorePrint = () => {};
-
-function stubWindowPrint(spy: ReturnType<typeof vi.fn>) {
-  Object.defineProperty(window, "print", { value: spy, configurable: true });
-  restorePrint = () => {
-    Object.defineProperty(window, "print", { value: ORIGINAL_PRINT, configurable: true });
-    restorePrint = () => {};
-  };
-}
-
 beforeEach(() => {
   localStorage.clear();
   useScriptorium.setState(useScriptorium.getInitialState());
   epubMock.genEpub.mockClear();
+  docxMock.toBlob.mockImplementation(async () => new Blob(["docx-bytes"]));
+  docxMock.toBlob.mockClear();
   epubMock.calls.length = 0;
   epubMock.expectedOrder = null;
   stubAnchorDownload();
@@ -115,7 +118,6 @@ beforeEach(() => {
 afterEach(() => {
   restoreAnchor();
   restoreAnchor = () => {};
-  restorePrint();
   anchorHref = "";
   anchorDownload = "";
   vi.restoreAllMocks();
@@ -271,9 +273,8 @@ describe("EPUB export", () => {
     let key!: string;
     act(() => { key = useScriptorium.getState().putImage("data:image/png;base64,CAPACOVER", "cover"); });
     act(() => { useScriptorium.getState().updateProject(projectId, { coverImageKey: key }); });
-    seedBook(projectId, { title: "Livro Com Capa", chapters: [{ heading: "Um", content: "x." }] });
-    render(manuscriptRoute(projectId));
-    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
+    const book = seedBook(projectId, { title: "Livro Com Capa", chapters: [{ heading: "Um", content: "x." }] });
+    render(binderyRoute(projectId, book.id));
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
     expect((epubMock.calls[0].options as { cover?: string }).cover).toBe("data:image/png;base64,CAPACOVER");
@@ -281,9 +282,8 @@ describe("EPUB export", () => {
 
   it("omits the cover option when the project has none", async () => {
     const projectId = seedProject();
-    seedBook(projectId, { title: "Livro Sem Capa", chapters: [{ heading: "Um", content: "x." }] });
-    render(manuscriptRoute(projectId));
-    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
+    const book = seedBook(projectId, { title: "Livro Sem Capa", chapters: [{ heading: "Um", content: "x." }] });
+    render(binderyRoute(projectId, book.id));
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
     expect((epubMock.calls[0].options as { cover?: string }).cover).toBeUndefined();
@@ -293,7 +293,7 @@ describe("EPUB export", () => {
 describe("EPUB export", () => {
   it("assembles the book in order, downloads <slug>.epub and shows the success toast", async () => {
     const projectId = seedProject();
-    seedBook(projectId, {
+    const book = seedBook(projectId, {
       title: "Cantar de Vellmora",
       author: "Renan",
       chapters: [
@@ -302,8 +302,7 @@ describe("EPUB export", () => {
       ],
     });
     epubMock.expectedOrder = ["Prólogo", "Fim"];
-    render(manuscriptRoute(projectId));
-    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
+    render(binderyRoute(projectId, book.id));
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
     await waitFor(() => {
       expect(useScriptorium.getState().toasts.some((t) => t.message === "EPUB gerado.")).toBe(true);
@@ -326,9 +325,8 @@ describe("EPUB export", () => {
     const projectId = seedProject();
     const key = useScriptorium.getState().putImage("data:image/png;base64,COVER", "cover");
     useScriptorium.getState().updateProject(projectId, { coverImageKey: key });
-    seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "x" }] });
-    const covered = render(manuscriptRoute(projectId));
-    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
+    const coveredBook = seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "x" }] });
+    const covered = render(binderyRoute(projectId, coveredBook.id));
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
     expect(lastOptions(0)).toEqual(expect.objectContaining({ cover: "data:image/png;base64,COVER" }));
@@ -336,9 +334,8 @@ describe("EPUB export", () => {
 
     useScriptorium.setState(useScriptorium.getInitialState());
     const bareId = seedProject();
-    seedBook(bareId, { title: "B", chapters: [{ heading: "Um", content: "x" }] });
-    render(manuscriptRoute(bareId));
-    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
+    const bareBook = seedBook(bareId, { title: "B", chapters: [{ heading: "Um", content: "x" }] });
+    render(binderyRoute(bareId, bareBook.id));
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(2));
     expect("cover" in lastOptions(1)).toBe(false);
@@ -346,9 +343,8 @@ describe("EPUB export", () => {
 
   it("falls back to the 'livro' slug when the title has no alnum characters", async () => {
     const projectId = seedProject();
-    seedBook(projectId, { title: "???", chapters: [{ heading: "Um", content: "x" }] });
-    render(manuscriptRoute(projectId));
-    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
+    const book = seedBook(projectId, { title: "???", chapters: [{ heading: "Um", content: "x" }] });
+    render(binderyRoute(projectId, book.id));
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
     expect(anchorDownload).toBe("livro.epub");
@@ -356,33 +352,21 @@ describe("EPUB export", () => {
 
   it("folds accents out of the download filename slug", async () => {
     const projectId = seedProject();
-    seedBook(projectId, { title: "Época Antiga", chapters: [{ heading: "Um", content: "x" }] });
-    render(manuscriptRoute(projectId));
-    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
+    const book = seedBook(projectId, { title: "Época Antiga", chapters: [{ heading: "Um", content: "x" }] });
+    render(binderyRoute(projectId, book.id));
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
     expect(anchorDownload).toBe("epoca-antiga.epub");
-
-    act(() => {
-      const state = useScriptorium.getState();
-      const created = state.addManuscript(projectId, "Açúcar & Sal");
-      state.addChapter(created.id, "Um");
-    });
-    await pickSelectOptionSync(() => screen.getByRole("combobox", { name: "Book" }), "Açúcar & Sal");
-    fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
-    await waitFor(() => expect(epubMock.calls).toHaveLength(2));
-    expect(anchorDownload).toBe("acucar-sal.epub");
   });
 
   it("shows disabled + aria-busy while generating, then re-enables", async () => {
     const projectId = seedProject();
-    seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "x" }] });
+    const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "x" }] });
     let resolve!: (value: never) => void;
     epubMock.genEpub.mockImplementationOnce(
       () => new Promise<never>((res) => { resolve = res; }),
     );
-    render(manuscriptRoute(projectId));
-    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
+    render(binderyRoute(projectId, book.id));
     const button = screen.getByRole("button", { name: "Exportar EPUB" });
     fireEvent.click(button);
     await waitFor(() => expect(button).toBeDisabled());
@@ -395,10 +379,9 @@ describe("EPUB export", () => {
 
   it("toasts the failure message and re-enables the button", async () => {
     const projectId = seedProject();
-    seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "x" }] });
+    const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "x" }] });
     epubMock.genEpub.mockRejectedValueOnce(new Error("boom"));
-    render(manuscriptRoute(projectId));
-    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
+    render(binderyRoute(projectId, book.id));
     const button = screen.getByRole("button", { name: "Exportar EPUB" });
     fireEvent.click(button);
     await waitFor(() => {
@@ -409,47 +392,30 @@ describe("EPUB export", () => {
   });
 });
 
-describe("PDF export", () => {
-  it("renders the print book with h1 + first chapter h2 and calls window.print", async () => {
+describe("Word export", () => {
+  it("downloads <slug>.docx and toasts success", async () => {
     const projectId = seedProject();
-    seedBook(projectId, {
-      title: "Cantar de Vellmora",
-      chapters: [
-        { heading: "Prólogo", content: "Uma noite." },
-        { heading: "Fim", content: "Duas." },
-      ],
+    const book = seedBook(projectId, { title: "Açúcar & Sal", chapters: [{ heading: "Um", content: "Um parágrafo." }] });
+    render(binderyRoute(projectId, book.id));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar Word" }));
+    await waitFor(() => expect(docxMock.toBlob).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(useScriptorium.getState().toasts.some((t) => t.message === "Word gerado.")).toBe(true);
     });
-    const printSpy = vi.fn();
-    stubWindowPrint(printSpy);
-    render(manuscriptRoute(projectId));
-    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
-    fireEvent.click(screen.getByRole("button", { name: "Exportar PDF" }));
-    const printBook = screen.getByTestId("print-book");
-    // Portal regression: the print book must live on document.body, outside the app shell.
-    expect(printBook.parentElement).toBe(document.body);
-    expect(printBook.closest(".workspace")).toBeNull();
-    // TOC (front matter) renders its own h2 first; chapter h2s come after
-    expect(printBook.querySelector("h1")?.textContent).toBe("Cantar de Vellmora");
-    expect(printBook.querySelector(".toc h2")?.textContent).toBe("Contents");
-    expect(printBook.querySelector(".chapter h2 .ch-num")?.textContent).toBe("1");
-    expect(printBook.querySelector(".chapter h2")?.textContent).toBe("1Prólogo");
-    await waitFor(() => expect(printSpy).toHaveBeenCalled());
+    expect(anchorDownload).toBe("acucar-sal.docx");
+    expect(anchorHref).toBe("blob:mock-url");
   });
 
-  it("unmounts the print book after the fallback timeout", async () => {
-    vi.useFakeTimers();
+  it("toasts the failure message", async () => {
     const projectId = seedProject();
-    seedBook(projectId, {
-      title: "Cantar",
-      chapters: [{ heading: "Prólogo", content: "Uma noite." }],
+    const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "x" }] });
+    docxMock.toBlob.mockRejectedValueOnce(new Error("boom"));
+    render(binderyRoute(projectId, book.id));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar Word" }));
+    await waitFor(() => {
+      expect(useScriptorium.getState().toasts.some((t) => t.message === "Falha ao gerar o Word.")).toBe(true);
     });
-    const printSpy = vi.fn();
-    stubWindowPrint(printSpy);
-    render(manuscriptRoute(projectId));
-    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
-    fireEvent.click(screen.getByRole("button", { name: "Exportar PDF" }));
-    expect(screen.getByTestId("print-book")).toBeInTheDocument();
-    act(() => vi.runAllTimers());
-    expect(screen.queryByTestId("print-book")).toBeNull();
+    expect(screen.getByRole("button", { name: "Exportar Word" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Exportar Word" })).not.toHaveAttribute("aria-busy");
   });
 });
