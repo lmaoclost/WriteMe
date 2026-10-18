@@ -38,5 +38,12 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
     );
   }
   rules.push(`.print-book { font-family: ${config.font}; font-size: ${t.bodyPt}pt; line-height: ${t.leading / t.bodyPt}; }`);
+  rules.push(
+    `.print-book p { margin: 0; text-align: ${t.justify ? "justify" : "left"}; widows: 2; orphans: 2; }`,
+    `.print-book p + p { text-indent: ${t.indent}em; }`,
+    `.print-book blockquote + p, .print-book ul + p, .print-book ol + p { text-indent: ${t.indent}em; }`,
+    `.print-book h1 + p, .print-book h2 + p, .print-book h3 + p, .print-book .chapter-note + p { text-indent: 0; }`,
+  );
+  if (t.hyphens) rules.push(`.print-book p { hyphens: auto; -webkit-hyphens: auto; }`);
   return rules.join("\n");
 }

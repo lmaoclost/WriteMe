@@ -59,6 +59,23 @@ describe("bindery utils", () => {
     expect(css).toContain("margin-right: 0.42in"); // outer = 5 × 0.0833
   });
 
+  it("indents paragraphs after the first and never the opener", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const css = buildBookCss(defaultBindery()!, { chapters: [{ heading: "Um" }], parts: [], pageCount: 100 });
+    expect(css).toMatch(/\.print-book p \+ p \{ text-indent: 1em; \}/);
+    expect(css).toContain("widows: 2");
+    expect(css).toContain("orphans: 2");
+  });
+
+  it("justification is opt-in and hyphens stay off by default", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const ctx = { chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
+    expect(buildBookCss(defaultBindery()!, ctx)).toContain("text-align: justify");
+    expect(buildBookCss(defaultBindery()!, ctx)).not.toContain("hyphens: auto");
+    const ragged = { ...defaultBindery()!, typography: { bodyPt: 11, leading: 14.5, indent: 1, justify: false, hyphens: false } };
+    expect(buildBookCss(ragged, ctx)).toContain("text-align: left");
+  });
+
   it("chapter head numbers get visual separation from the title, in live preview and print portal", async () => {
     const fsp = await import("node:fs/promises");
     const theme = await fsp.readFile("src/app/theme.css", "utf8");
