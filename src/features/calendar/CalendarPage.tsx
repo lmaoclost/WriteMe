@@ -7,6 +7,7 @@ import { Field } from "../../ui/Field";
 import { Button } from "../../ui/Button";
 import { BOARD_HEADER, BOARD_NAME_INPUT, BOARD_ACTIONS, BOARD_ACTION_BTN, BOARD_PANEL, BOARD_PANEL_HINT, BOARD_PANEL_HEAD, BOARD_PANEL_HEAD_H2, BOARD_NOTEPAD, BOARD_NOTEPAD_HEAD, BOARD_NOTEPAD_TXT } from "../../ui/board";
 import { useBoardNotesHotkey } from "../../ui/boardNotes";
+import { withCurrentColor } from "../../ui/colors";
 
 
 export const EVENT_CATEGORIES = ["Events", "Festivals", "Notes"] as const;
@@ -166,7 +167,7 @@ function DayPanel({ cal, dayKey, onClose }: {
               </SelectContent>
             </Select>
             <div className="flex gap-1">
-              {EVENT_PRESET_COLORS.map((c) => (
+              {withCurrentColor(EVENT_PRESET_COLORS, e.color).map((c) => (
                 <button key={c} type="button" className={`color-swatch w-3.5 h-3.5 rounded-full border border-transparent cursor-pointer${e.color === c ? " outline outline-2 outline-parchment" : ""}`} style={{ background: c }} aria-label={`Cor ${c}`} onClick={() => store().updateCalendarEvent(cal.id, dayKey, e.id, { color: c })} />
               ))}
             </div>

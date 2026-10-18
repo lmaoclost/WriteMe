@@ -10,6 +10,7 @@ import { Field } from "../../ui/Field";
 import { Button } from "../../ui/Button";
 import { BOARD_HEADER, BOARD_NAME_INPUT, BOARD_ACTIONS, BOARD_ACTION_BTN, BOARD_PANEL, BOARD_PANEL_HINT, BOARD_PANEL_HEAD, BOARD_PANEL_HEAD_H2 } from "../../ui/board";
 import type { TimelineWire, TimelineBead } from "../../domain/types";
+import { withCurrentColor } from "../../ui/colors";
 import { useBoardNotesHotkey } from "../../ui/boardNotes";
 
 
@@ -244,7 +245,7 @@ function BeadPanel({ timeline, selectedId, onSelect }: {
           <TomeEntryLink timeline={timeline} bead={bead} onNavigate={(entryId) => navigate(`/p/${timeline.projectId}/entries?e=${entryId}`)} />
           <Field label="Color">
             <div className="color-row flex flex-wrap gap-1.5" role="listbox" aria-label="Event color">
-              {BEAD_PRESET_COLORS.map((c) => (
+              {withCurrentColor(BEAD_PRESET_COLORS, bead.color).map((c) => (
                 <button key={c} type="button" role="option" aria-selected={bead.color === c}
                   className={`color-swatch size-5 rounded-full border border-transparent cursor-pointer${bead.color === c ? " outline outline-2 outline-parchment" : ""}`} style={{ background: c }}
                   onClick={() => store().updateBead(bead.id, { color: c })} />

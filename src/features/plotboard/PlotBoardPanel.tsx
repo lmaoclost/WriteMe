@@ -5,6 +5,7 @@ import { Field } from "../../ui/Field";
 import { Button } from "../../ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BOARD_PANEL, BOARD_PANEL_HINT, BOARD_PANEL_HEAD, BOARD_PANEL_HEAD_H2 } from "../../ui/board";
+import { withCurrentColor } from "../../ui/colors";
 
 export const BOARD_PRESET_COLORS = [
   "#7c5cbf", "#3498db", "#27ae60", "#e67e22", "#e74c3c", "#9b59b6",
@@ -74,7 +75,7 @@ function CardForm({ board, card, onSelect }: {
       </Field>
       <Field label="Color">
         <div className="flex flex-wrap gap-1.5" role="listbox" aria-label="Card color">
-          {BOARD_PRESET_COLORS.map((c) => (
+          {withCurrentColor(BOARD_PRESET_COLORS, card.color).map((c) => (
             <button key={c} type="button" role="option" aria-selected={card.color === c}
               className={`color-swatch${card.color === c ? " current" : ""}`} style={{ background: c }}
               data-color={c} onClick={() => update({ color: c })} />

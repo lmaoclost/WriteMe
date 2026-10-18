@@ -119,7 +119,7 @@ describe("FactionWebPage", () => {
     const node = screen.getAllByTestId("fac-node").find((n) => n.getAttribute("data-fac-id") === a)!;
     firePointer(node, "pointerdown", { clientX: 0, clientY: 0 });
     const options = screen.getAllByRole("option");
-    expect(options).toHaveLength(12);
+    expect(options).toHaveLength(13); // 12 presets + new-faction default #7a7a99
     fireEvent.click(options[4]); // #27ae60
     expect(store().factionWebs![0].factions.find((f) => f.id === a)!.color).toBe("#27ae60");
   });

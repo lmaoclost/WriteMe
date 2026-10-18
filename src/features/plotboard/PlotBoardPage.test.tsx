@@ -137,6 +137,18 @@ describe("PlotBoardPage", () => {
     expect(store().plotBoards![0].cards[0].parts[0].text).toBe("o rio avisa");
   });
 
+  it("highlights the current swatch even for non-preset colors", () => {
+    const b = seedBoard();
+    const c = store().addCard(b.id, { x: 300, y: 200 })!;
+    act(() => store().updateCard(c.id, { color: "#4d6f8f" })); // fora da paleta
+    render(<PlotBoardPage boardId={b.id} />);
+    const node = screen.getByTestId("board-card");
+    firePointer(node, "pointerdown", { clientX: 0, clientY: 0 });
+    const selected = document.querySelector('[role="option"][aria-selected="true"]') as HTMLElement;
+    expect(selected).toBeTruthy();
+    expect(selected.dataset.color).toBe("#4d6f8f");
+  });
+
   it("notepad persists", () => {
     vi.useFakeTimers();
     const b = seedBoard();

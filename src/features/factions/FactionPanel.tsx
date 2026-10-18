@@ -5,6 +5,7 @@ import { FACTION_PRESET_COLORS } from "./connectionStyles";
 import { Field } from "../../ui/Field";
 import { Button } from "../../ui/Button";
 import { BOARD_PANEL, BOARD_PANEL_HINT, BOARD_PANEL_HEAD, BOARD_PANEL_HEAD_H2 } from "../../ui/board";
+import { withCurrentColor } from "../../ui/colors";
 import type { Faction, FactionWeb } from "../../domain/types";
 
 export function FactionPanel({ web, selectedId, selectedConnectionId, onSelect }: {
@@ -67,7 +68,7 @@ export function FactionForm({ web, faction, onSelect }: {
       </Field>
       <Field label="Color">
         <div className="flex flex-wrap gap-1.5" role="listbox" aria-label="Faction color">
-          {FACTION_PRESET_COLORS.map((c) => (
+          {withCurrentColor(FACTION_PRESET_COLORS, faction.color).map((c) => (
             <button
               key={c}
               type="button"

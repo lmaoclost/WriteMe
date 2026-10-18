@@ -8,6 +8,7 @@ import { Field } from "../../ui/Field";
 import { Button } from "../../ui/Button";
 import { BOARD_HEADER, BOARD_NAME_INPUT, BOARD_ACTIONS, BOARD_ACTION_BTN, BOARD_PANEL, BOARD_PANEL_HINT, BOARD_PANEL_HEAD, BOARD_PANEL_HEAD_H2 } from "../../ui/board";
 import { useBoardNotesHotkey } from "../../ui/boardNotes";
+import { withCurrentColor } from "../../ui/colors";
 
 
 export const OATH_LINK_STYLE: Record<OathLink["status"], { label: string; color: string; dash: string }> = {
@@ -15,6 +16,11 @@ export const OATH_LINK_STYLE: Record<OathLink["status"], { label: string; color:
   strained: { label: "Strained", color: "#d4a017", dash: "7 5" },
   broken: { label: "Broken", color: "#c0392b", dash: "10 6" },
 };
+
+export const OATH_MEMBER_COLORS = [
+  "#c0392b", "#e74c3c", "#e67e22", "#f1c40f", "#27ae60", "#2ecc71",
+  "#2980b9", "#3498db", "#7c5cbf", "#8e44ad", "#2c3e50", "#34495e",
+];
 
 export function OathsChartPage({ chartId }: { chartId: string }) {
   const chart = useScriptorium((s) => (s.oathsCharts ?? []).find((c) => c.id === chartId));
@@ -194,7 +200,7 @@ function MemberForm({ chart, member, onSelect }: {
       </Field>
       <Field label="Color">
         <div className="flex flex-wrap gap-1.5" role="listbox" aria-label="Member color">
-          {["#c0392b", "#e74c3c", "#e67e22", "#f1c40f", "#27ae60", "#2ecc71", "#2980b9", "#3498db", "#7c5cbf", "#8e44ad", "#2c3e50", "#34495e"].map((c) => (
+          {withCurrentColor(OATH_MEMBER_COLORS, member.color).map((c) => (
             <button key={c} type="button" role="option" aria-selected={member.color === c}
               className={`color-swatch size-5 rounded-full border border-transparent cursor-pointer${member.color === c ? " outline outline-2 outline-parchment" : ""}`} style={{ background: c }}
               onClick={() => update({ color: c })} />

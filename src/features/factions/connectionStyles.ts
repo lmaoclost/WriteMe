@@ -11,5 +11,5 @@ export const FACTION_CONNECTION_STYLES: Record<string, ConnectionStyle> = {
 
 export const FACTION_PRESET_COLORS = [
   "#c0392b", "#e74c3c", "#e67e22", "#f1c40f", "#27ae60", "#2ecc71",
-  "#2980b9", "#3498db", "#7c5cbf", "#8e44ad", "#2c3e50", "#34495e",
+  "#2980b9", "#3498db", "#7c5cbf", "#8e44ad", "#2c3e50", "#34495e", "#7a7a99",
 ];
