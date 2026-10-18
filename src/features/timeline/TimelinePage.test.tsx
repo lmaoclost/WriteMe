@@ -209,7 +209,7 @@ describe("TimelinePage", () => {
     const labels = Array.from(document.querySelectorAll("[aria-label='World sections'] a")).map(
       (el) => el.textContent,
     );
-    expect(labels).toEqual(["Overview", "Atlas", "Codex", "Timeline", "Bloodline", "Factions", "Calendar", "Plot board", "Timeline canvas", "Oaths", "Wellspring", "Conlang", "Manuscript", "Bindery"]);
+    expect(labels).toEqual(["← My worlds", "Overview", "Atlas", "Codex", "Timeline", "Bloodline", "Factions", "Calendar", "Plot board", "Timeline canvas", "Oaths", "Wellspring", "Conlang", "Manuscript", "Bindery"]);
     expect(screen.getByRole("link", { name: "Timeline" }).getAttribute("class")).toContain("text-gold");
   });
 });

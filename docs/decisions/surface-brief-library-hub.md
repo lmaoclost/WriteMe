@@ -8,3 +8,7 @@
 - **States:** zero worlds → ghost forge panels + create/import CTA; one world → auto-selected (selector hidden); ≥3 worlds → sort; delete confirm modal unchanged in behavior.
 - **Boundaries:** no Unlock badge, no survey, no purple glow, no gradient text. Forge copy EN per glossary. ADR-0001 governs function.
 - **Implementation consequence:** tokens go to `DESIGN.md`; identity + EN migration then rolls app-wide starting at this hub.
+
+**Update 2026-10-18:** forge panels and the world selector were removed by user
+decision — `/` is welcome + "My worlds" cards only; re-entry from a workspace
+happens through the "← My worlds" rail item. See the supersede note in ADR-0001.

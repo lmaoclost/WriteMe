@@ -24,11 +24,15 @@ beforeEach(() => {
 });
 
 describe("LibraryPage hub", () => {
-  it("shows welcome, forges and my-worlds section even with zero worlds", () => {
+  it("shows welcome and my-worlds section even with zero worlds", () => {
     render(wrap());
     expect(screen.getByRole("heading", { name: "Welcome back" })).toBeInTheDocument();
-    FORGE_NAMES.forEach((f) => expect(screen.getByText(f)).toBeInTheDocument());
     expect(screen.getByRole("heading", { name: "My worlds" })).toBeInTheDocument();
+  });
+
+  it("forge panels are gone: the library only lists worlds", () => {
+    render(wrap());
+    FORGE_NAMES.forEach((f) => expect(screen.queryByText(f)).toBeNull());
   });
 
   it("site nav is gone: no chronicles/updates/settings/profile links", () => {
@@ -40,10 +44,11 @@ describe("LibraryPage hub", () => {
     expect(screen.queryByLabelText("Site pages")).toBeNull();
   });
 
-  it("ghost forge cards are not links while there is no world", () => {
+  it("single world shows its card and no active-world selector", () => {
+    const p = useScriptorium.getState().addProject("Solo");
     render(wrap());
-    expect(screen.getByText(/Create a world to enable the forges/i)).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /Codex/i })).toBeNull();
+    expect(screen.queryByLabelText(/active world/i)).toBeNull();
+    expect(screen.getByRole("link", { name: /Solo/i })).toHaveAttribute("href", `/p/${p.id}`);
   });
 
   it("load demo from empty state populates a full world and hides afterward", async () => {
@@ -56,30 +61,9 @@ describe("LibraryPage hub", () => {
     expect(screen.queryByRole("button", { name: /load the sample project/i })).toBeNull();
   });
 
-  it("single world is auto-selected and the selector is hidden", () => {
-    const p = useScriptorium.getState().addProject("Solo");
-    render(wrap());
-    expect(screen.queryByLabelText(/active world/i)).toBeNull();
-    const tome = screen.getByRole("link", { name: /Codex/i });
-    expect(tome).toHaveAttribute("href", `/p/${p.id}/entries`);
-  });
 
-  it("selector appears with two+ worlds and directs forges at the chosen world", async () => {
-    useScriptorium.getState().addProject("Aurora");
-    useScriptorium.getState().addProject("Borealis");
-    render(wrap());
-    const trigger = await selectOption(() => screen.getByLabelText(/active world/i), "Aurora");
-    expect(trigger).toHaveTextContent("Aurora"); // chosen world
-    const tome = screen.getByRole("link", { name: /Codex/i });
-    expect(tome.getAttribute("href")).toBe(`/p/${useScriptorium.getState().projects[0].id}/entries`);
-  });
 
-  it("Bloodline card exposes both bloodline and oaths links", () => {
-    const p = useScriptorium.getState().addProject("Solo");
-    render(wrap());
-    expect(screen.getByRole("link", { name: /Bloodline/i })).toHaveAttribute("href", `/p/${p.id}/bloodline`);
-    expect(screen.getByRole("link", { name: /Oaths/i })).toHaveAttribute("href", `/p/${p.id}/oaths`);
-  });
+
 
   it("creates a world through the modal in EN", async () => {
     render(wrap());

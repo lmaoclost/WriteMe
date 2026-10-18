@@ -45,6 +45,7 @@ describe("shell routes", () => {
     expect(rail.getByRole("link", { name: /Atlas/i })).toHaveAttribute("href", `/p/${p.id}/atlas`);
     expect(rail.getByRole("link", { name: /Codex/i })).toHaveAttribute("href", `/p/${p.id}/entries`);
     expect(rail.getByRole("link", { name: /Manuscript/i })).toHaveAttribute("href", `/p/${p.id}/manuscript`);
+    expect(rail.getByRole("link", { name: /My worlds/i })).toHaveAttribute("href", "/");
   });
 
   it("atlas route shows the atlas index (not a placeholder)", () => {

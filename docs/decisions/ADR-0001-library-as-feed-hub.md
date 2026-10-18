@@ -21,3 +21,9 @@ The Library (`/`) was a mixed surface: PT copy, project launcher, and navigation
 
 ## Status
 Accepted — 2026-10-16, grilling session with Renan.
+
+**Superseded 2026-10-18 (items 1–4) — user decision:** the forges grid and the
+world selector left the Library. `/` is again a bare launcher: welcome +
+worlds list; each card enters the world's workspace. Re-entry from a workspace
+is the "← My worlds" rail item in WorkspaceLayout (ADR-0002's hub role moved
+back to the Overview page via its forge ledger). Remaining valid items: 5, 8.

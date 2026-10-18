@@ -1,4 +1,4 @@
-import { Navigate, NavLink, Outlet, useParams } from "react-router-dom";
+import { Navigate, NavLink, Outlet, useParams, Link } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import { selectProject, useScriptorium } from "../../data/store";
 import { Seal } from "../../ui/Seal";
@@ -46,6 +46,12 @@ export function WorkspaceLayout() {
         <div className="mb-[18px] shrink-0">
           <Seal letter="S" />
         </div>
+        <Link
+          to="/"
+          className={RAIL_LINK + " mb-1 border-b border-line pb-3.5 text-slate hover:text-parchment max-[720px]:border-b-0"}
+        >
+          ← My worlds
+        </Link>
         {SECTIONS.map((s) => (
           <NavLink
             key={s.key}

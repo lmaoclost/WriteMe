@@ -4,7 +4,7 @@ One name per concept — use it consistently in code, copy, and docs.
 
 | Canonical name | Clone page/route | Scriptorium name | Notes |
 |---|---|---|---|
-| Library | `/` (LibraryPage) | `/feed` (hub) | launcher + forges + worlds list |
+| Library | `/` (LibraryPage) | `/feed` (hub) | launcher + worlds list (forges grid removed 2026-10-18) |
 | Project (world) | `/p/:id` | work/tome | one story universe |
 | Codex | `/p/:id/entries` | Codex | world entries |
 | Atlas | `/p/:id/atlas` | Atlas | map, regions, pins |

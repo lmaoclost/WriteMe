@@ -7,29 +7,6 @@ import { Field } from "../../ui/Field";
 import { Modal } from "../../ui/Modal";
 import { Seal } from "../../ui/Seal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Project } from "../../domain/types";
-
-interface ForgeDef {
-  name: string;
-  desc: string;
-  letter: string;
-  path: (worldId: string) => string;
-  double?: { label: string; path: (worldId: string) => string };
-}
-
-const FORGES: ForgeDef[] = [
-  { name: "Codex", desc: "Build interconnected lore about your world.", letter: "T", path: (w) => `/p/${w}/entries` },
-  { name: "Atlas", desc: "Pin and outline an interactive world map.", letter: "A", path: (w) => `/p/${w}/atlas` },
-  { name: "Calendar", desc: "Craft calendars for your world.", letter: "C", path: (w) => `/p/${w}/calendar` },
-  { name: "Plot board", desc: "Weave plot boards and story beats.", letter: "L", path: (w) => `/p/${w}/plotboard` },
-  {
-    name: "Bloodline", desc: "Bloodlines, lineages and sworn oaths.", letter: "B",
-    path: (w) => `/p/${w}/bloodline`,
-    double: { label: "Oaths", path: (w) => `/p/${w}/oaths` },
-  },
-  { name: "Manuscript", desc: "Write chapters and assemble the manuscript.", letter: "C2", path: (w) => `/p/${w}/manuscript` },
-  { name: "Bindery Scriptorium", desc: "Lay out and export the finished book.", letter: "S", path: (w) => `/p/${w}/manuscript` },
-];
 
 function updatedStamp(ms: number): string {
   const s = Math.floor((Date.now() - ms) / 1000);
@@ -60,21 +37,8 @@ export function LibraryPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [toDelete, setToDelete] = useState<string | null>(null);
-  const [chosenWorld, setChosenWorld] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<"recent" | "name">("recent");
-
-  const activeWorld: Project | null = useMemo(() => {
-    if (projects.length === 0) return null;
-    if (projects.length === 1) return projects[0];
-    if (chosenWorld) {
-      const found = projects.find((p) => p.id === chosenWorld);
-      if (found) return found;
-    }
-    return projects.reduce((latest, p) => (p.updatedAt >= latest.updatedAt ? p : latest), projects[projects.length - 1]);
-  }, [projects, chosenWorld]);
-
-  const showSelector = projects.length >= 2;
 
   const submitCreate = () => {
     const n = name.trim();
@@ -110,79 +74,8 @@ export function LibraryPage() {
           <Seal letter="S" className="size-7 text-sm" />
           <span className="font-display text-[15px] uppercase tracking-[0.14em] text-parchment">Scriptorium</span>
         </div>
-        <div className="flex w-full flex-wrap items-baseline gap-[18px]">
-          <h1 className="font-display font-semibold text-[clamp(2rem,4.5vw,2.75rem)] tracking-[-0.02em] leading-[1.15] text-parchment-strong">Welcome back</h1>
-          {showSelector && (
-            <Select value={activeWorld?.id ?? ""} onValueChange={(v) => setChosenWorld(v)}>
-              <SelectTrigger
-                aria-label="Active world"
-                className="ml-auto max-w-[300px] justify-between rounded-sm border-line bg-night px-2.5 py-2 text-[15px] text-parchment font-[inherit] hover:border-gold-dim data-[size=default]:h-auto truncate"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="border-line bg-night text-parchment">
-                {projects.map((p) => (
-                  <SelectItem key={p.id} value={p.id} className="text-[15px] focus:bg-[#24233f] focus:text-parchment">
-                    {p.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
+        <h1 className="font-display font-semibold text-[clamp(2rem,4.5vw,2.75rem)] tracking-[-0.02em] leading-[1.15] text-parchment-strong">Welcome back</h1>
       </header>
-
-      <hr className="w-full border-0 border-t border-line my-9" />
-
-      <section aria-label="Forges">
-        <div className="grid grid-cols-3 gap-4 max-w-[960px]">
-          {FORGES.map((f) => {
-            const live = activeWorld !== null;
-            const wide = f.name === "Bindery Scriptorium";
-            const inner = (
-              <>
-                <span className="[grid-area:seal]"><Seal letter={f.letter.slice(0, 1)} /></span>
-                <span className="[grid-area:name] font-display text-[1.375rem] font-semibold text-parchment-strong">{f.name}</span>
-                <span className={"[grid-area:desc] text-slate text-sm leading-[1.5]" + (wide ? " self-center" : "")}>{f.desc}</span>
-                {live && f.double && (
-                  <span className="[grid-area:sub] mt-1 flex items-center gap-2 text-sm text-slate">
-                    <Link className="text-lilac no-underline" to={f.path(activeWorld.id)}>Bloodline</Link>
-                    <span aria-hidden>·</span>
-                    <Link className="text-lilac no-underline" to={f.double.path(activeWorld.id)}>{f.double.label}</Link>
-                  </span>
-                )}
-              </>
-            );
-            const cardCls = wide
-              ? "col-span-full [grid-template-columns:40px_1fr_1fr] [grid-template-areas:'seal_name_desc'_'seal_sub_desc']"
-              : "[grid-template-columns:40px_1fr] [grid-template-areas:'seal_name'_'seal_desc'_'sub_sub']";
-            const baseCls = "grid min-h-[148px] content-center gap-x-3.5 gap-y-1 rounded-lg border bg-night-2 px-5 py-[22px] transition-[border-color] duration-[180ms]";
-            if (!live) {
-              return (
-                <div className={`${baseCls} cursor-not-allowed opacity-55 border-line hover:border-line ${cardCls}`} aria-disabled="true" key={f.name}>
-                  {inner}
-                </div>
-              );
-            }
-            if (f.double) {
-              return <div className={`${baseCls} border-line hover:border-gold-dim ${cardCls}`} key={f.name}>{inner}</div>;
-            }
-            return (
-              <Link
-                key={f.name}
-                to={activeWorld ? f.path(activeWorld.id) : "#"}
-                className={`${baseCls} border-line hover:border-gold-dim no-underline ${cardCls}`}
-                aria-label={f.name}
-              >
-                {inner}
-              </Link>
-            );
-          })}
-        </div>
-        {projects.length === 0 && (
-          <p className="text-slate text-sm mt-3.5">Create a world to enable the forges.</p>
-        )}
-      </section>
 
       <hr className="w-full border-0 border-t border-line my-9" />
 
