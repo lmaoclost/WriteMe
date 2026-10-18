@@ -8,6 +8,7 @@ import { useScriptorium } from "../../data/store";
 import { WellNotepad } from "./WellNotepad";
 import type { WellSpring, WellKind } from "../../domain/types";
 import { useBoardNotesHotkey } from "../../ui/boardNotes";
+import { useRafState, useRafCallback } from "../../ui/useRaf";
 
 
 export const WELL_KIND_META: Record<WellKind, { label: string; icon: string; color: string }> = {
@@ -22,20 +23,46 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
   const pushToast = useScriptorium((s) => s.pushToast);
   const pushWSHistory = useScriptorium((s) => s.pushWSHistory);
   const addWellNode = useScriptorium((s) => s.addWellNode);
-  const moveWellNode = useScriptorium((s) => s.moveWellNode);
   const flags = useScriptorium(useShallow((s) => {
     const h = s.histories[`ws_${wellId}`];
     return { canUndo: !!h?.undo.length, canRedo: !!h?.redo.length };
   }));
 
   const stageRef = useRef<HTMLDivElement>(null);
-  const [view, setView] = useState({ s: 1, panX: 80, panY: 40 });
+  const [view, scheduleView] = useRafState({ s: 1, panX: 80, panY: 40 });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [placingKind, setPlacingKind] = useState<WellKind | null>(null);
   const [notesOpen, setNotesOpen] = useState(false);
   useBoardNotesHotkey(notesOpen, setNotesOpen);
   const nodeDrag = useRef<{ id: string; sx: number; sy: number; baseX: number; baseY: number; pushed: boolean } | null>(null);
   const pan = useRef<{ x: number; basePanX: number; y: number; basePanY: number } | null>(null);
+  const viewRef = useRef(view);
+  viewRef.current = view;
+
+  // Coalesced drag: one moveWellNode per frame; pointerup flushes.
+  const moveNodeRaf = useRafCallback((id: string, x: number, y: number) => {
+    useScriptorium.getState().moveWellNode(id, x, y);
+  });
+
+  // Wheel zoom on a native non-passive listener; chained functional updates
+  // keep rapid wheel bursts exact (the old closure read a stale view.s).
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const handler = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+      scheduleView((v) => {
+        const s = Math.min(8, Math.max(0.1, v.s * (e.deltaY < 0 ? 1.1 : 1 / 1.1)));
+        const relX = (sx - v.panX) / v.s, relY = (sy - v.panY) / v.s;
+        return { s, panX: sx - relX * s, panY: sy - relY * s };
+      });
+      scheduleView.flush();
+    };
+    el.addEventListener("wheel", handler, { passive: false });
+    return () => el.removeEventListener("wheel", handler);
+  }, [scheduleView]);
 
   useEffect(() => {
     if (!well) pushToast("error", "Wellspring not found.");
@@ -43,7 +70,8 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
 
   if (!well) return null;
 
-  const nodeById = (id: string) => well.nodes.find((n) => n.id === id);
+  const nodeByIdMap = new Map(well.nodes.map((n) => [n.id, n] as const));
+  const nodeById = (id: string) => nodeByIdMap.get(id);
 
   return (
     <div className="grid grid-rows-[auto_1fr] h-full" data-testid="well-page">
@@ -86,17 +114,18 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
             if (placingKind) {
               const rect = stageRef.current?.getBoundingClientRect();
               if (!rect) return;
+              const v = viewRef.current;
               const created = addWellNode(wellId, {
                 kind: placingKind,
-                x: (e.clientX - rect.left - view.panX) / view.s,
-                y: (e.clientY - rect.top - view.panY) / view.s,
+                x: (e.clientX - rect.left - v.panX) / v.s,
+                y: (e.clientY - rect.top - v.panY) / v.s,
                 text: "",
               });
               if (created) setSelectedId(created.id);
               setPlacingKind(null);
               return;
             }
-            pan.current = { x: e.clientX, y: e.clientY, basePanX: view.panX, basePanY: view.panY };
+            pan.current = { x: e.clientX, y: e.clientY, basePanX: viewRef.current.panX, basePanY: viewRef.current.panY };
           }}
           onPointerMove={(e) => {
             const d = nodeDrag.current;
@@ -104,23 +133,18 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
               const dx = e.clientX - d.sx, dy = e.clientY - d.sy;
               if (Math.hypot(dx, dy) > 5) {
                 if (!d.pushed) { pushWSHistory(wellId); d.pushed = true; }
-                moveWellNode(d.id, d.baseX + dx / view.s, d.baseY + dy / view.s);
+                moveNodeRaf(d.id, d.baseX + dx / viewRef.current.s, d.baseY + dy / viewRef.current.s);
               }
               return;
             }
             const p = pan.current;
-            if (p) setView((v) => ({ ...v, panX: p.basePanX + (e.clientX - p.x), panY: p.basePanY + (e.clientY - p.y) }));
+            if (p) {
+              const panX = p.basePanX + (e.clientX - p.x);
+              const panY = p.basePanY + (e.clientY - p.y);
+              scheduleView((v) => (v.panX === panX && v.panY === panY ? v : { ...v, panX, panY }));
+            }
           }}
-          onPointerUp={() => { nodeDrag.current = null; pan.current = null; }}
-          onWheel={(e) => {
-            e.preventDefault();
-            const rect = stageRef.current?.getBoundingClientRect();
-            if (!rect) return;
-            const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
-            const s = Math.min(8, Math.max(0.1, view.s * (e.deltaY < 0 ? 1.1 : 1 / 1.1)));
-            const relX = (sx - view.panX) / view.s, relY = (sy - view.panY) / view.s;
-            setView({ s, panX: sx - relX * s, panY: sy - relY * s });
-          }}
+          onPointerUp={() => { moveNodeRaf.flush(); scheduleView.flush(); nodeDrag.current = null; pan.current = null; }}
         >
           <div
             className="absolute bg-[radial-gradient(circle_at_25%_25%,#17162a,var(--ink)_65%)] shadow-[inset_0_0_0_1px_var(--line)]"
@@ -179,8 +203,7 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
                     onPointerDown={(e) => {
                       e.stopPropagation();
                       setSelectedId(n.id);
-                      useScriptorium.setState((st) => st); // no-op: border picked via panel
-                      void useScriptorium.getState().addWellBorder;
+                      // border picking happens in the panel (self-borders rejected)
                     }}
                     onClick={(e) => e.stopPropagation()}
                   >●</button>

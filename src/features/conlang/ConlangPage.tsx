@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
+import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { pathFrom, alphabetSheetSvg, type Pt } from "../../domain/conlang";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field } from "../../ui/Field";
@@ -292,16 +293,15 @@ function LexiconTab({ conlang }: { conlang: NonNullable<ReturnType<typeof useScr
 }
 
 function ConlangNotepad({ notes, onNotes, onClose }: { notes: string; onNotes(v: string): void; onClose(): void }) {
-  const [draft, setDraft] = useState(notes);
-  useEffect(() => {
-    const id = setTimeout(() => { if (draft !== notes) onNotes(draft); }, 300);
-    return () => clearTimeout(id);
-  }, [draft, notes, onNotes]);
+  // debounced draft that flushes on unmount: closing the notepad must not
+  // drop the pending <=300ms commit (the old local timer did exactly that)
+  const { draft, setDraft, flush } = useDebouncedDraft(notes, onNotes);
+  useEffect(() => () => flush(), [flush]);
   return (
     <div className={BOARD_NOTEPAD} data-testid="conlang-notepad">
       <header className={BOARD_NOTEPAD_HEAD}>
         <span>Notes</span>
-        <button type="button" aria-label="Fechar notas" onClick={onClose} className="bg-none border-0 text-slate">✕</button>
+        <button type="button" aria-label="Fechar notas" onClick={() => { flush(); onClose(); }} className="bg-none border-0 text-slate">✕</button>
       </header>
       <textarea aria-label="Conlang notes" value={draft} onChange={(e) => setDraft(e.target.value)} rows={5} className={BOARD_NOTEPAD_TXT} />
     </div>
