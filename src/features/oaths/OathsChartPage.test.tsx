@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { useScriptorium } from "../../data/store";
 import { selectOption } from "../../test/selectHelper";
+import { firePointer } from "../../test/pointer";
 import { OathsChartPage } from "./OathsChartPage";
 import { OathsIndexPage } from "./OathsIndexPage";
 
@@ -54,6 +55,40 @@ describe("OathsChartPage", () => {
     // and the link can be removed from the row
     fireEvent.click(screen.getByLabelText("Remove oath link"));
     expect(store().oathsCharts![0].oathLinks.find((l) => l.subordinateId === a.id)).toBeFalsy();
+  });
+
+  it("member position is stored on drag", () => {
+    const ch = store().addOathsChart("prj_1", "Anel");
+    store().addOathMember(ch.id, undefined, { name: "Mirren" })!;
+    render(<MemoryRouter><OathsChartPage chartId={ch.id} /></MemoryRouter>);
+    const card = screen.getByTestId("oath-member");
+    const canvas = screen.getByTestId("oaths-canvas");
+    firePointer(card, "pointerdown", { clientX: 100, clientY: 100 });
+    firePointer(canvas, "pointermove", { clientX: 200, clientY: 150 });
+    firePointer(canvas, "pointerup", { clientX: 200, clientY: 150 });
+    const got = store().oathsCharts![0].members[0];
+    expect(got.x).not.toBeUndefined();
+    expect(got.y).not.toBeUndefined();
+  });
+
+  it("zoom out button updates the zoom % readout", () => {
+    const ch = store().addOathsChart("prj_1", "Anel");
+    store().addOathMember(ch.id, undefined, { name: "Mirren" });
+    render(<MemoryRouter><OathsChartPage chartId={ch.id} /></MemoryRouter>);
+    fireEvent.click(screen.getByLabelText("Zoom out"));
+    expect(screen.getByTestId("oc-zoom").textContent).toBe("80%"); // fit inicial = 100%, 1 × 0.8
+  });
+
+  it("clicking the handle then another member creates an oath link", () => {
+    const ch = store().addOathsChart("prj_1", "Anel");
+    const a = store().addOathMember(ch.id, undefined, { name: "Mirren" })!;
+    const b = store().addOathMember(ch.id, undefined, { name: "Orvean" })!;
+    render(<MemoryRouter><OathsChartPage chartId={ch.id} /></MemoryRouter>);
+    firePointer(screen.getByLabelText(`Conectar ${a.name}`), "pointerdown", { clientX: 300, clientY: 300 });
+    const target = document.querySelector(`[data-member-id="${b.id}"]`) as HTMLElement;
+    firePointer(target, "pointerdown", { clientX: 500, clientY: 400 });
+    const chart = store().oathsCharts![0];
+    expect(chart.oathLinks.find((l) => l.superiorId === a.id && l.subordinateId === b.id)).toBeTruthy();
   });
 });
 

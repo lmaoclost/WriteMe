@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { tidyOathsChart } from "../../domain/oaths";
@@ -32,14 +32,128 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [notesOpen, setNotesOpen] = useState(false);
   useBoardNotesHotkey(notesOpen, setNotesOpen);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState({ s: 0.1, panX: 0, panY: 0 });
+  const scaleRef = useRef(scale);
+  scaleRef.current = scale;
+  const pan = useRef<{ x: number; basePanX: number; y: number; basePanY: number } | null>(null);
+  const drag = useRef<{ id: string; startX: number; startY: number; baseX: number; baseY: number; pushed: boolean } | null>(null);
+  const [pendingFrom, setPendingFrom] = useState<string | null>(null);
+  const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     if (!chart) pushToast("error", "Chain of command not found.");
   }, [chart, pushToast]);
 
+  // stored manual positions win; the solver covers members never dragged
+  const pos = useMemo(() => {
+    const base = tidyOathsChart(chart?.members ?? [], chart?.oathLinks ?? [], { rootX: 240, rootY: 120, levelH: 170 });
+    const merged = new Map(base);
+    for (const m of chart?.members ?? []) {
+      if (m.x != null && m.y != null) merged.set(m.id, { x: m.x, y: m.y });
+    }
+    return merged;
+  }, [chart?.members, chart?.oathLinks]);
+
+  const planeSize = useMemo(() => {
+    let size = 20000;
+    for (const p of pos.values()) size = Math.max(size, p.x + 4000, p.y + 4000);
+    return Math.ceil(size / 10000) * 10000;
+  }, [pos]);
+
+  const elWidth = () => stageRef.current?.clientWidth ?? 1200;
+  const elHeight = () => stageRef.current?.clientHeight ?? 800;
+
+  const fitToContentNow = () => {
+    const el = stageRef.current;
+    if (!el || !el.clientWidth || pos.size === 0) return;
+    const xs = [...pos.values()].map((p) => p.x);
+    const ys = [...pos.values()].map((p) => p.y);
+    const MIN_SPAN = 600;
+    const bw = Math.max(Math.max(...xs) - Math.min(...xs), MIN_SPAN);
+    const bh = Math.max(Math.max(...ys) - Math.min(...ys), MIN_SPAN);
+    const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+    const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+    const s = Math.min(1, Math.min(el.clientWidth / bw, el.clientHeight / bh) * 0.85);
+    setScale({ s, panX: el.clientWidth / 2 - cx * s, panY: el.clientHeight / 2 - cy * s });
+  };
+
+  // center-ish default view — fit the CONTENT (members), capped at scale 1
+  useEffect(() => {
+    fitToContentNow();
+    // run once per chart mount
+    // eslint config has no exhaustive-deps rule; matches FactionWebPage
+  }, [chartId]);
+
+  const zoomAt = (v: { s: number; panX: number; panY: number }, factor: number, cx: number, cy: number) => {
+    const s = Math.min(8, Math.max(0.05, v.s * factor));
+    const relX = (cx - v.panX) / v.s;
+    const relY = (cy - v.panY) / v.s;
+    return { s, panX: cx - relX * s, panY: cy - relY * s };
+  };
+
+  const onWheelZoom = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const el = stageRef.current;
+    if (!el) return;
+    const sx = e.clientX - el.getBoundingClientRect().left, sy = e.clientY - el.getBoundingClientRect().top;
+    const prev = scaleRef.current;
+    const s = Math.min(8, Math.max(0.02, prev.s * (e.deltaY < 0 ? 1.1 : 1 / 1.1)));
+    const relX = (sx - prev.panX) / prev.s, relY = (sy - prev.panY) / prev.s;
+    const next = { s, panX: sx - relX * s, panY: sy - relY * s };
+    setScale(next);
+  };
+
+  const onCanvasMove = (e: React.PointerEvent) => {
+    if (drag.current) {
+      const d = drag.current;
+      const dx = e.clientX - d.startX;
+      const dy = e.clientY - d.startY;
+      if (Math.hypot(dx, dy) > 5) {
+        if (!d.pushed) { useScriptorium.getState().pushOCHistory(chartId); d.pushed = true; }
+        useScriptorium.getState().moveOathMember(d.id, d.baseX + dx / scaleRef.current.s, d.baseY + dy / scaleRef.current.s);
+      }
+      return;
+    }
+    if (pendingFrom) {
+      const rect = stageRef.current?.getBoundingClientRect();
+      if (rect) setCursor({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      return;
+    }
+    if (pan.current) {
+      setScale((v) => ({ ...v, panX: pan.current!.basePanX + (e.clientX - pan.current!.x), panY: pan.current!.basePanY + (e.clientY - pan.current!.y) }));
+    }
+  };
+
+  const onCanvasDown = (e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    const t = e.target as Element;
+    if (t.closest(".oath-card") || t.closest(".conn-handle")) return;
+    if (pendingFrom) { setPendingFrom(null); setCursor(null); return; }
+    pan.current = { x: e.clientX, y: e.clientY, basePanX: scale.panX, basePanY: scale.panY };
+  };
+
+  const onPointerUp = () => { drag.current = null; pan.current = null; };
+
   if (!chart) return null;
 
-  const pos = tidyOathsChart(chart.members, chart.oathLinks, { rootX: 240, rootY: 120, levelH: 170 });
+  const connectTo = (targetId: string) => {
+    if (!pendingFrom || pendingFrom === targetId) { setPendingFrom(null); setCursor(null); return; }
+    useScriptorium.getState().addOathLink(chart.id, targetId, pendingFrom); // subordinate = target, superior = origin
+    setPendingFrom(null);
+    setCursor(null);
+  };
+
+  const onCardDown = (m: { id: string }) => (e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    const t = e.target as Element;
+    if (t.closest(".conn-handle")) return; // own handler
+    if (pendingFrom) { connectTo(m.id); return; }
+    e.stopPropagation();
+    setSelectedId(m.id);
+    const p = pos.get(m.id);
+    if (p) drag.current = { id: m.id, startX: e.clientX, startY: e.clientY, baseX: p.x, baseY: p.y, pushed: false };
+  };
 
   return (
     <div className="grid grid-rows-[auto_1fr] h-full" data-testid="oaths-page">
@@ -53,11 +167,22 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
         <div className={BOARD_ACTIONS}>
           <button type="button" aria-label="Undo" className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoOC(chartId)}>↶</button>
           <button type="button" aria-label="Redo" className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoOC(chartId)}>↷</button>
+          <button type="button" aria-label="Zoom out" className={BOARD_ACTION_BTN} onClick={() => setScale((v) => zoomAt({ ...v }, 1 / 1.25, elWidth(), elHeight()))}>−</button>
+          <span className="text-slate text-xs font-mono self-center" data-testid="oc-zoom">{Math.round(scale.s * 100)}%</span>
+          <button type="button" aria-label="Zoom in" className={BOARD_ACTION_BTN} onClick={() => setScale((v) => zoomAt({ ...v }, 1.25, elWidth(), elHeight()))}>+</button>
+          <button type="button" className={BOARD_ACTION_BTN} onClick={() => fitToContentNow()}>Ajustar</button>
           <button type="button" className={BOARD_ACTION_BTN} onClick={() => {
-            const rect = document.querySelector('[data-testid="oaths-plane"]')?.getBoundingClientRect();
+            const rect = stageRef.current?.getBoundingClientRect();
             useScriptorium.getState().pushOCHistory(chartId);
+            const elW = elWidth();
+            const elH = elHeight();
             const m = useScriptorium.getState().addOathMember(chartId, undefined, { name: "Fundador" });
-            void m; void rect;
+            if (m && rect) {
+              const x = (elW / 2 - scaleRef.current.panX) / scaleRef.current.s;
+              const y = (elH / 2 - scaleRef.current.panY) / scaleRef.current.s;
+              useScriptorium.getState().moveOathMember(m.id, x, y);
+            }
+            void m;
           }}>Fundador</button>
           <button type="button" aria-pressed={notesOpen} className={BOARD_ACTION_BTN} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
         </div>
@@ -66,8 +191,23 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
         <div
           className="relative overflow-hidden bg-ink cursor-grab active:cursor-grabbing"
           data-testid="oaths-canvas"
+          ref={stageRef}
+          style={{ ...(pendingFrom ? { cursor: "crosshair" } : {}) }}
+          onPointerDown={onCanvasDown}
+          onPointerMove={onCanvasMove}
+          onPointerUp={onPointerUp}
+          onWheel={onWheelZoom}
         >
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,#17162a,var(--ink)_65%)] shadow-[inset_0_0_0_1px_var(--line)]" data-testid="oaths-plane">
+          <div
+            className="absolute top-0 left-0 bg-[radial-gradient(circle_at_25%_25%,#17162a,var(--ink)_65%)] shadow-[inset_0_0_0_1px_var(--line)]"
+            data-testid="oaths-plane"
+            style={{
+              width: planeSize,
+              height: planeSize,
+              transform: `translate(${scale.panX}px, ${scale.panY}px) scale(${scale.s})`,
+              transformOrigin: "0 0",
+            }}
+          >
             <svg data-testid="oaths-links" className="edges-layer absolute left-0 top-0 w-full h-full pointer-events-none" width="100%" height="100%">
               {chart.oathLinks.map((l: OathLink) => {
                 const child = pos.get(l.subordinateId);
@@ -93,6 +233,11 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
                   </g>
                 );
               })}
+              {pendingFrom ? (() => {
+                const from = pos.get(pendingFrom);
+                if (!from || !cursor) return null;
+                return <line data-testid="pending-oath" x1={from.x} y1={from.y} x2={cursor.x / scaleRef.current.s} y2={cursor.y / scaleRef.current.s} className="[stroke:var(--gold)] [stroke-width:2] [stroke-dasharray:6_6]" />;
+              })() : null}
             </svg>
             {chart.members.map((m) => {
               const p = pos.get(m.id);
@@ -100,14 +245,15 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
               return (
                 <div
                   key={m.id}
-                  className={"oath-card absolute w-[180px] px-3 py-2.5 rounded-lg bg-night border border-slate grid gap-[3px] cursor-pointer" + (m.id === selectedId ? " outline outline-2 outline-gold" : "") + (m.seatStatus !== "held" ? " seat-" + m.seatStatus : "") + (m.seatStatus === "vacant" ? " border-dashed opacity-85" : "") + (m.seatStatus === "disputed" ? " border-[var(--ember)]" : "")}
+                  className={"oath-card conn-anchor absolute w-[180px] px-3 py-2.5 rounded-lg bg-night border border-slate grid gap-[3px] cursor-pointer" + (m.id === selectedId ? " outline outline-2 outline-gold" : "") + (m.seatStatus !== "held" ? " seat-" + m.seatStatus : "") + (m.seatStatus === "vacant" ? " border-dashed opacity-85" : "") + (m.seatStatus === "disputed" ? " border-[var(--ember)]" : "")}
                   data-testid="oath-member"
                   data-member-id={m.id}
-                  style={{ left: p.x - 90, top: p.y }}
+                  style={{ left: p.x - 90, top: p.y - 24 }}
                   role="button"
                   aria-label={`Membro ${m.name}`}
                   tabIndex={0}
-                  onClick={() => setSelectedId(m.id)}
+                  onPointerDown={onCardDown(m)}
+                  onClick={() => { if (pendingFrom) connectTo(m.id); else setSelectedId(m.id); }}
                 >
                   <span className="text-sm font-semibold text-parchment">{m.name}</span>
                   {m.title ? <span className="text-[11px] text-parchment-dim">{m.title}</span> : null}
@@ -115,12 +261,27 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
                   <span className={"oath-seat-badge w-max rounded-sm px-1 py-px text-[0.6875rem] bg-ink text-slate" + (m.seatStatus === "disputed" ? " text-[var(--ember)]" : "")}>
                     {m.seatStatus === "held" ? "Held" : m.seatStatus === "vacant" ? "Vacant seat" : "Contested seat"}
                   </span>
+                  <button
+                    type="button"
+                    className="conn-handle absolute -right-2.5 top-1/2 -translate-y-1/2 size-5 rounded-full bg-gold text-wax border-0 text-[0.6875rem] grid place-items-center cursor-crosshair"
+                    aria-label={`Conectar ${m.name}`}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      if (e.button !== 0) return;
+                      if (!pendingFrom) { setPendingFrom(m.id); setCursor(null); }
+                      else connectTo(m.id);
+                    }}
+                    onDoubleClick={(e) => e.stopPropagation()}
+                  >●</button>
                 </div>
               );
             })}
           </div>
           {chart.members.length === 0 ? (
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[calc(1/var(--bl-scale,0.1))] text-slate whitespace-nowrap">Coloque o fundador — todos os oaths descem dele.</div>
+          ) : null}
+          {pendingFrom ? (
+            <div className="absolute bottom-3.5 left-1/2 -translate-x-1/2 bg-night-2 border border-line text-parchment-dim px-3 py-1.5 rounded-lg text-[13px]">Escolha o membro que fará o oath.</div>
           ) : null}
           {notesOpen ? <OathsNotepadBridge notes={chart.notes} onNotes={(v) => useScriptorium.getState().setOathsNotes(chartId, v)} onClose={() => setNotesOpen(false)} /> : null}
         </div>

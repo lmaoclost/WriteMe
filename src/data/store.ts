@@ -303,6 +303,7 @@ interface ScriptoriumState extends ProjectData {
   addOathLink(chartId: string, subordinateId: string, superiorId: string, init?: { kind?: OathLink["kind"] }): OathLink | null;
   removeOathLink(linkId: string): void;
   updateOathMember(id: string, patch: Partial<Omit<OathMember, "id">>): void;
+  moveOathMember(id: string, x: number, y: number): void;
   deleteOathMember(id: string): void;
   setOathStatus(linkId: string, status: OathLink["status"]): void;
   setOathLinkKind(linkId: string, kind: OathLink["kind"]): void;
@@ -2214,6 +2215,16 @@ export const useScriptorium = create<ScriptoriumState>()(
             members: c.members.map((m) => (m.id === id ? { ...m, ...patch, id: m.id } : m)),
           }),
           projects: touchProject(st.projects, chart.projectId),
+        }));
+      },
+
+      /** Manual drag position. No history push — the page pushes once at drag start. */
+      moveOathMember(id, x, y) {
+        set((st) => ({
+          oathsCharts: (st.oathsCharts ?? []).map((c) => c.members.some((m) => m.id === id) ? {
+            ...c,
+            members: c.members.map((m) => (m.id === id ? { ...m, x, y } : m)),
+          } : c),
         }));
       },
 

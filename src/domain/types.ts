@@ -267,6 +267,8 @@ export type OathMember = {
   notes?: string;
   seatStatus: "held" | "vacant" | "disputed";
   color: string;
+  x?: number;
+  y?: number;
 };
 
 export type OathLink = {
