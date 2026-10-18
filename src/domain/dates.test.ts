@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dateIsEmpty, dateKey, formatDate, isValidDate, sanitizeDate } from "./dates";
+import { dateIsEmpty, dateKey, formatDate, formatDateWithCalendar, isValidDate, sanitizeDate } from "./dates";
 
 describe("sanitizeDate", () => {
   it("accepts the three formats and returns the input unchanged", () => {
@@ -78,5 +78,27 @@ describe("helpers", () => {
   it("dateIsEmpty checks a bare empty string", () => {
     expect(dateIsEmpty("")).toBe(true);
     expect(dateIsEmpty("1200")).toBe(false);
+  });
+});
+
+describe("formatDateWithCalendar", () => {
+  const cal = {
+    months: [{ name: "Calor" }, { name: "Sela" }, { name: "Cera" }, { name: "Fala" }, { name: "Vela" }],
+    era: "Contagem do Arco",
+  };
+  it("full date renders day + calendar month name + year + era", () => {
+    expect(formatDateWithCalendar("1200-05-10", cal)).toBe("10 Vela 1200 · Contagem do Arco");
+  });
+  it("partial date renders month name + year + era", () => {
+    expect(formatDateWithCalendar("1200-05", cal)).toBe("Vela 1200 · Contagem do Arco");
+  });
+  it("year-only renders year + era", () => {
+    expect(formatDateWithCalendar("1200", cal)).toBe("1200 · Contagem do Arco");
+  });
+  it("no era drops the suffix", () => {
+    expect(formatDateWithCalendar("1200-05", { months: cal.months })).toBe("Vela 1200");
+  });
+  it("no calendar falls back to the Gregorian format", () => {
+    expect(formatDateWithCalendar("1200-05-10")).toBe("10 de Maio de 1200");
   });
 });

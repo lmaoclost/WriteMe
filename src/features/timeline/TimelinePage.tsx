@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
-import { dateIsEmpty, dateKey, formatDate, sanitizeDate } from "../../domain/dates";
+import { dateIsEmpty, dateKey, formatDateWithCalendar, sanitizeDate } from "../../domain/dates";
+import type { CustomCalendar } from "../../domain/types";
 import { CATEGORY_COLORS, categoryDot } from "../entries/categories";
 
 interface DatedRow {
@@ -27,6 +28,9 @@ const snippet = (body: string): string => {
 export function TimelinePage({ projectId }: { projectId: string }) {
   const entries = useScriptorium(
     useShallow((s) => s.entries.filter((e) => e.projectId === projectId)),
+  );
+  const calendar = useScriptorium(
+    (s) => (s.calendars ?? []).find((c) => c.projectId === projectId),
   );
   const navigate = useNavigate();
   const [onlyEvents, setOnlyEvents] = useState(false);
@@ -54,6 +58,7 @@ export function TimelinePage({ projectId }: { projectId: string }) {
   const openEntry = (id: string) => {
     navigate(`/p/${projectId}/entries?e=${id}`);
   };
+  const fmt = (date: string) => formatDateWithCalendar(date, calendar as CustomCalendar | undefined);
 
   return (
     <div className="h-full overflow-y-auto py-[22px] px-7 max-w-[920px] max-[720px]:p-[18px] max-[720px]:px-3.5">
@@ -80,13 +85,13 @@ export function TimelinePage({ projectId }: { projectId: string }) {
           className="timeline list-none m-0 p-0 relative before:content-[''] before:absolute before:inset-y-0 before:left-[183px] before:w-0.5 before:bg-line max-[720px]:before:left-[115px]"
         >
           {dated.map((row) => {
-            const label = `${row.title} — ${formatDate(row.date)}`;
+            const label = `${row.title} — ${fmt(row.date)}`;
             return (
               <li
                 className="timeline-item relative grid grid-cols-[160px_48px_1fr] items-center py-[7px] max-[720px]:grid-cols-[96px_40px_1fr]"
                 key={row.id}
               >
-                <span className="font-mono font-bold text-[13px] text-parchment-dim text-right pr-3.5 whitespace-nowrap" aria-hidden="true">{formatDate(row.date)}</span>
+                <span className="font-mono font-bold text-[13px] text-parchment-dim text-right pr-3.5 whitespace-nowrap" aria-hidden="true">{fmt(row.date)}</span>
                 <span
                   className="timeline-dot size-2.5 rounded-full justify-self-center"
                   aria-hidden="true"

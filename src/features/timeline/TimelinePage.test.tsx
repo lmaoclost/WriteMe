@@ -162,6 +162,18 @@ describe("TimelinePage", () => {
     expect(section?.textContent).not.toContain("Rio Sarnen");
   });
 
+  it("dates render through the project's first configured calendar (month name + era)", () => {
+    const project = store().addProject("Vellmora");
+    const calendarEntry = store().addEntry(project.id, "event");
+    store().updateEntry(calendarEntry.id, { title: "Batalha", date: "1200-05-10" });
+    const cal = store().addCalendar(project.id, "Calendário do Arco");
+    store().setMonth(cal.id, 4, { name: "Vela" });
+    store().setEra(cal.id, "Contagem do Arco");
+    render(timelineRoute(project.id));
+    const line = mainLine();
+    expect(line.getByRole("button", { name: "Batalha — 10 Vela 1200 · Contagem do Arco" })).toBeTruthy();
+  });
+
   it("shows the empty copy when no filtered entry has a valid date", () => {
     const projectId = seedProject([
       { title: "Guerra dos Cinco Invernos", category: "event" },
