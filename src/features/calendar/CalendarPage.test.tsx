@@ -133,6 +133,21 @@ describe("CalendarPage", () => {
     fireEvent.blur(eraInp);
     expect(store().calendars![0].era).toBe("Depois do Selo");
   });
+
+  it("sizes week rows by the weekday count and pads month starts", () => {
+    const c = seed();
+    act(() => {
+      store().setWeekdays(c.id, ["Dawn", "Market", "Candle", "Rest", "Eve"]);
+      store().setStartingWeekday(c.id, 2);
+      for (let i = 0; i < 11; i++) store().removeMonth(c.id, 1);
+      store().setMonth(c.id, 0, { days: 9 });
+    });
+    mount(c);
+    const grid = document.querySelector('[data-testid="cal-days"]') as HTMLElement;
+    expect(grid.style.gridTemplateColumns).toBe("repeat(5, minmax(0, 1fr))");
+    // firstWeekday = 2 → 2 leading blanks; (5 - ((2+9) % 5)) % 5 = 4 trailing
+    expect(screen.getAllByTestId("cal-blank")).toHaveLength(6);
+  });
 });
 function fireDay(monthIndex: number, dayNumber: number) {
   const buttons = Array.from(document.querySelectorAll('[data-testid="cal-day"]'));

@@ -33,6 +33,7 @@ export function CalendarPage({ calendarId }: { calendarId: string }) {
 
   const dayKey = (m: number, d: number) => `${yearIndex}:${m}:${d}`;
   const firstWeekday = (cal.startingWeekday + yearIndex * cal.months.reduce((acc, m) => acc + m.days, 0)) % cal.weekdays.length;
+  const n = cal.weekdays.length;
 
   const store = useScriptorium.getState;
 
@@ -61,12 +62,15 @@ export function CalendarPage({ calendarId }: { calendarId: string }) {
           {cal.months.map((m, mi) => (
             <section key={mi} className="bg-night border border-line rounded-lg p-3" data-testid="cal-month" aria-label={m.name}>
               <h2 className="text-[1.125rem] mb-2">{m.name}{cal.era ? ` · A${yearIndex + 1}` : ""}</h2>
-              <div className="grid grid-cols-7 gap-0.5 mb-1" aria-hidden="true">
+              <div className="grid gap-0.5 mb-1" aria-hidden="true" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
                 {cal.weekdays.map((w, i) => (
                   <span key={i} className={`cal-wd text-[0.6875rem] text-slate text-center uppercase${cal.weekendDays.includes(i) ? " weekend text-[var(--ember)]" : ""}`}>{w.slice(0, 2)}</span>
                 ))}
               </div>
-              <div className="grid grid-cols-7 gap-0.5">
+              <div className="grid gap-0.5" data-testid="cal-days" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
+                {Array.from({ length: firstWeekday }, (_, i) => (
+                  <span key={`pad-s-${i}`} data-testid="cal-blank" aria-hidden="true" className="cal-blank aspect-square rounded-sm" />
+                ))}
                 {Array.from({ length: m.days }, (_, di) => {
                   const wd = (firstWeekday + di) % cal.weekdays.length;
                   const key = dayKey(mi, di);
@@ -89,6 +93,9 @@ export function CalendarPage({ calendarId }: { calendarId: string }) {
                     </button>
                   );
                 })}
+                {Array.from({ length: (n - ((firstWeekday + m.days) % n)) % n }, (_, i) => (
+                  <span key={`pad-e-${i}`} data-testid="cal-blank" aria-hidden="true" className="cal-blank aspect-square rounded-sm" />
+                ))}
               </div>
             </section>
           ))}
