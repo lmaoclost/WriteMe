@@ -262,7 +262,9 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
   const store = useScriptorium.getState;
   const endMarker = useDebouncedDraft(chapter.endMarker ?? "", (v) =>
     store().updateChapter(chapter.id, { endMarker: v.trim() || undefined }), 300);
-  useEffect(() => () => { endMarker.flush(); });
+  const endMarkerFlushRef = useRef(endMarker.flush);
+  endMarkerFlushRef.current = endMarker.flush;
+  useEffect(() => () => { endMarkerFlushRef.current(); }, []);
 
   const calendars = useScriptorium((s) => s.calendars ?? []);
   const [calendarPickOpen, setCalendarPickOpen] = useState(false);

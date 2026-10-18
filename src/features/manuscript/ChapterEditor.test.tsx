@@ -132,6 +132,27 @@ describe("ChapterEditor rich", () => {
     expect(ch.endMarker).toBeUndefined(); // untouched
   });
 
+  it("endMarker debounce holds the commit until blur", () => {
+    seedMS();
+    act(() => { store().updateChapter(store().manuscripts[0].chapters[0].id, { noteEnd: "Epílogo." }); });
+    render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
+    const marker = screen.getByLabelText("End-of-chapter marker");
+    fireEvent.change(marker, { target: { value: "Fim do Livro I" } });
+    expect(store().manuscripts[0].chapters[0].endMarker).toBeUndefined(); // debounce holds mid-typing
+    fireEvent.blur(marker);
+    expect(store().manuscripts[0].chapters[0].endMarker).toBe("Fim do Livro I");
+  });
+
+  it("endMarker pending draft flushes on unmount", () => {
+    seedMS();
+    act(() => { store().updateChapter(store().manuscripts[0].chapters[0].id, { noteEnd: "Epílogo." }); });
+    const { unmount } = render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
+    const marker = screen.getByLabelText("End-of-chapter marker");
+    fireEvent.change(marker, { target: { value: "Fim." } });
+    unmount();
+    expect(store().manuscripts[0].chapters[0].endMarker).toBe("Fim.");
+  });
+
   it("endMarker editable", () => {
     seedMS();
     act(() => { store().updateChapter(store().manuscripts[0].chapters[0].id, { endMarker: "Fim do cap." }); });
