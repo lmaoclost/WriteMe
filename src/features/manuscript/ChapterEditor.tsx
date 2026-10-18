@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
-import type { Chapter } from "../../domain/types";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
+import type { Chapter, CustomCalendar } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
@@ -58,7 +58,7 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
     setWriting(next);
   };
 
-  const confirmOrDelete = () => {
+  const confirmOrDelete = useCallback(() => {
     if (armed) {
       setArmed(false);
       window.clearTimeout(confirmTimerRef.current);
@@ -68,7 +68,7 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
     }
     setArmed(true);
     confirmTimerRef.current = window.setTimeout(() => setArmed(false), CONFIRM_RESET_MS);
-  };
+}, [armed, chapter.id, flush, onDeleted]);
 
 
   // Rich editor state: the body is a contenteditable; we hold its HTML locally
@@ -120,14 +120,14 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
     richTimer.current = window.setTimeout(commitRichNow, 300);
   };
 
-  const richExec = (cmd: string, value?: string) => {
+  const richExec = useCallback((cmd: string, value?: string) => {
     bodyRef.current?.focus();
     document.execCommand(cmd, false, value);
     richDirtyRef.current = true;
     setRichHtml(null); // keep DOM as truth until blur
     setRichTick((t) => t + 1);
     scheduleRichCommit();
-  };
+  }, [chapter.id]);
 
   const onRichInput = () => {
     richDirtyRef.current = true;
@@ -140,15 +140,7 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
     commitRichNow();
   };
 
-  // Footer follows the live DOM exactly while the user types (dirty), and the
-  // tag-stripped store content otherwise — never the raw HTML string.
-  const words = useMemo(() => {
-    void richTick; // typing re-runs this memo
-    if (writing && richDirtyRef.current && bodyRef.current) {
-      return countWords(bodyRef.current.innerHTML);
-    }
-    return countWords(chapter.content);
-  }, [writing, chapter.content, richTick]);
+  const previewHtml = useMemo(() => renderMarkdown(chapter.content), [chapter.content]);
 
   return (
     <div className="book-editor flex flex-col gap-2.5 max-w-[860px]">
@@ -198,19 +190,18 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
       ) : chapter.content.trim() === "" ? (
         <p className="mx-1 my-1 text-slate text-sm italic">No content yet.</p>
       ) : (
-        <div className="md-view" dangerouslySetInnerHTML={{ __html: renderMarkdown(chapter.content) }} />
+        <div className="md-view" dangerouslySetInnerHTML={{ __html: previewHtml }} />
       )}
       <NotesAndLinks chapter={chapter} />
-      <footer className="flex items-center justify-between gap-2">
-        <span className="book-words text-xs text-slate">{formatWords(words)}</span>
-        <button
-          type="button"
-          className={"book-delete bg-none border border-[var(--ember)] text-[var(--ember)] rounded-lg py-1.5 px-2.5 text-[13px] hover:bg-[color-mix(in_srgb,var(--ember)_18%,transparent)]" + (armed ? " armed bg-[color-mix(in_srgb,var(--ember)_20%,transparent)]" : "")}
-          onClick={confirmOrDelete}
-        >
-          {armed ? "Confirmar?" : "Delete chapter"}
-        </button>
-      </footer>
+      <WordCountFooter
+        writing={writing}
+        content={chapter.content}
+        richTick={richTick}
+        bodyRef={bodyRef}
+        richDirtyRef={richDirtyRef}
+        armed={armed}
+        onConfirmDelete={confirmOrDelete}
+      />
     </div>
   );
 }
@@ -258,6 +249,40 @@ function RichToolbar({ onExec }: { onExec(cmd: string, value?: string): void }) 
   );
 }
 
+const NO_CALENDARS: CustomCalendar[] = [];
+
+const WordCountFooter = memo(function WordCountFooter({ writing, content, richTick, bodyRef, richDirtyRef, armed, onConfirmDelete }: {
+  writing: boolean;
+  content: string;
+  richTick: number;
+  bodyRef: MutableRefObject<HTMLDivElement | null>;
+  richDirtyRef: MutableRefObject<boolean>;
+  armed: boolean;
+  onConfirmDelete(): void;
+}) {
+  // Footer follows the live DOM exactly while the user types (dirty), and the
+  // tag-stripped store content otherwise — never the raw HTML string.
+  const words = useMemo(() => {
+    void richTick; // typing re-runs this memo
+    if (writing && richDirtyRef.current && bodyRef.current) {
+      return countWords(bodyRef.current.innerHTML);
+    }
+    return countWords(content);
+  }, [writing, content, richTick]);
+  return (
+    <footer className="flex items-center justify-between gap-2">
+      <span className="book-words text-xs text-slate">{formatWords(words)}</span>
+      <button
+        type="button"
+        className={"book-delete bg-none border border-[var(--ember)] text-[var(--ember)] rounded-lg py-1.5 px-2.5 text-[13px] hover:bg-[color-mix(in_srgb,var(--ember)_18%,transparent)]" + (armed ? " armed bg-[color-mix(in_srgb,var(--ember)_20%,transparent)]" : "")}
+        onClick={onConfirmDelete}
+      >
+        {armed ? "Confirmar?" : "Delete chapter"}
+      </button>
+    </footer>
+  );
+});
+
 function NotesAndLinks({ chapter }: { chapter: Chapter }) {
   const store = useScriptorium.getState;
   const endMarker = useDebouncedDraft(chapter.endMarker ?? "", (v) =>
@@ -266,7 +291,7 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
   endMarkerFlushRef.current = endMarker.flush;
   useEffect(() => () => { endMarkerFlushRef.current(); }, []);
 
-  const calendars = useScriptorium((s) => s.calendars ?? []);
+  const calendars = useScriptorium((s) => s.calendars ?? NO_CALENDARS);
   const [calendarPickOpen, setCalendarPickOpen] = useState(false);
   const [calId, setCalId] = useState(chapter.linkedCalendarId ?? "");
   const [yy, setYy] = useState("0");
