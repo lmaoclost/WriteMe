@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import type { Id, Pt, Region } from "../../domain/types";
@@ -97,8 +97,9 @@ function RegionChooser({ options, position, onPick, onClear, onClose }: {
 export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
   const atlas = useScriptorium((s) => s.atlases.find((a) => a.id === atlasId));
   const navigate = useNavigate();
-  const allEntries = useScriptorium((s) => s.entries);
-  const images = useScriptorium((s) => s.images);
+  // narrowed: re-render only when this project's rows change — EntryImagePicker
+  // subscribes to the images map itself, only while it is open
+  const projectEntries = useScriptorium(useShallow((s) => s.entries.filter((e) => e.projectId === atlas?.projectId)));
   const flags = useScriptorium(useShallow(selectHistoryFlags(atlasId)));
   const pushToast = useScriptorium((s) => s.pushToast);
   const [tool, setTool] = useState<AtlasTool>("select");
@@ -124,11 +125,6 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
   });
   const { drawing, cancelDraw, attemptFinishRegion, confirmCarve } = draw;
 
-  const projectEntries = useMemo(
-    () => allEntries.filter((e) => e.projectId === atlas?.projectId),
-    [allEntries, atlas],
-  );
-
   useEffect(() => {
     setNameDraft(atlas?.name ?? "");
   }, [atlas?.name, atlasId]);
@@ -152,23 +148,37 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
     if (region) setTool("select");
   }, [confirmCarve]);
 
-  useEffect(() => {
-    if (!drawing) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") cancelDraw();
-      else if (e.key === "Enter" && draw.carvePreview) confirmPreview();
-      else if (e.key === "Enter") attemptFinishRegion();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [drawing, cancelDraw, attemptFinishRegion, confirmPreview, draw.carvePreview]);
+  // Stable preview ref: the Enter/Escape handler reads it at event time, so a
+  // new carvePreview no longer tears down and re-registers the key listener.
+  const carvePreviewRef = useRef(draw.carvePreview);
+  carvePreviewRef.current = draw.carvePreview;
+  const selectedPinRef = useRef(selectedPinId);
+  selectedPinRef.current = selectedPinId;
+  const drawingRef = useRef(drawing);
+  drawingRef.current = drawing;
 
-  // Ctrl+z / Ctrl+Shift+z / Ctrl+y mirror the header buttons; text entry keeps
-  // its own undo semantics.
+  // One document keydown router (draw escape/enter, undo/redo, delete pin)
+  // instead of four listeners with overlapping churn.
   useEffect(() => {
     if (!atlasId) return;
     const onKey = (e: KeyboardEvent) => {
+      if (drawingRef.current) {
+        if (e.key === "Escape") { cancelDraw(); return; }
+        if (e.key === "Enter") {
+          if (carvePreviewRef.current) confirmPreview();
+          else attemptFinishRegion();
+          return;
+        }
+      }
       if (isEditableTarget(e.target)) return;
+      if (e.key === "Delete" && selectedPinRef.current) {
+        const s = useScriptorium.getState();
+        if (s.atlases.some((a) => a.id === atlasId && a.pins.some((p) => p.id === selectedPinRef.current))) {
+          s.deletePin(selectedPinRef.current);
+          setSelectedPinId(null);
+        }
+        return;
+      }
       if (!(e.ctrlKey || e.metaKey)) return;
       const key = e.key.toLowerCase();
       if (key === "z") {
@@ -182,7 +192,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [atlasId, runRedo, runUndo]);
+  }, [atlasId, attemptFinishRegion, cancelDraw, confirmPreview, runRedo, runUndo]);
 
   // A missing atlas (unknown id, or it was just deleted) exits to the index.
   useEffect(() => {
@@ -202,22 +212,6 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
     if (selectedPinId && !current.pins.some((p) => p.id === selectedPinId)) setSelectedPinId(null);
     if (selectedRegionId && !current.regions.some((r) => r.id === selectedRegionId)) setSelectedRegionId(null);
   }, [atlasId, atlas, selectedPinId, selectedRegionId]);
-
-  // Delete key on the selected pin: direct delete (store pushes history).
-  useEffect(() => {
-    if (!selectedPinId) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Delete") return;
-      if (isEditableTarget(e.target)) return;
-      const s = useScriptorium.getState();
-      if (s.atlases.some((a) => a.id === atlasId && a.pins.some((p) => p.id === selectedPinId))) {
-        s.deletePin(selectedPinId);
-        setSelectedPinId(null);
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [atlasId, selectedPinId]);
 
   if (!atlas) {
     return <Navigate to={projectId ? `/p/${projectId}/atlas` : "/"} replace />;
@@ -495,7 +489,6 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
         <EntryImagePicker
           atlasId={atlasId}
           entries={projectEntries}
-          images={images}
           onClose={() => setPickerOpen(false)}
         />
       ) : null}

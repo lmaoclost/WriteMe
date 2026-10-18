@@ -5,13 +5,14 @@ import type { Id, WorldEntry } from "../../domain/types";
 export interface EntryImagePickerProps {
   atlasId: Id;
   entries: WorldEntry[];
-  images: Record<string, string>;
   onClose(): void;
 }
 
 /** Popover listing the project entries that carry their own image; picking
  *  one copies that blob into the atlas map (decoupled from the entry). */
-export function EntryImagePicker({ atlasId, entries, images, onClose }: EntryImagePickerProps) {
+export function EntryImagePicker({ atlasId, entries, onClose }: EntryImagePickerProps) {
+  // subscribes to the images map only while open — callers stay image-free
+  const images = useScriptorium((s) => s.images);
   const candidates = entries.filter((e) => e.imageKey && images[e.imageKey]);
   const pushToast = useScriptorium((s) => s.pushToast);
 
