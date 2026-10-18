@@ -121,12 +121,6 @@ export function LibraryPage() {
             </Select>
           )}
         </div>
-        <nav className="flex flex-wrap gap-3.5" aria-label="Site pages">
-          <Link to="/chronicles" className="rounded-full border border-line px-2.5 py-1 text-sm text-lilac no-underline hover:border-[var(--accent)]">Chronicles</Link>
-          <Link to="/updates" className="rounded-full border border-line px-2.5 py-1 text-sm text-lilac no-underline hover:border-[var(--accent)]">Updates</Link>
-          <Link to="/settings" className="rounded-full border border-line px-2.5 py-1 text-sm text-lilac no-underline hover:border-[var(--accent)]">Settings</Link>
-          <Link to="/profile" className="rounded-full border border-line px-2.5 py-1 text-sm text-lilac no-underline hover:border-[var(--accent)]">Profile</Link>
-        </nav>
       </header>
 
       <hr className="w-full border-0 border-t border-line my-9" />

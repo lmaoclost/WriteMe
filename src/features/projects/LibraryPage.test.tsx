@@ -31,6 +31,15 @@ describe("LibraryPage hub", () => {
     expect(screen.getByRole("heading", { name: "My worlds" })).toBeInTheDocument();
   });
 
+  it("site nav is gone: no chronicles/updates/settings/profile links", () => {
+    render(wrap());
+    expect(screen.queryByRole("link", { name: "Chronicles" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Updates" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Settings" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Profile" })).toBeNull();
+    expect(screen.queryByLabelText("Site pages")).toBeNull();
+  });
+
   it("ghost forge cards are not links while there is no world", () => {
     render(wrap());
     expect(screen.getByText(/Create a world to enable the forges/i)).toBeInTheDocument();
