@@ -56,8 +56,10 @@ export function ExportTools({ manuscript }: ExportToolsProps) {
     if (disabled) return;
     setBusy(true);
     try {
-      const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } = await import("docx");
-      const { htmlToBlocks } = await import("./docx");
+      const [{ Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType }, { htmlToBlocks }] = await Promise.all([
+        import("docx"),
+        import("./docx"),
+      ]);
       const chapters = [...manuscript.chapters].sort((a, b) => a.order - b.order);
       const children = [
         new Paragraph({ children: [new TextRun({ text: manuscript.title, bold: true, size: 48 })], alignment: AlignmentType.CENTER }),

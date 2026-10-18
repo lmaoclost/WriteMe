@@ -4,9 +4,26 @@ import { useScriptorium } from "../../data/store";
 import { renderWithLinks, resolveWikilink } from "./wikilinks";
 import { categoryIcon, categoryLabel } from "./categories";
 
+// last body+entries-signature → html. Any unrelated entry update recreates
+// the entries array; without this cache that alone re-ran marked.parse and
+// the sanitize pass for the whole rendered document.
+let htmlCache: { body: string; sig: string; html: string } | null = null;
+
 export function MarkdownView({ body, onSelectEntry }: { body: string; onSelectEntry?(id: string): void }) {
   const entries = useScriptorium((s) => s.entries);
-  const html = useMemo(() => renderWithLinks(body ?? "", entries), [body, entries]);
+  // only entries fields that wikilink resolution reads affect the html
+  const hasLinks = (body ?? "").includes("[[");
+  const sig = useMemo(
+    () => (hasLinks ? entries.map((e) => `${e.id}:${e.title}:${e.category}`).join("|") : ""),
+    [entries, hasLinks],
+  );
+  const html = useMemo(() => {
+    if (!hasLinks) return renderWithLinks(body ?? "", entries);
+    if (htmlCache && htmlCache.body === (body ?? "") && htmlCache.sig === sig) return htmlCache.html;
+    const out = renderWithLinks(body ?? "", entries);
+    htmlCache = { body: body ?? "", sig, html: out };
+    return out;
+  }, [body, sig, hasLinks, entries]);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
 

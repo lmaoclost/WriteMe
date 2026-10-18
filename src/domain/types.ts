@@ -6,8 +6,8 @@ export type EntryCategory =
   | "faction" | "deity" | "lore"
   | "person" | "place" | "item"; // legacy v1 keys, still valid
 
-export interface EntrySectionField { label: string; content: string }
-export interface EntrySection { name: string; fields: EntrySectionField[] }
+export interface EntrySectionField { label: string; content: string; id?: string }
+export interface EntrySection { name: string; fields: EntrySectionField[]; id?: string }
 
 export type EntryKind = {
   key: string;

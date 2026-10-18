@@ -30,7 +30,7 @@ export function renderWithLinks(body: string, entries: WorldEntry[]): string {
   }
   // mark.wikilink-style: escape happens in the parser; [[Title]] stays literal
   // text (with &-escapes) — replace occurrences with anchor markup.
-  const linked = html.replace(/\[\[([^\]]{1,200})\]\]/g, (_m, rawTitle: string) => {
+  const linked = html.replace(WIKILINK_HTML, (_m, rawTitle: string) => {
     const title = unescapeHtml(rawTitle); // marked may have escaped quotes/ampersands
     const e = resolveWikilink(title, entries);
     if (!e) return escapeHtml(title.trim()); // unresolvable: keep the title as plain text
@@ -39,8 +39,15 @@ export function renderWithLinks(body: string, entries: WorldEntry[]): string {
   return sanitizeFragment(linked);
 }
 
+const AMP = /&amp;/g
+  , QUOT = /&quot;/g
+  , APOS = /&#39;/g
+  , LT = /&lt;/g
+  , GT = /&gt;/g
+  , WIKILINK_HTML = /\[\[([^\]]{1,200})\]\]/g;
+
 function unescapeHtml(s: string): string {
-  return s.replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+  return s.replace(AMP, "&").replace(QUOT, '"').replace(APOS, "'").replace(LT, "<").replace(GT, ">");
 }
 
 const CODEX_ICONS: Record<string, string> = {

@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, useCallback, type ChangeEvent, type MutableRefObject } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, type ChangeEvent, type MutableRefObject } from "react";
 import { useShallow } from "zustand/react/shallow";
-import type { WorldEntry, EntrySection } from "../../domain/types";
+import type { WorldEntry, EntrySection, EntrySectionField } from "../../domain/types";
 import { ENTRY_CATEGORIES } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
 import { fileToDataUrl } from "../../data/image";
+import { newId } from "../../domain/id";
 import { dateIsEmpty, formatDate, isValidDate, sanitizeDate } from "../../domain/dates";
 import { LinkPicker } from "../atlas/panels/LinkPicker";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
@@ -23,10 +24,10 @@ const CONFIRM_RESET_MS = 3000;
 
 export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryViewProps) {
   const project = useScriptorium((s) => s.projects.find((p) => p.id === entry.projectId));
-  const images = useScriptorium((s) => s.images);
   const siblings = useScriptorium(
     useShallow((s) => s.entries.filter((e) => e.projectId === entry.projectId)),
   );
+  const siblingById = useMemo(() => new Map(siblings.map((e) => [e.id, e] as const)), [siblings]);
   const [writing, setWriting] = useState(true);
   const [armed, setArmed] = useState(false);
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
@@ -145,11 +146,11 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
     }
   };
 
-  const coveredSiblings = siblings.filter(
-    (e) => e.id !== entry.id && e.imageKey !== undefined && images[e.imageKey] !== undefined,
-  );
+  // the picker filters entries that actually carry images (it subscribes to
+  // the images map itself); the cover value is read narrowly per imageKey
+  const coveredSiblings = siblings.filter((e) => e.id !== entry.id && e.imageKey !== undefined);
   const coverEl = useRef<HTMLImageElement | null>(null);
-  const cover = entry.imageKey ? images[entry.imageKey] : undefined;
+  const cover = useScriptorium((s) => (entry.imageKey ? s.images[entry.imageKey] : undefined));
   const entryDate = dateIsEmpty(entry.date ?? "") ? null : sanitizeDate(entry.date ?? "");
   const dateInvalid = !dateIsEmpty(dateDraft.draft) && !isValidDate(dateDraft.draft);
 
@@ -298,7 +299,6 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
       ) : null}
       {imagePickerOpen ? (
         <ImagePicker
-          images={images}
           entries={coveredSiblings}
           onPick={(dataUrl) => {
             const ok = useScriptorium.getState().putEntryImage(entry.id, dataUrl);
@@ -311,34 +311,36 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
         <div className="grid gap-3">
           {(entry.sections ?? []).map((sec, si) => (
             <SectionBlock
-              key={si}
+              key={sec.id ?? si}
               sec={sec}
-              onField={(fi, content) => {
-                const sections = (entry.sections ?? []).map((s, j) => j === si
-                  ? { ...s, fields: s.fields.map((f, k) => (k === fi ? { ...f, content } : f)) }
+              onField={(field, content) => {
+                // match by object reference: an onRemoveField shift can leave
+                // captured indexes pointing at the wrong field
+                const sections = (entry.sections ?? []).map((s) => s === sec
+                  ? { ...s, fields: s.fields.map((f) => (f === field ? { ...f, content } : f)) }
                   : s);
                 useScriptorium.getState().updateEntry(entry.id, { sections });
               }}
               onAddField={() => {
-                const sections = (entry.sections ?? []).map((s, j) => j === si
-                  ? { ...s, fields: [...s.fields, { label: "New field", content: "" }] }
+                const sections = (entry.sections ?? []).map((s) => s === sec
+                  ? { ...s, fields: [...s.fields, { label: "New field", content: "", id: newId("fld") }] }
                   : s);
                 useScriptorium.getState().updateEntry(entry.id, { sections });
               }}
-              onRenameField={(fi, label) => {
-                const sections = (entry.sections ?? []).map((s, j) => j === si
-                  ? { ...s, fields: s.fields.map((f, k) => (k === fi ? { ...f, label } : f)) }
+              onRenameField={(field, label) => {
+                const sections = (entry.sections ?? []).map((s) => s === sec
+                  ? { ...s, fields: s.fields.map((f) => (f === field ? { ...f, label } : f)) }
                   : s);
                 useScriptorium.getState().updateEntry(entry.id, { sections });
               }}
-              onRemoveField={(fi) => {
-                const sections = (entry.sections ?? []).map((s, j) => j === si
-                  ? { ...s, fields: s.fields.filter((_f, k) => k !== fi) }
+              onRemoveField={(field) => {
+                const sections = (entry.sections ?? []).map((s) => s === sec
+                  ? { ...s, fields: s.fields.filter((f) => f !== field) }
                   : s);
                 useScriptorium.getState().updateEntry(entry.id, { sections });
               }}
               onRename={(name) => {
-                const sections = (entry.sections ?? []).map((s, j) => (j === si ? { ...s, name } : s));
+                const sections = (entry.sections ?? []).map((s) => (s === sec ? { ...s, name } : s));
                 useScriptorium.getState().updateEntry(entry.id, { sections });
               }}
             />
@@ -348,7 +350,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
             className="codex-section-add bg-none border border-line rounded-md text-slate cursor-pointer py-1 px-2.5 text-xs tracking-[0.04em] justify-self-start hover:text-parchment hover:border-gold-dim"
             aria-label="New section"
             onClick={() => {
-              const sections = [...(entry.sections ?? []), { name: "New section", fields: [] } satisfies EntrySection];
+              const sections = [...(entry.sections ?? []), { name: "New section", fields: [], id: newId("sec") } satisfies EntrySection];
               useScriptorium.getState().updateEntry(entry.id, { sections });
             }}
           >
@@ -373,7 +375,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
       <section className="flex items-center flex-wrap gap-1.5 border-t border-line pt-2.5" aria-label="Links">
         <span className="text-[11px] tracking-[0.08em] uppercase text-slate">Links</span>
         {entry.links.map((id) => {
-          const other = siblings.find((e) => e.id === id);
+          const other = siblingById.get(id);
           if (!other) return null;
           return (
             <span className="codex-link-chip inline-flex items-center border border-line rounded-full bg-night-2 pt-px pr-px pl-0.5" key={id}>
@@ -434,11 +436,11 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
 
 function SectionBlock({ sec, onField, onAddField, onRemoveField, onRename, onRenameField }: {
   sec: EntrySection;
-  onField(fi: number, content: string): void;
+  onField(field: EntrySectionField, content: string): void;
   onAddField(): void;
-  onRemoveField(fi: number): void;
+  onRemoveField(field: EntrySectionField): void;
   onRename(name: string): void;
-  onRenameField(fi: number, label: string): void;
+  onRenameField(field: EntrySectionField, label: string): void;
 }) {
   return (
     <section className="bg-night border border-line rounded-lg px-3.5 py-3 grid gap-2.5" aria-label={sec.name}>
@@ -453,23 +455,23 @@ function SectionBlock({ sec, onField, onAddField, onRemoveField, onRename, onRen
       </header>
       {sec.fields.length === 0 ? <p className="text-slate text-[13px] italic px-0.5 py-1">No fields.</p> : null}
       {sec.fields.map((f, fi) => (
-        <div className="grid grid-cols-[130px_1fr_auto] gap-1.5 items-start" key={fi}>
+        <div className="grid grid-cols-[130px_1fr_auto] gap-1.5 items-start" key={f.id ?? fi}>
           <div className="codex-field-label-row min-w-0 pt-[3px]">
             <input
               className="codex-field-label bg-none border border-transparent rounded-md text-[11px] uppercase tracking-[0.08em] text-slate px-0.5 min-w-0 w-full hover:border-line focus:border-gold-dim outline-none"
               aria-label={`Field label ${f.label}`}
               placeholder="Label"
               value={f.label}
-              onChange={(e) => onRenameField(fi, e.target.value)}
+              onChange={(e) => onRenameField(f, e.target.value)}
             />
             <button
               type="button"
               className="codex-field-remove bg-none border-0 text-slate px-1.5 py-0.5 text-xs cursor-pointer hover:text-[var(--ember)]"
               aria-label={`Remove field ${f.label}`}
-              onClick={() => onRemoveField(fi)}
+              onClick={() => onRemoveField(f)}
             >✕</button>
           </div>
-          <SectionFieldInput label={f.label} value={f.content} onCommit={(content) => onField(fi, content)} />
+          <SectionFieldInput label={f.label} value={f.content} onCommit={(content) => onField(f, content)} />
         </div>
       ))}
     </section>
