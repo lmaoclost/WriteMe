@@ -32,6 +32,15 @@ describe("bindery utils", () => {
     expect(BINDERY_FONTS.map((f) => f.label)).toContain("Palatino");
     expect(BINDERY_TRIMS.length).toBeGreaterThanOrEqual(6);
   });
+
+  it("chapter head numbers get visual separation from the title, in live preview and print portal", async () => {
+    const fsp = await import("node:fs/promises");
+    const theme = await fsp.readFile("src/app/theme.css", "utf8");
+    // both copies of the book carry .print-book, so the rule must live there —
+    // not on .bindery-live (screen-only class the portal copy never has)
+    expect(theme).toMatch(/\.print-book \.chapter h2 \.ch-num \{ margin-right: 0\.35em; \}/);
+    expect(theme).not.toMatch(/\.bindery-live \.chapter \{/);
+  });
 });
 
 describe("BinderyPage", () => {

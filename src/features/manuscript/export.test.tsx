@@ -232,9 +232,9 @@ describe("buildBookHtml v2", () => {
     expect(bookCss).not.toMatch(/break-after:\s*page/);
     expect(binderyCss).not.toMatch(/break-after:\s*page/);
     // single-side breaks exist where the document advances a page
-    expect(binderyCss).toMatch(/\.bindery-live \.chapter \{ break-before: page; \}/);
+    expect(binderyCss).toMatch(/\.print-book \.chapter \{ break-before: page; \}/);
     expect(bookCss).toMatch(/\.print-book \.chapter \{ break-before: page; \}/);
-    expect(binderyCss).toMatch(/\.bindery-live \.front-matter\.toc,\s*\.bindery-live \.dedication \{ break-before: page; \}/);
+    expect(binderyCss).toMatch(/\.print-book \.front-matter\.toc,\s*\.print-book \.dedication \{ break-before: page; \}/);
   });
 
   it("renders scene markers: endMarker between paragraphs, noteTop/noteEnd around the body", () => {

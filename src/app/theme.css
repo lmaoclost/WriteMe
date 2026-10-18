@@ -261,9 +261,11 @@ input[type="file"].sr-only {
   .book-note-rich { min-height: 72px; padding: 14px 20px; font-size: 14.5px; line-height: 1.6; }
 }
 
-/* Bindery live book preview (runtime-injected binderyCss handles typography). */
+/* Bindery book pages — the SAME selectors must style the on-screen live
+   preview AND the body-level print portal, so the scope is .print-book
+   (runtime-injected binderyCss handles typography on top). */
 @layer components {
-  .bindery-live {
+  .print-book {
     display: block;
     max-width: 7in;
     margin: 0 auto;
@@ -273,22 +275,23 @@ input[type="file"].sr-only {
     text-align: left;
     min-height: 100%;
   }
-  .bindery-live h1 { font-size: var(--fs-paper-h1); color: var(--paper-ink); }
-  .bindery-live h2 { font-size: var(--fs-paper-h2); color: var(--paper-ink); margin-top: 2em; }
-  .bindery-live p { line-height: 1.65; margin: 0.8em 0; }
-  .bindery-live .tp-title { text-align: center; font-size: var(--fs-paper-title); margin: 0.6em 0; }
-  .bindery-live .tp-series { text-align: center; letter-spacing: 0.3em; text-transform: uppercase; font-size: var(--fs-paper-body); color: var(--paper-muted); }
-  .bindery-live .tp-author { text-align: center; font-style: italic; }
-  .bindery-live .front-matter { padding: 3in 0 2in; }
-  .bindery-live .front-matter.toc, .bindery-live .dedication { break-before: page; }
-  .bindery-live .dedication { text-align: center; font-style: italic; padding-top: 2.5in; }
-  .bindery-live .toc ul { list-style: none; padding: 0; }
-  .bindery-live .toc-row { display: flex; gap: 6px; align-items: baseline; }
-  .bindery-live .toc-dot { flex: 1; border-bottom: 1px dotted var(--paper-muted-soft); margin-bottom: 4px; }
-  .bindery-live .running-head { float: right; font-size: var(--fs-paper-body); color: var(--paper-muted); }
-  .bindery-live .chapter { break-before: page; }
-  .bindery-live .glossary table { width: 100%; border-collapse: collapse; }
-  .bindery-live .glossary td { border-bottom: 1px dotted var(--paper-muted-soft); padding: 5px 6px; vertical-align: top; }
+  .print-book h1 { font-size: var(--fs-paper-h1); color: var(--paper-ink); }
+  .print-book h2 { font-size: var(--fs-paper-h2); color: var(--paper-ink); margin-top: 2em; }
+  .print-book .chapter h2 .ch-num { margin-right: 0.35em; }
+  .print-book p { line-height: 1.65; margin: 0.8em 0; }
+  .print-book .tp-title { text-align: center; font-size: var(--fs-paper-title); margin: 0.6em 0; }
+  .print-book .tp-series { text-align: center; letter-spacing: 0.3em; text-transform: uppercase; font-size: var(--fs-paper-body); color: var(--paper-muted); }
+  .print-book .tp-author { text-align: center; font-style: italic; }
+  .print-book .front-matter { padding: 3in 0 2in; }
+  .print-book .front-matter.toc, .print-book .dedication { break-before: page; }
+  .print-book .dedication { text-align: center; font-style: italic; padding-top: 2.5in; }
+  .print-book .toc ul { list-style: none; padding: 0; }
+  .print-book .toc-row { display: flex; gap: 6px; align-items: baseline; }
+  .print-book .toc-dot { flex: 1; border-bottom: 1px dotted var(--paper-muted-soft); margin-bottom: 4px; }
+  .print-book .running-head { float: right; font-size: var(--fs-paper-body); color: var(--paper-muted); }
+  .print-book .chapter { break-before: page; }
+  .print-book .glossary table { width: 100%; border-collapse: collapse; }
+  .print-book .glossary td { border-bottom: 1px dotted var(--paper-muted-soft); padding: 5px 6px; vertical-align: top; }
 }
 /* Long scroll lists: skip layout/paint for rows outside the viewport. */
 .book-ch-rows > li,
