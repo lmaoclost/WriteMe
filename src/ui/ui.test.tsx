@@ -75,4 +75,16 @@ describe("Toasts", () => {
     const t = useScriptorium.getState().toasts;
     expect(t.map((x) => x.id)).not.toContain(id);
   });
+
+  it("renders an action button and runs it on click", () => {
+    render(<Toasts />);
+    let ran = 0;
+    act(() => {
+      useScriptorium.getState().pushToast("success", "Idea board deleted.", { label: "Undo", run: () => { ran += 1; } });
+    });
+    const undo = screen.getByRole("button", { name: "Undo" });
+    fireEvent.click(undo);
+    expect(ran).toBe(1);
+    expect(useScriptorium.getState().toasts).toHaveLength(0); // action dismisses the toast
+  });
 });

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useParams, useOutletContext } from "react-router-dom";
 import { useScriptorium } from "../data/store";
+import { Toasts } from "../ui/Toasts";
 import { LibraryPage } from "../features/projects/LibraryPage";
 import { AtlasIndexPage } from "../features/atlas/AtlasIndexPage";
 import { AtlasEditor } from "../features/atlas/AtlasEditor";
@@ -184,6 +185,7 @@ export function AppRouter() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <CommandPalette />
+      <Toasts />
     </>
   );
 }

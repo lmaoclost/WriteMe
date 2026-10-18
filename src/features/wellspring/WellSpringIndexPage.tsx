@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useScriptorium } from "../../data/store";
+import { undoToastAction } from "../../ui/undoAction";
 import { Button } from "../../ui/Button";
 import { CARD_GRID, WORLD_CARD, CARD_LINK, CARD_NAME, CARD_DESC, DELETE_CHIP, EMPTY_STATE } from "../../ui/pageBits";
 import { Modal } from "../../ui/Modal";
@@ -36,7 +37,7 @@ export function WellSpringIndexPage({ projectId }: { projectId: string }) {
                 <h2 className={CARD_NAME}>{w.name}</h2>
                 <p className={CARD_DESC}>{w.nodes.length} circles · {w.borders.length} lines</p>
               </Link>
-              <button title="Delete idea board" className={DELETE_CHIP} onClick={() => setToDelete(w.id)}>✕</button>
+              <button title="Delete idea board" aria-label="Delete idea board" className={DELETE_CHIP} onClick={() => setToDelete(w.id)}>✕</button>
             </article>
           ))}
         </div>
@@ -66,7 +67,7 @@ export function WellSpringIndexPage({ projectId }: { projectId: string }) {
           <div className="mt-2 flex justify-end gap-2.5">
             <Button kind="danger" onClick={() => {
               useScriptorium.getState().deleteWellSpring(target.id);
-              pushToast("success", "Idea board deleted.");
+              pushToast("success", "Idea board deleted.", undoToastAction());
               setToDelete(null);
             }}>Delete</Button>
             <Button kind="ghost" onClick={() => setToDelete(null)}>Cancel</Button>

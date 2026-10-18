@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useScriptorium } from "../../data/store";
+import { undoToastAction } from "../../ui/undoAction";
 import { Button } from "../../ui/Button";
 import { CARD_GRID, WORLD_CARD, CARD_LINK, CARD_NAME, CARD_DESC, DELETE_CHIP, EMPTY_STATE } from "../../ui/pageBits";
 import { Modal } from "../../ui/Modal";
@@ -66,7 +67,7 @@ export function OathsIndexPage({ projectId }: { projectId: string }) {
           <div className="mt-2 flex justify-end gap-2.5">
             <Button kind="danger" onClick={() => {
               useScriptorium.getState().deleteOathsChart(target.id);
-              pushToast("success", "Hierarchy deleted.");
+              pushToast("success", "Hierarchy deleted.", undoToastAction());
               setToDelete(null);
             }}>Delete</Button>
             <Button kind="ghost" onClick={() => setToDelete(null)}>Cancel</Button>

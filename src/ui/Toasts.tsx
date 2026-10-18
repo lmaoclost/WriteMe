@@ -15,7 +15,7 @@ export function Toasts() {
     for (const t of toasts) {
       if (scheduledRef.current.has(t.id)) continue;
       scheduledRef.current.add(t.id);
-      timers.push(setTimeout(() => dismiss(t.id), 4000));
+      timers.push(setTimeout(() => dismiss(t.id), t.action ? 8000 : 4000));
     }
     return () => { timers.forEach(clearTimeout); };
   }, [toasts, dismiss]);
@@ -28,6 +28,14 @@ export function Toasts() {
           data-kind={t.kind}
         >
           <span className="toast-message">{t.message}</span>
+          {t.action ? (
+            <button
+              className="toast-action border-0 bg-transparent text-xs font-semibold text-gold cursor-pointer hover:text-parchment"
+              onClick={() => { t.action?.run(); dismiss(t.id); }}
+            >
+              {t.action.label}
+            </button>
+          ) : null}
           <button className="toast-dismiss border-0 bg-transparent text-xs text-slate hover:text-parchment" onClick={() => dismiss(t.id)} aria-label="Dismiss">✕</button>
         </div>
       ))}

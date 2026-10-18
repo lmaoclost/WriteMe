@@ -24,7 +24,12 @@ import { getLastRegionColor } from "../features/atlas/panels/recentColors";
 import { STORE_KEY, localStoragePersistence, wipeStore, storageHealth, flushPendingPersist, PersistedState } from "./storage";
 
 export type ToastKind = "info" | "error" | "success";
-export interface Toast { id: string; kind: ToastKind; message: string; }
+export interface Toast { id: string; kind: ToastKind; message: string; action?: ToastAction }
+export interface ToastAction { label: string; run: () => void }
+
+export type UndoCollection =
+  | "atlases" | "bloodlines" | "factionWebs" | "calendars" | "plotBoards"
+  | "timelines" | "oathsCharts" | "wellsprings" | "conlangs" | "manuscripts";
 
 export type ImageKind = "cover" | "entry" | "map" | "person";
 
@@ -174,10 +179,12 @@ interface ScriptoriumState extends ProjectData {
   deleteProject(id: string): void;
   putImage(dataUrl: string, kind: ImageKind): string;
   removeImage(key: string): void;
-  pushToast(kind: ToastKind, message: string): string;
+  pushToast(kind: ToastKind, message: string, action?: ToastAction): string;
   dismissToast(id: string): void;
   paletteOpen: boolean;
   setPaletteOpen(open: boolean): void;
+  undoItem?: { collection: UndoCollection; item: unknown };
+  undoDelete(): boolean;
   seedDemo(): string | null;
   exportData(): string;
   importData(text: string): { ok: true } | { ok: false; error: string };
@@ -349,7 +356,11 @@ interface ScriptoriumState extends ProjectData {
 
 export const useScriptorium = create<ScriptoriumState>()(
   persist(
-    (set, get) => ({
+    (set, get) => {
+    const armUndo = (collection: UndoCollection, item: unknown) => {
+      set({ undoItem: { collection, item } });
+    };
+    return {
       ...emptyProjectData(),
       toasts: [],
       paletteOpen: false,
@@ -358,6 +369,22 @@ export const useScriptorium = create<ScriptoriumState>()(
 
       setPaletteOpen(open: boolean) {
         set({ paletteOpen: open });
+      },
+
+      undoDelete() {
+        const undo = get().undoItem;
+        if (!undo) return false;
+        const collection = get()[undo.collection] as unknown[] | undefined;
+        if (collection?.some((x) => (x as { id: string }).id === (undo.item as { id: string }).id)) {
+          set({ undoItem: undefined });
+          return false;
+        }
+        set((s) => ({
+          [undo.collection]: [...((s[undo.collection] as unknown[] | undefined) ?? []), undo.item],
+          undoItem: undefined,
+          projects: touchProject(s.projects, (undo.item as { projectId?: string }).projectId ?? s.projects[0]?.id ?? ""),
+        }) as never);
+        return true;
       },
 
       addProject(name, description = "") {
@@ -446,9 +473,9 @@ export const useScriptorium = create<ScriptoriumState>()(
         });
       },
 
-      pushToast(kind, message) {
+      pushToast(kind, message, action) {
         const id = newId("toast");
-        set((s) => ({ toasts: [...s.toasts, { id, kind, message }] }));
+        set((s) => ({ toasts: [...s.toasts, { id, kind, message, action }] }));
         return id;
       },
 
@@ -533,6 +560,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         const s = get();
         const atlas = s.atlases.find((a) => a.id === atlasId);
         if (!atlas) return;
+        armUndo("atlases", atlas);
         const kept = s.atlases.filter((a) => a.id !== atlasId);
         if (kept.length === s.atlases.length) return;
         const images = { ...s.images };
@@ -740,6 +768,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         const m = s.manuscripts.find((x) => x.id === id);
         if (!m) return;
         // Chapters hold no images — nothing to release.
+        armUndo("manuscripts", m);
         set((st) => ({
           manuscripts: st.manuscripts.filter((x) => x.id !== id),
           projects: touchProject(st.projects, m.projectId),
@@ -1080,6 +1109,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         const bloodline = s.bloodlines.find((b) => b.id === id);
         if (!bloodline) return;
         const kept = s.bloodlines.filter((b) => b.id !== id);
+        armUndo("bloodlines", bloodline);
         if (kept.length === s.bloodlines.length) return;
         const images = { ...s.images };
         for (const p of bloodline.persons) {
@@ -1286,6 +1316,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         const s = get();
         const web = (s.factionWebs ?? []).find((w) => w.id === id);
         if (!web) return;
+        armUndo("factionWebs", web);
         const kept = (s.factionWebs ?? []).filter((w) => w.id !== id);
         if (kept.length === (s.factionWebs ?? []).length) return;
         const histories = { ...s.histories };
@@ -1480,6 +1511,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         const s = get();
         const cal = (s.calendars ?? []).find((c) => c.id === id);
         if (!cal) return;
+        armUndo("calendars", cal);
         const histories = { ...s.histories };
         delete histories[clKey(id)];
         set({
@@ -1720,6 +1752,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         const s = get();
         const board = (s.plotBoards ?? []).find((b) => b.id === id);
         if (!board) return;
+        armUndo("plotBoards", board);
         const histories = { ...s.histories };
         delete histories[pbKey(id)];
         set({
@@ -1941,6 +1974,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         const s = get();
         const t = (s.timelines ?? []).find((x) => x.id === id);
         if (!t) return;
+        armUndo("timelines", t);
         const histories = { ...s.histories };
         delete histories[tlKey(id)];
         set({
@@ -2144,6 +2178,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         const s = get();
         const chart = (s.oathsCharts ?? []).find((c) => c.id === id);
         if (!chart) return;
+        armUndo("oathsCharts", chart);
         const histories = { ...s.histories };
         delete histories[oKey(id)];
         set({
@@ -2393,6 +2428,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         const s = get();
         const well = (s.wellsprings ?? []).find((w) => w.id === id);
         if (!well) return;
+        armUndo("wellsprings", well);
         const histories = { ...s.histories };
         delete histories[wsKey(id)];
         set({
@@ -2589,6 +2625,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         const s = get();
         const c = (s.conlangs ?? []).find((x) => x.id === id);
         if (!c) return;
+        armUndo("conlangs", c);
         const histories = { ...s.histories };
         delete histories[cnKey(id)];
         set({
@@ -2852,7 +2889,8 @@ export const useScriptorium = create<ScriptoriumState>()(
           };
         });
       },
-    }),
+    };
+    },
     {
       name: STORE_KEY,
       version: 2,

@@ -2,6 +2,7 @@ import { useState, type KeyboardEvent } from "react";
 import { Link, useNavigate, useOutletContext } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
+import { undoToastAction } from "../../ui/undoAction";
 import type { Atlas } from "../../domain/types";
 import { Button } from "../../ui/Button";
 import { Field } from "../../ui/Field";
@@ -60,7 +61,7 @@ export function AtlasIndexPage() {
 
   const remove = (atlasId: string) => {
     useScriptorium.getState().deleteAtlas(atlasId);
-    useScriptorium.getState().pushToast("success", "Atlas deleted.");
+    useScriptorium.getState().pushToast("success", "Atlas deleted.", undoToastAction());
     setConfirmId(null);
   };
 
