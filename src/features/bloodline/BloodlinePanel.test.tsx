@@ -53,13 +53,14 @@ describe("BloodlinePanel — person", () => {
     vi.useRealTimers();
   });
 
-  it("badge toggle + text render pill", () => {
+  it("badge toggle + text render pill", async () => {
     const { b, p1 } = seed();
     mountCanvas(b.id);
     firePointer(screen.getAllByTestId("person-node")[0], "pointerdown", { clientX: 0, clientY: 0 });
     fireEvent.click(screen.getByLabelText("Show badge"));
     fireEvent.change(screen.getByLabelText("Badge text"), { target: { value: "Rei em exílio" } });
-    screen.getByText("Rei em exílio");
+    fireEvent.blur(screen.getByLabelText("Badge text"));
+    await waitFor(() => screen.getByText("Rei em exílio"));
     void p1;
   });
 

@@ -2,12 +2,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { usePlane } from "./usePlane";
-import { EdgesLayer, HouseNode, PersonNode } from "./NodesLayer";
+import { EdgesLayer, HouseNode, PersonNode, type NodeHandlers } from "./NodesLayer";
+import type { NodeKind } from "./nodeTypes";
 import { BloodlinePanel } from "./BloodlinePanel";
 import { FindBar } from "./FindBar";
 import { Notepad } from "./Notepad";
 import { BOARD_HEADER, BOARD_NAME_INPUT, BOARD_ACTIONS, BOARD_ACTION_BTN } from "../../ui/board";
 import { useBoardNotesHotkey } from "../../ui/boardNotes";
+import { useRafCallback } from "../../ui/useRaf";
 
 
 export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
@@ -41,12 +43,18 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
   useEffect(() => {
     if (!bloodline) return;
     // fit to the content bounds — the 20k plane itself must never define the view
-    const xs = [...bloodline.persons.map((p) => p.x), ...bloodline.houses.map((h) => h.x)];
-    const ys = [...bloodline.persons.map((p) => p.y), ...bloodline.houses.map((h) => h.y)];
-    if (xs.length === 0) return;
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    const scan = (x: number, y: number) => {
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    };
+    for (const p of bloodline.persons) scan(p.x, p.y);
+    for (const h of bloodline.houses) scan(h.x, h.y);
+    if (minX === Infinity) return;
     const t = setTimeout(() => plane.fitToContent({
-      minX: Math.min(...xs), maxX: Math.max(...xs),
-      minY: Math.min(...ys), maxY: Math.max(...ys),
+      minX, maxX, minY, maxY,
     }), 0);
     return () => clearTimeout(t);
     // fit once on mount
@@ -54,9 +62,9 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
 
   if (!bloodline) return null;
 
-  // Drag base: the person position when the current drag started (set on
-  // select via the panel wiring below; the node's pointerdown reports deltas).
-  let dragBase = { x: 0, y: 0 };
+  // Drag base: the node position when the drag started. Ref, not render
+  // state — select/drag callbacks must agree across re-renders.
+  const dragBaseRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const selected = bloodline.persons.find((p) => p.id === selectedId)
     ?? bloodline.houses.find((h) => h.id === selectedId);
@@ -64,9 +72,45 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
   const selectNode = (id: string | null) => {
     const sel = bloodline.persons.find((p) => p.id === id)
       ?? bloodline.houses.find((h) => h.id === id);
-    if (sel) dragBase = { x: sel.x, y: sel.y };
+    if (sel) dragBaseRef.current = { x: sel.x, y: sel.y };
     setSelectedId(id);
   };
+
+  // O(houses×persons) → two Maps built once per render.
+  const memberCountByHouse = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const p of bloodline.persons) {
+      if (!p.houseId) continue;
+      counts.set(p.houseId, (counts.get(p.houseId) ?? 0) + 1);
+    }
+    return counts;
+  }, [bloodline.persons]);
+  const houseById = useMemo(() => new Map(bloodline.houses.map((h) => [h.id, h])), [bloodline.houses]);
+
+  // Coalesced drags: movePerson/moveHouse at most once per frame, final
+  // position flushed on drag end.
+  const moveNodeRaf = useRafCallback((kind: NodeKind, id: string, x: number, y: number) => {
+    if (kind === "person") useScriptorium.getState().movePerson(id, x, y);
+    else useScriptorium.getState().moveHouse(id, x, y);
+  });
+
+  const nodeHandlersRef = useRef<NodeHandlers | null>(null);
+  nodeHandlersRef.current = {
+    onSelect: (kind, id) => { void kind; selectNode(id); },
+    onDelete: (kind, id) => { if (kind === "person") useScriptorium.getState().deletePerson(id); },
+    onDragStart: () => useScriptorium.getState().pushBLHistory(bloodlineId),
+    onDragMove: (kind, id, dx, dy) => {
+      moveNodeRaf(kind, id, dragBaseRef.current.x + dx / plane.scale, dragBaseRef.current.y + dy / plane.scale);
+    },
+    onDragEnd: () => { moveNodeRaf.flush(); dragBaseRef.current = { x: 0, y: 0 }; },
+  };
+  const nodeHandlers = useMemo(() => ({
+    onSelect: (kind: NodeKind, id: string) => nodeHandlersRef.current?.onSelect(kind, id),
+    onDelete: (kind: NodeKind, id: string) => nodeHandlersRef.current?.onDelete(kind, id),
+    onDragStart: (kind: NodeKind, id: string) => nodeHandlersRef.current?.onDragStart(kind, id),
+    onDragMove: (kind: NodeKind, id: string, dx: number, dy: number) => nodeHandlersRef.current?.onDragMove(kind, id, dx, dy),
+    onDragEnd: (kind: NodeKind, id: string) => nodeHandlersRef.current?.onDragEnd(kind, id),
+  }), []);
 
   return (
     <div className="grid grid-rows-[auto_1fr] h-full" data-testid="bloodline-page">
@@ -121,27 +165,14 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
             <EdgesLayer persons={bloodline.persons} selected={selectedId} />
             {bloodline.houses.map((h) => (
               <HouseNode key={h.id} house={h} selected={h.id === selectedId}
-                memberCount={bloodline.persons.filter((p) => p.houseId === h.id).length}
-                onSelect={() => selectNode(h.id)}
-                onDragStart={() => useScriptorium.getState().pushBLHistory(bloodlineId)}
-                onDragMove={(dx, dy) => {
-                  useScriptorium.getState().moveHouse(h.id, dragBase.x + dx / plane.scale, dragBase.y + dy / plane.scale);
-                }}
-                onDragEnd={() => { dragBase = { x: 0, y: 0 }; }}
+                memberCount={memberCountByHouse.get(h.id) ?? 0}
+                handlers={nodeHandlers}
               />
             ))}
             {bloodline.persons.map((p) => (
               <PersonNode key={p.id} person={p} images={images} selected={p.id === selectedId}
-                houseName={bloodline.houses.find((h) => h.id === p.houseId)?.name}
-                onSelect={() => selectNode(p.id)}
-                onDelete={() => useScriptorium.getState().deletePerson(p.id)}
-                onDragStart={() => useScriptorium.getState().pushBLHistory(bloodlineId)}
-                onDragMove={(dx, dy) => {
-                  const start = { x: p.x, y: p.y };
-                  void start;
-                  useScriptorium.getState().movePerson(p.id, dragBase.x + dx / plane.scale, dragBase.y + dy / plane.scale);
-                }}
-                onDragEnd={() => { dragBase = { x: 0, y: 0 }; }}
+                houseName={houseById.get(p.houseId ?? "")?.name}
+                handlers={nodeHandlers}
               />
             ))}
           </div>

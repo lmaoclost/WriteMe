@@ -1,20 +1,29 @@
+import { memo, useRef } from "react";
 import type { BloodlineHouse, BloodlinePerson } from "../../domain/types";
+import type { NodeKind } from "./nodeTypes";
 
-export function PersonNode({
-  person, images, selected, houseName, onSelect, onDelete, onDragStart, onDragMove, onDragEnd,
-}: {
+/** Handlers a node asks its parent for; the parent resolves them at event
+ *  time through a ref, so memoized nodes never pin a stale drag base. */
+export interface NodeHandlers {
+  onSelect(kind: NodeKind, id: string): void;
+  onDelete(kind: NodeKind, id: string): void;
+  onDragStart(kind: NodeKind, id: string): void;
+  onDragMove(kind: NodeKind, id: string, dx: number, dy: number): void;
+  onDragEnd(kind: NodeKind, id: string): void;
+}
+
+export const PersonNode = memo(function PersonNode({ person, images, selected, houseName, handlers }: {
   person: BloodlinePerson;
   images: Record<string, string>;
   selected: boolean;
   houseName?: string;
-  onSelect(): void;
-  onDelete(): void;
-  onDragStart?(): void;
-  onDragMove?(dx: number, dy: number): void;
-  onDragEnd?(): void;
+  handlers: NodeHandlers;
 }) {
+  const kind = "person" as const;
   const portrait = person.portraitKey ? images[person.portraitKey] : undefined;
-  const drag = { start: { x: 0, y: 0 }, moved: false };
+  // drag state lives in a ref: the node re-renders on every move commit and a
+  // render-scope variable would be recreated, orphaning the window listeners
+  const drag = useRef<{ x: number; y: number; moved: boolean }>({ x: 0, y: 0, moved: false });
   return (
     <div
       data-testid="person-node"
@@ -23,18 +32,17 @@ export function PersonNode({
       onPointerDown={(e) => {
         if (e.button !== 0) return;
         e.stopPropagation();
-        onSelect();
-        drag.start = { x: e.clientX, y: e.clientY };
-        drag.moved = false;
+        handlers.onSelect(kind, person.id);
+        drag.current = { x: e.clientX, y: e.clientY, moved: false };
         const move = (ev: PointerEvent) => {
-          const dx = ev.clientX - drag.start.x;
-          const dy = ev.clientY - drag.start.y;
-          if (!drag.moved && Math.hypot(dx, dy) <= 5) return;
-          if (!drag.moved) { drag.moved = true; onDragStart?.(); }
-          onDragMove?.(dx, dy);
+          const dx = ev.clientX - drag.current.x;
+          const dy = ev.clientY - drag.current.y;
+          if (!drag.current.moved && Math.hypot(dx, dy) <= 5) return;
+          if (!drag.current.moved) { drag.current.moved = true; handlers.onDragStart(kind, person.id); }
+          handlers.onDragMove(kind, person.id, dx, dy);
         };
         const up = () => {
-          if (drag.moved) onDragEnd?.();
+          if (drag.current.moved) handlers.onDragEnd(kind, person.id);
           window.removeEventListener("pointermove", move);
           window.removeEventListener("pointerup", up);
         };
@@ -44,7 +52,7 @@ export function PersonNode({
       role="button"
       aria-label={`Pessoa ${person.name}`}
       tabIndex={0}
-      onKeyDown={(e) => { if (e.key === "Delete") onDelete(); }}
+      onKeyDown={(e) => { if (e.key === "Delete") handlers.onDelete(kind, person.id); }}
     >
       {portrait ? (
         <img className="person-portrait size-[60px] rounded-full object-cover" src={portrait} alt="" draggable={false} />
@@ -62,18 +70,16 @@ export function PersonNode({
       ) : null}
     </div>
   );
-}
+});
 
-export function HouseNode({ house, selected, memberCount, onSelect, onDragStart, onDragMove, onDragEnd }: {
+export const HouseNode = memo(function HouseNode({ house, selected, memberCount, handlers }: {
   house: BloodlineHouse;
   selected: boolean;
   memberCount: number;
-  onSelect(): void;
-  onDragStart?(): void;
-  onDragMove?(dx: number, dy: number): void;
-  onDragEnd?(): void;
+  handlers: NodeHandlers;
 }) {
-  const drag = { start: { x: 0, y: 0 }, moved: false };
+  const kind = "house" as const;
+  const drag = useRef<{ x: number; y: number; moved: boolean }>({ x: 0, y: 0, moved: false });
   return (
     <div
       data-testid="house-node"
@@ -82,18 +88,17 @@ export function HouseNode({ house, selected, memberCount, onSelect, onDragStart,
       onPointerDown={(e) => {
         if (e.button !== 0) return;
         e.stopPropagation();
-        onSelect();
-        drag.start = { x: e.clientX, y: e.clientY };
-        drag.moved = false;
+        handlers.onSelect(kind, house.id);
+        drag.current = { x: e.clientX, y: e.clientY, moved: false };
         const move = (ev: PointerEvent) => {
-          const dx = ev.clientX - drag.start.x;
-          const dy = ev.clientY - drag.start.y;
-          if (!drag.moved && Math.hypot(dx, dy) <= 5) return;
-          if (!drag.moved) { drag.moved = true; onDragStart?.(); }
-          onDragMove?.(dx, dy);
+          const dx = ev.clientX - drag.current.x;
+          const dy = ev.clientY - drag.current.y;
+          if (!drag.current.moved && Math.hypot(dx, dy) <= 5) return;
+          if (!drag.current.moved) { drag.current.moved = true; handlers.onDragStart(kind, house.id); }
+          handlers.onDragMove(kind, house.id, dx, dy);
         };
         const up = () => {
-          if (drag.moved) onDragEnd?.();
+          if (drag.current.moved) handlers.onDragEnd(kind, house.id);
           window.removeEventListener("pointermove", move);
           window.removeEventListener("pointerup", up);
         };
@@ -110,11 +115,14 @@ export function HouseNode({ house, selected, memberCount, onSelect, onDragStart,
       {house.isMonarch ? <span className="house-crown absolute -top-4 right-1.5 text-gold" aria-hidden="true">♛</span> : null}
     </div>
   );
-}
+});
 
 interface EdgePts { fromId: string; toId: string; x1: number; y1: number; x2: number; y2: number }
 
-export function EdgesLayer({ persons, selected }: { persons: BloodlinePerson[]; selected?: string | null }) {
+export const EdgesLayer = memo(function EdgesLayer({ persons, selected }: {
+  persons: BloodlinePerson[];
+  selected?: string | null;
+}) {
   const byId = new Map(persons.map((p) => [p.id, p]));
   const blood: EdgePts[] = [];
   const partners: EdgePts[] = [];
@@ -126,8 +134,8 @@ export function EdgesLayer({ persons, selected }: { persons: BloodlinePerson[]; 
   }
   return (
     <svg data-testid="edges-layer" className="edges-layer absolute left-0 top-0 w-full h-full pointer-events-none" width="100%" height="100%">
-      {blood.map((e, i) => (
-        <g key={`b${i}`}>
+      {blood.map((e) => (
+        <g key={`b-${e.fromId}-${e.toId}`}>
           <path
             data-testid="edge-blood"
             className={`edge-blood [stroke:var(--gold-dim)] [stroke-width:1.5] [fill:none]${selected && (e.fromId === selected || e.toId === selected) ? " highlighted [stroke:var(--gold)] [stroke-width:2]" : ""}`}
@@ -135,12 +143,12 @@ export function EdgesLayer({ persons, selected }: { persons: BloodlinePerson[]; 
           />
         </g>
       ))}
-      {partners.map((e, i) => (
-        <g key={`p${i}`}>
+      {partners.map((e) => (
+        <g key={`p-${e.fromId}-${e.toId}`}>
           <path data-testid="edge-partner" className={`edge-partner [stroke:var(--slate)] [stroke-width:1.5] [fill:none]${selected && (e.fromId === selected || e.toId === selected) ? " highlighted [stroke:var(--gold)] [stroke-width:2]" : ""}`} d={`M ${e.x1} ${e.y1} L ${e.x2} ${e.y2}`} />
           <path data-testid="edge-partner" className="edge-partner edge-partner-2 opacity-60 [stroke:var(--slate)] [stroke-width:1.5] [fill:none]" d={`M ${e.x1} ${e.y1 + 3} L ${e.x2} ${e.y2 + 3}`} />
         </g>
       ))}
     </svg>
   );
-}
+});

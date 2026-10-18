@@ -42,6 +42,24 @@ function PersonField({ label, value, onCommit, placeholder }: { label: string; v
   );
 }
 
+function PersonFieldArea({ label, value, onCommit, placeholder, rows = 3 }: { label: string; value: string; onCommit(v: string): void; placeholder?: string; rows?: number }) {
+  const { draft, setDraft, flush } = useDebouncedDraft(value, onCommit);
+  useEffect(() => () => flush(), [flush]);
+  return (
+    <Field label={label}>
+      <textarea value={draft} onChange={(e) => setDraft(e.target.value)} onBlur={() => flush()} aria-label={label} placeholder={placeholder} rows={rows} />
+    </Field>
+  );
+}
+
+function LoosePersonField({ label, value, onCommit, placeholder }: { label: string; value: string; onCommit(v: string): void; placeholder?: string }) {
+  const { draft, setDraft, flush } = useDebouncedDraft(value, onCommit);
+  useEffect(() => () => flush(), [flush]);
+  return (
+    <input value={draft} onChange={(e) => setDraft(e.target.value)} onBlur={() => flush()} aria-label={label} placeholder={placeholder} className="flex-1 min-w-0 bg-ink border border-line rounded-sm text-parchment px-2 py-1.5" />
+  );
+}
+
 function PersonPanel({ bloodline, person, onSelect }: {
   bloodline: Bloodline;
   person: BloodlinePerson;
@@ -122,15 +140,9 @@ function PersonPanel({ bloodline, person, onSelect }: {
           </SelectContent>
         </Select>
       </Field>
-      <Field label="Title">
-        <input value={person.title ?? ""} onChange={(e) => update({ title: e.target.value })} aria-label="Title" placeholder="e.g. King, Queen, Lord..." />
-      </Field>
-      <Field label="Relationship">
-        <input value={person.relationship ?? ""} onChange={(e) => update({ relationship: e.target.value })} aria-label="Relationship" placeholder="Child of / Sibling of / Partner of" />
-      </Field>
-      <Field label="Bio">
-        <textarea value={person.bio ?? ""} onChange={(e) => update({ bio: e.target.value })} aria-label="Bio" placeholder="A brief biography of this person..." rows={3} />
-      </Field>
+      <PersonField label="Title" placeholder="e.g. King, Queen, Lord..." value={person.title ?? ""} onCommit={(v) => update({ title: v })} />
+      <PersonField label="Relationship" placeholder="Child of / Sibling of / Partner of" value={person.relationship ?? ""} onCommit={(v) => update({ relationship: v })} />
+      <PersonFieldArea label="Bio" placeholder="A brief biography of this person..." rows={3} value={person.bio ?? ""} onCommit={(v) => update({ bio: v })} />
       <PersonField label="Birth Date" placeholder="e.g. 12th of Joremein, Year 250" value={person.birthDate ?? ""} onCommit={(v) => update({ birthDate: v.trim() || undefined })} />
       <PersonField label="Death Date" placeholder="e.g. 5th of Forun, Year 312" value={person.deathDate ?? ""} onCommit={(v) => update({ deathDate: v.trim() || undefined })} />
 
@@ -167,8 +179,8 @@ function PersonPanel({ bloodline, person, onSelect }: {
                   {TENURE_LABELS.map((l) => <SelectItem key={l} value={l} className="text-xs focus:bg-[#24233f] focus:text-parchment">{l}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <input value={t.from} aria-label="Start" onChange={(e) => update({ tenures: person.tenures.map((tt, j) => (j === i ? { ...tt, from: e.target.value } : tt)) })} placeholder="From" />
-              <input value={t.to} aria-label="End" onChange={(e) => update({ tenures: person.tenures.map((tt, j) => (j === i ? { ...tt, to: e.target.value } : tt)) })} placeholder="To" />
+              <LoosePersonField label="Start" value={t.from} placeholder="From" onCommit={(v) => update({ tenures: person.tenures.map((tt, j) => (j === i ? { ...tt, from: v } : tt)) })} />
+              <LoosePersonField label="End" value={t.to} placeholder="To" onCommit={(v) => update({ tenures: person.tenures.map((tt, j) => (j === i ? { ...tt, to: v } : tt)) })} />
               <button type="button" aria-label="Remove tenure" onClick={() => update({ tenures: person.tenures.filter((_, j) => j !== i) })} className="bg-none border-0 text-slate text-xs">✕</button>
             </li>
           ))}
@@ -238,13 +250,7 @@ function PersonPanel({ bloodline, person, onSelect }: {
           <input type="checkbox" checked={person.showBadge} onChange={(e) => update({ showBadge: e.target.checked, ...(e.target.checked ? {} : { badgeText: person.badgeText }) })} />
           <span>Show badge</span>
         </label>
-        <input
-          value={person.badgeText}
-          aria-label="Badge text"
-          onChange={(e) => update({ badgeText: e.target.value })}
-          placeholder="e.g. King - 3rd House"
-          className="bg-ink border border-line rounded-sm text-parchment px-2 py-1.5 text-xs"
-        />
+        <PersonField label="Badge text" value={person.badgeText ?? ""} onCommit={(v) => update({ badgeText: v })} placeholder="e.g. King - 3rd House" />
       </section>
     </div>
   );
