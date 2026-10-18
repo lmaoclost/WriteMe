@@ -43,4 +43,28 @@ describe("bindery config", () => {
     expect(trimToPage("6x9")).toBe("6in 9in");
     expect(trimToPage("6.14x9.21")).toBe("6.14in 9.21in");
   });
+  it("each preset yields a valid bindery config", async () => {
+    const { PRESETS, applyPreset } = await import("../features/manuscript/presets");
+    const { defaultBindery } = await import("./schema");
+    for (const p of PRESETS) {
+      const merged = applyPreset(defaultBindery()!, p.id);
+      expect(merged.preset).toBe(p.id);
+      expect(merged.typography?.bodyPt).toBeGreaterThan(8);
+    }
+  });
+  it("classic and commercial differ on justification", async () => {
+    const { applyPreset } = await import("../features/manuscript/presets");
+    const { defaultBindery } = await import("./schema");
+    expect(applyPreset(defaultBindery()!, "classic").typography?.justify).toBe(true);
+    expect(applyPreset(defaultBindery()!, "commercial").typography?.justify).toBe(false);
+  });
+  it("preset leaves undeclared fields untouched", async () => {
+    const { applyPreset } = await import("../features/manuscript/presets");
+    const { defaultBindery } = await import("./schema");
+    const cfg = { ...defaultBindery()!, trim: "5x8", backMatter: { glossary: true, colophon: true } };
+    const merged = applyPreset(cfg, "manuscript");
+    expect(merged.trim).toBe("5x8");
+    expect(merged.backMatter).toEqual({ glossary: true, colophon: true });
+    expect(merged.preset).toBe("manuscript");
+  });
 });
