@@ -4,7 +4,7 @@ import { GROUPS, SECTIONS } from "../../app/sections";
 import { selectProject, useScriptorium } from "../../data/store";
 import { Seal } from "../../ui/Seal";
 
-const RAIL_LINK = "px-3 py-[9px] rounded-sm text-xs tracking-[0.1em] uppercase whitespace-nowrap text-ellipsis overflow-hidden no-underline transition-colors max-[720px]:flex-none max-[720px]:overflow-visible max-[720px]:whitespace-nowrap max-[720px]:text-ellipsis max-[720px]:text-clip";
+const RAIL_LINK = "flex items-center gap-2 px-3 py-[9px] rounded-sm text-xs tracking-[0.1em] uppercase whitespace-nowrap text-ellipsis overflow-hidden no-underline transition-colors max-[720px]:flex-none max-[720px]:overflow-visible max-[720px]:whitespace-nowrap max-[720px]:text-ellipsis max-[720px]:text-clip max-[720px]:min-w-0";
 
 export function WorkspaceLayout() {
   const { projectId } = useParams();

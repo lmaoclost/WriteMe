@@ -2,6 +2,17 @@
 @import "tw-animate-css";
 @import "./print.css";
 
+/* File inputs hidden with .sr-only (file pickers inside Fields). Tailwind's
+   Field utilities (`[&_input]:w-full input`, specificity 0-1-1) would beat
+   .sr-only's `width: 1px` (0-1-0) and, with no positioned ancestor, the
+   input stretches to the viewport width — a huge horizontal overflow and
+   blank space on the right of every page. Unlayered rules outrank every
+   cascade layer, so this wins without !important. */
+input[type="file"].sr-only {
+  width: 1px;
+  height: 1px;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
