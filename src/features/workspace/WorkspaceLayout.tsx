@@ -1,24 +1,39 @@
 import { Navigate, NavLink, Outlet, useParams, Link } from "react-router-dom";
 import { useEffect, useRef } from "react";
+import {
+  Book, BookOpen, Calendar, Feather, Hourglass, Languages, LayoutGrid,
+  Lightbulb, Map, Network, Orbit, Shield, Users, type LucideIcon,
+} from "lucide-react";
 import { selectProject, useScriptorium } from "../../data/store";
 import { Seal } from "../../ui/Seal";
 
-const SECTIONS = [
-  { key: "overview", label: "Overview", to: "" },
-  { key: "atlas", label: "Atlas", to: "atlas" },
-  { key: "entries", label: "Lore", to: "entries" },
-  { key: "timeline", label: "Chronology", to: "timeline" },
-  { key: "bloodline", label: "Bloodline", to: "bloodline" },
-  { key: "factions", label: "Factions", to: "factions" },
-  { key: "calendar", label: "Calendar", to: "calendar" },
-  { key: "plotboard", label: "Plot board", to: "plotboard" },
-  { key: "linewheel", label: "Timeline", to: "linewheel" },
-  { key: "oaths", label: "Oaths", to: "oaths" },
-  { key: "wellspring", label: "Ideas", to: "wellspring" },
-  { key: "conlang", label: "Language", to: "conlang" },
-  { key: "manuscript", label: "Manuscript", to: "manuscript" },
-  { key: "bindery", label: "Publishing", to: "bindery" },
-] as const;
+interface SectionDef {
+  key: string;
+  label: string;
+  to: string;
+  icon: LucideIcon;
+  group: string;
+  tip: string;
+}
+
+const SECTIONS: SectionDef[] = [
+  { key: "overview", label: "Overview", to: "", icon: BookOpen, group: "", tip: "The world's home" },
+  { key: "atlas", label: "Atlas", to: "atlas", icon: Map, group: "Reference", tip: "Map regions and drop pins for places" },
+  { key: "entries", label: "Lore", to: "entries", icon: Book, group: "Reference", tip: "Characters, places, creatures and things" },
+  { key: "timeline", label: "Chronology", to: "timeline", icon: Hourglass, group: "Reference", tip: "Dated events in world order" },
+  { key: "bloodline", label: "Bloodline", to: "bloodline", icon: Users, group: "Relations", tip: "Family trees across generations" },
+  { key: "factions", label: "Factions", to: "factions", icon: Network, group: "Relations", tip: "Who fights whom, who backs whom" },
+  { key: "oaths", label: "Oaths", to: "oaths", icon: Shield, group: "Relations", tip: "Chains of loyalty between groups" },
+  { key: "calendar", label: "Calendar", to: "calendar", icon: Calendar, group: "Worldbuilding", tip: "Your world's own year and months" },
+  { key: "plotboard", label: "Plot board", to: "plotboard", icon: LayoutGrid, group: "Worldbuilding", tip: "Story arcs as cards on a board" },
+  { key: "linewheel", label: "Timeline", to: "linewheel", icon: Orbit, group: "Worldbuilding", tip: "Beads strung on a wheel" },
+  { key: "wellspring", label: "Ideas", to: "wellspring", icon: Lightbulb, group: "Writing", tip: "Loose ideas, before they have a home" },
+  { key: "conlang", label: "Language", to: "conlang", icon: Languages, group: "Writing", tip: "Words and phonetics for your tongue" },
+  { key: "manuscript", label: "Manuscript", to: "manuscript", icon: Feather, group: "Writing", tip: "Write the chapters" },
+  { key: "bindery", label: "Publishing", to: "bindery", icon: BookOpen, group: "Writing", tip: "Trim the manuscript for export" },
+];
+
+const GROUPS = ["Reference", "Relations", "Worldbuilding", "Writing"] as const;
 
 const RAIL_LINK = "px-3 py-[9px] rounded-sm text-xs tracking-[0.1em] uppercase whitespace-nowrap text-ellipsis overflow-hidden no-underline transition-colors max-[720px]:flex-none max-[720px]:overflow-visible max-[720px]:whitespace-nowrap max-[720px]:text-ellipsis max-[720px]:text-clip";
 
@@ -62,11 +77,12 @@ export function WorkspaceLayout() {
         >
           ← My worlds
         </Link>
-        {SECTIONS.map((s) => (
+        {SECTIONS.filter((s) => !s.group).map((s) => (
           <NavLink
             key={s.key}
             to={`/p/${projectId}/${s.to}`.replace(/\/$/, "")}
             end={s.key === "overview" || undefined}
+            title={s.tip}
             className={({ isActive }) =>
               RAIL_LINK +
               (isActive
@@ -74,8 +90,30 @@ export function WorkspaceLayout() {
                 : " text-slate hover:text-parchment")
             }
           >
+            <s.icon aria-hidden className="size-3.5 flex-none opacity-80" />
             <span>{s.label}</span>
           </NavLink>
+        ))}
+        {GROUPS.map((g) => (
+          <div key={g} className="max-[720px]:contents">
+            <p className="mt-2 mb-0.5 px-3 text-[9px] uppercase tracking-[0.22em] text-[var(--text-faint)] max-[720px]:hidden" aria-hidden="true">{g}</p>
+            {SECTIONS.filter((s) => s.group === g).map((s) => (
+              <NavLink
+                key={s.key}
+                to={`/p/${projectId}/${s.to}`}
+                title={s.tip}
+                className={({ isActive }) =>
+                  RAIL_LINK +
+                  (isActive
+                    ? " text-gold bg-[color-mix(in_srgb,var(--gold)_10%,transparent)] shadow-[inset_2px_0_0_var(--gold)]"
+                    : " text-slate hover:text-parchment")
+                }
+              >
+                <s.icon aria-hidden className="size-3.5 flex-none opacity-80" />
+                <span>{s.label}</span>
+              </NavLink>
+            ))}
+          </div>
         ))}
       </nav>
       <main className="h-screen min-h-0 overflow-hidden py-6 px-7 max-[720px]:p-5">

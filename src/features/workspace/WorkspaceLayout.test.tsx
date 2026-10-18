@@ -33,4 +33,31 @@ describe("workspace rail", () => {
     expect(rail.getByRole("link", { name: /My worlds/i })).toHaveAttribute("href", "/");
     expect(rail.getByRole("link", { name: /second world/i })).toBeInTheDocument();
   });
+
+  it("groups sections under group headers with icons", () => {
+    const p = useScriptorium.getState().addProject("G");
+    render(at(`/p/${p.id}`));
+    const rail = within(screen.getByRole("navigation", { name: /world sections/i }));
+    for (const g of ["Reference", "Relations", "Worldbuilding", "Writing"]) {
+      expect(rail.getByText(g)).toBeInTheDocument();
+    }
+    const lore = rail.getByRole("link", { name: /Lore/i });
+    const icon = lore.querySelector("svg");
+    expect(icon).not.toBeNull();
+    expect(icon).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("keeps every section label and route", () => {
+    const p = useScriptorium.getState().addProject("R");
+    render(at(`/p/${p.id}`));
+    const rail = within(screen.getByRole("navigation", { name: /world sections/i }));
+    const labels = [
+      "Overview", "Atlas", "Lore", "Chronology", "Bloodline", "Factions", "Calendar",
+      "Plot board", "Timeline", "Oaths", "Ideas", "Language", "Manuscript", "Publishing",
+    ];
+    for (const label of labels) {
+      expect(rail.getByText(label)).toBeInTheDocument();
+    }
+    expect(rail.getByRole("link", { name: /Publishing/i })).toHaveAttribute("href", `/p/${p.id}/bindery`);
+  });
 });
