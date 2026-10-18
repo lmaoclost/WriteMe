@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useScriptorium, type ToastKind } from "../data/store";
 
 export const toastKindAttr = (kind: ToastKind): string => `[data-kind="${kind}"]`;
@@ -6,9 +6,17 @@ export const toastKindAttr = (kind: ToastKind): string => `[data-kind="${kind}"]
 export function Toasts() {
   const toasts = useScriptorium((s) => s.toasts);
   const dismiss = useScriptorium((s) => s.dismissToast);
+  // one timer per NEW toast: keying the effect on the whole array restarted
+  // every timer whenever any toast arrived, so toasts arriving within 4s of
+  // each other never expired
+  const scheduledRef = useRef(new Set<string>());
   useEffect(() => {
-    if (!toasts.length) return;
-    const timers = toasts.map((t) => setTimeout(() => dismiss(t.id), 4000));
+    const timers: Array<ReturnType<typeof setTimeout>> = [];
+    for (const t of toasts) {
+      if (scheduledRef.current.has(t.id)) continue;
+      scheduledRef.current.add(t.id);
+      timers.push(setTimeout(() => dismiss(t.id), 4000));
+    }
     return () => { timers.forEach(clearTimeout); };
   }, [toasts, dismiss]);
   return (

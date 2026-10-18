@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
+import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import type { CustomCalendar } from "../../domain/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field } from "../../ui/Field";
@@ -12,6 +13,61 @@ import { withCurrentColor } from "../../ui/colors";
 
 export const EVENT_CATEGORIES = ["Events", "Festivals", "Notes"] as const;
 export const EVENT_PRESET_COLORS = ["#e74c3c", "#e67e22", "#f1c40f", "#2ecc71", "#3498db", "#9b59b6", "#1abc9c", "#e84393", "#636e72", "#b2bec3"];
+
+const MonthSection = memo(function MonthSection({ month, monthIndex, yearIndex, era, weekdays, weekendDays, firstWeekday, eventsByDay, selectedDay, onSelectDay }: {
+  month: CustomCalendar["months"][number];
+  monthIndex: number;
+  yearIndex: number;
+  era?: string;
+  weekdays: string[];
+  weekendDays: number[];
+  firstWeekday: number;
+  eventsByDay: Record<number, CustomCalendar["events"][string]>;
+  selectedDay: string | null;
+  onSelectDay(dayKey: string): void;
+}) {
+  const n = weekdays.length;
+  return (
+    <section className="bg-night border border-line rounded-lg p-3" data-testid="cal-month" aria-label={month.name}>
+      <h2 className="text-[1.125rem] mb-2">{month.name}{era ? ` · A${yearIndex + 1}` : ""}</h2>
+      <div className="grid gap-0.5 mb-1" aria-hidden="true" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
+        {weekdays.map((w, i) => (
+          <span key={i} className={`cal-wd text-[0.6875rem] text-slate text-center uppercase${weekendDays.includes(i) ? " weekend text-[var(--ember)]" : ""}`}>{w.slice(0, 2)}</span>
+        ))}
+      </div>
+      <div className="grid gap-0.5" data-testid="cal-days" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
+        {Array.from({ length: firstWeekday }, (_, i) => (
+          <span key={`pad-s-${i}`} data-testid="cal-blank" aria-hidden="true" className="cal-blank aspect-square rounded-sm" />
+        ))}
+        {Array.from({ length: month.days }, (_, di) => {
+          const wd = (firstWeekday + di) % n;
+          const key = `${yearIndex}:${monthIndex}:${di}`;
+          const evs = eventsByDay[di] ?? [];
+          return (
+            <button
+              key={di}
+              type="button"
+              data-testid="cal-day"
+              className={`cal-day relative aspect-square rounded-sm border border-transparent bg-ink text-parchment-dim text-[11px] p-0.5 grid grid-rows-[auto_1fr] items-start cursor-pointer hover:border-gold-dim${weekendDays.includes(wd) ? " weekend bg-[color-mix(in_srgb,var(--ember)_10%,var(--ink))]" : ""}${selectedDay === key ? " selected border-gold outline outline-1 outline-gold" : ""}`}
+              aria-label={`${di + 1} de ${month.name}`}
+              onClick={() => onSelectDay(key)}
+            >
+              <span className="cal-day-num font-mono text-[0.6875rem] text-left">{di + 1}</span>
+              <span className="cal-day-events flex flex-wrap gap-0.5 content-start">
+                {evs.slice(0, 3).map((e) => (
+                  <i key={e.id} className="cal-event-dot w-1.5 h-1.5 rounded-full inline-block" style={{ background: e.color ?? "#636e72" }} />
+                ))}
+              </span>
+            </button>
+          );
+        })}
+        {Array.from({ length: (n - ((firstWeekday + month.days) % n)) % n }, (_, i) => (
+          <span key={`pad-e-${i}`} data-testid="cal-blank" aria-hidden="true" className="cal-blank aspect-square rounded-sm" />
+        ))}
+      </div>
+    </section>
+  );
+});
 
 export function CalendarPage({ calendarId }: { calendarId: string }) {
   const cal = useScriptorium((s) => (s.calendars ?? []).find((c) => c.id === calendarId));
@@ -30,11 +86,41 @@ export function CalendarPage({ calendarId }: { calendarId: string }) {
     if (!cal) pushToast("error", "Calendar not found.");
   }, [cal, pushToast]);
 
-  if (!cal) return null;
+  const nameDraft = useDebouncedDraft(
+    cal?.name ?? "",
+    (v) => { if (cal && v.trim() && v !== cal.name) useScriptorium.getState().renameCalendar(calendarId, v); },
+    300,
+  );
+  useEffect(() => () => nameDraft.flush(), [nameDraft.flush]);
 
-  const dayKey = (m: number, d: number) => `${yearIndex}:${m}:${d}`;
-  const firstWeekday = (cal.startingWeekday + yearIndex * cal.months.reduce((acc, m) => acc + m.days, 0)) % cal.weekdays.length;
-  const n = cal.weekdays.length;
+  // all hooks stay above the early return: hook order must not flip when the
+  // calendar disappears mid-mount
+  const firstWeekday = useMemo(
+    () => (cal
+      ? (cal.startingWeekday + yearIndex * cal.months.reduce((acc, m) => acc + m.days, 0)) % cal.weekdays.length
+      : 0),
+    [cal, yearIndex],
+  );
+
+  // per-month event slices, rebuilt only when events/years change — a header
+  // rename or selection flip no longer re-renders the 12×30 day grid
+  const eventsByMonth = useMemo(() => {
+    const slices: Array<Record<number, CustomCalendar["events"][string]>> = [];
+    if (!cal) return slices;
+    cal.months.forEach((m, mi) => {
+      const slice: Record<number, CustomCalendar["events"][string]> = {};
+      for (let di = 0; di < m.days; di++) {
+        const evs = cal.events[`${yearIndex}:${mi}:${di}`];
+        if (evs && evs.length) slice[di] = evs;
+      }
+      slices[mi] = slice;
+    });
+    return slices;
+  }, [cal, yearIndex]);
+
+  const onSelectDay = useCallback((dayKey: string) => setSelectedDay(dayKey), []);
+
+  if (!cal) return null;
 
   const store = useScriptorium.getState;
 
@@ -44,8 +130,9 @@ export function CalendarPage({ calendarId }: { calendarId: string }) {
         <input
           className={BOARD_NAME_INPUT}
           aria-label="Calendar name"
-          value={cal.name}
-          onChange={(e) => store().renameCalendar(calendarId, e.target.value)}
+          value={nameDraft.draft}
+          onChange={(e) => nameDraft.setDraft(e.target.value)}
+          onBlur={() => nameDraft.flush()}
         />
         <span className="text-slate text-[13px]">{cal.era ?? ""}</span>
         <div className={BOARD_ACTIONS}>
@@ -61,44 +148,19 @@ export function CalendarPage({ calendarId }: { calendarId: string }) {
       <div className="grid grid-cols-[1fr_300px] min-h-0 overflow-hidden">
         <div className="overflow-y-auto p-5 grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-4 content-start" data-testid="cal-year-grid">
           {cal.months.map((m, mi) => (
-            <section key={mi} className="bg-night border border-line rounded-lg p-3" data-testid="cal-month" aria-label={m.name}>
-              <h2 className="text-[1.125rem] mb-2">{m.name}{cal.era ? ` · A${yearIndex + 1}` : ""}</h2>
-              <div className="grid gap-0.5 mb-1" aria-hidden="true" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
-                {cal.weekdays.map((w, i) => (
-                  <span key={i} className={`cal-wd text-[0.6875rem] text-slate text-center uppercase${cal.weekendDays.includes(i) ? " weekend text-[var(--ember)]" : ""}`}>{w.slice(0, 2)}</span>
-                ))}
-              </div>
-              <div className="grid gap-0.5" data-testid="cal-days" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
-                {Array.from({ length: firstWeekday }, (_, i) => (
-                  <span key={`pad-s-${i}`} data-testid="cal-blank" aria-hidden="true" className="cal-blank aspect-square rounded-sm" />
-                ))}
-                {Array.from({ length: m.days }, (_, di) => {
-                  const wd = (firstWeekday + di) % cal.weekdays.length;
-                  const key = dayKey(mi, di);
-                  const evs = cal.events[key] ?? [];
-                  return (
-                    <button
-                      key={di}
-                      type="button"
-                      data-testid="cal-day"
-                      className={`cal-day relative aspect-square rounded-sm border border-transparent bg-ink text-parchment-dim text-[11px] p-0.5 grid grid-rows-[auto_1fr] items-start cursor-pointer hover:border-gold-dim${cal.weekendDays.includes(wd) ? " weekend bg-[color-mix(in_srgb,var(--ember)_10%,var(--ink))]" : ""}${selectedDay === key ? " selected border-gold outline outline-1 outline-gold" : ""}`}
-                      aria-label={`${di + 1} de ${m.name}`}
-                      onClick={() => setSelectedDay(key)}
-                    >
-                      <span className="cal-day-num font-mono text-[0.6875rem] text-left">{di + 1}</span>
-                      <span className="cal-day-events flex flex-wrap gap-0.5 content-start">
-                        {evs.slice(0, 3).map((e) => (
-                          <i key={e.id} className="cal-event-dot w-1.5 h-1.5 rounded-full inline-block" style={{ background: e.color ?? "#636e72" }} />
-                        ))}
-                      </span>
-                    </button>
-                  );
-                })}
-                {Array.from({ length: (n - ((firstWeekday + m.days) % n)) % n }, (_, i) => (
-                  <span key={`pad-e-${i}`} data-testid="cal-blank" aria-hidden="true" className="cal-blank aspect-square rounded-sm" />
-                ))}
-              </div>
-            </section>
+            <MonthSection
+              key={mi}
+              month={m}
+              monthIndex={mi}
+              yearIndex={yearIndex}
+              era={cal.era}
+              weekdays={cal.weekdays}
+              weekendDays={cal.weekendDays}
+              firstWeekday={firstWeekday}
+              eventsByDay={eventsByMonth[mi]}
+              selectedDay={selectedDay}
+              onSelectDay={onSelectDay}
+            />
           ))}
         </div>
         <DayPanel
