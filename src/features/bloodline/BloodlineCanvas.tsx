@@ -101,7 +101,7 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
           <button type="button" aria-pressed={notesOpen} className={BOARD_ACTION_BTN} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
         </div>
       </header>
-      <div className="grid grid-cols-[1fr_300px] min-h-0 overflow-hidden">
+      <div className="grid grid-cols-[1fr_300px] min-h-0 overflow-hidden max-[720px]:grid-cols-1 max-[720px]:grid-rows-[45vh_minmax(0,1fr)]">
         <div className="relative overflow-hidden bg-ink cursor-grab active:cursor-grabbing" data-testid="bl-canvas" ref={stageRef}
           onPointerDown={plane.onPointerDown}
           onPointerMove={plane.onPointerMove}

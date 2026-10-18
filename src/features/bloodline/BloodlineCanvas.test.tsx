@@ -184,4 +184,11 @@ describe("BloodlineCanvasPage", () => {
     const house = screen.getByTestId("house-node");
     expect(house.textContent).toContain("2 membros");
   });
+
+  it("stacks canvas and panel below 720px", () => {
+    const b = makeBloodline();
+    mount(b);
+    const wrapper = document.querySelector("[data-testid=bloodline-page] > div:nth-child(2)") as HTMLElement;
+    expect(wrapper.className).toContain("max-[720px]:grid-cols-1");
+  });
 });
