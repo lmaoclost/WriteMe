@@ -72,15 +72,9 @@ export function buildBookHtml(manuscript: Manuscript): string {
       if (chapter.noteEnd?.trim()) {
         body = body + `<div class="chapter-note bottom">${renderMarkdown(chapter.noteEnd.trim())}</div>`;
       }
-      const headText = b.runningHead
-        ? (b.runningHeadMode === "chapter" ? chapter.heading : manuscript.title)
-        : "";
-      const head = b.runningHead
-        ? `<span class="running-head" data-ch-index="${i + 1}">${escapeText(headText)}</span>`
-        : "";
       const num = chapterNumber(b.numberingStyle ?? "arabic", i + 1);
       const numHtml = num ? `<span class="ch-num">${escapeText(num)}</span>` : "";
-      return `${head}<section class="chapter"><h2>${numHtml}${escapeText(chapter.heading)}</h2>${body}</section>`;
+      return `<section class="chapter" data-ch="${i + 1}"><h2>${numHtml}${escapeText(chapter.heading)}</h2>${body}</section>`;
     })
     .join("");
   return `<article class="book">${titleBlock}${dedication}${toc}${sections}${glossary}</article>`;

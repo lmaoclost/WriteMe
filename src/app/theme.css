@@ -300,7 +300,6 @@ input[type="file"].sr-only {
   .print-book .toc ul { list-style: none; padding: 0; }
   .print-book .toc-row { display: flex; gap: 6px; align-items: baseline; }
   .print-book .toc-dot { flex: 1; border-bottom: 1px dotted var(--paper-muted-soft); margin-bottom: 4px; }
-  .print-book .running-head { float: right; font-size: var(--fs-paper-body); color: var(--paper-muted); }
   .print-book .chapter { break-before: page; }
   .print-book .glossary table { width: 100%; border-collapse: collapse; }
   .print-book .glossary td { border-bottom: 1px dotted var(--paper-muted-soft); padding: 5px 6px; vertical-align: top; }

@@ -1,4 +1,5 @@
-/** Generated print stylesheet — page geometry, mirrored margins, folio.
+/** Generated print stylesheet — page geometry, mirrored margins, folio,
+ *  chapter openers (sink, suppressed head/folio) and per-chapter running heads.
  *  Ordered geometry first, then typography; structure rules land here too. */
 
 import type { BinderyConfig, Part } from "../../domain/types";
@@ -45,5 +46,30 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
     `.print-book h1 + p, .print-book h2 + p, .print-book h3 + p, .print-book .chapter-note + p { text-indent: 0; }`,
   );
   if (t.hyphens) rules.push(`.print-book p { hyphens: auto; -webkit-hyphens: auto; }`);
+  const opener = config.opener ?? { sink: 0.18, suppressHead: true, suppressFolio: true };
+  // running head by chapter: a named page per chapter, tied to the flat
+  // 1-based chapter index so numbering stays continuous across parts
+  if (config.runningHead && config.runningHeadMode === "chapter") {
+    ctx.chapters.forEach((ch, i) => {
+      const title = ch.heading.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
+      rules.push(
+        `@page ch${i + 1} { @top-center { content: "${title}"; font-size: 9pt; letter-spacing: 0.08em; text-transform: uppercase; } }`,
+        `.print-book .chapter[data-ch="${i + 1}"] { page: ch${i + 1}; }`,
+      );
+      if (opener.suppressHead || opener.suppressFolio) {
+        const head = opener.suppressHead ? "@top-center { content: none; }" : "";
+        const foot = opener.suppressFolio ? "@bottom-center { content: none; }" : "";
+        rules.push(`@page ch${i + 1}:first { ${head} ${foot} }`);
+      }
+    });
+  }
+  rules.push(
+    `.print-book .chapter { break-before: page; padding-top: ${Math.round(opener.sink * 100)}%; }`,
+    `.print-book .chapter h2 { margin: 0 0 1.2em; text-align: center; }`,
+    `.print-book .chapter h2 .ch-num { display: block; font-size: 0.8em; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.4em; }`,
+  );
+  if (config.dropCaps) {
+    rules.push(`.print-book .chapter > p:first-of-type::first-letter { font-size: 2.6em; float: left; line-height: 0.85; padding-right: 0.08em; }`);
+  }
   return rules.join("\n");
 }

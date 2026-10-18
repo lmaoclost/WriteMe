@@ -291,12 +291,20 @@ describe("buildBookHtml v2", () => {
     expect(html).toContain('<div class="chapter-note bottom"><p>End of draft</p>');
   });
 
-  it("running-head mode chapter uses the chapter title per section", () => {
-    const html = buildBookHtml(mkBook({ bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: false, runningHeadMode: "chapter" } }));
-    expect(html).toContain('<span class="running-head" data-ch-index="1">Prólogo</span>');
-    expect(html).toContain('<span class="running-head" data-ch-index="2">Fim</span>');
-    const book = buildBookHtml(mkBook({ bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: false, runningHeadMode: "book" } }));
-    expect(book).toContain('<span class="running-head" data-ch-index="1">A Coroa e o Rio</span>');
+  it("running-head mode chapter uses the chapter title per section", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const bindery: NonNullable<Manuscript["bindery"]> = { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: false, runningHeadMode: "chapter" };
+    // the chapter title no longer lives in the markup: it moves to the CSS, as a named page per chapter
+    const html = buildBookHtml(mkBook({ bindery }));
+    expect(html).not.toContain("running-head");
+    expect(html).toContain('<section class="chapter" data-ch="1">');
+    expect(html).toContain('<section class="chapter" data-ch="2">');
+    const css = buildBookCss({ ...defaultBindery()!, ...bindery },
+      { chapters: [{ heading: "Prólogo" }, { heading: "Fim" }], parts: [], pageCount: 200 });
+    expect(css).toContain('@page ch1 { @top-center { content: "Prólogo";');
+    expect(css).toContain('@page ch2 { @top-center { content: "Fim";');
+    const book = buildBookHtml(mkBook({ bindery: { ...bindery, runningHeadMode: "book" } }));
+    expect(book).not.toContain('<span class="running-head"');
   });
 
   it("book strings are EN: Contents, Glossary, No content yet", () => {
