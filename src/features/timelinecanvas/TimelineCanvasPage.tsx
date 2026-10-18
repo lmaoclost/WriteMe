@@ -29,6 +29,7 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
   }));
 
   const stageRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   const view = useRef({ s: 0.4, panX: 100, panY: 0 });
   const viewTick = useRef(0);
   const [, setDraw] = useState(0);
@@ -135,7 +136,12 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
                     beadDrag.current = { id: b.id, sx: e.clientX, beadX: b.x, startBeadY: b.y };
                     pushTLHistory(timelineId);
                   }}
+                  onDoubleClick={() => {
+                    if (!b.entryId) return;
+                    navigate(`/p/${timeline.projectId}/entries?e=${b.entryId}`);
+                  }}
                   transform={`translate(${b.x}, ${b.y})`}>
+                  {b.entryId ? <title>Abre no codex</title> : null}
                   <line x1={0} y1={0} x2={0} y2={200 - b.y} className="tl-bead-stem [stroke:var(--line)] [stroke-width:1.5]" />
                   <circle cx={0} cy={0} r={8} fill={b.color} className="tl-bead-dot cursor-pointer" />
                   <text x={0} y={-18} className="tl-bead-label text-sm fill-parchment font-semibold" textAnchor="middle">{b.label}</text>

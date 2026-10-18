@@ -87,4 +87,39 @@ describe("TimelineCanvasPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open in codex" }));
     expect(screen.getByTestId("codex-dest")).toBeInTheDocument();
   });
+
+  it("double-clicking a linked bead opens the codex entry", () => {
+    const prj = store().addProject("V").id;
+    const entry = store().addEntry(prj, "event");
+    store().updateEntry(entry.id, { title: "Guerra dos Cinco Invernos" });
+    const tl = store().addTimeline(prj, "Fio dos Selos");
+    const bead = store().addBead(tl.id, { x: 800, y: 140, label: "Guerra" })!;
+    store().updateBead(bead.id, { entryId: entry.id });
+    render(
+      <MemoryRouter initialEntries={[`/p/${prj}/linewheel/${tl.id}`]}>
+        <Routes>
+          <Route path="/p/:projectId/linewheel/:timelineId" element={<TimelineCanvasPage timelineId={tl.id} />} />
+          <Route path="/p/:projectId/entries" element={<div data-testid="codex-dest" />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    fireEvent.doubleClick(screen.getByTestId("tl-bead"));
+    expect(screen.getByTestId("codex-dest")).toBeInTheDocument();
+  });
+
+  it("double-clicking an unlinked bead does nothing", () => {
+    const prj = store().addProject("V").id;
+    const tl = store().addTimeline(prj, "Fio");
+    store().addBead(tl.id, { x: 800, y: 140, label: "Marcas" });
+    render(
+      <MemoryRouter initialEntries={[`/p/${prj}/linewheel/${tl.id}`]}>
+        <Routes>
+          <Route path="/p/:projectId/linewheel/:timelineId" element={<TimelineCanvasPage timelineId={tl.id} />} />
+          <Route path="/p/:projectId/entries" element={<div data-testid="codex-dest" />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    fireEvent.doubleClick(screen.getByTestId("tl-bead"));
+    expect(screen.queryByTestId("codex-dest")).toBeNull();
+  });
 });
