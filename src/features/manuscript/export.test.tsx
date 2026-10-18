@@ -300,7 +300,7 @@ describe("buildBookHtml v2", () => {
     expect(html).toContain('<section class="chapter" data-ch="1">');
     expect(html).toContain('<section class="chapter" data-ch="2">');
     const css = buildBookCss({ ...defaultBindery()!, ...bindery },
-      { chapters: [{ heading: "Prólogo" }, { heading: "Fim" }], parts: [], pageCount: 200 });
+      { title: "A Coroa e o Rio", chapters: [{ heading: "Prólogo" }, { heading: "Fim" }], parts: [], pageCount: 200 });
     expect(css).toContain('@page ch1 { @top-center { content: "Prólogo";');
     expect(css).toContain('@page ch2 { @top-center { content: "Fim";');
     const book = buildBookHtml(mkBook({ bindery: { ...bindery, runningHeadMode: "book" } }));
@@ -316,7 +316,7 @@ describe("buildBookHtml v2", () => {
 
   it("pageNumbers only affects the print stylesheet, not the book markup", async () => {
     const { buildBookCss } = await import("./bookCss");
-    const ctx = { chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
+    const ctx = { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
     const on = buildBookCss({ ...defaultBindery()!, pageNumbers: true }, ctx);
     expect(on).toContain("counter(page)");
     const off = buildBookCss({ ...defaultBindery()!, pageNumbers: false }, ctx);

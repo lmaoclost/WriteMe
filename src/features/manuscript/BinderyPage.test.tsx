@@ -35,7 +35,7 @@ describe("bindery utils", () => {
   it("mirrored geometry puts the gutter on the inner edge of each page", async () => {
     const { buildBookCss } = await import("./bookCss");
     const css = buildBookCss({ ...defaultBindery()!, geometry: { gutter: 0.5, mirrored: true }, trim: "6x9" },
-      { chapters: [{ heading: "Um" }], parts: [], pageCount: 240 });
+      { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 240 });
     expect(css).toContain("@page :left");
     expect(css).toContain("margin-right: 0.75in"); // inner à direita no verso
     expect(css).toContain("@page :right");
@@ -45,7 +45,7 @@ describe("bindery utils", () => {
 
   it("folio counter only appears when pageNumbers is on", async () => {
     const { buildBookCss } = await import("./bookCss");
-    const ctx = { chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
+    const ctx = { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
     expect(buildBookCss({ ...defaultBindery()!, pageNumbers: true }, ctx)).toContain("counter(page)");
     expect(buildBookCss({ ...defaultBindery()!, pageNumbers: false }, ctx)).not.toContain("counter(page)");
   });
@@ -53,7 +53,7 @@ describe("bindery utils", () => {
   it("gutter auto derives from the estimated page count", async () => {
     const { buildBookCss } = await import("./bookCss");
     const css = buildBookCss({ ...defaultBindery()!, trim: "5x8", geometry: { gutter: "auto", mirrored: true } },
-      { chapters: [{ heading: "Um" }], parts: [], pageCount: 700 });
+      { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 700 });
     expect(css).toContain("@page :right");
     expect(css).toContain("margin-left: 0.75in");  // 700 páginas → gutter KDP 0.75 vence outer×1.5 (0.63)
     expect(css).toContain("margin-right: 0.42in"); // outer = 5 × 0.0833
@@ -61,7 +61,7 @@ describe("bindery utils", () => {
 
   it("indents paragraphs after the first and never the opener", async () => {
     const { buildBookCss } = await import("./bookCss");
-    const css = buildBookCss(defaultBindery()!, { chapters: [{ heading: "Um" }], parts: [], pageCount: 100 });
+    const css = buildBookCss(defaultBindery()!, { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 });
     expect(css).toMatch(/\.print-book p \+ p \{ text-indent: 1em; \}/);
     expect(css).toContain("widows: 2");
     expect(css).toContain("orphans: 2");
@@ -69,30 +69,49 @@ describe("bindery utils", () => {
 
   it("one named page per chapter carries the chapter title as a running head", async () => {
     const { buildBookCss } = await import("./bookCss");
-    const ctx = { chapters: [{ heading: "A Porta" }, { heading: "O Rio" }], parts: [], pageCount: 200 };
+    const ctx = { title: "A Coroa e o Rio", chapters: [{ heading: "A Porta" }, { heading: "O Rio" }], parts: [], pageCount: 200 };
     const css = buildBookCss({ ...defaultBindery()!, runningHead: true, runningHeadMode: "chapter" }, ctx);
     expect(css).toContain(`@page ch1 { @top-center { content: "A Porta";`);
     expect(css).toContain(`@page ch2 { @top-center { content: "O Rio";`);
     expect(css).toContain('.print-book .chapter[data-ch="1"] { page: ch1; }');
   });
 
-  it("book-wide running head ignores chapter titles", async () => {
+  it("book-wide running head carries the book title and no chapter pages", async () => {
     const { buildBookCss } = await import("./bookCss");
-    const ctx = { chapters: [{ heading: "A Porta" }], parts: [], pageCount: 200 };
+    const ctx = { title: "A Coroa e o Rio", chapters: [{ heading: "A Porta" }], parts: [], pageCount: 200 };
     const css = buildBookCss({ ...defaultBindery()!, runningHead: true, runningHeadMode: "book" }, ctx);
+    expect(css).toContain('@page { @top-center { content: "A Coroa e o Rio"; font-size: 9pt; letter-spacing: 0.08em; text-transform: uppercase; } }');
     expect(css).not.toContain('content: "A Porta"');
+    expect(css).not.toContain("@page ch1");
+  });
+
+  it("chapter mode leaves the base page head-free for front matter", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const ctx = { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
+    const css = buildBookCss({ ...defaultBindery()!, runningHead: true, runningHeadMode: "chapter" }, ctx);
+    expect(css).not.toContain("@page { @top-center");
+    expect(css).not.toContain('content: "A Coroa e o Rio"');
+  });
+
+  it("escapes quotes and backslashes in running-head titles", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const ctx = { title: 'Rio "de\\Baixo"', chapters: [{ heading: 'Capa "Um"\\Final' }], parts: [], pageCount: 100 };
+    const book = buildBookCss({ ...defaultBindery()!, runningHead: true, runningHeadMode: "book" }, ctx);
+    expect(book).toContain('content: "Rio \\"de\\\\Baixo\\""');
+    const chapter = buildBookCss({ ...defaultBindery()!, runningHead: true, runningHeadMode: "chapter" }, ctx);
+    expect(chapter).toContain('content: "Capa \\"Um\\"\\\\Final"');
   });
 
   it("chapter opener drops head and folio, and sinks", async () => {
     const { buildBookCss } = await import("./bookCss");
-    const css = buildBookCss(defaultBindery()!, { chapters: [{ heading: "Um" }], parts: [], pageCount: 100 });
+    const css = buildBookCss(defaultBindery()!, { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 });
     expect(css).toContain("@page ch1:first { @top-center { content: none; } @bottom-center { content: none; } }");
     expect(css).toContain(".print-book .chapter { break-before: page; padding-top: 18%; }");
   });
 
   it("drop cap styles the chapter's opening paragraph only when enabled", async () => {
     const { buildBookCss } = await import("./bookCss");
-    const ctx = { chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
+    const ctx = { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
     const on = buildBookCss({ ...defaultBindery()!, dropCaps: true }, ctx);
     expect(on).toContain(".print-book .chapter > p:first-of-type::first-letter { font-size: 2.6em; float: left; line-height: 0.85; padding-right: 0.08em; }");
     const off = buildBookCss({ ...defaultBindery()!, dropCaps: false }, ctx);
@@ -101,7 +120,7 @@ describe("bindery utils", () => {
 
   it("justification is opt-in and hyphens stay off by default", async () => {
     const { buildBookCss } = await import("./bookCss");
-    const ctx = { chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
+    const ctx = { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
     expect(buildBookCss(defaultBindery()!, ctx)).toContain("text-align: justify");
     expect(buildBookCss(defaultBindery()!, ctx)).not.toContain("hyphens: auto");
     const ragged = { ...defaultBindery()!, typography: { bodyPt: 11, leading: 14.5, indent: 1, justify: false, hyphens: false } };

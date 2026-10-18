@@ -52,6 +52,7 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
   const html = useMemo(() => (manuscript ? buildBookHtml(manuscript) : ""), [manuscript]);
   const css = useMemo(
     () => (manuscript ? buildBookCss(b, {
+      title: manuscript.title,
       chapters: manuscript.chapters.map((c) => ({ heading: c.heading, partId: c.partId })),
       parts: manuscript.parts ?? [],
       pageCount: estimatePageCount(manuscript),

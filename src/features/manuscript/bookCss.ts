@@ -1,15 +1,20 @@
 /** Generated print stylesheet — page geometry, mirrored margins, folio,
- *  chapter openers (sink, suppressed head/folio) and per-chapter running heads.
+ *  chapter openers (sink, suppressed head/folio) and running heads
+ *  (book-wide head on the base page, or per-chapter named pages).
  *  Ordered geometry first, then typography; structure rules land here too. */
 
 import type { BinderyConfig, Part } from "../../domain/types";
 import { inches, kdpGutter, pageMargins, trimToPage } from "./bindery";
 
 export interface BookCtx {
+  title: string;
   chapters: { heading: string; partId?: string }[];
   parts: Part[];
   pageCount: number;
 }
+
+/** CSS string literal: escape backslashes and quotes for content: "...". */
+const cssStr = (text: string) => text.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
 
 const BASE = (config: BinderyConfig) => ({
   bodyPt: config.typography?.bodyPt ?? 11,
@@ -32,6 +37,11 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
   const rules: string[] = [
     `@page { size: ${trimToPage(config.trim)}; margin: ${inches(m.top)} ${inches(m.outer)} ${inches(m.bottom)} ${inches(m.inner)}; ${folio} }`,
   ];
+  // book-wide head lives on the base page rule; chapter mode leaves it to the
+  // chN named pages so front matter and the TOC print head-free
+  if (config.runningHead && config.runningHeadMode === "book") {
+    rules.push(`@page { @top-center { content: "${cssStr(ctx.title)}"; font-size: 9pt; letter-spacing: 0.08em; text-transform: uppercase; } }`);
+  }
   if (t.mirrored) {
     rules.push(
       `@page :left { margin-left: ${inches(m.outer)}; margin-right: ${inches(m.inner)}; }`,
@@ -51,9 +61,8 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
   // 1-based chapter index so numbering stays continuous across parts
   if (config.runningHead && config.runningHeadMode === "chapter") {
     ctx.chapters.forEach((ch, i) => {
-      const title = ch.heading.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
       rules.push(
-        `@page ch${i + 1} { @top-center { content: "${title}"; font-size: 9pt; letter-spacing: 0.08em; text-transform: uppercase; } }`,
+        `@page ch${i + 1} { @top-center { content: "${cssStr(ch.heading)}"; font-size: 9pt; letter-spacing: 0.08em; text-transform: uppercase; } }`,
         `.print-book .chapter[data-ch="${i + 1}"] { page: ch${i + 1}; }`,
       );
       if (opener.suppressHead || opener.suppressFolio) {
