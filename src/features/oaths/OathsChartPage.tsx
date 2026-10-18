@@ -37,7 +37,6 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
   const scaleRef = useRef(scale);
   scaleRef.current = scale;
   const pan = useRef<{ x: number; basePanX: number; y: number; basePanY: number } | null>(null);
-  const drag = useRef<{ id: string; startX: number; startY: number; baseX: number; baseY: number; pushed: boolean } | null>(null);
   const [pendingFrom, setPendingFrom] = useState<string | null>(null);
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
 
@@ -105,16 +104,6 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
   };
 
   const onCanvasMove = (e: React.PointerEvent) => {
-    if (drag.current) {
-      const d = drag.current;
-      const dx = e.clientX - d.startX;
-      const dy = e.clientY - d.startY;
-      if (Math.hypot(dx, dy) > 5) {
-        if (!d.pushed) { useScriptorium.getState().pushOCHistory(chartId); d.pushed = true; }
-        useScriptorium.getState().moveOathMember(d.id, d.baseX + dx / scaleRef.current.s, d.baseY + dy / scaleRef.current.s);
-      }
-      return;
-    }
     if (pendingFrom) {
       const rect = stageRef.current?.getBoundingClientRect();
       if (rect) setCursor({ x: e.clientX - rect.left, y: e.clientY - rect.top });
@@ -133,7 +122,7 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
     pan.current = { x: e.clientX, y: e.clientY, basePanX: scale.panX, basePanY: scale.panY };
   };
 
-  const onPointerUp = () => { drag.current = null; pan.current = null; };
+  const onPointerUp = () => { pan.current = null; };
 
   if (!chart) return null;
 
@@ -144,6 +133,8 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
     setCursor(null);
   };
 
+  // Drag runs on window listeners (bloodline pattern) so a release outside the
+  // canvas — over the header or the panel — still ends the drag.
   const onCardDown = (m: { id: string }) => (e: React.PointerEvent) => {
     if (e.button !== 0) return;
     const t = e.target as Element;
@@ -152,7 +143,24 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
     e.stopPropagation();
     setSelectedId(m.id);
     const p = pos.get(m.id);
-    if (p) drag.current = { id: m.id, startX: e.clientX, startY: e.clientY, baseX: p.x, baseY: p.y, pushed: false };
+    if (!p) return;
+    const start = { x: e.clientX, y: e.clientY };
+    let pushed = false;
+    const onMove = (ev: PointerEvent) => {
+      const dx = ev.clientX - start.x;
+      const dy = ev.clientY - start.y;
+      if (Math.hypot(dx, dy) <= 5) return;
+      if (!pushed) { useScriptorium.getState().pushOCHistory(chartId); pushed = true; }
+      useScriptorium.getState().moveOathMember(m.id, p.x + dx / scaleRef.current.s, p.y + dy / scaleRef.current.s);
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
   };
 
   return (
@@ -236,7 +244,7 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
               {pendingFrom ? (() => {
                 const from = pos.get(pendingFrom);
                 if (!from || !cursor) return null;
-                return <line data-testid="pending-oath" x1={from.x} y1={from.y} x2={cursor.x / scaleRef.current.s} y2={cursor.y / scaleRef.current.s} className="[stroke:var(--gold)] [stroke-width:2] [stroke-dasharray:6_6]" />;
+                return <line data-testid="pending-oath" x1={from.x} y1={from.y} x2={(cursor.x - scaleRef.current.panX) / scaleRef.current.s} y2={(cursor.y - scaleRef.current.panY) / scaleRef.current.s} className="[stroke:var(--gold)] [stroke-width:2] [stroke-dasharray:6_6]" />;
               })() : null}
             </svg>
             {chart.members.map((m) => {

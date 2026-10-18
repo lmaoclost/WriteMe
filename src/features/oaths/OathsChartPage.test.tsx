@@ -90,6 +90,33 @@ describe("OathsChartPage", () => {
     const chart = store().oathsCharts![0];
     expect(chart.oathLinks.find((l) => l.superiorId === a.id && l.subordinateId === b.id)).toBeTruthy();
   });
+
+  it("pending rubber band lands on the pointer in plane coords", () => {
+    const ch = store().addOathsChart("prj_1", "Anel");
+    const a = store().addOathMember(ch.id, undefined, { name: "Mirren" })!;
+    void a;
+    store().addOathMember(ch.id, undefined, { name: "Orvean" });
+    render(<MemoryRouter><OathsChartPage chartId={ch.id} /></MemoryRouter>);
+    firePointer(screen.getByLabelText("Conectar Mirren"), "pointerdown", { clientX: 300, clientY: 300 });
+    firePointer(screen.getByTestId("oaths-canvas"), "pointermove", { clientX: 500, clientY: 450 });
+    // fit: 2 roots at x=315/465 → s=1, panX=600-390=210, panY=400-120=280
+    // cursor (500,450) stage-relative → plane (290, 170)
+    const line = document.querySelector('[data-testid="pending-oath"]') as SVGLineElement;
+    expect(line.getAttribute("x2")).toBe("290");
+    expect(line.getAttribute("y2")).toBe("170");
+  });
+
+  it("drag releases anywhere (window-level), not only over the canvas", () => {
+    const ch = store().addOathsChart("prj_1", "Anel");
+    store().addOathMember(ch.id, undefined, { name: "Mirren" })!;
+    render(<MemoryRouter><OathsChartPage chartId={ch.id} /></MemoryRouter>);
+    firePointer(screen.getByTestId("oath-member"), "pointerdown", { clientX: 100, clientY: 100 });
+    firePointer(document.body, "pointermove", { clientX: 200, clientY: 150 });
+    firePointer(document.body, "pointerup", { clientX: 200, clientY: 150 });
+    const got = store().oathsCharts![0].members[0];
+    expect(got.x).not.toBeUndefined();
+    expect(got.y).not.toBeUndefined();
+  });
 });
 
 describe("OathsIndexPage", () => {
