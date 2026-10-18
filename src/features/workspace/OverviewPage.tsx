@@ -39,7 +39,7 @@ export function OverviewPage() {
   const putImage = useScriptorium((s) => s.putImage);
   const updateProject = useScriptorium((s) => s.updateProject);
   const removeImage = useScriptorium((s) => s.removeImage);
-  const images = useScriptorium((s) => s.images);
+  const coverUrl = useScriptorium((s) => (project?.coverImageKey ? s.images[project.coverImageKey] : undefined));
   const pushToast = useScriptorium((s) => s.pushToast);
 
   const onCover = async (file: File) => {
@@ -60,8 +60,8 @@ export function OverviewPage() {
     <div className="mx-auto h-full max-w-[960px] overflow-y-auto pt-7 px-6 pb-16">
       <header className="grid gap-[18px]">
         <label className="group relative block h-[200px] rounded-lg border border-line overflow-hidden bg-[radial-gradient(ellipse_120%_80%_at_30%_20%,color-mix(in_srgb,var(--accent)_14%,var(--night-2)),var(--night))] cursor-pointer hover:border-gold-dim">
-          {project?.coverImageKey && images[project.coverImageKey] && (
-            <img src={images[project.coverImageKey]} alt="" className="block h-full w-full object-cover" />
+          {project?.coverImageKey && coverUrl && (
+            <img src={coverUrl} alt="" className="block h-full w-full object-cover" />
           )}
           <span className="absolute right-3 bottom-3 bg-[color-mix(in_srgb,var(--ink)_88%,var(--gold)_4%)] text-parchment border border-gold-dim rounded-sm px-2.5 py-1.5 text-xs tracking-[0.04em] shadow-[0_18px_40px_rgb(16_16_30/0.55)] group-hover:border-gold group-hover:text-parchment-strong">Change cover</span>
           <input

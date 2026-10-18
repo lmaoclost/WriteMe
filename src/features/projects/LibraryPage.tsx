@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { Button } from "../../ui/Button";
 import { Field } from "../../ui/Field";
@@ -45,7 +46,15 @@ export function LibraryPage() {
   const deleteProject = useScriptorium((s) => s.deleteProject);
   const pushToast = useScriptorium((s) => s.pushToast);
   const seedDemo = useScriptorium((s) => s.seedDemo);
-  const images = useScriptorium((s) => s.images);
+  // only cover values for the listed projects — an unrelated image upload
+  // no longer re-renders the whole library
+  const covers = useScriptorium(useShallow((s) => {
+    const out: Record<string, string> = {};
+    for (const p of s.projects) {
+      if (p.coverImageKey && s.images[p.coverImageKey]) out[p.coverImageKey] = s.images[p.coverImageKey];
+    }
+    return out;
+  }));
 
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
@@ -219,8 +228,8 @@ export function LibraryPage() {
             {worldList.map((p) => (
               <article key={p.id} className="relative flex flex-col min-h-[120px] overflow-hidden rounded-lg border border-line bg-night transition-[border-color] duration-[180ms] hover:border-gold-dim">
                 <Link to={`/p/${p.id}`} className="grid gap-1.5 p-4 text-inherit no-underline">
-                  {p.coverImageKey && images[p.coverImageKey] && (
-                    <img className="h-[120px] w-full object-cover" src={images[p.coverImageKey]} alt="" />
+                  {p.coverImageKey && covers[p.coverImageKey] && (
+                    <img className="h-[120px] w-full object-cover" src={covers[p.coverImageKey]} alt="" />
                   )}
                   <h3 className="font-display text-[1.25rem] font-semibold">{p.name}</h3>
                   {p.description && <p className="text-slate text-[0.8125rem] m-0">{p.description}</p>}

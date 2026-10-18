@@ -279,3 +279,10 @@
   .bindery-live .glossary table { width: 100%; border-collapse: collapse; }
   .bindery-live .glossary td { border-bottom: 1px dotted var(--paper-muted-soft); padding: 5px 6px; vertical-align: top; }
 }
+/* Long scroll lists: skip layout/paint for rows outside the viewport. */
+.book-ch-rows > li,
+.codex-rows > li,
+.timeline-item {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 3.5rem;
+}
