@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { useRafState, useRafCallback } from "./useRaf";
+import { useRafCallback, useRafState, type RafSetter } from "./useRaf";
 
 let frameQueue: FrameRequestCallback[] = [];
 
@@ -31,34 +31,48 @@ const fireFrames = () =>
 
 describe("useRafState", () => {
   it("does not commit until a frame fires; the latest absolute value wins", () => {
-    let set: (v: number) => void = () => {};
+    let set: RafSetter<number> | null = null;
     function Harness(): ReactNode {
       const [x, setX] = useRafState(0);
       set = setX;
       return <div data-testid="out">{String(x)}</div>;
     }
     render(<Harness />);
-    act(() => { set(1); set(2); set(3); });
+    act(() => { set!(1); set!(2); set!(3); });
     expect(screen.getByTestId("out")).toHaveTextContent("0");
     fireFrames();
     expect(screen.getByTestId("out")).toHaveTextContent("3");
-    act(() => { set(9); });
+    act(() => { set!(9); });
     fireFrames();
     expect(screen.getByTestId("out")).toHaveTextContent("9");
   });
 
   it("chains functional updates issued within the same frame", () => {
-    let set: (v: number | ((p: number) => number)) => void = () => {};
+    let set: RafSetter<number> | null = null;
     function Harness(): ReactNode {
       const [x, setX] = useRafState(10);
       set = setX;
       return <div data-testid="out">{String(x)}</div>;
     }
     render(<Harness />);
-    act(() => { set((p) => p + 1); set((p) => p + 10); });
+    act(() => { set!((p) => p + 1); set!((p) => p + 10); });
     expect(screen.getByTestId("out")).toHaveTextContent("10");
     fireFrames();
     expect(screen.getByTestId("out")).toHaveTextContent("21");
+  });
+
+  it("flush() commits the pending chain synchronously", () => {
+    let set: RafSetter<number> | null = null;
+    function Harness(): ReactNode {
+      const [x, setX] = useRafState(0);
+      set = setX;
+      return <div data-testid="out">{String(x)}</div>;
+    }
+    render(<Harness />);
+    act(() => { set!(4); set!.flush(); });
+    expect(screen.getByTestId("out")).toHaveTextContent("4");
+    fireFrames(); // must not double-apply after flush
+    expect(screen.getByTestId("out")).toHaveTextContent("4");
   });
 });
 
