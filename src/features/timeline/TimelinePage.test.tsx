@@ -109,7 +109,7 @@ describe("TimelinePage", () => {
     expect(screen.getByRole("link", { name: "Codex" }).getAttribute("class")).toContain("text-gold");
   });
 
-  it("uses Só eventos as the default chip and Tudo reveals dated non-events", () => {
+  it("uses Tudo as the default chip and Events only narrows the line", () => {
     const projectId = seedProject([
       { title: "Lei do Selo", category: "lore", date: "1300-01" },
       { title: "Tratado das Três Pontes", category: "event", date: "1200-05" },
@@ -118,13 +118,14 @@ describe("TimelinePage", () => {
     render(timelineRoute(projectId));
     const so = screen.getByRole("button", { name: "Events only" });
     const tudo = screen.getByRole("button", { name: "Tudo" });
+    expect(tudo.getAttribute("aria-pressed")).toBe("true");
+    expect(so.getAttribute("aria-pressed")).toBe("false");
+    // Tudo default: dated non-events (e.g. casa/faction) already on the line
+    expect(cardTitles()).toEqual(["Tratado das Três Pontes", "Lei do Selo"]);
+    fireEvent.click(so);
     expect(so.getAttribute("aria-pressed")).toBe("true");
     expect(tudo.getAttribute("aria-pressed")).toBe("false");
     expect(cardTitles()).toEqual(["Tratado das Três Pontes"]);
-    fireEvent.click(tudo);
-    expect(so.getAttribute("aria-pressed")).toBe("false");
-    expect(tudo.getAttribute("aria-pressed")).toBe("true");
-    expect(cardTitles()).toEqual(["Tratado das Três Pontes", "Lei do Selo"]);
   });
 
   it("lists undated entries and corrupted dates in the final section with warning dots", () => {
@@ -155,9 +156,10 @@ describe("TimelinePage", () => {
     render(timelineRoute(projectId));
     const section = document.querySelector(".timeline-undated");
     expect(section?.textContent).toContain("Guerra dos Cinco Invernos");
+    // Tudo is the default now: undated non-events are listed from the start
+    expect(section?.textContent).toContain("Rio Sarnen");
+    fireEvent.click(screen.getByRole("button", { name: "Events only" }));
     expect(section?.textContent).not.toContain("Rio Sarnen");
-    fireEvent.click(screen.getByRole("button", { name: "Tudo" }));
-    expect(document.querySelector(".timeline-undated")?.textContent).toContain("Rio Sarnen");
   });
 
   it("shows the empty copy when no filtered entry has a valid date", () => {

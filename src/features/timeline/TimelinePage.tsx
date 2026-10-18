@@ -29,7 +29,7 @@ export function TimelinePage({ projectId }: { projectId: string }) {
     useShallow((s) => s.entries.filter((e) => e.projectId === projectId)),
   );
   const navigate = useNavigate();
-  const [onlyEvents, setOnlyEvents] = useState(true);
+  const [onlyEvents, setOnlyEvents] = useState(false);
 
   const dated: DatedRow[] = [];
   const undated: UndatedRow[] = [];
