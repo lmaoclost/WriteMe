@@ -20,7 +20,7 @@ export function BloodlinePanel({ bloodline, selectedId, onSelect }: {
   if (!person && !house) {
     return (
       <aside className={BOARD_PANEL}>
-        <p className={BOARD_PANEL_HINT}>Selecione uma pessoa ou casa no canvas.</p>
+        <p className={BOARD_PANEL_HINT}>Select a person or house on the canvas.</p>
       </aside>
     );
   }
@@ -78,7 +78,7 @@ function PersonPanel({ bloodline, person, onSelect }: {
       const { dataUrl } = await fileToDataUrl(file);
       const key = store().putImage(dataUrl, "person");
       update({ portraitKey: key });
-      pushToast("success", "Retrato atualizado.");
+      pushToast("success", "Portrait updated.");
     } catch {
       pushToast("error", "Couldn't load the portrait.");
     } finally {
@@ -89,30 +89,30 @@ function PersonPanel({ bloodline, person, onSelect }: {
   const removePerson = () => {
     if (!armDelete) { setArmDelete(true); return; }
     store().deletePerson(person.id);
-    pushToast("success", "Pessoa removida.");
+    pushToast("success", "Person removed.");
     onSelect(null);
   };
 
   const candidates = bloodline.persons;
 
   return (
-    <div className="grid gap-3">
+    <div className="grid grid-cols-1 gap-3">
       <header className={BOARD_PANEL_HEAD}>
-        <h2 className={BOARD_PANEL_HEAD_H2}>{person.name || "Sem nome"}</h2>
-        <Button kind={armDelete ? "danger" : "ghost"} className="px-2 py-1 text-xs" onClick={removePerson}
+        <h2 className={BOARD_PANEL_HEAD_H2}>{person.name || "Unnamed"}</h2>
+        <Button kind={armDelete ? "danger" : "ghost"} className="px-2 py-1 text-xs whitespace-nowrap" onClick={removePerson}
           aria-label={armDelete ? "Confirm delete person" : "Delete person"}>
           {armDelete ? "Confirm?" : "Delete"}
         </Button>
       </header>
-      <Field label="Retrato">
+      <Field label="Portrait">
         <div className="flex items-center gap-2">
           {person.portraitKey ? (
             <PortraitThumb personId={person.id} />
           ) : (
-            <span className="portrait-none text-slate text-[13px]">Sem retrato</span>
+            <span className="portrait-none text-slate text-[13px]">No portrait</span>
           )}
           <label className="upload-label rounded-sm border border-line py-1 px-2.5 text-parchment-dim cursor-pointer hover:text-parchment hover:border-gold-dim">
-            {portraitUploading ? "…" : "Carregar"}
+            {portraitUploading ? "…" : "Upload"}
             <input
               type="file"
               accept="image/*"
@@ -169,7 +169,7 @@ function PersonPanel({ bloodline, person, onSelect }: {
       </section>
 
       <section className="border-t border-line mt-3.5 pt-2.5 grid gap-2">
-        <h3>Reinado / mandato</h3>
+        <h3>Reigns / tenures</h3>
         <ul className="list-none m-0 p-0 grid gap-1.5">
           {person.tenures.map((t, i) => (
             <li key={i} className="tenure-row grid grid-cols-[1.2fr_1fr_1fr_auto] gap-1.5 items-center [&>*]:min-w-0 [&_button]:text-slate [&_button]:text-xs [&_input]:bg-ink [&_input]:border [&_input]:border-line [&_input]:rounded-sm [&_input]:text-parchment [&_input]:px-1.5 [&_input]:py-1 [&_input]:text-xs [&_input]:w-full">
@@ -201,7 +201,7 @@ function PersonPanel({ bloodline, person, onSelect }: {
           onClear={() => update({ connectedTo: undefined })}
         />
         <ConnectionPicker
-          label="Parceiro"
+          label="Partner"
           persons={candidates.filter((c) => c.id !== person.id)}
           currentId={person.partnerId}
           onPick={(id) => {
@@ -288,19 +288,19 @@ function ConnectionPicker({ label, persons, currentId, onPick, onClear }: {
   const q = query.trim().toLowerCase();
   const matches = persons.filter((p) => p.name.toLowerCase().includes(q)).slice(0, 8);
   return (
-    <div className="flex flex-col gap-1.5 connection-picker">
+    <div className="relative flex flex-col gap-1.5 connection-picker">
       <span className="field-label text-xs font-semibold uppercase tracking-[0.08em] text-slate">{label}</span>
       <div className="flex items-center gap-2">
         {current ? (
-          <span className="connection-name text-[13px] text-parchment">{current.name}</span>
+          <span className="connection-name min-w-0 truncate text-[13px] text-parchment">{current.name}</span>
         ) : (
           <span className="connection-name text-slate text-[13px]">—</span>
         )}
-        <button type="button" aria-label={`Escolher ${label}`} onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }} className="bg-ink border border-line text-slate rounded-sm px-2 py-0.5 text-xs">v</button>
-        {current ? <button type="button" aria-label={`Remover ${label}`} onClick={onClear} className="bg-ink border border-line text-slate rounded-sm px-1.5 py-0.5 text-xs">✕</button> : null}
+        <button type="button" aria-label={`Pick ${label}`} onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }} className="shrink-0 bg-ink border border-line text-slate rounded-sm px-2 py-0.5 text-xs">v</button>
+        {current ? <button type="button" aria-label={`Remove ${label}`} onClick={onClear} className="shrink-0 bg-ink border border-line text-slate rounded-sm px-1.5 py-0.5 text-xs">✕</button> : null}
       </div>
       {open ? (
-        <div className="connection-pop absolute mt-1 z-30 bg-night-2 border border-line rounded-lg p-2 w-60" onClick={(e) => e.stopPropagation()}>
+        <div className="connection-pop absolute top-full left-0 mt-1 z-50 max-h-[240px] overflow-y-auto bg-night-2 border border-line rounded-lg p-2 w-60" onClick={(e) => e.stopPropagation()}>
           <input value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search persons" placeholder="Type to search persons..." className="w-full bg-ink border border-line text-parchment rounded-sm px-2 py-1 mb-1.5" />
           <ul className="link-list list-none m-0 p-0 grid gap-0.5 [&_button]:block [&_button]:w-full [&_button]:text-left [&_button]:bg-none [&_button]:border-0 [&_button]:text-parchment-dim [&_button]:text-[13px] [&_button]:py-1 [&_button]:px-1.5 [&_button]:rounded-sm hover:[&_button]:bg-accent">
             {matches.map((p) => (
@@ -328,12 +328,12 @@ function HousePanel({ bloodline, house, onSelect }: {
   const removeHouse = () => {
     if (!armDelete) { setArmDelete(true); return; }
     store().deleteHouse(house.id);
-    pushToast("success", "Casa removida.");
+    pushToast("success", "House removed.");
     onSelect(null);
   };
   const members = bloodline.persons.filter((p) => p.houseId === house.id);
   return (
-    <div className="grid gap-3">
+    <div className="grid grid-cols-1 gap-3">
       <header className={BOARD_PANEL_HEAD}>
         <h2 className={BOARD_PANEL_HEAD_H2}>{house.name}</h2>
         <Button kind={armDelete ? "danger" : "ghost"} className="px-2 py-1 text-xs" onClick={removeHouse}
@@ -347,15 +347,15 @@ function HousePanel({ bloodline, house, onSelect }: {
       <PersonField label="Subtitle" value={house.subtitle ?? ""} onCommit={(v) => update({ subtitle: v.trim() || undefined })} />
       <label className="flex gap-2 items-center text-[13px] text-parchment-dim">
         <input type="checkbox" checked={house.isMainBranch} onChange={(e) => update({ isMainBranch: e.target.checked })} />
-        <span>Ramo principal</span>
+        <span>Main branch</span>
       </label>
       <label className="flex gap-2 items-center text-[13px] text-parchment-dim">
         <input type="checkbox" checked={house.isMonarch} onChange={(e) => update({ isMonarch: e.target.checked })} />
         <span>Monarch House</span>
       </label>
       <section className="border-t border-line mt-3.5 pt-2.5 grid gap-2">
-        <h3>Membros da casa</h3>
-        {members.length === 0 ? <p className="text-slate text-[13px] italic">Nenhum membro.</p> : null}
+        <h3>House members</h3>
+        {members.length === 0 ? <p className="text-slate text-[13px] italic">No members yet.</p> : null}
         <ul className="titles-list list-none m-0 p-0 grid gap-1 [&_li]:flex [&_li]:items-center [&_li]:gap-2 [&_li]:text-[13px]">
           {members.map((p) => (
             <li key={p.id}>
@@ -363,13 +363,13 @@ function HousePanel({ bloodline, house, onSelect }: {
                 type="button"
                 className="bg-none border-0 text-parchment-dim text-[13px] py-0.5 cursor-pointer hover:text-gold"
                 onClick={() => onSelect(p.id)}
-              >{p.name || "Sem nome"}</button>
+              >{p.name || "Unnamed"}</button>
             </li>
           ))}
         </ul>
       </section>
       <p className="text-slate text-xs" aria-hidden="true">
-        {bloodline.persons.length} {bloodline.persons.length === 1 ? "pessoa" : "pessoas"} · {bloodline.houses.length} {bloodline.houses.length === 1 ? "casa" : "casas"}
+        {bloodline.persons.length} {bloodline.persons.length === 1 ? "person" : "persons"} · {bloodline.houses.length} {bloodline.houses.length === 1 ? "house" : "houses"}
       </p>
     </div>
   );

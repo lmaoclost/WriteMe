@@ -20,10 +20,10 @@ export function FindBar({ persons, onPick, onClose }: {
     return haystack.includes(q);
   }).slice(0, 50);
   return (
-    <div className="find-bar absolute top-3 right-[320px] z-40 bg-night-2 border border-line rounded-lg p-2.5 w-[260px]" role="dialog" aria-label="Buscar pessoas" data-testid="find-bar">
+    <div className="find-bar absolute top-3 right-[320px] z-40 bg-night-2 border border-line rounded-lg p-2.5 w-[260px]" role="dialog" aria-label="Search persons" data-testid="find-bar">
       <input
         autoFocus
-        aria-label="Buscar"
+        aria-label="Search"
         placeholder="Name, suffix, title…"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
@@ -37,7 +37,7 @@ export function FindBar({ persons, onPick, onClose }: {
         ))}
       </ul>
       {!q ? <p className="text-slate text-xs mt-1.5 mb-0">Digite para buscar.</p> : null}
-      {q && matches.length === 0 ? <p className="text-slate text-xs mt-1.5 mb-0">Nenhum resultado.</p> : null}
+      {q && matches.length === 0 ? <p className="text-slate text-xs mt-1.5 mb-0">No results.</p> : null}
     </div>
   );
 }

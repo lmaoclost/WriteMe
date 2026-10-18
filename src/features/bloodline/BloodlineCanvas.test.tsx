@@ -110,13 +110,13 @@ describe("BloodlineCanvasPage", () => {
   it("empty state invites founder", () => {
     const b = makeBloodline();
     mount(b);
-    expect(screen.getByText(/fundador|primeira pessoa/i)).toBeInTheDocument();
+    expect(screen.getByText(/founder|first person/i)).toBeInTheDocument();
   });
 
   it("add person button creates and selects", () => {
     const b = makeBloodline();
     mount(b);
-    fireEvent.click(screen.getByRole("button", { name: /Adicionar pessoa/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Add person/i }));
     expect(store().bloodlines[0].persons).toHaveLength(1);
     expect(screen.getByTestId("person-node")).toBeInTheDocument();
   });

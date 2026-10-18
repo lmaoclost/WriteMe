@@ -137,7 +137,7 @@ describe("BloodlinePanel — house", () => {
     store().addHouse(b.id, { name: "Casa Vellmor" })!;
     mountCanvas(b.id);
     firePointer(screen.getByTestId("house-node"), "pointerdown", { clientX: 0, clientY: 0 });
-    expect(screen.getByText("2 pessoas · 1 casa")).toBeInTheDocument();
+    expect(screen.getByText("2 persons · 1 house")).toBeInTheDocument();
   });
 
   it("house panel lists the persons belonging to the house and focuses them", () => {
@@ -149,7 +149,7 @@ describe("BloodlinePanel — house", () => {
     });
     mountCanvas(b.id);
     firePointer(screen.getByTestId("house-node"), "pointerdown", { clientX: 0, clientY: 0 });
-    expect(screen.getByTestId("bl-panel").textContent).toContain("Membros da casa");
+    expect(screen.getByTestId("bl-panel").textContent).toContain("House members");
     expect(screen.getByRole("button", { name: "Aldric" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Roderick" }));
     expect(document.querySelector("[data-selected-id]")?.getAttribute("data-selected-id")).toBe(p2);
@@ -183,10 +183,10 @@ describe("Find + Notepad", () => {
   it("find searches and centers", () => {
     const { b, p1 } = seed();
     mountCanvas(b.id);
-    fireEvent.click(screen.getByRole("button", { name: "Buscar pessoa" }));
+    fireEvent.click(screen.getByRole("button", { name: "Search person" }));
     const bar = screen.getByTestId("find-bar");
     expect(bar).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Buscar"), { target: { value: "aldric" } });
+    fireEvent.change(screen.getByLabelText("Search"), { target: { value: "aldric" } });
     expect(screen.getByRole("button", { name: "Aldric" })).toBeInTheDocument();
     const planeBefore = screen.getByTestId("bl-plane").style.transform;
     fireEvent.click(screen.getByRole("button", { name: "Aldric" }));
