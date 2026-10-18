@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
-  ProjectData, Project, Atlas, Region, Pin, PinType, WorldEntry, EntryCategory, Manuscript, Chapter,
+  ProjectData, Project, Atlas, Region, Pin, PinType, WorldEntry, EntryCategory, Manuscript, Chapter, Part,
   Bloodline, BloodlinePerson, BloodlineHouse,
   FactionWeb, Faction, FactionConnection, ConnectionType,
   CustomCalendar, CalendarEvent,
@@ -91,6 +91,11 @@ const nextChapterOrder = (chapters: readonly Chapter[]): number =>
   chapters.length === 0
     ? 0
     : chapters.reduce((max, c) => (c.order > max ? c.order : max), 0) + 1;
+/** max(orders)+1; 1 when the book has no parts. */
+const nextPartOrder = (parts: readonly Part[]): number =>
+  parts.length === 0
+    ? 1
+    : parts.reduce((max, p) => (p.order > max ? p.order : max), 0) + 1;
 /** Spec §7: polygon-clipping failure surfaces once, state untouched. */
 const CLIP_FAILURE_TOAST = "Couldn't compute the cuts.";
 const cloneSnapshot = (a: Atlas): AtlasSnapshot => ({
@@ -213,6 +218,11 @@ interface ScriptoriumState extends ProjectData {
   deleteChapter(chapterId: string): void;
   moveChapter(chapterId: string, dir: -1 | 1): void;
   setChapterCalendar(chapterId: string, calendarId: string | undefined, dayKey?: string): void;
+  addPart(manuscriptId: string, title?: string): Part | null;
+  renamePart(partId: string, title: string): void;
+  reorderPart(partId: string, dir: -1 | 1): void;
+  removePart(partId: string): void;
+  setChapterPart(chapterId: string, partId?: string): void;
 
   addAtlas(projectId: string, name: string): Atlas;
   renameAtlas(atlasId: string, name: string): void;
@@ -891,6 +901,85 @@ export const useScriptorium = create<ScriptoriumState>()(
               if (c.id === neighbor.id) return { ...c, order: orderA };
               return c;
             }),
+          })),
+          projects: touchProject(s.projects, m.projectId),
+        }));
+      },
+
+      addPart(manuscriptId, title = "Untitled Part") {
+        const m = get().manuscripts.find((x) => x.id === manuscriptId);
+        if (!m) return null;
+        const part: Part = {
+          id: newId("pt"),
+          title,
+          order: nextPartOrder(m.parts ?? []),
+        };
+        set((s) => ({
+          manuscripts: s.manuscripts.map((x) =>
+            x.id === manuscriptId ? { ...x, parts: [...(x.parts ?? []), part] } : x),
+          projects: touchProject(s.projects, m.projectId),
+        }));
+        return part;
+      },
+
+      renamePart(partId, title) {
+        const m = get().manuscripts.find((x) => (x.parts ?? []).some((p) => p.id === partId));
+        if (!m) return;
+        set((s) => ({
+          manuscripts: s.manuscripts.map((x) => (x.id !== m.id ? x : {
+            ...x,
+            parts: (x.parts ?? []).map((p) => (p.id === partId ? { ...p, title } : p)),
+          })),
+          projects: touchProject(s.projects, m.projectId),
+        }));
+      },
+
+      /** Swaps the part's order with its nearest neighbor by sorted order;
+       *  gaps are tolerated (no renumbering) — same rule as moveChapter. */
+      reorderPart(partId, dir) {
+        const m = get().manuscripts.find((x) => (x.parts ?? []).some((p) => p.id === partId));
+        if (!m) return;
+        const sorted = [...(m.parts ?? [])].sort((a, b) => a.order - b.order);
+        const idx = sorted.findIndex((p) => p.id === partId);
+        const neighbor = sorted[idx + dir];
+        if (!neighbor) return;
+        const orderA = sorted[idx].order;
+        set((s) => ({
+          manuscripts: s.manuscripts.map((x) => (x.id !== m.id ? x : {
+            ...x,
+            parts: (x.parts ?? []).map((p) => {
+              if (p.id === partId) return { ...p, order: neighbor.order };
+              if (p.id === neighbor.id) return { ...p, order: orderA };
+              return p;
+            }),
+          })),
+          projects: touchProject(s.projects, m.projectId),
+        }));
+      },
+
+      /** Chapters are the user's writing: they are released to the top level,
+       *  not deleted with the part. */
+      removePart(partId) {
+        const m = get().manuscripts.find((x) => (x.parts ?? []).some((p) => p.id === partId));
+        if (!m) return;
+        set((s) => ({
+          manuscripts: s.manuscripts.map((x) => (x.id !== m.id ? x : {
+            ...x,
+            parts: (x.parts ?? []).filter((p) => p.id !== partId),
+            chapters: x.chapters.map((c) => (c.partId === partId ? { ...c, partId: undefined } : c)),
+          })),
+          projects: touchProject(s.projects, m.projectId),
+        }));
+      },
+
+      setChapterPart(chapterId, partId) {
+        const m = get().manuscripts.find((x) => x.chapters.some((c) => c.id === chapterId));
+        if (!m) return;
+        set((s) => ({
+          manuscripts: s.manuscripts.map((x) => (x.id !== m.id ? x : {
+            ...x,
+            chapters: x.chapters.map((c) =>
+              c.id === chapterId ? { ...c, partId } : c),
           })),
           projects: touchProject(s.projects, m.projectId),
         }));
