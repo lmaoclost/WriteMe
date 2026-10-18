@@ -23,13 +23,13 @@ describe("App shell", () => {
     }
   });
 
-  it("public profile deep link still works", () => {
+  it("public profile deep link (u/:username) also redirects home", () => {
     render(
       <MemoryRouter initialEntries={["/u/renan"]}>
         <AppRouter />
       </MemoryRouter>,
     );
-    expect(screen.queryByRole("heading", { name: "Welcome back" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Welcome back" })).toBeInTheDocument();
     cleanup();
   });
 });

@@ -27,7 +27,6 @@ import type { WorkspaceContext } from "../features/workspace/OverviewPage";
 import { ManuscriptPage } from "../features/manuscript/ManuscriptPage";
 import { OverviewPage } from "../features/workspace/OverviewPage";
 import { WorkspaceLayout } from "../features/workspace/WorkspaceLayout";
-import { PublicProfilePage } from "../features/account/PublicProfilePage";
 
 function AtlasEditorRoute() {
   const { projectId, atlasId } = useParams();
@@ -154,7 +153,6 @@ export function AppRouter() {
   return (
     <Routes>
       <Route path="/" element={<LibraryPage />} />
-      <Route path="/u/:username" element={<PublicProfilePage />} />
       <Route path="/p/:projectId" element={<WorkspaceLayout />}>
         <Route index element={<OverviewPage />} />
         <Route path="atlas" element={<AtlasIndexPage />} />
