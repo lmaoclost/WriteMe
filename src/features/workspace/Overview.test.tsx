@@ -162,13 +162,25 @@ describe("overview dashboard", () => {
     expect(screen.getByLabelText(/change cover/i)).toBeInTheDocument();
   });
 
-  it("empty counters render an em dash when the forge has no data", () => {
+  it("empty rows show a purpose line and an action call instead of a dash", () => {
     const pid = useScriptorium.getState().addProject("Blank world").id;
     render(at(`/p/${pid}`));
     const ledger = within(screen.getByRole("region", { name: "Forge ledger" }));
-    expect(ledger.getByLabelText("Bloodline persons")).toHaveTextContent("—");
-    expect(ledger.getByLabelText("Lexicon words")).toHaveTextContent("—");
-    expect(ledger.getByLabelText("Chronology events")).toHaveTextContent("—");
+    expect(ledger.getByText("Characters, places, creatures and things")).toBeInTheDocument();
+    expect(ledger.getByText("Map regions and drop pins for places")).toBeInTheDocument();
+    const call = ledger.getByRole("link", { name: /Write your first entry/i });
+    expect(call).toHaveAttribute("href", `/p/${pid}/entries`);
+    expect(ledger.getByRole("link", { name: "Add a dated event" })).toHaveAttribute("href", `/p/${pid}/timeline`);
+    expect(ledger.getByRole("link", { name: "Draw your first region" })).toBeInTheDocument();
+    expect(ledger.getByRole("link", { name: "Open an idea board" })).toBeInTheDocument();
+  });
+
+  it("non-empty rows keep counters over the action call", () => {
+    const pid = seeded();
+    render(at(`/p/${pid}`));
+    const ledger = within(screen.getByRole("region", { name: "Forge ledger" }));
+    expect(ledger.getByLabelText("Lore entries")).toHaveTextContent("16");
+    expect(ledger.queryByText(/Write your first entry/i)).toBeNull();
   });
 });
 describe("Bindery index", () => {
