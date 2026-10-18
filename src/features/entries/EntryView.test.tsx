@@ -456,4 +456,12 @@ describe("EntryView — pickers close (Escape + outside click)", () => {
     expect(screen.queryByLabelText("Search entries")).toBeNull();
     expect(screen.getByRole("button", { name: "+ Link" })).toHaveAttribute("aria-pressed", "false");
   });
+
+  it("shows a visible Date label next to the date input", () => {
+    const { entries } = seed([{ title: "Casa", date: "1200-05" }]);
+    const [casa] = entries;
+    renderView(casa);
+    expect(screen.getByText("Date")).toBeInTheDocument();
+    expect(screen.getByLabelText("Date")).toBeTruthy();
+  });
 });

@@ -240,10 +240,12 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
         />
       ) : null}
       <div className="flex items-center gap-2.5 flex-wrap">
+        <span className="codex-date-label text-[10px] tracking-[0.12em] uppercase text-slate">Date</span>
         <input
           type="text"
           className="codex-date-input font-mono text-[13px] text-parchment bg-ink border border-line rounded-lg px-2.5 py-1.5 outline-none focus:border-gold placeholder:text-slate"
           aria-label="Date"
+          title="Year · Year-Month · Year-Month-Day, e.g. 1200 · 1200-05 · 1200-05-10"
           placeholder="1200 · 1200-05 · 1200-05-10"
           value={dateDraft.draft}
           onChange={(e) => dateDraft.setDraft(e.target.value)}
