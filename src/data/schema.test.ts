@@ -157,6 +157,8 @@ describe("manuscript parts and bindery layout blocks", () => {
     expect(validateProjectData(withBindery({ geometry: { gutter: Number.NaN, mirrored: true } }))).toBe(false);
     expect(validateProjectData(withBindery({ opener: { sink: "0.18", suppressHead: true, suppressFolio: true } }))).toBe(false);
     expect(validateProjectData(withBindery({ frontMatter: { halfTitle: "yes", copyright: true, romanNumerals: true } }))).toBe(false);
+    expect(validateProjectData(withBindery({ frontMatter: null }))).toBe(false);
+    expect(validateProjectData(withBindery({ frontMatter: { halfTitle: true, copyright: true, romanNumerals: true, copyrightInfo: null } }))).toBe(false);
     expect(validateProjectData(withBindery({ frontMatter: { halfTitle: true, copyright: true, romanNumerals: true, copyrightInfo: { year: 2024 } } }))).toBe(false);
     expect(validateProjectData(withBindery({ backMatter: { glossary: false, colophon: "no" } }))).toBe(false);
     expect(validateProjectData(withBindery({ preset: "gothic" }))).toBe(false);

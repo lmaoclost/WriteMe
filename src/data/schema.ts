@@ -122,10 +122,10 @@ const isBinderyOpener = (v: unknown): boolean => {
 
 const isBinderyFrontMatter = (v: unknown): boolean => {
   if (v === undefined) return true;
+  if (!isObj(v)) return false;
   const f = v as NonNullable<BinderyConfig["frontMatter"]>;
   const info = f.copyrightInfo;
-  return isObj(f)
-    && optionalBool(f.halfTitle) && optionalBool(f.copyright) && optionalBool(f.romanNumerals)
+  return optionalBool(f.halfTitle) && optionalBool(f.copyright) && optionalBool(f.romanNumerals)
     && optionalStr(f.epigraph)
     && (info === undefined || (isObj(info)
       && optionalStr(info.year) && optionalStr(info.holder) && optionalStr(info.isbn)
