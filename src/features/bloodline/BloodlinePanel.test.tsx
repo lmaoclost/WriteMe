@@ -153,6 +153,15 @@ describe("BloodlinePanel — house", () => {
     fireEvent.click(screen.getByRole("button", { name: "Roderick" }));
     expect(document.querySelector("[data-selected-id]")?.getAttribute("data-selected-id")).toBe(p2);
   });
+
+  it("panel headers truncate long names instead of clipping the action button", () => {
+    const { b, p1 } = seed();
+    mountCanvas(b.id);
+    firePointer(screen.getAllByTestId("person-node")[0], "pointerdown", { clientX: 0, clientY: 0 });
+    const h2 = document.querySelector("[data-testid=bl-panel] h2") as HTMLElement;
+    h2.textContent = "Aldric Vellmor o Primeiro, Rei Fundador da Dinastia do Selo";
+    expect(h2.className).toContain("truncate");
+  });
 });
 
 describe("BloodlinePanel — house picker", () => {
