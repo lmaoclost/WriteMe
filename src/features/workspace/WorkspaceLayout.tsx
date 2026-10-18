@@ -25,6 +25,7 @@ const RAIL_LINK = "px-3 py-[9px] rounded-sm text-xs tracking-[0.1em] uppercase w
 export function WorkspaceLayout() {
   const { projectId } = useParams();
   const project = useScriptorium(selectProject(projectId ?? ""));
+  const coverUrl = useScriptorium((s) => (project?.coverImageKey ? s.images[project.coverImageKey] : undefined));
   const pushToast = useScriptorium((s) => s.pushToast);
   const warnedRef = useRef(false);
 
@@ -46,6 +47,15 @@ export function WorkspaceLayout() {
         <div className="mb-[18px] shrink-0">
           <Seal letter="S" />
         </div>
+        <Link
+          to={`/p/${projectId}`}
+          data-testid="rail-world"
+          className="group mb-1 flex max-w-full items-center gap-2 rounded-sm px-3 py-1.5 no-underline text-parchment transition-colors hover:text-parchment-strong"
+          title={project.name}
+        >
+          {coverUrl && <img src={coverUrl} alt="" className="size-6 flex-none rounded-sm object-cover" />}
+          <span className="truncate font-display text-sm font-semibold tracking-[-0.01em]">{project.name}</span>
+        </Link>
         <Link
           to="/"
           className={RAIL_LINK + " mb-1 border-b border-line pb-3.5 text-slate hover:text-parchment max-[720px]:border-b-0"}
