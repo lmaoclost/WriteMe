@@ -1,39 +1,8 @@
 import { Navigate, NavLink, Outlet, useParams, Link } from "react-router-dom";
 import { useEffect, useRef } from "react";
-import {
-  Book, BookOpen, Calendar, Feather, Hourglass, Languages, LayoutGrid,
-  Lightbulb, Map, Network, Orbit, Shield, Users, type LucideIcon,
-} from "lucide-react";
+import { GROUPS, SECTIONS } from "../../app/sections";
 import { selectProject, useScriptorium } from "../../data/store";
 import { Seal } from "../../ui/Seal";
-
-interface SectionDef {
-  key: string;
-  label: string;
-  to: string;
-  icon: LucideIcon;
-  group: string;
-  tip: string;
-}
-
-const SECTIONS: SectionDef[] = [
-  { key: "overview", label: "Overview", to: "", icon: BookOpen, group: "", tip: "The world's home" },
-  { key: "atlas", label: "Atlas", to: "atlas", icon: Map, group: "Reference", tip: "Map regions and drop pins for places" },
-  { key: "entries", label: "Lore", to: "entries", icon: Book, group: "Reference", tip: "Characters, places, creatures and things" },
-  { key: "timeline", label: "Chronology", to: "timeline", icon: Hourglass, group: "Reference", tip: "Dated events in world order" },
-  { key: "bloodline", label: "Bloodline", to: "bloodline", icon: Users, group: "Relations", tip: "Family trees across generations" },
-  { key: "factions", label: "Factions", to: "factions", icon: Network, group: "Relations", tip: "Who fights whom, who backs whom" },
-  { key: "oaths", label: "Oaths", to: "oaths", icon: Shield, group: "Relations", tip: "Chains of loyalty between groups" },
-  { key: "calendar", label: "Calendar", to: "calendar", icon: Calendar, group: "Worldbuilding", tip: "Your world's own year and months" },
-  { key: "plotboard", label: "Plot board", to: "plotboard", icon: LayoutGrid, group: "Worldbuilding", tip: "Story arcs as cards on a board" },
-  { key: "linewheel", label: "Timeline", to: "linewheel", icon: Orbit, group: "Worldbuilding", tip: "Beads strung on a wheel" },
-  { key: "wellspring", label: "Ideas", to: "wellspring", icon: Lightbulb, group: "Writing", tip: "Loose ideas, before they have a home" },
-  { key: "conlang", label: "Language", to: "conlang", icon: Languages, group: "Writing", tip: "Words and phonetics for your tongue" },
-  { key: "manuscript", label: "Manuscript", to: "manuscript", icon: Feather, group: "Writing", tip: "Write the chapters" },
-  { key: "bindery", label: "Publishing", to: "bindery", icon: BookOpen, group: "Writing", tip: "Trim the manuscript for export" },
-];
-
-const GROUPS = ["Reference", "Relations", "Worldbuilding", "Writing"] as const;
 
 const RAIL_LINK = "px-3 py-[9px] rounded-sm text-xs tracking-[0.1em] uppercase whitespace-nowrap text-ellipsis overflow-hidden no-underline transition-colors max-[720px]:flex-none max-[720px]:overflow-visible max-[720px]:whitespace-nowrap max-[720px]:text-ellipsis max-[720px]:text-clip";
 
@@ -115,6 +84,13 @@ export function WorkspaceLayout() {
             ))}
           </div>
         ))}
+        <button
+          type="button"
+          className="mt-auto flex items-center gap-2 border-0 bg-none px-3 py-[9px] text-left text-xs uppercase tracking-[0.1em] text-slate cursor-pointer hover:text-parchment max-[720px]:hidden"
+          onClick={() => window.dispatchEvent(new Event("scriptorium:open-palette"))}
+        >
+          Search <span className="text-[9px] tracking-[0.06em] opacity-70">Ctrl+K</span>
+        </button>
       </nav>
       <main className="h-screen min-h-0 overflow-hidden py-6 px-7 max-[720px]:p-5">
         <Outlet context={{ projectId }} />

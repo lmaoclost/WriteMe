@@ -176,6 +176,8 @@ interface ScriptoriumState extends ProjectData {
   removeImage(key: string): void;
   pushToast(kind: ToastKind, message: string): string;
   dismissToast(id: string): void;
+  paletteOpen: boolean;
+  setPaletteOpen(open: boolean): void;
   seedDemo(): string | null;
   exportData(): string;
   importData(text: string): { ok: true } | { ok: false; error: string };
@@ -350,8 +352,13 @@ export const useScriptorium = create<ScriptoriumState>()(
     (set, get) => ({
       ...emptyProjectData(),
       toasts: [],
+      paletteOpen: false,
       seedFlag: false,
       histories: {},
+
+      setPaletteOpen(open: boolean) {
+        set({ paletteOpen: open });
+      },
 
       addProject(name, description = "") {
         const project: Project = {
@@ -2874,8 +2881,10 @@ export const useScriptorium = create<ScriptoriumState>()(
         const p = persisted as Partial<PersistedState>;
         return { ...norm(persisted as PersistedState), bloodlines: p.bloodlines ?? [] } as PersistedState;
       },
-      partialize: ({ histories: _h, ...s }): PersistedState => {
+      partialize: ({ histories: _h, paletteOpen: _p, toasts: _t, ...s }): PersistedState => {
         void _h; // ephemeral histories are never persisted
+        void _p; // palette visibility is never persisted
+        void _t; // toasts are never persisted
         return {
           projects: s.projects,
           entries: s.entries,

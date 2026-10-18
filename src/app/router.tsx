@@ -27,6 +27,7 @@ import type { WorkspaceContext } from "../features/workspace/OverviewPage";
 import { ManuscriptPage } from "../features/manuscript/ManuscriptPage";
 import { OverviewPage } from "../features/workspace/OverviewPage";
 import { WorkspaceLayout } from "../features/workspace/WorkspaceLayout";
+import { CommandPalette } from "../ui/CommandPalette";
 
 function AtlasEditorRoute() {
   const { projectId, atlasId } = useParams();
@@ -151,9 +152,10 @@ export function AppRouter() {
   if (!hydrated) return <div className="min-h-screen bg-background" data-testid="hydration-splash" />;
 
   return (
-    <Routes>
-      <Route path="/" element={<LibraryPage />} />
-      <Route path="/p/:projectId" element={<WorkspaceLayout />}>
+    <>
+      <Routes>
+        <Route path="/" element={<LibraryPage />} />
+        <Route path="/p/:projectId" element={<WorkspaceLayout />}>
         <Route index element={<OverviewPage />} />
         <Route path="atlas" element={<AtlasIndexPage />} />
         <Route path="atlas/:atlasId" element={<AtlasEditorRoute />} />
@@ -179,7 +181,9 @@ export function AppRouter() {
         <Route path="bindery/:manuscriptId" element={<BinderyRoute />} />
         <Route path="manuscript" element={<ManuscriptRoute />} />
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <CommandPalette />
+    </>
   );
 }
