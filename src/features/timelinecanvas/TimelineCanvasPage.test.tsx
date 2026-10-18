@@ -129,6 +129,7 @@ describe("TimelineCanvasPage", () => {
     store().addBead(tl.id, { x: 620, y: -40, label: "A" });
     render(<MemoryRouter><TimelineCanvasPage timelineId={tl.id} /></MemoryRouter>);
     const svg = document.querySelector("[data-testid=tl-wire-svg]") as SVGSVGElement;
+    expect(svg.getAttribute("class")).toContain("overflow-visible");
     expect(svg.getAttribute("class")).toContain("[&_.tl-bead]:pointer-events-auto");
     expect(svg.getAttribute("class")).toContain("[&_.tl-seg]:pointer-events-auto");
   });
