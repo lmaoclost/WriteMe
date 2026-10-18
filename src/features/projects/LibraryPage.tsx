@@ -39,6 +39,52 @@ export function LibraryPage() {
   const [toDelete, setToDelete] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<"recent" | "name">("recent");
+  const [restoring, setRestoring] = useState(false);
+  const [pendingRestore, setPendingRestore] = useState<string | null>(null);
+
+  const downloadBackup = () => {
+    const json = useScriptorium.getState().exportData();
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `scriptorium-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const readFileText = (file: File) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(file);
+  });
+
+  const onRestoreFile = async (file: File) => {
+    const text = await readFileText(file);
+    try {
+      JSON.parse(text);
+    } catch {
+      pushToast("error", "That file is not valid JSON.");
+      setRestoring(false);
+      setPendingRestore(null);
+      return;
+    }
+    setPendingRestore(text);
+  };
+
+  const confirmRestore = () => {
+    if (!pendingRestore) return;
+    const result = useScriptorium.getState().importData(pendingRestore);
+    if (result.ok) {
+      pushToast("success", "Library restored.");
+    } else {
+      pushToast("error", result.error);
+      return;
+    }
+    setRestoring(false);
+    setPendingRestore(null);
+  };
 
   const submitCreate = () => {
     const n = name.trim();
@@ -141,6 +187,17 @@ export function LibraryPage() {
         )}
       </section>
 
+      <section aria-label="Backup" className="mt-9">
+        <h2 className="font-display text-[1.375rem] font-semibold text-parchment-strong">Backup</h2>
+        <p className="text-slate text-sm mt-1 mb-3 max-w-[60ch]">
+          Your library lives in this browser only — nothing is sent anywhere. Save a JSON copy from time to time.
+        </p>
+        <div className="flex gap-2.5">
+          <Button onClick={downloadBackup}>Download backup</Button>
+          <Button kind="ghost" onClick={() => { setPendingRestore(null); setRestoring(true); }}>Restore backup</Button>
+        </div>
+      </section>
+
       {creating && (
         <Modal title="New world" onClose={() => setCreating(false)} closeLabel="Close">
           <div className="grid gap-3">
@@ -150,6 +207,29 @@ export function LibraryPage() {
               <Button onClick={submitCreate}>Create</Button>
               <Button kind="ghost" onClick={() => setCreating(false)}>Cancel</Button>
             </div>
+          </div>
+        </Modal>
+      )}
+
+      {restoring && (
+        <Modal title="Restore backup" onClose={() => { setRestoring(false); setPendingRestore(null); }}>
+          <p className="text-parchment-dim">
+            Restoring replaces the whole library — every world, entry and manuscript — with the file's contents.
+          </p>
+          <input
+            type="file"
+            accept="application/json"
+            aria-label="Restore from backup file"
+            className="mt-3 text-sm text-slate file:mr-3 file:rounded-sm file:border file:border-line file:bg-night file:px-2.5 file:py-1.5 file:text-parchment"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void onRestoreFile(f);
+              e.target.value = "";
+            }}
+          />
+          <div className="mt-3 flex justify-end gap-2.5">
+            <Button kind="danger" disabled={!pendingRestore} onClick={confirmRestore}>Restore</Button>
+            <Button kind="ghost" onClick={() => { setRestoring(false); setPendingRestore(null); }}>Cancel</Button>
           </div>
         </Modal>
       )}

@@ -18,7 +18,7 @@ React 18 + Vite + TypeScript · Tailwind CSS v4 + shadcn/ui · Zustand.
 
 ## Dados
 
-localStorage (`scriptorium.v1`), com backup automático caso o storage corrompa (`scriptorium.corrupt.<iso>`). Export/import de JSON na visão geral do projeto.
+localStorage (`scriptorium.v1`), com backup automático caso o storage corrompa (`scriptorium.corrupt.<iso>`). Export/import de JSON na seção **Backup** da Library (página inicial) — export/download e restore substituem a biblioteca inteira.
 
 ## Arquitetura (resumo)
 

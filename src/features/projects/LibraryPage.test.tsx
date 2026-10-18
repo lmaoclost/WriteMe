@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor, act, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useScriptorium } from "../../data/store";
 import { selectOption } from "../../test/selectHelper";
 import { LibraryPage } from "./LibraryPage";
@@ -115,5 +115,72 @@ describe("LibraryPage hub", () => {
   it("keeps the sample-project invite in the empty worlds list", () => {
     render(wrap());
     expect(screen.getByText(/create your first world or load the sample/i)).toBeInTheDocument();
+  });
+});
+
+describe("library backup", () => {
+  it("offers an export button that downloads a JSON backup", async () => {
+    act(() => { useScriptorium.getState().addProject("Shimradis"); });
+    let captured: Blob | null = null;
+    const stub = (name: "createObjectURL" | "revokeObjectURL", impl: unknown) => {
+      Object.defineProperty(URL, name, { value: impl, writable: true, configurable: true });
+    };
+    stub("createObjectURL", (blob: Blob) => { captured = blob; return "blob:fake"; });
+    stub("revokeObjectURL", () => {});
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function click(this: HTMLAnchorElement) {});
+    render(wrap());
+    fireEvent.click(screen.getByRole("button", { name: "Download backup" }));
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+    const anchor = clickSpy.mock.instances[0] as unknown as HTMLAnchorElement;
+    expect(anchor.getAttribute("download")).toMatch(/^scriptorium-backup-\d{4}-\d{2}-\d{2}\.json$/);
+    const text = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.readAsText(captured as Blob);
+    });
+    const payload = JSON.parse(text);
+    expect(payload.app).toBe("scriptorium");
+    expect(payload.projects.map((p: { name: string }) => p.name)).toContain("Shimradis");
+    delete (URL as unknown as Record<string, unknown>).createObjectURL;
+    delete (URL as unknown as Record<string, unknown>).revokeObjectURL;
+  });
+
+  it("restore replaces the whole library from a backup file", async () => {
+    act(() => { useScriptorium.getState().addProject("Temporary"); });
+    const exportBefore = useScriptorium.getState().exportData();
+    act(() => { useScriptorium.getState().resetAll(); });
+    render(wrap());
+    fireEvent.click(screen.getByRole("button", { name: "Restore backup" }));
+    const input = screen.getByLabelText(/Restore from backup file/i) as HTMLInputElement;
+    const file = new File([exportBefore], "backup.json", { type: "application/json" });
+    await act(async () => { fireEvent.change(input, { target: { files: [file] } }); });
+    await waitFor(() => expect(screen.getByRole("button", { name: "Restore" })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: "Restore" }));
+    expect(useScriptorium.getState().projects.map((p) => p.name)).toContain("Temporary");
+    expect(useScriptorium.getState().toasts.some((t) => /restored/i.test(t.message))).toBe(true);
+  });
+
+  it("restore rejects invalid files with an error toast", async () => {
+    render(wrap());
+    fireEvent.click(screen.getByRole("button", { name: "Restore backup" }));
+    const input = screen.getByLabelText(/Restore from backup file/i) as HTMLInputElement;
+    const file = new File(["{not json"], "broken.json", { type: "application/json" });
+    await act(async () => { fireEvent.change(input, { target: { files: [file] } }); });
+    await waitFor(() => expect(useScriptorium.getState().toasts.some((t) => t.kind === "error")).toBe(true));
+    expect(screen.getByRole("button", { name: "Download backup" })).toBeInTheDocument();
+  });
+
+  it("restore needs a confirmation before replacing the library", async () => {
+    const exportBefore = useScriptorium.getState().exportData();
+    render(wrap());
+    fireEvent.click(screen.getByRole("button", { name: "Restore backup" }));
+    expect(screen.getByText(/replaces the whole library/i)).toBeInTheDocument();
+    expect(useScriptorium.getState().projects).toHaveLength(0);
+    const input = screen.getByLabelText(/Restore from backup file/i) as HTMLInputElement;
+    const file = new File([exportBefore], "backup.json", { type: "application/json" });
+    await act(async () => { fireEvent.change(input, { target: { files: [file] } }); });
+    await waitFor(() => expect(screen.getByRole("button", { name: "Restore" })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: "Restore" }));
+    expect(useScriptorium.getState().toasts.some((t) => /restored/i.test(t.message))).toBe(true);
   });
 });
