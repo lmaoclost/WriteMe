@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useParams, useOutletContext } from "react-router-dom";
+import { useScriptorium } from "../data/store";
 import { LibraryPage } from "../features/projects/LibraryPage";
 import { AtlasIndexPage } from "../features/atlas/AtlasIndexPage";
 import { AtlasEditor } from "../features/atlas/AtlasEditor";
@@ -142,6 +144,17 @@ function BinderyRoute() {
 }
 
 export function AppRouter() {
+  // Deep-link safety: zustand/persist rehydrates async — blocking the first
+  // render until hydration completes keeps WorkspaceLayout from falsely
+  // redirecting to "/" on plen reloads (URL paste / F5 on /p/:id/...).
+  const [hydrated, setHydrated] = useState(() => useScriptorium.persist.hasHydrated());
+  useEffect(() => {
+    if (hydrated) return;
+    return useScriptorium.persist.onFinishHydration(() => setHydrated(true));
+  }, [hydrated]);
+
+  if (!hydrated) return <div className="min-h-screen bg-background" data-testid="hydration-splash" />;
+
   return (
     <Routes>
       <Route path="/" element={<LibraryPage />} />
