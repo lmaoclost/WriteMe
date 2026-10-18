@@ -63,9 +63,7 @@ export function FactionForm({ web, faction, onSelect }: {
       <TextDebounced label="Leader" value={faction.leader ?? ""} onCommit={(v) => update({ leader: v.trim() || undefined })} />
       <TextDebounced label="Territory" value={faction.territory ?? ""} onCommit={(v) => update({ territory: v.trim() || undefined })} />
       <TextDebounced label="Objetivos" value={faction.goals ?? ""} onCommit={(v) => update({ goals: v.trim() || undefined })} />
-      <Field label="Description">
-        <textarea aria-label="Description" placeholder="Background, history, culture..." rows={4} value={faction.description ?? ""} onChange={(e) => update({ description: e.target.value })} />
-      </Field>
+      <TextDebouncedArea label="Description" value={faction.description ?? ""} onCommit={(v) => update({ description: v })} />
       <Field label="Color">
         <div className="flex flex-wrap gap-1.5" role="listbox" aria-label="Faction color">
           {withCurrentColor(FACTION_PRESET_COLORS, faction.color).map((c) => (
@@ -101,6 +99,18 @@ function TextDebounced({ label, value, onCommit }: { label: string; value: strin
   return (
     <Field label={label}>
       <input aria-label={label} value={draft} onChange={(e) => setDraft(e.target.value)} onBlur={() => flush()} />
+    </Field>
+  );
+}
+
+function TextDebouncedArea({ label, value, onCommit, rows = 4, placeholder }: {
+  label: string; value: string; onCommit(v: string): void; rows?: number; placeholder?: string;
+}) {
+  const { draft, setDraft, flush } = useDebouncedDraft(value, onCommit, 300);
+  useEffect(() => () => flush(), [flush]);
+  return (
+    <Field label={label}>
+      <textarea aria-label={label} placeholder={placeholder} rows={rows} value={draft} onChange={(e) => setDraft(e.target.value)} onBlur={() => flush()} />
     </Field>
   );
 }
