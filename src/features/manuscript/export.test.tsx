@@ -5,7 +5,7 @@ import { AppRouter } from "../../app/router";
 import { useScriptorium } from "../../data/store";
 import type { Manuscript } from "../../domain/types";
 import { buildBookHtml } from "./buildBook";
-import { binderyCss } from "./bindery";
+import { defaultBindery } from "../../data/schema";
 
 // Real package shape: { EPub (class), default (fn), chapterDefaults, optionsDefaults }.
 // The app path instantiates EPub and awaits genEpub() (render() runs inside genEpub).
@@ -306,11 +306,13 @@ describe("buildBookHtml v2", () => {
     expect(emptyBody).toContain("No content yet.");
   });
 
-  it("pageNumbers only affects the print stylesheet, not the book markup", () => {
-    const on = binderyCss("Georgia, serif", "6x9", { dropCaps: false, runningHead: true, pageNumbers: true });
-    expect(on).toContain("@bottom-center");
-    const off = binderyCss("Georgia, serif", "6x9", { dropCaps: false, runningHead: true, pageNumbers: false });
-    expect(off).not.toContain("@bottom-center");
+  it("pageNumbers only affects the print stylesheet, not the book markup", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const ctx = { chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
+    const on = buildBookCss({ ...defaultBindery()!, pageNumbers: true }, ctx);
+    expect(on).toContain("counter(page)");
+    const off = buildBookCss({ ...defaultBindery()!, pageNumbers: false }, ctx);
+    expect(off).not.toContain("counter(page)");
   });
 });
 

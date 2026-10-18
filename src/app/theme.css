@@ -263,7 +263,7 @@ input[type="file"].sr-only {
 
 /* Bindery book pages — the SAME selectors must style the on-screen live
    preview AND the body-level print portal, so the scope is .print-book
-   (runtime-injected binderyCss handles typography on top). Sheet geometry
+   (runtime-injected buildBookCss handles typography on top). Sheet geometry
    (paper width/padding) is screen-only: in print the page box comes from
    @page, and preview padding would over-narrow the printed text area. */
 @layer components {

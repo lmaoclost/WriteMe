@@ -4,7 +4,8 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { useScriptorium } from "../../data/store";
 import { pickSelectOptionSync } from "../../test/selectHelper";
 import { BinderyPage } from "./BinderyPage";
-import { binderyCss, trimToPage, BINDERY_FONTS, BINDERY_TRIMS } from "./bindery";
+import { trimToPage, BINDERY_FONTS, BINDERY_TRIMS } from "./bindery";
+import { defaultBindery } from "../../data/schema";
 
 const store = () => useScriptorium.getState();
 
@@ -22,15 +23,40 @@ const seedBook = () => {
 };
 
 describe("bindery utils", () => {
-  it("trim → @page size", () => {
+  it("trim → page size string", () => {
     expect(trimToPage("6x9")).toBe("6in 9in");
-    expect(binderyCss('"Literata", serif', "5x8", { dropCaps: true, runningHead: true })).toContain("5in 8in");
-    expect(binderyCss("Georgia", "6x9", { dropCaps: true, runningHead: true })).toContain("first-letter");
-    expect(binderyCss("Georgia", "6x9", { dropCaps: false, runningHead: false })).not.toContain("first-letter");
+    expect(trimToPage("5x8")).toBe("5in 8in");
   });
   it("fonts + trims catalogs", () => {
     expect(BINDERY_FONTS.map((f) => f.label)).toContain("Palatino");
     expect(BINDERY_TRIMS.length).toBeGreaterThanOrEqual(6);
+  });
+
+  it("mirrored geometry puts the gutter on the inner edge of each page", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const css = buildBookCss({ ...defaultBindery()!, geometry: { gutter: 0.5, mirrored: true }, trim: "6x9" },
+      { chapters: [{ heading: "Um" }], parts: [], pageCount: 240 });
+    expect(css).toContain("@page :left");
+    expect(css).toContain("margin-right: 0.75in"); // inner à direita no verso
+    expect(css).toContain("@page :right");
+    expect(css).toContain("margin-left: 0.75in");  // inner à esquerda no recto
+    expect(css).toContain("size: 6in 9in");
+  });
+
+  it("folio counter only appears when pageNumbers is on", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const ctx = { chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
+    expect(buildBookCss({ ...defaultBindery()!, pageNumbers: true }, ctx)).toContain("counter(page)");
+    expect(buildBookCss({ ...defaultBindery()!, pageNumbers: false }, ctx)).not.toContain("counter(page)");
+  });
+
+  it("gutter auto derives from the estimated page count", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const css = buildBookCss({ ...defaultBindery()!, trim: "5x8", geometry: { gutter: "auto", mirrored: true } },
+      { chapters: [{ heading: "Um" }], parts: [], pageCount: 700 });
+    expect(css).toContain("@page :right");
+    expect(css).toContain("margin-left: 0.75in");  // 700 páginas → gutter KDP 0.75 vence outer×1.5 (0.63)
+    expect(css).toContain("margin-right: 0.42in"); // outer = 5 × 0.0833
   });
 
   it("chapter head numbers get visual separation from the title, in live preview and print portal", async () => {

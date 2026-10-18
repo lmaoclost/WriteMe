@@ -3,7 +3,8 @@ import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
-import { BINDERY_FONTS, BINDERY_TRIMS, binderyCss, trimToPage } from "./bindery";
+import { BINDERY_FONTS, BINDERY_TRIMS, estimatePageCount, trimToPage } from "./bindery";
+import { buildBookCss } from "./bookCss";
 import { ExportButtons } from "./Export";
 import { BIND_HEAD_MODES } from "../../data/schema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -49,6 +50,14 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
   );
   const set = (patch: Partial<NonNullable<typeof b>>) => useScriptorium.getState().setBindery(manuscriptId, patch);
   const html = useMemo(() => (manuscript ? buildBookHtml(manuscript) : ""), [manuscript]);
+  const css = useMemo(
+    () => (manuscript ? buildBookCss(b, {
+      chapters: manuscript.chapters.map((c) => ({ heading: c.heading, partId: c.partId })),
+      parts: manuscript.parts ?? [],
+      pageCount: estimatePageCount(manuscript),
+    }) : ""),
+    [manuscript, b],
+  );
 
   if (!manuscript) return null;
 
@@ -130,7 +139,7 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
           <p className="text-slate text-xs">Print at: {trimToPage(b.trim)} — check it in the dialog.</p>
         </aside>
         <div className="overflow-auto p-6 bg-ink" data-testid="bindery-preview">
-          <style>{binderyCss(b.font, b.trim, b)}</style>
+          <style>{css}</style>
           <div
             className="print-book bindery-live"
             data-testid="bindery-book"
@@ -149,7 +158,7 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
       {printing
         ? createPortal(
             <>
-              <style>{binderyCss(b.font, b.trim, b)}</style>
+              <style>{css}</style>
               <div
                 className="print-book"
                 data-testid="print-book"
