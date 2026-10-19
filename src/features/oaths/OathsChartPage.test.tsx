@@ -43,9 +43,9 @@ describe("OathsChartPage", () => {
     const a = store().addOathMember(ch.id, undefined, { name: "Mirren" })!;
     const b = store().addOathMember(ch.id, undefined, { name: "Orvean" })!;
     render(<MemoryRouter><OathsChartPage chartId={ch.id} /></MemoryRouter>);
-    fireEvent.click(screen.getByLabelText("Membro Mirren"));
+    fireEvent.click(screen.getByLabelText("Member Mirren"));
     const beforeMembers = store().oathsCharts![0].members.length;
-    await selectOption(() => screen.getByLabelText("Subordinar a"), "Orvean");
+    await selectOption(() => screen.getByLabelText("Subordinate to"), "Orvean");
     const chart = store().oathsCharts![0];
     expect(chart.members).toHaveLength(beforeMembers); // no phantom member
     const link = chart.oathLinks.find((l) => l.subordinateId === a.id);
@@ -84,7 +84,7 @@ describe("OathsChartPage", () => {
     const a = store().addOathMember(ch.id, undefined, { name: "Mirren" })!;
     const b = store().addOathMember(ch.id, undefined, { name: "Orvean" })!;
     render(<MemoryRouter><OathsChartPage chartId={ch.id} /></MemoryRouter>);
-    firePointer(screen.getByLabelText(`Conectar ${a.name}`), "pointerdown", { clientX: 300, clientY: 300 });
+    firePointer(screen.getByLabelText(`Connect ${a.name}`), "pointerdown", { clientX: 300, clientY: 300 });
     const target = document.querySelector(`[data-member-id="${b.id}"]`) as HTMLElement;
     firePointer(target, "pointerdown", { clientX: 500, clientY: 400 });
     const chart = store().oathsCharts![0];
@@ -97,7 +97,7 @@ describe("OathsChartPage", () => {
     void a;
     store().addOathMember(ch.id, undefined, { name: "Orvean" });
     render(<MemoryRouter><OathsChartPage chartId={ch.id} /></MemoryRouter>);
-    firePointer(screen.getByLabelText("Conectar Mirren"), "pointerdown", { clientX: 300, clientY: 300 });
+    firePointer(screen.getByLabelText("Connect Mirren"), "pointerdown", { clientX: 300, clientY: 300 });
     firePointer(screen.getByTestId("oaths-canvas"), "pointermove", { clientX: 500, clientY: 450 });
     // fit: 2 roots at x=315/465 → s=1, panX=600-390=210, panY=400-120=280
     // cursor (500,450) stage-relative → plane (290, 170)

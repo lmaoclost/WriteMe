@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { FACTION_CONNECTION_STYLES } from "./connectionStyles";
@@ -13,6 +14,7 @@ const FEdgesLayer = memo(function FEdgesLayer({ connections, facById }: {
   connections: FactionConnection[];
   facById: Map<string, Faction>;
 }) {
+  const { t } = useTranslation();
   return (
     <>
       {connections.map((c) => {
@@ -31,7 +33,7 @@ const FEdgesLayer = memo(function FEdgesLayer({ connections, facById }: {
               strokeWidth={2}
               strokeDasharray={style.dashArray}
             />
-            <text x={mx} y={my - 6} className="text-[11px] font-mono" fill={style.color} textAnchor="middle">{style.label}</text>
+            <text x={mx} y={my - 6} className="text-[11px] font-mono" fill={style.color} textAnchor="middle">{t(style.labelKey)}</text>
           </g>
         );
       })}
@@ -46,6 +48,7 @@ const FNodesLayer = memo(function FNodesLayer({ factions, selectedId, handleNode
   handleNodeClick(f: Faction): void;
   handleConnectDown(f: Faction, e: React.PointerEvent): void;
 }) {
+  const { t } = useTranslation();
   return (
     <>
       {factions.map((f) => (
@@ -58,7 +61,7 @@ const FNodesLayer = memo(function FNodesLayer({ factions, selectedId, handleNode
           onPointerDown={(e) => handleNodeDown(f, e)}
           onClick={() => handleNodeClick(f)}
           role="button"
-          aria-label={`Faction ${f.name}`}
+          aria-label={t("factions.web.node", { name: f.name })}
           tabIndex={0}
         >
           <span className="absolute size-2.5 rounded-full -left-1.5 -top-1.5" style={{ background: f.color }} />
@@ -67,7 +70,7 @@ const FNodesLayer = memo(function FNodesLayer({ factions, selectedId, handleNode
           <button
             type="button"
             className="conn-handle absolute -right-2.5 top-1/2 -translate-y-1/2 size-5 rounded-full bg-gold text-wax border-0 text-[0.6875rem] grid place-items-center cursor-crosshair"
-            aria-label={`Conectar ${f.name}`}
+            aria-label={t("factions.web.connect", { name: f.name })}
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => handleConnectDown(f, e)}
           >
@@ -81,6 +84,7 @@ const FNodesLayer = memo(function FNodesLayer({ factions, selectedId, handleNode
 
 
 export function FactionWebPage({ webId }: { webId: string }) {
+  const { t } = useTranslation();
   const web = useScriptorium((s) => (s.factionWebs ?? []).find((w) => w.id === webId));
   const pushToast = useScriptorium((s) => s.pushToast);
   const pushFWHistory = useScriptorium((s) => s.pushFWHistory);
@@ -110,8 +114,8 @@ export function FactionWebPage({ webId }: { webId: string }) {
   });
 
   useEffect(() => {
-    if (!web) pushToast("error", "Faction web not found.");
-  }, [web, pushToast]);
+    if (!web) pushToast("error", t("factions.web.notFound"));
+  }, [web, pushToast, t]);
 
   const planeSize = useMemo(() => {
     let size = 20000;
@@ -265,21 +269,21 @@ export function FactionWebPage({ webId }: { webId: string }) {
       <header className={BOARD_HEADER}>
         <input
           className={BOARD_NAME_INPUT}
-          aria-label="Faction web name"
+          aria-label={t("factions.web.name")}
           value={web.name}
           onChange={(e) => useScriptorium.getState().renameFactionWeb(webId, e.target.value)}
         />
         <div className={BOARD_ACTIONS}>
-          <button type="button" aria-label="Undo" className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoFW(webId)}>↶</button>
-          <button type="button" aria-label="Redo" className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoFW(webId)}>↷</button>
-          <button type="button" aria-label="Zoom out" className={BOARD_ACTION_BTN} onClick={() => { scheduleScale((v) => zoomAt({ ...v }, 1 / 1.25, elWidth(), elHeight())); scheduleScale.flush(); }}>−</button>
+          <button type="button" aria-label={t("factions.web.undo")} className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoFW(webId)}>↶</button>
+          <button type="button" aria-label={t("factions.web.redo")} className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoFW(webId)}>↷</button>
+          <button type="button" aria-label={t("factions.web.zoomOut")} className={BOARD_ACTION_BTN} onClick={() => { scheduleScale((v) => zoomAt({ ...v }, 1 / 1.25, elWidth(), elHeight())); scheduleScale.flush(); }}>−</button>
           <span className="text-slate text-xs font-mono self-center" data-testid="fw-zoom">{Math.round(scale.s * 100)}%</span>
-          <button type="button" aria-label="Zoom in" className={BOARD_ACTION_BTN} onClick={() => { scheduleScale((v) => zoomAt({ ...v }, 1.25, elWidth(), elHeight())); scheduleScale.flush(); }}>+</button>
-          <button type="button" className={BOARD_ACTION_BTN} onClick={() => adjustView()}>Ajustar</button>
+          <button type="button" aria-label={t("factions.web.zoomIn")} className={BOARD_ACTION_BTN} onClick={() => { scheduleScale((v) => zoomAt({ ...v }, 1.25, elWidth(), elHeight())); scheduleScale.flush(); }}>+</button>
+          <button type="button" className={BOARD_ACTION_BTN} onClick={() => adjustView()}>{t("factions.web.fit")}</button>
           <button type="button" className={BOARD_ACTION_BTN} onClick={() => { pushFWHistory(webId); const el = stageRef.current; const f = addFaction(webId, { x: el ? (el.clientWidth / 2 - scaleRef.current.panX) / scaleRef.current.s : 4000, y: el ? (el.clientHeight / 2 - scaleRef.current.panY) / scaleRef.current.s : 4000 }); if (f) setSelectedId(f.id); }}>
-            New Faction
+            {t("factions.web.newFaction")}
           </button>
-          <button type="button" aria-pressed={notesOpen} className={BOARD_ACTION_BTN} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
+          <button type="button" aria-pressed={notesOpen} className={BOARD_ACTION_BTN} onClick={() => setNotesOpen((v) => !v)}>{t("factions.web.notes")}</button>
         </div>
       </header>
       <div className="grid grid-cols-[1fr_300px] min-h-0 overflow-hidden">
@@ -324,10 +328,10 @@ export function FactionWebPage({ webId }: { webId: string }) {
             <FNodesLayer factions={web.factions} selectedId={selectedId} handleNodeDown={handleNodeDown} handleNodeClick={handleNodeClick} handleConnectDown={handleConnectDown} />
           </div>
           {web.factions.length === 0 ? (
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[calc(1/var(--bl-scale,0.1))] text-slate whitespace-nowrap">Add the first faction to the web.</div>
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[calc(1/var(--bl-scale,0.1))] text-slate whitespace-nowrap">{t("factions.web.startHint")}</div>
           ) : null}
           {pendingFrom ? (
-            <div className="absolute bottom-3.5 left-1/2 -translate-x-1/2 bg-night-2 border border-line text-parchment-dim px-3 py-1.5 rounded-lg text-[13px]">Choose a faction to connect.</div>
+            <div className="absolute bottom-3.5 left-1/2 -translate-x-1/2 bg-night-2 border border-line text-parchment-dim px-3 py-1.5 rounded-lg text-[13px]">{t("factions.web.chooseToConnect")}</div>
           ) : null}
         </div>
         <FactionPanel
@@ -347,10 +351,10 @@ export function FactionWebPage({ webId }: { webId: string }) {
                 style={{ borderColor: style.color, color: style.color }}
                 onClick={() => { setConnectionType(typePicker.connId, type as never); setTypePicker(null); }}
               >
-                {style.label}
+                {t(style.labelKey)}
               </button>
             ))}
-            <button type="button" className="conn-type-option bg-transparent border border-line rounded-sm px-2.5 py-1 text-[13px] text-left hover:brightness-110" onClick={() => { useScriptorium.getState().removeConnection(typePicker.connId); setTypePicker(null); }}>Remove connection</button>
+            <button type="button" className="conn-type-option bg-transparent border border-line rounded-sm px-2.5 py-1 text-[13px] text-left hover:brightness-110" onClick={() => { useScriptorium.getState().removeConnection(typePicker.connId); setTypePicker(null); }}>{t("factions.web.removeConnection")}</button>
           </div>
         ) : null}
       </div>

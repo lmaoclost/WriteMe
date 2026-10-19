@@ -1,4 +1,5 @@
 import { memo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import type { BloodlineHouse, BloodlinePerson } from "../../domain/types";
 import type { NodeKind } from "./nodeTypes";
 
@@ -20,6 +21,7 @@ export const PersonNode = memo(function PersonNode({ person, images, selected, h
   handlers: NodeHandlers;
 }) {
   const kind = "person" as const;
+  const { t } = useTranslation();
   const portrait = person.portraitKey ? images[person.portraitKey] : undefined;
   // drag state lives in a ref: the node re-renders on every move commit and a
   // render-scope variable would be recreated, orphaning the window listeners
@@ -50,7 +52,7 @@ export const PersonNode = memo(function PersonNode({ person, images, selected, h
         window.addEventListener("pointerup", up);
       }}
       role="button"
-      aria-label={`Pessoa ${person.name}`}
+      aria-label={t("bloodline.node.person", { name: person.name })}
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === "Delete") handlers.onDelete(kind, person.id); }}
     >
@@ -79,6 +81,7 @@ export const HouseNode = memo(function HouseNode({ house, selected, memberCount,
   handlers: NodeHandlers;
 }) {
   const kind = "house" as const;
+  const { t } = useTranslation();
   const drag = useRef<{ x: number; y: number; moved: boolean }>({ x: 0, y: 0, moved: false });
   return (
     <div
@@ -106,12 +109,12 @@ export const HouseNode = memo(function HouseNode({ house, selected, memberCount,
         window.addEventListener("pointerup", up);
       }}
       role="button"
-      aria-label={`Casa ${house.name}`}
+      aria-label={t("bloodline.node.house", { name: house.name })}
       tabIndex={0}
     >
       <span className="house-name text-sm font-semibold text-parchment">{house.name}</span>
       {house.subtitle ? <span className="house-subtitle text-[11px] text-slate">{house.subtitle}</span> : null}
-      <span className="house-count text-[10px] text-slate" data-testid="house-member-count">{memberCount} {memberCount === 1 ? "membro" : "membros"}</span>
+      <span className="house-count text-[10px] text-slate" data-testid="house-member-count">{t("bloodline.node.memberCount", { count: memberCount })}</span>
       {house.isMonarch ? <span className="house-crown absolute -top-4 right-1.5 text-gold" aria-hidden="true">♛</span> : null}
     </div>
   );

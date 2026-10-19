@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useScriptorium } from "../../data/store";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
-import { FACTION_PRESET_COLORS } from "./connectionStyles";
+import { FACTION_CONNECTION_STYLES, FACTION_PRESET_COLORS } from "./connectionStyles";
 import { Field } from "../../ui/Field";
 import { Button } from "../../ui/Button";
 import { BOARD_PANEL, BOARD_PANEL_HINT, BOARD_PANEL_HEAD, BOARD_PANEL_HEAD_H2 } from "../../ui/board";
@@ -14,11 +15,12 @@ export function FactionPanel({ web, selectedId, selectedConnectionId, onSelect }
   selectedConnectionId?: string | null;
   onSelect(id: string | null): void;
 }) {
+  const { t } = useTranslation();
   const faction = web.factions.find((f) => f.id === selectedId);
   if (!faction && !selectedConnectionId) {
     return (
       <aside className={BOARD_PANEL} data-testid="fac-panel">
-        <p className={BOARD_PANEL_HINT}>Select a faction or connection.</p>
+        <p className={BOARD_PANEL_HINT}>{t("factions.panel.selectHint")}</p>
       </aside>
     );
   }
@@ -36,6 +38,7 @@ export function FactionForm({ web, faction, onSelect }: {
   onSelect(id: string | null): void;
 }) {
   const store = useScriptorium.getState;
+  const { t } = useTranslation();
   const pushToast = useScriptorium((s) => s.pushToast);
   const [armDelete, setArmDelete] = useState(false);
   const update = (patch: Partial<Faction>) => store().updateFaction(faction.id, patch);
@@ -44,7 +47,7 @@ export function FactionForm({ web, faction, onSelect }: {
   const remove = () => {
     if (!armDelete) { setArmDelete(true); return; }
     store().deleteFaction(faction.id);
-    pushToast("success", "Faction removed.");
+    pushToast("success", t("factions.panel.factionRemoved"));
     onSelect(null);
   };
 
@@ -53,19 +56,19 @@ export function FactionForm({ web, faction, onSelect }: {
       <header className={BOARD_PANEL_HEAD}>
         <h2 className={BOARD_PANEL_HEAD_H2}>{faction.name}</h2>
         <Button kind={armDelete ? "danger" : "ghost"} className="px-2 py-1 text-xs" onClick={remove}
-          aria-label={armDelete ? "Confirm delete faction" : "Delete faction"}>
-          {armDelete ? "Confirm?" : "Delete"}
+          aria-label={armDelete ? t("factions.panel.confirmDeleteFaction") : t("common.delete")}>
+          {armDelete ? t("common.confirm") : t("common.delete")}
         </Button>
       </header>
-      <Field label="Name">
-        <input aria-label="Name" placeholder="e.g. House Valoris" value={nameDraft.draft} onChange={(e) => nameDraft.setDraft(e.target.value)} onBlur={() => nameDraft.flush()} />
+      <Field label={t("factions.panel.name")}>
+        <input aria-label={t("factions.panel.name")} placeholder={t("factions.panel.namePlaceholder")} value={nameDraft.draft} onChange={(e) => nameDraft.setDraft(e.target.value)} onBlur={() => nameDraft.flush()} />
       </Field>
-      <TextDebounced label="Leader" value={faction.leader ?? ""} onCommit={(v) => update({ leader: v.trim() || undefined })} />
-      <TextDebounced label="Territory" value={faction.territory ?? ""} onCommit={(v) => update({ territory: v.trim() || undefined })} />
-      <TextDebounced label="Objetivos" value={faction.goals ?? ""} onCommit={(v) => update({ goals: v.trim() || undefined })} />
-      <TextDebouncedArea label="Description" value={faction.description ?? ""} onCommit={(v) => update({ description: v })} />
-      <Field label="Color">
-        <div className="flex flex-wrap gap-1.5" role="listbox" aria-label="Faction color">
+      <TextDebounced label={t("factions.panel.leader")} value={faction.leader ?? ""} onCommit={(v) => update({ leader: v.trim() || undefined })} />
+      <TextDebounced label={t("factions.panel.territory")} value={faction.territory ?? ""} onCommit={(v) => update({ territory: v.trim() || undefined })} />
+      <TextDebounced label={t("factions.panel.goals")} value={faction.goals ?? ""} onCommit={(v) => update({ goals: v.trim() || undefined })} />
+      <TextDebouncedArea label={t("factions.panel.description")} value={faction.description ?? ""} onCommit={(v) => update({ description: v })} />
+      <Field label={t("factions.panel.color")}>
+        <div className="flex flex-wrap gap-1.5" role="listbox" aria-label={t("factions.panel.colorGroup")}>
           {withCurrentColor(FACTION_PRESET_COLORS, faction.color).map((c) => (
             <button
               key={c}
@@ -80,7 +83,12 @@ export function FactionForm({ web, faction, onSelect }: {
           ))}
         </div>
       </Field>
-      <p className="text-slate text-xs">{web.factions.length} factions · {web.connections.length} connections</p>
+      <p className="text-slate text-xs">
+        {t("factions.index.counts", {
+          factions: t("factions.index.factionCount", { count: web.factions.length }),
+          connections: t("factions.index.connectionCount", { count: web.connections.length }),
+        })}
+      </p>
     </div>
   );
 }
@@ -121,6 +129,7 @@ function ConnectionForm({ connectionId, web, onSelect }: {
   onSelect(id: string | null): void;
 }) {
   const store = useScriptorium.getState;
+  const { t } = useTranslation();
   const conn = web.connections.find((c) => c.id === connectionId);
   useEffect(() => {
     if (!conn) onSelect(null);
@@ -128,15 +137,16 @@ function ConnectionForm({ connectionId, web, onSelect }: {
   if (!conn) return null;
   const a = web.factions.find((f) => f.id === conn.fromId);
   const b = web.factions.find((f) => f.id === conn.toId);
+  const style = FACTION_CONNECTION_STYLES[conn.type];
   return (
     <div className="grid gap-3" data-testid="connection-form">
       <header className={BOARD_PANEL_HEAD}>
-        <h2 className={BOARD_PANEL_HEAD_H2}>Relationship</h2>
-        <Button kind="danger" className="px-2 py-1 text-xs" aria-label="Remove connection"
-          onClick={() => { store().removeConnection(conn.id); onSelect(null); }}>Delete</Button>
+        <h2 className={BOARD_PANEL_HEAD_H2}>{t("factions.web.relationship")}</h2>
+        <Button kind="danger" className="px-2 py-1 text-xs" aria-label={t("factions.web.removeConnection")}
+          onClick={() => { store().removeConnection(conn.id); onSelect(null); }}>{t("common.delete")}</Button>
       </header>
       <p className="text-slate text-xs">{a?.name} ⇄ {b?.name}</p>
-      <p className="text-slate text-xs">Tipo atual: {conn.type}</p>
+      <p className="text-slate text-xs">{t("factions.web.currentType", { type: style ? t(style.labelKey) : conn.type })}</p>
     </div>
   );
 }
