@@ -62,10 +62,16 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
   rules.push(
     `@page display { @bottom-center { content: none; } @top-center { content: none; } }`,
     `.print-book .front-matter.display { page: display; }`,
+    // theme.css centres these in @layer components, which the unlayered
+    // blanket p rule outranks — the centring has to be restated here
+    `.print-book .tp-series, .print-book .tp-author, .print-book .book-author { text-align: center; }`,
     // the front-matter epigraph takes the part epigraph's shape so the two
-    // read as one idea; the block centres itself (its paragraphs still take
-    // the body justification, like the part epigraph's)
-    `.print-book .epigraph { font-style: italic; max-width: 60%; margin: 0 auto; }`,
+    // read as one idea; centred lines, since justify would stretch every
+    // line but the last in a narrow column
+    `.print-book .epigraph { font-style: italic; max-width: 60%; margin: 0 auto; text-align: center; }`,
+    // the blanket p rule matches the epigraph's paragraphs directly, so the
+    // centring must land on them — on the wrapping block alone it never reaches
+    `.print-book .epigraph p, .print-book .part-epigraph p { text-align: center; }`,
   );
   if (config.frontMatter?.romanNumerals && config.pageNumbers) {
     rules.push(
@@ -75,6 +81,10 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
   }
   rules.push(`.print-book { font-family: ${config.font}; font-size: ${t.bodyPt}pt; line-height: ${t.leading / t.bodyPt}; }`);
   rules.push(
+    // unlayered, this outranks the sheet's @layer components alignment for
+    // every paragraph: a display-page paragraph that must not be justified
+    // (the divider number, the title-page lines, the epigraphs) carries its
+    // own text-align in this generated sheet
     `.print-book p { margin: 0; text-align: ${t.justify ? "justify" : "left"}; widows: 2; orphans: 2; }`,
     `.print-book p + p { text-indent: ${t.indent}em; }`,
     `.print-book blockquote + p, .print-book ul + p, .print-book ol + p { text-indent: ${t.indent}em; }`,
@@ -152,7 +162,7 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
       // beats the divider's inherited centring, so this rule must set it
       `.print-book .part-num { font-size: 0.8em; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.4em; text-align: center; }`,
       `.print-book .part-title { font-size: 1.6em; margin: 0 0 1.2em; }`,
-      `.print-book .part-epigraph { font-style: italic; max-width: 60%; margin: 0 auto; }`,
+      `.print-book .part-epigraph { font-style: italic; max-width: 60%; margin: 0 auto; text-align: center; }`,
     );
   }
   if (config.dropCaps) {

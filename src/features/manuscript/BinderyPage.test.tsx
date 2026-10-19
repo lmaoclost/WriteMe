@@ -419,6 +419,16 @@ describe("Bindery preset picker, advanced groups and print hints", () => {
     expect(note).toHaveTextContent(/estimat/i);
   });
 
+  it("the page estimate agrees on the singular", () => {
+    const id = seedBook(); // one chapter, no words → the estimate floors at 1
+    act(() => { store().setBindery(id, { frontMatter: { ...defaultBindery()!.frontMatter!, halfTitle: false } }); });
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    expect(estimatePageCount(store().manuscripts[0])).toBe(1);
+    const note = screen.getByTestId("page-estimate");
+    expect(note).toHaveTextContent("1 página");
+    expect(note).not.toHaveTextContent("páginas");
+  });
+
   it("warns that running heads and folios only appear in the print dialog", () => {
     const id = seedBook();
     render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);

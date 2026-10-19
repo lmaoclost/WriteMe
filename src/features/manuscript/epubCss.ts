@@ -47,8 +47,11 @@ export function buildEpubCss(config: BinderyConfig): string {
     // beats the divider's inherited centring, so this rule must set it
     `.part-num { font-size: 0.8em; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.4em; text-align: center; }`,
     `.part-title { font-size: 1.6em; margin: 0 0 1.2em; }`,
-    `.part-epigraph { font-style: italic; max-width: 60%; margin: 0 auto; }`,
-    `.epigraph { font-style: italic; max-width: 60%; margin: 0 auto; }`,
+    `.part-epigraph { font-style: italic; max-width: 60%; margin: 0 auto; text-align: center; }`,
+    `.epigraph { font-style: italic; max-width: 60%; margin: 0 auto; text-align: center; }`,
+    // the bare p rule matches the epigraph's paragraphs directly, so the
+    // centring must land on them — on the wrapping block alone it never reaches
+    `.epigraph p, .part-epigraph p { text-align: center; }`,
     `figure, img { max-width: 100%; height: auto; }`,
   );
   if (config.dropCaps) {

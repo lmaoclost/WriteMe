@@ -497,7 +497,7 @@ describe("buildBookHtml front matter + parts", () => {
     // inherited centring, so the divider's own rule must set it
     expect(css).toContain(".print-book .part-num { font-size: 0.8em; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.4em; text-align: center; }");
     expect(css).toMatch(/\.print-book \.part-title \{ font-size: 1\.6em;/);
-    expect(css).toMatch(/\.print-book \.part-epigraph \{ font-style: italic;/);
+    expect(css).toContain(".print-book .part-epigraph { font-style: italic; max-width: 60%; margin: 0 auto; text-align: center; }");
     expect(css).not.toMatch(/break-after:\s*page/);
   });
 
@@ -506,7 +506,20 @@ describe("buildBookHtml front matter + parts", () => {
     const css = buildBookCss(defaultBindery()!, {
       title: "Aldoria", chapters: [{ heading: "Um" }], parts: [], pageCount: 100,
     });
-    expect(css).toContain(".print-book .epigraph { font-style: italic; max-width: 60%; margin: 0 auto; }");
+    expect(css).toContain(".print-book .epigraph { font-style: italic; max-width: 60%; margin: 0 auto; text-align: center; }");
+    // the blanket p rule matches the epigraph's paragraphs directly, so the
+    // centring must land on them — on the wrapping block alone it never reaches
+    expect(css).toContain(".print-book .epigraph p, .print-book .part-epigraph p { text-align: center; }");
+  });
+
+  it("the generated sheet restates the title-page centring the layered theme rules lose", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const css = buildBookCss(defaultBindery()!, {
+      title: "Aldoria", chapters: [{ heading: "Um" }], parts: [], pageCount: 100,
+    });
+    // both title markups: the branded page (tp-series/tp-author) and the
+    // fallback book-title page (book-author)
+    expect(css).toContain(".print-book .tp-series, .print-book .tp-author, .print-book .book-author { text-align: center; }");
   });
 
   it("a book without parts emits no part-page rules", async () => {
@@ -869,7 +882,11 @@ describe("EPUB export", () => {
     // bare `p { text-align: justify }` matches the number directly and beats
     // the inherited centring from .part-divider — same leak as print
     expect(css).toContain(".part-num { font-size: 0.8em; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.4em; text-align: center; }");
-    expect(css).toContain(".epigraph { font-style: italic; max-width: 60%; margin: 0 auto; }");
+    expect(css).toContain(".epigraph { font-style: italic; max-width: 60%; margin: 0 auto; text-align: center; }");
+    expect(css).toContain(".part-epigraph { font-style: italic; max-width: 60%; margin: 0 auto; text-align: center; }");
+    // same paragraph-level override as print: the bare p rule matches the
+    // epigraph's paragraphs directly, so centring must land on them
+    expect(css).toContain(".epigraph p, .part-epigraph p { text-align: center; }");
     // the EPUB chapter keeps h2 and its first p as siblings, so the reset stays
     expect(css).toContain("h1 + p, h2 + p, h3 + p, .chapter-note + p { text-indent: 0; }");
   });

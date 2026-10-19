@@ -134,6 +134,7 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
   );
 
   if (!manuscript) return null;
+  const pages = estimatePageCount(manuscript);
 
   return (
     <div className="bindery-page grid grid-rows-[auto_1fr] h-full" data-testid="bindery-page">
@@ -294,7 +295,7 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
           </details>
           <p className="text-slate text-xs">Print at: {trimToPage(b.trim)} — check it in the dialog.</p>
           <p className="text-slate text-xs" data-testid="page-estimate">
-            ≈ {estimatePageCount(manuscript)} páginas — estimativa por contagem de palavras; a paginação final só sai na impressão.
+            ≈ {pages} {pages === 1 ? "página" : "páginas"} — estimativa por contagem de palavras; a paginação final só sai na impressão.
           </p>
           <p className="text-slate text-xs leading-relaxed" role="note" data-testid="print-hint">
             Cabeças de página e fólios aparecem apenas no diálogo de impressão — nunca na prévia na tela.
