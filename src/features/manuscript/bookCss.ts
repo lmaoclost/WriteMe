@@ -81,7 +81,8 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
   const sinkPct = Math.round(opener.sink * 100);
   // running head by chapter: a named page per chapter, tied to the flat
   // 1-based chapter index so numbering stays continuous across parts
-  if (config.runningHead && config.runningHeadMode === "chapter") {
+  const chapterPages = config.runningHead && config.runningHeadMode === "chapter";
+  if (chapterPages) {
     ctx.chapters.forEach((ch, i) => {
       rules.push(
         `@page ch${i + 1} { @top-center { content: "${cssStr(ch.heading)}"; font-size: 9pt; letter-spacing: 0.08em; text-transform: uppercase; } }`,
@@ -104,6 +105,12 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
         `.print-book .chapter-opener[data-ch="${i + 1}"] { page: opener${i + 1}; break-before: page; padding-top: ${sinkPct}%; }`,
       );
     } else {
+      // the opener must carry the body's named page: a page change between
+      // the pair forces a break no `avoid` can cancel, splitting opener from
+      // text even with both suppressions off
+      if (chapterPages) {
+        rules.push(`.print-book .chapter-opener[data-ch="${i + 1}"] { page: ch${i + 1}; }`);
+      }
       rules.push(`.print-book .chapter-opener[data-ch="${i + 1}"] + .chapter { break-before: avoid; }`);
     }
   }

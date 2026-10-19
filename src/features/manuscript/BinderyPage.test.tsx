@@ -128,9 +128,23 @@ describe("bindery utils", () => {
   it("with both suppressions off the opener shares its page with the text", async () => {
     const { buildBookCss } = await import("./bookCss");
     const ctx = { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
-    const css = buildBookCss({ ...defaultBindery()!, opener: { sink: 0.18, suppressHead: false, suppressFolio: false } }, ctx);
-    expect(css).not.toMatch(/chapter-opener\[data-ch="1"\] \{ page:/);
+    const off = { ...defaultBindery()!, opener: { sink: 0.18, suppressHead: false, suppressFolio: false } };
+    const css = buildBookCss(off, ctx);
+    // chapter-head mode: the opener must carry the body's named page — a page
+    // change between the pair would force a break no `avoid` can cancel
+    expect(css).toContain('.print-book .chapter-opener[data-ch="1"] { page: ch1; }');
     expect(css).toContain('.print-book .chapter-opener[data-ch="1"] + .chapter { break-before: avoid; }');
+    const bookMode = buildBookCss({ ...off, runningHeadMode: "book" }, ctx);
+    expect(bookMode).not.toMatch(/chapter-opener\[data-ch="1"\] \{ page:/);
+    expect(bookMode).toContain('.print-book .chapter-opener[data-ch="1"] + .chapter { break-before: avoid; }');
+  });
+
+  it("sink 0 with suppression on still gives the opener its own, headless page", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const ctx = { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
+    const css = buildBookCss({ ...defaultBindery()!, opener: { sink: 0, suppressHead: true, suppressFolio: true } }, ctx);
+    expect(css).toContain("@page opener1 { @top-center { content: none; } @bottom-center { content: none; } }");
+    expect(css).toContain('.print-book .chapter-opener[data-ch="1"] { page: opener1; break-before: page; padding-top: 0%; }');
   });
 
   it("no page-first suppression rule survives: Chromium drops the selector", async () => {
