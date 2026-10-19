@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it } from "vitest";
 import { AppRouter } from "../../app/router";
@@ -67,5 +67,20 @@ describe("workspace rail", () => {
       expect(rail.getByText(label)).toBeInTheDocument();
     }
     expect(rail.getByRole("link", { name: /Publishing/i })).toHaveAttribute("href", `/p/${p.id}/bindery`);
+  });
+
+  it("switches the rail and pages to Portuguese", async () => {
+    const p = useScriptorium.getState().addProject("R");
+    render(at(`/p/${p.id}`));
+    const rail = within(screen.getByRole("navigation", { name: /world sections/i }));
+
+    fireEvent.click(rail.getByRole("button", { name: "Switch to Portuguese" }));
+
+    const nav = await screen.findByRole("navigation", { name: "Seções do mundo" });
+    const ptRail = within(nav);
+    expect(ptRail.getByRole("link", { name: "Visão geral" })).toHaveAttribute("href", `/p/${p.id}`);
+    expect(ptRail.getByRole("link", { name: /Meus mundos/ })).toHaveAttribute("href", "/");
+    expect(ptRail.getByText("Referência")).toBeInTheDocument();
+    expect(document.documentElement.lang).toBe("pt-BR");
   });
 });

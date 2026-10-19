@@ -33,8 +33,8 @@ describe("Field / Modal", () => {
   });
   it("modal closes via close button", () => {
     const onClose = vi.fn();
-    render(<Modal title="Excluir projeto" onClose={onClose}><p>confirmar</p></Modal>);
-    fireEvent.click(screen.getByRole("button", { name: "Fechar" }));
+    render(<Modal title="Delete project" onClose={onClose}><p>confirm</p></Modal>);
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
   it("modal closes on Escape keydown", () => {

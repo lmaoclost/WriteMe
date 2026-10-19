@@ -1,0 +1,218 @@
+{
+  "common": {
+    "cancel": "Cancelar",
+    "close": "Fechar",
+    "create": "Criar",
+    "delete": "Excluir",
+    "restore": "Restaurar",
+    "search": "Buscar",
+    "dismiss": "Dispensar",
+    "undo": "Desfazer",
+    "switchTo": "Mudar para {{language}}",
+    "languages": {
+      "english": "inglês",
+      "portuguese": "português"
+    }
+  },
+  "sections": {
+    "groups": {
+      "reference": "Referência",
+      "relations": "Relações",
+      "worldbuilding": "Construção de mundo",
+      "writing": "Escrita",
+      "goTo": "Ir para"
+    },
+    "overview": {
+      "label": "Visão geral",
+      "tip": "A casa do mundo"
+    },
+    "atlas": {
+      "label": "Atlas",
+      "tip": "Regiões de mapa e pins de lugares"
+    },
+    "lore": {
+      "label": "Acervo",
+      "tip": "Personagens, lugares, criaturas e coisas"
+    },
+    "chronology": {
+      "label": "Cronologia",
+      "tip": "Eventos datados em ordem"
+    },
+    "bloodline": {
+      "label": "Linhagem",
+      "tip": "Árvores familiares entre gerações"
+    },
+    "factions": {
+      "label": "Facções",
+      "tip": "Quem luta contra quem, quem apoia quem"
+    },
+    "oaths": {
+      "label": "Juramentos",
+      "tip": "Correntes de lealdade entre grupos"
+    },
+    "calendar": {
+      "label": "Calendário",
+      "tip": "O ano e os meses do seu mundo"
+    },
+    "plotboard": {
+      "label": "Quadro de trama",
+      "tip": "Arcos de história como cartas"
+    },
+    "timeline": {
+      "label": "Linha do tempo",
+      "tip": "Contas enfiadas numa roda"
+    },
+    "wellspring": {
+      "label": "Ideias",
+      "tip": "Ideias soltas, antes de terem um lar"
+    },
+    "conlang": {
+      "label": "Idioma",
+      "tip": "Palavras e fonética para o seu idioma"
+    },
+    "manuscript": {
+      "label": "Manuscrito",
+      "tip": "Escreva os capítulos"
+    },
+    "bindery": {
+      "label": "Publicação",
+      "tip": "Prepare o manuscrito para exportação"
+    }
+  },
+  "library": {
+    "welcome": "Bem-vindo de volta",
+    "myWorlds": "Meus mundos",
+    "searchWorlds": "Buscar mundos",
+    "searchWorldsPlaceholder": "Buscar mundos…",
+    "sortWorlds": "Ordenar mundos",
+    "recentlyUpdated": "Atualizados recentemente",
+    "nameAZ": "Nome A–Z",
+    "newWorld": "Novo mundo",
+    "emptyInvite": "Crie seu primeiro mundo ou carregue o projeto de exemplo.",
+    "loadSample": "Carregar o projeto de exemplo",
+    "noMatch": "Nenhum mundo corresponde a “{{query}}”.",
+    "updated": "Atualizado {{when}}",
+    "justNow": "agora mesmo",
+    "name": "Nome",
+    "description": "Descrição",
+    "deleteWorld": "Excluir mundo",
+    "deleteTitle": "Excluir \"{{name}}\"?",
+    "deleteBody": "Isso remove o mundo, seus verbetes, atlas e manuscritos. Não há como voltar.",
+    "backup": "Cópia de segurança",
+    "backupNote": "Sua biblioteca vive só neste navegador — nada é enviado. Salve uma cópia JSON de vez em quando.",
+    "downloadBackup": "Baixar cópia",
+    "restoreBackup": "Restaurar cópia",
+    "restoreTitle": "Restaurar cópia",
+    "restoreBody": "Restaurar substitui a biblioteca inteira — cada mundo, verbete e manuscrito — pelo conteúdo do arquivo.",
+    "restoreFromFile": "Restaurar a partir de arquivo",
+    "toasts": {
+      "invalidFile": "Não foi possível ler esse arquivo.",
+      "invalidJson": "Esse arquivo não é um JSON válido.",
+      "restored": "Biblioteca restaurada.",
+      "worldCreated": "Mundo criado.",
+      "sampleLoaded": "Projeto de exemplo carregado.",
+      "worldDeleted": "Mundo excluído.",
+      "nameRequired": "Dê um nome ao mundo."
+    }
+  },
+  "workspace": {
+    "worldSections": "Seções do mundo",
+    "myWorlds": "← Meus mundos",
+    "search": "Buscar",
+    "worldMissing": "Este mundo não existe ou foi removido."
+  },
+  "overview": {
+    "forgeLedger": "Livro do mundo",
+    "changeCover": "Trocar capa",
+    "coverUpdated": "Capa atualizada.",
+    "coverError": "Não foi possível carregar essa imagem.",
+    "items": {
+      "lore": {
+        "name": "Acervo",
+        "counter": "Verbetes do acervo",
+        "desc": "Personagens, lugares, criaturas e coisas",
+        "empty": "Escreva seu primeiro verbete"
+      },
+      "atlas": {
+        "name": "Atlas",
+        "counter": "Pins do atlas",
+        "desc": "Regiões de mapa e pins de lugares",
+        "count": "{{regions}} regiões · {{pins}} pins",
+        "empty": "Desenhe sua primeira região"
+      },
+      "chronology": {
+        "name": "Cronologia",
+        "counter": "Eventos da cronologia",
+        "desc": "Eventos datados em ordem",
+        "empty": "Adicione um evento datado"
+      },
+      "bloodline": {
+        "name": "Linhagem",
+        "counter": "Pessoas da linhagem",
+        "desc": "Árvores familiares entre gerações",
+        "empty": "Adicione a primeira pessoa"
+      },
+      "oaths": {
+        "name": "Juramentos",
+        "counter": "Membros dos juramentos",
+        "desc": "Correntes de lealdade entre grupos",
+        "empty": "Desenhe o primeiro juramento"
+      },
+      "factions": {
+        "name": "Facções",
+        "counter": "Facções",
+        "desc": "Quem luta contra quem, quem apoia quem",
+        "empty": "Adicione a primeira facção"
+      },
+      "calendar": {
+        "name": "Calendário",
+        "counter": "Eventos do calendário",
+        "desc": "O ano e os meses do seu mundo",
+        "empty": "Adicione um evento ao calendário"
+      },
+      "plotboard": {
+        "name": "Quadro de trama",
+        "counter": "Cartas do quadro",
+        "desc": "Arcos de história como cartas",
+        "empty": "Adicione a primeira carta"
+      },
+      "timeline": {
+        "name": "Linha do tempo",
+        "counter": "Contas da linha do tempo",
+        "desc": "Contas enfiadas numa roda",
+        "empty": "Enfie a primeira conta"
+      },
+      "wellspring": {
+        "name": "Ideias",
+        "counter": "Ideias",
+        "desc": "Ideias soltas, antes de terem um lar",
+        "empty": "Abra um quadro de ideias"
+      },
+      "conlang": {
+        "name": "Idioma",
+        "counter": "Palavras do léxico",
+        "desc": "Palavras e fonética para o seu idioma",
+        "empty": "Adicione a primeira palavra"
+      },
+      "manuscript": {
+        "name": "Manuscrito",
+        "counter": "Capítulos do manuscrito",
+        "desc": "Escreva os capítulos",
+        "empty": "Escreva o primeiro capítulo"
+      },
+      "bindery": {
+        "name": "Publicação",
+        "counter": "Ajustes de publicação",
+        "desc": "Prepare o manuscrito para exportação"
+      }
+    }
+  },
+  "palette": {
+    "search": "Buscar",
+    "placeholder": "Ir para qualquer coisa — seções, verbetes, capítulos…",
+    "noMatches": "Nenhum resultado.",
+    "searchResults": "Resultados da busca",
+    "goTo": "Ir para",
+    "worlds": "Mundos"
+  }
+}

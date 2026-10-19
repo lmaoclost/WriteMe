@@ -1,0 +1,218 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "close": "Close",
+    "create": "Create",
+    "delete": "Delete",
+    "restore": "Restore",
+    "search": "Search",
+    "dismiss": "Dismiss",
+    "undo": "Undo",
+    "switchTo": "Switch to {{language}}",
+    "languages": {
+      "english": "English",
+      "portuguese": "Portuguese"
+    }
+  },
+  "sections": {
+    "groups": {
+      "reference": "Reference",
+      "relations": "Relations",
+      "worldbuilding": "Worldbuilding",
+      "writing": "Writing",
+      "goTo": "Go to"
+    },
+    "overview": {
+      "label": "Overview",
+      "tip": "The world's home"
+    },
+    "atlas": {
+      "label": "Atlas",
+      "tip": "Map regions and drop pins for places"
+    },
+    "lore": {
+      "label": "Lore",
+      "tip": "Characters, places, creatures and things"
+    },
+    "chronology": {
+      "label": "Chronology",
+      "tip": "Dated events in world order"
+    },
+    "bloodline": {
+      "label": "Bloodline",
+      "tip": "Family trees across generations"
+    },
+    "factions": {
+      "label": "Factions",
+      "tip": "Who fights whom, who backs whom"
+    },
+    "oaths": {
+      "label": "Oaths",
+      "tip": "Chains of loyalty between groups"
+    },
+    "calendar": {
+      "label": "Calendar",
+      "tip": "Your world's own year and months"
+    },
+    "plotboard": {
+      "label": "Plot board",
+      "tip": "Story arcs as cards on a board"
+    },
+    "timeline": {
+      "label": "Timeline",
+      "tip": "Beads strung on a wheel"
+    },
+    "wellspring": {
+      "label": "Ideas",
+      "tip": "Loose ideas, before they have a home"
+    },
+    "conlang": {
+      "label": "Language",
+      "tip": "Words and phonetics for your tongue"
+    },
+    "manuscript": {
+      "label": "Manuscript",
+      "tip": "Write the chapters"
+    },
+    "bindery": {
+      "label": "Publishing",
+      "tip": "Trim the manuscript for export"
+    }
+  },
+  "library": {
+    "welcome": "Welcome back",
+    "myWorlds": "My worlds",
+    "searchWorlds": "Search worlds",
+    "searchWorldsPlaceholder": "Search worlds…",
+    "sortWorlds": "Sort worlds",
+    "recentlyUpdated": "Recently updated",
+    "nameAZ": "Name A–Z",
+    "newWorld": "New world",
+    "emptyInvite": "Create your first world or load the sample project.",
+    "loadSample": "Load the sample project",
+    "noMatch": "No worlds match “{{query}}”.",
+    "updated": "Updated {{when}}",
+    "justNow": "just now",
+    "name": "Name",
+    "description": "Description",
+    "deleteWorld": "Delete world",
+    "deleteTitle": "Delete \"{{name}}\"?",
+    "deleteBody": "This removes the world, its entries, atlas and manuscripts. No going back.",
+    "backup": "Backup",
+    "backupNote": "Your library lives in this browser only — nothing is sent anywhere. Save a JSON copy from time to time.",
+    "downloadBackup": "Download backup",
+    "restoreBackup": "Restore backup",
+    "restoreTitle": "Restore backup",
+    "restoreBody": "Restoring replaces the whole library — every world, entry and manuscript — with the file's contents.",
+    "restoreFromFile": "Restore from backup file",
+    "toasts": {
+      "invalidFile": "That file could not be read.",
+      "invalidJson": "That file is not valid JSON.",
+      "restored": "Library restored.",
+      "worldCreated": "World created.",
+      "sampleLoaded": "Sample project loaded.",
+      "worldDeleted": "World deleted.",
+      "nameRequired": "Give the world a name."
+    }
+  },
+  "workspace": {
+    "worldSections": "World sections",
+    "myWorlds": "← My worlds",
+    "search": "Search",
+    "worldMissing": "This world doesn't exist or was removed."
+  },
+  "overview": {
+    "forgeLedger": "Forge ledger",
+    "changeCover": "Change cover",
+    "coverUpdated": "Cover updated.",
+    "coverError": "That image could not be loaded.",
+    "items": {
+      "lore": {
+        "name": "Lore",
+        "counter": "Lore entries",
+        "desc": "Characters, places, creatures and things",
+        "empty": "Write your first entry"
+      },
+      "atlas": {
+        "name": "Atlas",
+        "counter": "Atlas pins",
+        "desc": "Map regions and drop pins for places",
+        "count": "{{regions}} regions · {{pins}} pins",
+        "empty": "Draw your first region"
+      },
+      "chronology": {
+        "name": "Chronology",
+        "counter": "Chronology events",
+        "desc": "Dated events in world order",
+        "empty": "Add a dated event"
+      },
+      "bloodline": {
+        "name": "Bloodline",
+        "counter": "Bloodline persons",
+        "desc": "Family trees across generations",
+        "empty": "Add the first person"
+      },
+      "oaths": {
+        "name": "Oaths",
+        "counter": "Oaths members",
+        "desc": "Chains of loyalty between groups",
+        "empty": "Draw the first oath"
+      },
+      "factions": {
+        "name": "Factions",
+        "counter": "Factions",
+        "desc": "Who fights whom, who backs whom",
+        "empty": "Add the first faction"
+      },
+      "calendar": {
+        "name": "Calendar",
+        "counter": "Calendar events",
+        "desc": "Your world's own year and months",
+        "empty": "Add an event to your calendar"
+      },
+      "plotboard": {
+        "name": "Plot board",
+        "counter": "Plot board cards",
+        "desc": "Story arcs as cards on a board",
+        "empty": "Add the first card"
+      },
+      "timeline": {
+        "name": "Timeline",
+        "counter": "Timeline beads",
+        "desc": "Beads strung on a wheel",
+        "empty": "String the first bead"
+      },
+      "wellspring": {
+        "name": "Ideas",
+        "counter": "Ideas",
+        "desc": "Loose ideas, before they have a home",
+        "empty": "Open an idea board"
+      },
+      "conlang": {
+        "name": "Language",
+        "counter": "Lexicon words",
+        "desc": "Words and phonetics for your tongue",
+        "empty": "Add the first word"
+      },
+      "manuscript": {
+        "name": "Manuscript",
+        "counter": "Manuscript chapters",
+        "desc": "Write the chapters",
+        "empty": "Write the first chapter"
+      },
+      "bindery": {
+        "name": "Publishing",
+        "counter": "Publishing trims",
+        "desc": "Trim the manuscript for export"
+      }
+    }
+  },
+  "palette": {
+    "search": "Search",
+    "placeholder": "Jump to anything — sections, entries, chapters…",
+    "noMatches": "No matches.",
+    "searchResults": "Search results",
+    "goTo": "Go to",
+    "worlds": "Worlds"
+  }
+}

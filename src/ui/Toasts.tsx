@@ -1,9 +1,11 @@
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useScriptorium, type ToastKind } from "../data/store";
 
 export const toastKindAttr = (kind: ToastKind): string => `[data-kind="${kind}"]`;
 
 export function Toasts() {
+  const { t: translate } = useTranslation();
   const toasts = useScriptorium((s) => s.toasts);
   const dismiss = useScriptorium((s) => s.dismissToast);
   // one timer per NEW toast: keying the effect on the whole array restarted
@@ -36,7 +38,7 @@ export function Toasts() {
               {t.action.label}
             </button>
           ) : null}
-          <button className="toast-dismiss border-0 bg-transparent text-xs text-slate hover:text-parchment" onClick={() => dismiss(t.id)} aria-label="Dismiss">✕</button>
+          <button className="toast-dismiss border-0 bg-transparent text-xs text-slate hover:text-parchment" onClick={() => dismiss(t.id)} aria-label={translate("common.dismiss")}>✕</button>
         </div>
       ))}
     </div>
