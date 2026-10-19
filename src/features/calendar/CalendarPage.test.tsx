@@ -230,3 +230,19 @@ describe("CalendarPage — config popover", () => {
     expect(store().calendars![0].weekdays).toEqual(before);
   });
 });
+
+describe("CalendarPage — Portuguese", () => {
+  it("reads the header, day panel and settings from the active locale", async () => {
+    const { setLanguage } = await import("../../i18n");
+    await setLanguage("pt-BR");
+    const cal = seed();
+    render(<CalendarPage calendarId={cal.id} />);
+    expect(screen.getByLabelText("Nome do calendário")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Editar configurações do calendário" })).toBeInTheDocument();
+    fireEvent.click(screen.getAllByTestId("cal-day")[0]);
+    expect(screen.getByLabelText("Novo evento")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Adicionar" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Editar configurações do calendário" }));
+    expect(screen.getByLabelText("Nome do novo mês")).toBeInTheDocument();
+  });
+});

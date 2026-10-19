@@ -34,7 +34,7 @@ describe("TimelineCanvasPage", () => {
     const tl = store().addTimeline("prj_1", "Fio");
     render(<MemoryRouter><TimelineCanvasPage timelineId={tl.id} /></MemoryRouter>);
     const panel = document.querySelector("[data-testid=tl-panel]") as HTMLElement;
-    expect(panel.textContent).toMatch(/choose|escolha/i);
+    expect(panel.textContent).toMatch(/choose|pick/i);
   });
 
   it("Add event creates a bead at the visible center and selects it", () => {
@@ -47,7 +47,7 @@ describe("TimelineCanvasPage", () => {
     expect(beads[0].x).toBe(1250);
     expect(beads[0].y).toBe(-60);
     const panel = document.querySelector("[data-testid=tl-panel]") as HTMLElement;
-    expect(panel.textContent).not.toMatch(/choose|escolha/i); // selected → editor fields
+    expect(panel.textContent).not.toMatch(/choose|pick/i); // selected → editor fields
     expect(screen.getByLabelText("Event label")).toBeTruthy();
   });
 

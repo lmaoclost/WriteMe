@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import type { PlotCard, PlotWire } from "../../domain/types";
@@ -40,6 +41,7 @@ const PBCardsLayer = memo(function PBCardsLayer({ cards, selectedCardId, handleC
   handleCardDown(c: PlotCard, e: React.PointerEvent): void;
   handleConnect(c: PlotCard): void;
 }) {
+  const { t } = useTranslation();
   return (
     <>
       {cards.map((c) => (
@@ -50,18 +52,18 @@ const PBCardsLayer = memo(function PBCardsLayer({ cards, selectedCardId, handleC
           data-card-id={c.id}
           style={{ left: c.x - 80, top: c.y - 20, borderTopColor: c.color }}
           role="button"
-          aria-label={`Scene ${c.title || "untitled"}`}
+          aria-label={t("plotboard.page.scene", { title: c.title || t("plotboard.page.untitledScene") })}
           tabIndex={0}
           onPointerDown={(e) => handleCardDown(c, e)}
         >
           <span className="absolute size-2.5 rounded-full -left-1.5 -top-1.5" style={{ background: c.color }} />
-          <span className="text-[13px] font-semibold text-parchment">{c.title || "Untitled Scene"}</span>
-          {c.pov ? <span className="text-[11px] text-slate">POV: {c.pov}</span> : null}
+          <span className="text-[13px] font-semibold text-parchment">{c.title || t("plotboard.page.untitledScene")}</span>
+          {c.pov ? <span className="text-[11px] text-slate">{t("plotboard.page.pov", { pov: c.pov })}</span> : null}
           {c.location ? <span className="text-[11px] text-slate">{c.location}</span> : null}
           <button
             type="button"
             className="conn-btn w-5 h-5 rounded-full bg-gold text-wax border-0 text-[0.6875rem] grid place-items-center cursor-crosshair"
-            aria-label={`Connect scene ${c.title || ""}`}
+            aria-label={t("plotboard.page.connectScene", { title: c.title || "" })}
             onPointerDown={(e) => { e.stopPropagation(); handleConnect(c); }}
             onClick={(e) => e.stopPropagation()}
           >●</button>
@@ -72,6 +74,7 @@ const PBCardsLayer = memo(function PBCardsLayer({ cards, selectedCardId, handleC
 });
 
 export function PlotBoardPage({ boardId }: { boardId: string }) {
+  const { t } = useTranslation();
   const board = useScriptorium((s) => (s.plotBoards ?? []).find((b) => b.id === boardId));
   const pushToast = useScriptorium((s) => s.pushToast);
   const pushPBHistory = useScriptorium((s) => s.pushPBHistory);
@@ -98,8 +101,8 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
   });
 
   useEffect(() => {
-    if (!board) pushToast("error", "Plot board not found.");
-  }, [board, pushToast]);
+    if (!board) pushToast("error", t("plotboard.page.notFound"));
+  }, [board, pushToast, t]);
 
   const cardById = useMemo(() => new Map((board?.cards ?? []).map((c) => [c.id, c])), [board?.cards]);
 
@@ -153,18 +156,18 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
       <header className={BOARD_HEADER}>
         <input
           className={BOARD_NAME_INPUT}
-          aria-label="Plot board name"
+          aria-label={t("plotboard.page.name")}
           value={board.name}
           onChange={(e) => useScriptorium.getState().renamePlotBoard(boardId, e.target.value)}
         />
         <div className={BOARD_ACTIONS}>
-          <button type="button" aria-label="Undo" disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoPB(boardId)}>↶</button>
-          <button type="button" aria-label="Redo" disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoPB(boardId)}>↷</button>
+          <button type="button" aria-label={t("plotboard.page.undo")} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoPB(boardId)}>↶</button>
+          <button type="button" aria-label={t("plotboard.page.redo")} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoPB(boardId)}>↷</button>
           {!board.hasPrologue ? (
-            <button type="button" onClick={() => { pushPBHistory(boardId); useScriptorium.getState().setBoardFlags(boardId, { hasPrologue: true }); }}>Prologue</button>
+            <button type="button" onClick={() => { pushPBHistory(boardId); useScriptorium.getState().setBoardFlags(boardId, { hasPrologue: true }); }}>{t("plotboard.page.prologue")}</button>
           ) : null}
           {!board.hasEpilogue ? (
-            <button type="button" onClick={() => { pushPBHistory(boardId); useScriptorium.getState().setBoardFlags(boardId, { hasEpilogue: true }); }}>Epilogue</button>
+            <button type="button" onClick={() => { pushPBHistory(boardId); useScriptorium.getState().setBoardFlags(boardId, { hasEpilogue: true }); }}>{t("plotboard.page.epilogue")}</button>
           ) : null}
           <button
             type="button"
@@ -179,9 +182,9 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
               if (created) setSelectedCardId(created.id);
             }}
           >
-            + Add scene
+            {t("plotboard.page.addScene")}
           </button>
-          <button type="button" aria-pressed={notesOpen} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
+          <button type="button" aria-pressed={notesOpen} onClick={() => setNotesOpen((v) => !v)}>{t("plotboard.page.notes")}</button>
         </div>
       </header>
       <div className="grid grid-cols-[1fr_300px] min-h-0 overflow-hidden">
@@ -246,9 +249,9 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
             <PBCardsLayer cards={board.cards} selectedCardId={selectedCardId} handleCardDown={handleCardDown} handleConnect={handleConnect} />
           </div>
           {board.cards.length === 0 ? (
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[calc(1/var(--bl-scale,0.1))] text-slate whitespace-nowrap">Drag to pan the board — "+ Add scene" places a scene at the center.</div>
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[calc(1/var(--bl-scale,0.1))] text-slate whitespace-nowrap">{t("plotboard.page.emptyHint")}</div>
           ) : connecting ? (
-            <div className="absolute bottom-3.5 left-1/2 -translate-x-1/2 bg-night-2 border border-line text-parchment-dim px-3 py-1.5 rounded-lg text-[13px]">Choose a scene card to connect.</div>
+            <div className="absolute bottom-3.5 left-1/2 -translate-x-1/2 bg-night-2 border border-line text-parchment-dim px-3 py-1.5 rounded-lg text-[13px]">{t("plotboard.page.chooseScene")}</div>
           ) : null}
           {notesOpen ? <BoardNotepad notes={board.notes} onNotes={(v) => useScriptorium.getState().setBoardNotes(boardId, v)} onClose={() => setNotesOpen(false)} /> : null}
         </div>
