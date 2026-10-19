@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useScriptorium } from "../../data/store";
 import type { Id, WorldEntry } from "../../domain/types";
 
@@ -11,6 +12,7 @@ export interface EntryImagePickerProps {
 /** Popover listing the project entries that carry their own image; picking
  *  one copies that blob into the atlas map (decoupled from the entry). */
 export function EntryImagePicker({ atlasId, entries, onClose }: EntryImagePickerProps) {
+  const { t } = useTranslation();
   // subscribes to the images map only while open — callers stay image-free
   const images = useScriptorium((s) => s.images);
   const candidates = entries.filter((e) => e.imageKey && images[e.imageKey]);
@@ -26,17 +28,17 @@ export function EntryImagePicker({ atlasId, entries, onClose }: EntryImagePicker
 
   const apply = (entryId: Id) => {
     const ok = useScriptorium.getState().setAtlasMapFromEntry(atlasId, entryId);
-    if (ok) pushToast("success", "Mapa vinculado ao codex.");
-    else pushToast("error", "Couldn't link the image.");
+    if (ok) pushToast("success", t("atlas.picker.linked"));
+    else pushToast("error", t("atlas.picker.linkFailed"));
     onClose();
   };
 
   return (
     <>
       <div className="chooser-backdrop fixed inset-0 z-29 bg-transparent" onPointerDown={onClose} aria-hidden="true" />
-      <div className="fixed top-[52px] right-3 z-30 w-[340px] max-h-[70vh] overflow-y-auto p-2.5 bg-night-2 border border-line rounded-lg" role="dialog" aria-label="Entry image">
+      <div className="fixed top-[52px] right-3 z-30 w-[340px] max-h-[70vh] overflow-y-auto p-2.5 bg-night-2 border border-line rounded-lg" role="dialog" aria-label={t("atlas.picker.title")}>
         {candidates.length === 0 ? (
-          <p className="m-0 text-parchment-dim text-[13px]">No entries with images.</p>
+          <p className="m-0 text-parchment-dim text-[13px]">{t("atlas.picker.empty")}</p>
         ) : (
           <ul className="list-none m-0 p-0 grid grid-cols-2 gap-2">
             {candidates.map((e) => (

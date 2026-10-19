@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import type { Id, Pt, Region } from "../../domain/types";
 import { pointInPolygon, polygonArea } from "../../domain/geometry";
@@ -31,11 +32,11 @@ const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const ZOOM_IN = 1.25;
 const ZOOM_OUT = 0.8;
 
-const DRAW_MODES: Array<{ value: Exclude<DrawMode, "none">; label: string }> = [
-  { value: "carve", label: "Carve" },
-  { value: "neighbor", label: "Neighbor" },
-  { value: "fit", label: "Fit" },
-];
+const DRAW_MODES = [
+  { value: "carve", labelKey: "atlas.editor.carve" },
+  { value: "neighbor", labelKey: "atlas.editor.neighbor" },
+  { value: "fit", labelKey: "atlas.editor.fit" },
+] as const satisfies ReadonlyArray<{ value: Exclude<DrawMode, "none">; labelKey: string }>;
 
 function isEditableTarget(t: EventTarget | null): boolean {
   const el = t as HTMLElement | null;
@@ -67,6 +68,7 @@ function RegionChooser({ options, position, onPick, onClear, onClose }: {
   onClear(): void;
   onClose(): void;
 }) {
+  const { t } = useTranslation();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -80,21 +82,22 @@ function RegionChooser({ options, position, onPick, onClear, onClose }: {
       <div
         className="region-chooser fixed z-30 flex flex-col min-w-[150px] p-1 bg-night-2 border border-line rounded-lg"
         role="dialog"
-        aria-label="Pick region"
+        aria-label={t("atlas.editor.pickRegion")}
         style={{ left: position.x, top: position.y }}
       >
         {options.map((r) => (
           <button type="button" key={r.id} onClick={() => onPick(r.id)} className="bg-none border-0 rounded-lg text-parchment px-2.5 py-1.5 text-left hover:bg-night">
-            {r.label || "Region"}
+            {r.label || t("atlas.editor.regionFallback")}
           </button>
         ))}
-        <button type="button" onClick={onClear} className="bg-none border-0 rounded-lg text-parchment px-2.5 py-1.5 text-left hover:bg-night">None</button>
+        <button type="button" onClick={onClear} className="bg-none border-0 rounded-lg text-parchment px-2.5 py-1.5 text-left hover:bg-night">{t("atlas.editor.none")}</button>
       </div>
     </>
   );
 }
 
 export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
+  const { t } = useTranslation();
   const atlas = useScriptorium((s) => s.atlases.find((a) => a.id === atlasId));
   const navigate = useNavigate();
   // narrowed: re-render only when this project's rows change — EntryImagePicker
@@ -198,9 +201,9 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
   useEffect(() => {
     if (!atlas && !deletedRef.current) {
       deletedRef.current = true;
-      useScriptorium.getState().pushToast("error", "Atlas not found.");
+      useScriptorium.getState().pushToast("error", t("atlas.editor.notFound"));
     }
-  }, [atlas]);
+  }, [atlas, t]);
 
   // Selections may outlive their pin or region (undo/delete) — drop them when
   // the selected id vanishes.
@@ -263,7 +266,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
     }
     deletedRef.current = true;
     useScriptorium.getState().deleteAtlas(atlasId);
-    pushToast("success", "Atlas deleted.");
+    pushToast("success", t("atlas.editor.deleted"));
   };
 
   const onReplaceFile = (e: ChangeEvent<HTMLInputElement>) => {
@@ -272,18 +275,18 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
     e.target.value = "";
   };
 
-  const tools: Array<{ name: string; label: string; value: AtlasTool }> = [
-    { name: "Move tool", label: "Select / move", value: "select" },
-    { name: "Pin tool", label: "Add pin", value: "pin" },
-    { name: "Draw region", label: "Region", value: "region" },
-  ];
+  const tools = [
+    { nameKey: "atlas.editor.selectMove", labelKey: "atlas.editor.selectMove", value: "select" },
+    { nameKey: "atlas.editor.addPin", labelKey: "atlas.editor.addPin", value: "pin" },
+    { nameKey: "atlas.editor.region", labelKey: "atlas.editor.region", value: "region" },
+  ] as const satisfies ReadonlyArray<{ nameKey: string; labelKey: string; value: AtlasTool }>;
 
   return (
     <div className="atlas-editor relative flex flex-col h-full [&[data-tool=region]_.stage]:cursor-crosshair" data-tool={tool}>
       <header className="flex items-center gap-2.5 px-3 py-2 bg-night border-b border-line flex-wrap">
         <input
           className="editor-name-input w-[190px] min-w-[120px] font-mono text-base text-parchment bg-none border border-transparent rounded-lg px-1.5 py-1 hover:border-line focus:border-gold outline-none"
-          aria-label="Atlas name"
+          aria-label={t("atlas.editor.name")}
           value={nameDraft}
           onChange={(e) => setNameDraft(e.target.value)}
           onKeyDown={(e) => {
@@ -295,23 +298,23 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
           }}
           onBlur={commitName}
         />
-        <div className="flex items-center gap-1.5" role="toolbar" aria-label="Atlas tools">
-          {tools.map((t) => (
+        <div className="flex items-center gap-1.5" role="toolbar" aria-label={t("atlas.editor.tools")}>
+          {tools.map((toolDef) => (
             <button
               type="button"
-              key={t.value}
-              aria-label={t.name}
-              aria-pressed={tool === t.value}
+              key={toolDef.value}
+              aria-label={t(toolDef.nameKey)}
+              aria-pressed={tool === toolDef.value}
               className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold"
-              onClick={() => setTool(t.value)}
+              onClick={() => setTool(toolDef.value)}
             >
-              {t.label}
+              {t(toolDef.labelKey)}
             </button>
           ))}
           {tool === "region" ? (
             <>
               <span className="text-[11px] text-slate whitespace-nowrap" aria-hidden="true">
-                Esc cancela · Enter fecha
+                {t("atlas.editor.drawHint")}
               </span>
               {DRAW_MODES.map((m) => (
                 <button
@@ -321,24 +324,24 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
                   aria-pressed={mode === m.value}
                   onClick={() => setMode((cur) => (cur === m.value ? "none" : m.value))}
                 >
-                  {m.label}
+                  {t(m.labelKey)}
                 </button>
               ))}
             </>
           ) : null}
         </div>
-        <div className="flex items-center gap-1.5 ml-auto" role="toolbar" aria-label="Map zoom">
-          <button type="button" aria-label="Reduzir" className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold w-7 text-center" onClick={() => apiRef.current?.zoomBy(ZOOM_OUT)}>−</button>
-          <output className="font-mono text-xs text-parchment-dim min-w-[44px] text-center" aria-label="Zoom level">{Math.round(zoom * 100)}%</output>
-          <button type="button" aria-label="Ampliar" className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold w-7 text-center" onClick={() => apiRef.current?.zoomBy(ZOOM_IN)}>+</button>
-          <button type="button" className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold" onClick={() => apiRef.current?.fitToContainer()}>Ajustar</button>
+        <div className="flex items-center gap-1.5 ml-auto" role="toolbar" aria-label={t("atlas.editor.zoom")}>
+          <button type="button" aria-label={t("atlas.editor.zoomOut")} className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold w-7 text-center" onClick={() => apiRef.current?.zoomBy(ZOOM_OUT)}>−</button>
+          <output className="font-mono text-xs text-parchment-dim min-w-[44px] text-center" aria-label={t("atlas.editor.zoomLevel")}>{Math.round(zoom * 100)}%</output>
+          <button type="button" aria-label={t("atlas.editor.zoomIn")} className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold w-7 text-center" onClick={() => apiRef.current?.zoomBy(ZOOM_IN)}>+</button>
+          <button type="button" className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold" onClick={() => apiRef.current?.fitToContainer()}>{t("atlas.editor.fitToContainer")}</button>
         </div>
-        <div className="flex items-center gap-1.5 ml-auto" role="toolbar" aria-label="Atlas actions">
+        <div className="flex items-center gap-1.5 ml-auto" role="toolbar" aria-label={t("atlas.editor.actions")}>
           <button
             type="button"
             className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold w-[30px] text-center"
-            aria-label="Desfazer"
-            title="Desfazer"
+            aria-label={t("atlas.editor.undo")}
+            title={t("atlas.editor.undo")}
             disabled={!flags.canUndo}
             onClick={runUndo}
           >
@@ -347,22 +350,22 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
           <button
             type="button"
             className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold w-[30px] text-center"
-            aria-label="Refazer"
-            title="Refazer"
+            aria-label={t("atlas.editor.redo")}
+            title={t("atlas.editor.redo")}
             disabled={!flags.canRedo}
             onClick={runRedo}
           >
             ↷
           </button>
-          <button type="button" className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold" onClick={() => replaceInputRef.current?.click()}>Replace map</button>
-          <button type="button" className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold" onClick={() => setPickerOpen(true)}>Entry image</button>
+          <button type="button" className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold" onClick={() => replaceInputRef.current?.click()}>{t("atlas.editor.replaceMap")}</button>
+          <button type="button" className="bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] cursor-pointer hover:border-gold-dim disabled:opacity-40 disabled:cursor-default disabled:hover:border-line aria-pressed:border-gold aria-pressed:text-gold" onClick={() => setPickerOpen(true)}>{t("atlas.editor.entryImage")}</button>
           <button
             type="button"
             className="danger-btn border-[var(--ember)] text-[var(--ember)] hover:bg-[color-mix(in_srgb,var(--ember)_18%,transparent)] bg-none rounded-lg py-1 px-2.5 text-[13px] cursor-pointer transition-colors"
-            aria-label="Excluir atlas"
+            aria-label={t("atlas.editor.delete")}
             onClick={deleteFromHeader}
           >
-            {armDelete ? "Confirmar?" : "Excluir atlas"}
+            {armDelete ? t("atlas.editor.confirm") : t("atlas.editor.delete")}
           </button>
         </div>
         <input
@@ -370,7 +373,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
           type="file"
           accept="image/*"
           className="sr-only"
-          aria-label="Map file"
+          aria-label={t("atlas.editor.mapFile")}
           onChange={onReplaceFile}
         />
       </header>
@@ -404,7 +407,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
                       : hover!.cursor.y - TOOLTIP_SIZE.height;
                     return (
                       <div className="pin-tooltip absolute z-6 flex flex-col gap-0.5 max-w-[180px] px-2 py-1.5 bg-night-2 border border-line rounded-lg pointer-events-none text-xs" data-testid="pin-tooltip" style={{ left, top }}>
-                        <span className="font-semibold text-parchment">{hoveredPin.label || "Pino"}</span>
+                        <span className="font-semibold text-parchment">{hoveredPin.label || t("atlas.editor.pinFallback")}</span>
                         {hoverEntryTitle ? <span className="text-parchment-dim">{hoverEntryTitle}</span> : null}
                       </div>
                     );
@@ -417,7 +420,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
                   const top = st.h > 0 ? Math.max(0, Math.min(cur.y + 14, st.h - 190)) : cur.y + 14;
                   return (
                     <div className="pin-tooltip pin-preview-pop absolute z-44 flex flex-col gap-1 w-[300px] px-3 py-2.5 bg-night-2 border border-gold-dim rounded-lg text-xs" data-testid="pin-entry-preview" style={{ left, top }}>
-                      <button type="button" className="pin-preview-close absolute top-1 right-1.5 bg-none border-0 text-slate cursor-pointer text-xs hover:text-parchment" aria-label="Fechar preview" onClick={closePreview}>✕</button>
+                      <button type="button" className="pin-preview-close absolute top-1 right-1.5 bg-none border-0 text-slate cursor-pointer text-xs hover:text-parchment" aria-label={t("atlas.editor.closePreview")} onClick={closePreview}>✕</button>
                       <EntryPreview
                         data={{
                           entryId: previewEntryObj.id,
@@ -460,7 +463,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
           </Stage>
           {!atlas.mapImageKey ? <MapDropzone atlasId={atlasId} /> : null}
         </div>
-        <aside className="w-[280px] flex-none min-h-0 overflow-y-auto p-3 bg-night border-l border-line flex flex-col gap-3.5" aria-label="Atlas panels">
+        <aside className="w-[280px] flex-none min-h-0 overflow-y-auto p-3 bg-night border-l border-line flex flex-col gap-3.5" aria-label={t("atlas.editor.panels")}>
           {selectedPin ? (
             <PinPanel
               pin={selectedPin}
@@ -481,7 +484,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
               }}
             />
           ) : (
-            <p className="panel-placeholder text-parchment-dim text-[13px]">Select or create a pin or region.</p>
+            <p className="panel-placeholder text-parchment-dim text-[13px]">{t("atlas.editor.placeholder")}</p>
           )}
         </aside>
       </div>
@@ -493,10 +496,10 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
         />
       ) : null}
       {draw.carvePreview ? (
-        <div className="mode-actions absolute left-1/2 bottom-4 -translate-x-1/2 flex gap-2 z-20 px-2 py-1.5 bg-night-2 border border-line rounded-lg" role="toolbar" aria-label="Carve actions">
-          <button type="button" className="mode-actions-btn bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] hover:border-gold-dim" onClick={draw.flipCarvePreview}>Outro lado</button>
-          <button type="button" className="mode-actions-btn bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] hover:border-gold-dim" onClick={confirmPreview}>Aplicar recorte</button>
-          <button type="button" className="mode-actions-btn bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] hover:border-gold-dim" onClick={cancelDraw}>Cancel</button>
+        <div className="mode-actions absolute left-1/2 bottom-4 -translate-x-1/2 flex gap-2 z-20 px-2 py-1.5 bg-night-2 border border-line rounded-lg" role="toolbar" aria-label={t("atlas.editor.carveActions")}>
+          <button type="button" className="mode-actions-btn bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] hover:border-gold-dim" onClick={draw.flipCarvePreview}>{t("atlas.editor.flipSide")}</button>
+          <button type="button" className="mode-actions-btn bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] hover:border-gold-dim" onClick={confirmPreview}>{t("atlas.editor.applyCarve")}</button>
+          <button type="button" className="mode-actions-btn bg-none border border-line text-parchment rounded-lg py-1 px-2.5 text-[13px] hover:border-gold-dim" onClick={cancelDraw}>{t("common.cancel")}</button>
         </div>
       ) : null}
       {chooser ? (

@@ -63,7 +63,7 @@ describe("FactionWebPage", () => {
   it("connects two factions via handle → destination → type picker", () => {
     const { w, a, b } = seedWeb();
     render(<FactionWebPage webId={w.id} />);
-    const handle = screen.getByRole("button", { name: /Conectar Casa Vellmor/ });
+    const handle = screen.getByRole("button", { name: /Connect Casa Vellmor/ });
     firePointer(handle, "pointerdown", { clientX: 100, clientY: 100 });
     expect(screen.getByText(/faction to connect/i)).toBeInTheDocument();
     // click destination

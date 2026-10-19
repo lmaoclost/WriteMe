@@ -1,4 +1,5 @@
 import { useScriptorium } from "../../data/store";
+import { useTranslation } from "react-i18next";
 import type { WorldEntry } from "../../domain/types";
 
 export interface ImagePickerProps {
@@ -7,13 +8,14 @@ export interface ImagePickerProps {
 }
 
 export function ImagePicker({ entries, onPick }: ImagePickerProps) {
+  const { t } = useTranslation();
   // subscribes to the images map only while open — callers stay image-free
   const images = useScriptorium((s) => s.images);
   const covered = entries.filter((e) => e.imageKey !== undefined && images[e.imageKey] !== undefined);
   return (
-    <div className="relative z-30 bg-ink border border-line rounded-lg p-2" role="group" aria-label="Entry images">
+    <div className="relative z-30 bg-ink border border-line rounded-lg p-2" role="group" aria-label={t("entries.images.title")}>
       {covered.length === 0 ? (
-        <p className="m-1 text-parchment-dim text-[13px]">No lore images yet.</p>
+        <p className="m-1 text-parchment-dim text-[13px]">{t("entries.images.empty")}</p>
       ) : (
         <ul className="list-none m-0 p-0 grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2">
           {covered.map((entry) => (

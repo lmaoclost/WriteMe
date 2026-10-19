@@ -77,12 +77,12 @@ describe("WellSpringPage", () => {
   it("notepad opens via the Notes button (pressed state) and via the N hotkey", () => {
     const w = seed();
     render(<WellSpringPage wellId={w.id} />);
-    const btn = screen.getByRole("button", { name: /notes/i }) as HTMLButtonElement;
+    const btn = screen.getByRole("button", { name: /^notes/i }) as HTMLButtonElement;
     expect(btn.getAttribute("aria-pressed")).toBe("false");
     expect(screen.queryByTestId("well-notepad")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: /notes/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^notes/i }));
     expect(screen.getByTestId("well-notepad")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /notes/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^notes/i }));
     expect(screen.queryByTestId("well-notepad")).toBeNull();
     fireEvent.keyDown(document, { key: "n" });
     expect(screen.getByTestId("well-notepad")).toBeInTheDocument();
@@ -119,9 +119,9 @@ describe("WellSpringPage", () => {
     firePointer(node, "pointerdown", { clientX: 0, clientY: 0 });
     await selectOption(() => screen.getByLabelText("Border target"), "Por que o rio fala?");
     fireEvent.change(screen.getByLabelText("Name this border"), { target: { value: "ouviu o aviso" } });
-    fireEvent.click(screen.getByRole("button", { name: "+ Borda" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Border" }));
     expect(screen.getByText("ouviu o aviso")).toBeInTheDocument();
-    const borderRow = screen.getAllByLabelText("Label da borda com Por que o rio fala?")[0] as HTMLInputElement;
+    const borderRow = screen.getAllByLabelText("Border label with Por que o rio fala?")[0] as HTMLInputElement;
     fireEvent.change(borderRow, { target: { value: "rascunho" } });
     expect(store().wellsprings![0].borders[0].label).toBe("rascunho");
   });

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, type PointerEvent as ReactPointerEvent, type CSSProperties } from "react";
 import type { Id, Pin } from "../../../domain/types";
 import { useScriptorium } from "../../../data/store";
+import { i18n } from "../../../i18n";
 import type { TransformApi } from "./useStageTransform";
 import { PIN_TYPE_META } from "../panels/pinTypes";
 import { useRafCallback } from "../../../ui/useRaf";
@@ -173,7 +174,7 @@ export function PinLayer({
               type="button"
               className={"pin-dot block w-full h-full p-0 border-0 bg-none cursor-pointer" + (selected ? " selected" : "")}
               style={{ "--pin-color": pin.color } as CSSProperties}
-              aria-label={pin.label || "Pino"}
+              aria-label={pin.label || i18n.t("atlas.editor.pinFallback")}
               aria-pressed={selected}
               onPointerDown={(e) => startDrag(pin, e)}
               onPointerEnter={(e) => reportHover(pin.id, e)}

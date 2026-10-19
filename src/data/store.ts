@@ -1,3 +1,4 @@
+import { i18n } from "../i18n";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
@@ -15,7 +16,7 @@ import { newId } from "../domain/id";
 import { dateIsEmpty, sanitizeDate } from "../domain/dates";
 import type { Pt } from "../domain/geometry";
 import { isMeaningful } from "../domain/geometry";
-import { emptyProjectData, serialize, parseExport } from "./schema";
+import { emptyProjectData, ParseExportError, serialize, parseExport } from "./schema";
 import { templateSections } from "../features/entries/categories";
 import { defaultBindery } from "./schema";
 import { seedDemoProject } from "./seed";
@@ -565,6 +566,14 @@ export const useScriptorium = create<ScriptoriumState>()(
           set({ ...data, histories: {} });
           return { ok: true as const };
         } catch (e) {
+          if (e instanceof ParseExportError) {
+            const error =
+              e.code === "invalidJson" ? i18n.t("import.errors.invalidJson")
+              : e.code === "notScriptorium" ? i18n.t("import.errors.notScriptorium")
+              : e.code === "unsupportedVersion" ? i18n.t("import.errors.unsupportedVersion", { version: String(e.version) })
+              : i18n.t("import.errors.invalidStructure");
+            return { ok: false as const, error };
+          }
           return { ok: false as const, error: (e as Error).message };
         }
       },
@@ -653,7 +662,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         const entry: WorldEntry = {
           id: newId("ent"),
           projectId,
-          title: "Untitled entry",
+          title: i18n.t("entries.untitledEntry"),
           category,
           body: "",
           links: [],
@@ -765,7 +774,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         return s.putMapImage(atlasId, src);
       },
 
-      addManuscript(projectId, title = "Untitled Manuscript") {
+      addManuscript(projectId, title = i18n.t("manuscript.untitled")) {
         const manuscript: Manuscript = {
           id: newId("man"),
           projectId,
@@ -825,7 +834,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         }));
       },
 
-      addChapter(manuscriptId, heading = "Untitled Chapter") {
+      addChapter(manuscriptId, heading = i18n.t("manuscript.untitledChapter")) {
         const m = get().manuscripts.find((x) => x.id === manuscriptId);
         if (!m) return null;
         const chapter: Chapter = {
@@ -906,7 +915,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         }));
       },
 
-      addPart(manuscriptId, title = "Untitled Part") {
+      addPart(manuscriptId, title = i18n.t("manuscript.untitledPart")) {
         const m = get().manuscripts.find((x) => x.id === manuscriptId);
         if (!m) return null;
         const part: Part = {
@@ -1195,7 +1204,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         });
       },
 
-      addBloodline(projectId, name = "Untitled Bloodline") {
+      addBloodline(projectId, name = i18n.t("bloodline.untitled")) {
         const bloodline: Bloodline = {
           id: newId("bl"),
           projectId,
@@ -1255,7 +1264,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           id: newId("per"),
           x: init?.x ?? 4000,
           y: init?.y ?? 4000,
-          name: init?.name ?? "Sem nome",
+          name: init?.name ?? i18n.t("bloodline.untitledPerson"),
           additionalTitles: [],
           tenures: [],
           showBadge: false,
@@ -1339,7 +1348,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           id: newId("hou"),
           x: init?.x ?? 4000,
           y: init?.y ?? 4000,
-          name: init?.name ?? "Casa sem nome",
+          name: init?.name ?? i18n.t("bloodline.untitledHouse"),
           isMainBranch: false,
           isMonarch: false,
           ...(init?.subtitle !== undefined ? { subtitle: init.subtitle } : {}),
@@ -1406,7 +1415,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         }));
       },
 
-      addFactionWeb(projectId, name = "Untitled Faction Web") {
+      addFactionWeb(projectId, name = i18n.t("factions.untitledWeb")) {
         const web: FactionWeb = {
           id: newId("fw"),
           projectId,
@@ -1455,7 +1464,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           id: newId("fac"),
           x: init?.x ?? 4000,
           y: init?.y ?? 4000,
-          name: init?.name ?? "Untitled Faction",
+          name: init?.name ?? i18n.t("factions.untitledFaction"),
           color: init?.color ?? "#7a7a99",
         };
         set((s) => ({
@@ -1650,7 +1659,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         });
       },
 
-      addCalendar(projectId, name = "Untitled Calendar") {
+      addCalendar(projectId, name = i18n.t("calendar.untitled")) {
         const calendar: CustomCalendar = {
           id: newId("cal"),
           projectId,
@@ -1839,7 +1848,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         }));
       },
 
-      addPlotBoard(projectId, name = "Untitled Plot Board") {
+      addPlotBoard(projectId, name = i18n.t("plotboard.untitled")) {
         const board: PlotBoard = {
           id: newId("pb"),
           projectId,
@@ -2068,7 +2077,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         });
       },
 
-      addTimeline(projectId, name = "Untitled Timeline") {
+      addTimeline(projectId, name = i18n.t("timeline.untitled")) {
         const timeline: TimelineWire = {
           id: newId("tl"),
           projectId,
@@ -2272,7 +2281,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         });
       },
 
-      addOathsChart(projectId, name = "Untitled Oaths Hierarchy") {
+      addOathsChart(projectId, name = i18n.t("oaths.untitled")) {
         const chart: OathsChart = {
           id: newId("oath"),
           projectId,
@@ -2319,7 +2328,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         get().pushOCHistory(chartId);
         const member: OathMember = {
           id: newId("mem"),
-          name: init?.name ?? "Sem nome",
+          name: init?.name ?? i18n.t("oaths.untitledMember"),
           seatStatus: "held",
           color: "#7c5cbf",
         };
@@ -2350,7 +2359,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         const dup = chart.oathLinks.some(
           (l) => (l.subordinateId === subordinateId && l.superiorId === superiorId));
         if (dup) {
-          get().pushToast("error", "That oath already exists between the two.");
+          get().pushToast("error", i18n.t("oaths.alreadyExists"));
           return null;
         }
         get().pushOCHistory(chartId);
@@ -2522,7 +2531,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         });
       },
 
-      addWellSpring(projectId, name = "Untitled Wellspring") {
+      addWellSpring(projectId, name = i18n.t("wellspring.untitled")) {
         const well: WellSpring = {
           id: newId("well"),
           projectId,
@@ -2726,7 +2735,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         });
       },
 
-      addConlang(projectId, name = "Untitled Conlang") {
+      addConlang(projectId, name = i18n.t("conlang.untitled")) {
         const conlang: Conlang = { id: newId("clg"), projectId, name, glyphs: [], words: [], notes: "" };
         set((s) => ({
           conlangs: [...(s.conlangs ?? []), conlang],

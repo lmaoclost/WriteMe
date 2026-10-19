@@ -1,24 +1,27 @@
 import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
+import { useTranslation } from "react-i18next";
+import { i18n } from "../../i18n";
 import { fileToDataUrl } from "../../data/image";
 import { useScriptorium, type ToastKind } from "../../data/store";
 
 export type PushToast = (kind: ToastKind, message: string) => void;
 
-/** Shared pipeline for the dropzone and the "Substituir mapa" header flow. */
+/** Shared pipeline for the dropzone and the "replace map" header flow. */
 export async function loadMapIntoAtlas(atlasId: string, file: File, pushToast: PushToast): Promise<void> {
   try {
     const { dataUrl } = await fileToDataUrl(file);
     const ok = useScriptorium.getState().putMapImage(atlasId, dataUrl);
-    if (ok) pushToast("success", "Mapa carregado.");
-    else pushToast("error", "Upload failed. Please try again.");
+    if (ok) pushToast("success", i18n.t("atlas.dropzone.loaded"));
+    else pushToast("error", i18n.t("atlas.dropzone.failed"));
   } catch {
-    pushToast("error", "Upload failed. Please try again.");
+    pushToast("error", i18n.t("atlas.dropzone.failed"));
   }
 }
 
 /** Full-stage overlay for an atlas without a map: drag&drop or click → file
  *  input → fileToDataUrl → putMapImage. */
 export function MapDropzone({ atlasId }: { atlasId: string }) {
+  const { t } = useTranslation();
   const pushToast = useScriptorium((s) => s.pushToast);
   const inputRef = useRef<HTMLInputElement>(null);
   const busyRef = useRef(false);
@@ -58,14 +61,14 @@ export function MapDropzone({ atlasId }: { atlasId: string }) {
       onDragLeave={() => setOver(false)}
       onDrop={onDrop}
     >
-      <p className="m-0 text-parchment-dim text-[15px] group-[.drag-over]:text-gold">Arraste um mapa…</p>
-      <p className="m-0 text-slate text-[13px]">or click to choose a file.</p>
+      <p className="m-0 text-parchment-dim text-[15px] group-[.drag-over]:text-gold">{t("atlas.dropzone.drag")}</p>
+      <p className="m-0 text-slate text-[13px]">{t("atlas.dropzone.click")}</p>
       <input
         ref={inputRef}
         type="file"
         accept="image/*"
         className="sr-only"
-        aria-label="Map file"
+        aria-label={t("atlas.dropzone.file")}
         onChange={pick}
       />
     </div>

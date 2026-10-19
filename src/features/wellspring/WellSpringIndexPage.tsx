@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useScriptorium } from "../../data/store";
 import { undoToastAction } from "../../ui/undoAction";
 import { Button } from "../../ui/Button";
@@ -8,6 +9,7 @@ import { Modal } from "../../ui/Modal";
 import { Field } from "../../ui/Field";
 
 export function WellSpringIndexPage({ projectId }: { projectId: string }) {
+  const { t } = useTranslation();
   const wells = useScriptorium((s) => s.wellsprings ?? []);
   const pushToast = useScriptorium((s) => s.pushToast);
   const mine = wells.filter((w) => w.projectId === projectId);
@@ -19,15 +21,15 @@ export function WellSpringIndexPage({ projectId }: { projectId: string }) {
   return (
     <div className="mx-auto max-w-[900px] px-6 py-8">
       <header className="grid gap-1.5 justify-items-start mb-5">
-        <h1>Ideas</h1>
-        <p className="text-slate text-sm">Somewhere to put an idea before it has a home.</p>
-        <Button onClick={() => setCreating(true)}>New idea board</Button>
+        <h1>{t("wellspring.index.title")}</h1>
+        <p className="text-slate text-sm">{t("wellspring.index.purpose")}</p>
+        <Button onClick={() => setCreating(true)}>{t("wellspring.index.new")}</Button>
       </header>
 
       {mine.length === 0 ? (
         <div className={EMPTY_STATE}>
-          <p>No idea boards found. Create a new one first!</p>
-          <p className="text-slate text-sm">Loose ideas, before they have a home.</p>
+          <p>{t("wellspring.index.empty")}</p>
+          <p className="text-slate text-sm">{t("wellspring.index.emptyDesc")}</p>
         </div>
       ) : (
         <div className={CARD_GRID}>
@@ -35,42 +37,47 @@ export function WellSpringIndexPage({ projectId }: { projectId: string }) {
             <article key={w.id} className={WORLD_CARD}>
               <Link className={CARD_LINK} to={`/p/${projectId}/wellspring/${w.id}`}>
                 <h2 className={CARD_NAME}>{w.name}</h2>
-                <p className={CARD_DESC}>{w.nodes.length} circles · {w.borders.length} lines</p>
+                <p className={CARD_DESC}>
+                  {t("wellspring.index.counts", {
+                    circles: t("wellspring.index.circleCount", { count: w.nodes.length }),
+                    lines: t("wellspring.index.lineCount", { count: w.borders.length }),
+                  })}
+                </p>
               </Link>
-              <button title="Delete idea board" aria-label="Delete idea board" className={DELETE_CHIP} onClick={() => setToDelete(w.id)}>✕</button>
+              <button title={t("wellspring.index.deleteChip")} aria-label={t("wellspring.index.deleteChip")} className={DELETE_CHIP} onClick={() => setToDelete(w.id)}>✕</button>
             </article>
           ))}
         </div>
       )}
 
       {creating ? (
-        <Modal title="New idea board" onClose={() => setCreating(false)}>
+        <Modal title={t("wellspring.index.new")} onClose={() => setCreating(false)}>
           <div className="grid gap-3">
-            <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
+            <Field label={t("wellspring.index.name")}><input aria-label={t("wellspring.index.name")} value={name} onChange={(e) => setName(e.target.value)} /></Field>
             <div className="mt-2 flex justify-end gap-2.5">
               <Button onClick={() => {
                 const n = name.trim();
-                if (!n) { pushToast("error", "Please enter a name."); return; }
+                if (!n) { pushToast("error", t("wellspring.index.nameRequired")); return; }
                 useScriptorium.getState().addWellSpring(projectId, n);
                 setCreating(false);
                 setName("");
-              }}>Create</Button>
-              <Button kind="ghost" onClick={() => setCreating(false)}>Cancel</Button>
+              }}>{t("wellspring.index.create")}</Button>
+              <Button kind="ghost" onClick={() => setCreating(false)}>{t("common.cancel")}</Button>
             </div>
           </div>
         </Modal>
       ) : null}
 
       {target ? (
-        <Modal title={`Delete "${target.name}"?`} onClose={() => setToDelete(null)}>
-          <p className="text-parchment-dim">Removes circles and lines. Undo right after works, from the notification.</p>
+        <Modal title={t("wellspring.index.deleteTitle", { name: target.name })} onClose={() => setToDelete(null)}>
+          <p className="text-parchment-dim">{t("wellspring.index.deleteBody")}</p>
           <div className="mt-2 flex justify-end gap-2.5">
             <Button kind="danger" onClick={() => {
               useScriptorium.getState().deleteWellSpring(target.id);
-              pushToast("success", "Idea board deleted.", undoToastAction());
+              pushToast("success", t("wellspring.index.deleted"), undoToastAction());
               setToDelete(null);
-            }}>Delete</Button>
-            <Button kind="ghost" onClick={() => setToDelete(null)}>Cancel</Button>
+            }}>{t("common.delete")}</Button>
+            <Button kind="ghost" onClick={() => setToDelete(null)}>{t("common.cancel")}</Button>
           </div>
         </Modal>
       ) : null}

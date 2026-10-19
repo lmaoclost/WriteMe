@@ -156,13 +156,13 @@ describe("parseExport", () => {
   });
   it("rejects unsupported versions and malformed bloodlines", () => {
     expect(() => parseExport(JSON.stringify({ app: "scriptorium", version: 3, ...base, bloodlines: [] })))
-      .toThrow(/Versão/);
+      .toThrow("unsupportedVersion");
     expect(() => parseExport(JSON.stringify({
       app: "scriptorium", version: 2, ...base,
       bloodlines: [blEnvelope({ persons: [badPerson({ x: "no" })] })],
     })))
-      .toThrow(/estrutura/);
+      .toThrow("invalidStructure");
     expect(() => parseExport(JSON.stringify({ app: "scriptorium", version: 2, ...base, bloodlines: null })))
-      .toThrow(/estrutura/);
+      .toThrow("invalidStructure");
   });
 });

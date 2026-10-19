@@ -115,6 +115,17 @@ describe("LibraryPage hub", () => {
     render(wrap());
     expect(screen.getByText(/create your first world or load the sample/i)).toBeInTheDocument();
   });
+
+  it("switches the whole library to Portuguese from the top-right toggle", async () => {
+    render(wrap());
+    fireEvent.click(screen.getByRole("button", { name: "Switch to Portuguese" }));
+
+    expect(await screen.findByRole("heading", { name: "Bem-vindo de volta" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Meus mundos" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Novo mundo" })).toBeInTheDocument();
+    expect(document.documentElement.lang).toBe("pt-BR");
+    expect(localStorage.getItem("scriptorium.lang")).toBe("pt-BR");
+  });
 });
 
 describe("library backup", () => {

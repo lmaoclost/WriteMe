@@ -1,4 +1,18 @@
 import type { EntryCategory } from "../../domain/types";
+import { i18n, normalizeLanguage } from "../../i18n";
+import en from "../../i18n/locales/en.json";
+import ptBR from "../../i18n/locales/pt-BR.json";
+
+/** EN is the resource shape; PT mirrors it. */
+type TemplateLexicon = typeof en.categories;
+const SECTION_KEYS: Record<string, keyof TemplateLexicon["sections"]> = {
+  "Quick Facts": "quickFacts",
+  "Overview": "overview",
+  "Detail": "detail",
+};
+function lexicon(): TemplateLexicon {
+  return normalizeLanguage(i18n.language) === "pt-BR" ? ptBR.categories : en.categories;
+}
 
 export interface CodexCategoryDef {
   key: EntryCategory;
@@ -134,8 +148,8 @@ export function kindDef(key: string, customs?: { key: string; label: string; ico
   const custom = customs?.find((k) => k.key === key);
   if (custom) return { label: custom.label, icon: custom.icon, color: custom.color ?? "#e0c264" };
   const def = categoryDef(key);
-  if (def) return { label: def.label, icon: def.icon, color: CATEGORY_COLORS[key] ?? "#e0c264" };
-  const legacy = LEGACY_CATEGORY_LABELS[key];
+  if (def) return { label: categoryLabel(key), icon: def.icon, color: CATEGORY_COLORS[key] ?? "#e0c264" };
+  const legacy = lexicon().legacy[key as keyof TemplateLexicon["legacy"]];
   if (legacy) return { label: legacy, icon: "📖", color: CATEGORY_COLORS[key] ?? "#e0c264" };
   return { label: key, icon: "📜", color: "#e0c264" };
 }
@@ -146,18 +160,27 @@ export function categoryDot(key: string, customs?: { key: string; label: string;
 }
 
 export function categoryLabel(key: string): string {
-  return categoryDef(key)?.label ?? LEGACY_CATEGORY_LABELS[key] ?? "General Lore";
+  const lex = lexicon();
+  const def = categoryDef(key);
+  if (def) return (lex.labels as Record<string, string>)[def.key];
+  return lex.legacy[key as keyof TemplateLexicon["legacy"]] ?? lex.labels.lore;
 }
 
 export function categoryIcon(key: string): string {
   return categoryDef(key)?.icon ?? "📖";
 }
 
-/** Sections a fresh entry of this category starts with (labels pre-created). */
+/** Sections a fresh entry of this category starts with (labels pre-created in
+ *  the active UI language; they become user data once written). */
 export function templateSections(key: string): { name: string; fields: { label: string; content: string }[] }[] {
   const def = categoryDef(key);
   if (!def) return [];
-  return def.sections.map((s) => ({ name: s.name, fields: s.fields.map((label) => ({ label, content: "" })) }));
+  const lex = lexicon();
+  const fields = lex.fields as Record<string, string>;
+  return def.sections.map((s) => ({
+    name: lex.sections[SECTION_KEYS[s.name] ?? "detail"],
+    fields: s.fields.map((label) => ({ label: fields[label] ?? label, content: "" })),
+  }));
 }
 /** Category dot colors (v1 palette, extended for the 15 forge categories). */
 export const CATEGORY_COLORS: Record<string, string> = {
@@ -193,7 +216,10 @@ export const CATEGORY_CANONICAL: Record<string, EntryCategory> = {
   person: "character", place: "location", item: "artifact",
 };
 
-export const CODEX_CATEGORY_CHIPS: readonly Chip[] = [
-  { value: null, label: "Todas", icon: "✦" },
-  ...CODEX_CATEGORIES.map((c) => ({ value: c.key as EntryCategory, label: c.label, icon: c.icon })),
-];
+export function codexCategoryChips(): readonly Chip[] {
+  const lex = lexicon();
+  return [
+    { value: null, label: lex.all, icon: "✦" },
+    ...CODEX_CATEGORIES.map((c) => ({ value: c.key as EntryCategory, label: (lex.labels as Record<string, string>)[c.key], icon: c.icon })),
+  ];
+}

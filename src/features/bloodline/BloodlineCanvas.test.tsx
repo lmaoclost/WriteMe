@@ -182,7 +182,7 @@ describe("BloodlineCanvasPage", () => {
     });
     mount(b);
     const house = screen.getByTestId("house-node");
-    expect(house.textContent).toContain("2 membros");
+    expect(house.textContent).toContain("2 members");
   });
 
   it("stacks canvas and panel below 720px", () => {

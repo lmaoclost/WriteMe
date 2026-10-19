@@ -206,11 +206,11 @@ describe("BloodlinePanel — house picker", () => {
     const { b, p1 } = seed();
     const h = store().addHouse(b.id, { x: 4200, y: 3700, name: "Casa Vellmor" })!;
     mountCanvas(b.id);
-    const node = screen.getAllByTestId("person-node").find((n) => n.getAttribute("aria-label") === "Pessoa Aldric")!;
+    const node = screen.getAllByTestId("person-node").find((n) => n.getAttribute("aria-label") === "Person Aldric")!;
     firePointer(node, "pointerdown", { clientX: 0, clientY: 0 });
     await selectOption(() => screen.getAllByLabelText("House").pop()!, "Casa Vellmor");
     expect(store().bloodlines[0].persons.find((x) => x.id === p1)!.houseId).toBe(h.id);
-    const nodeWithHouse = screen.getAllByTestId("person-node").find((n) => n.getAttribute("aria-label") === "Pessoa Aldric")!;
+    const nodeWithHouse = screen.getAllByTestId("person-node").find((n) => n.getAttribute("aria-label") === "Person Aldric")!;
     expect(nodeWithHouse.textContent).toContain("Casa Vellmor");
   });
 });
@@ -236,7 +236,7 @@ describe("Find + Notepad", () => {
     const { b } = seed();
     mountCanvas(b.id);
     fireEvent.click(screen.getByRole("button", { name: /notes/i }));
-    const ta = screen.getByLabelText("Notas da linhagem") as HTMLTextAreaElement;
+    const ta = screen.getByLabelText("Bloodline notes") as HTMLTextAreaElement;
     fireEvent.change(ta, { target: { value: "Aldric fundou a casa no rio." } });
     act(() => vi.advanceTimersByTime(320));
     expect(store().bloodlines[0].notes).toBe("Aldric fundou a casa no rio.");
@@ -247,7 +247,22 @@ describe("Find + Notepad", () => {
     const { b } = seed();
     mountCanvas(b.id);
     fireEvent.click(screen.getByRole("button", { name: /notes/i }));
-    fireEvent.click(screen.getByRole("button", { name: "Fechar notas" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close notes" }));
     expect(screen.queryByTestId("bl-notepad")).toBeNull();
+  });
+});
+
+describe("Bloodline — Portuguese", () => {
+  it("reads the panel labels from the active locale", async () => {
+    const { setLanguage } = await import("../../i18n");
+    await setLanguage("pt-BR");
+    const { b, p1 } = seed();
+    mountCanvas(b.id);
+    firePointer(screen.getAllByTestId("person-node")[0], "pointerdown", { clientX: 0, clientY: 0 });
+    const panel = screen.getByTestId("bl-panel");
+    expect(panel.textContent).toContain("Parentesco");
+    expect(panel.textContent).toContain("Laços de sangue");
+    expect(panel.textContent).toContain("Sem retrato");
+    void p1;
   });
 });

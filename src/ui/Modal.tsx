@@ -1,24 +1,26 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export function Modal({
   title,
   onClose,
   children,
-  closeLabel = "Fechar",
+  closeLabel,
 }: {
   title: ReactNode;
   onClose: () => void;
   children?: ReactNode | undefined;
   closeLabel?: string;
 }) {
+  const { t } = useTranslation();
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent showCloseButton={false} className="w-[min(440px,92vw)] rounded-lg bg-card p-4.5 sm:max-w-[min(440px,92vw)]">
         <DialogHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
           <DialogTitle className="font-display">{title}</DialogTitle>
           <DialogClose
-            aria-label={closeLabel}
+            aria-label={closeLabel ?? t("common.close")}
             className="border-0 bg-transparent text-sm text-slate hover:text-parchment"
           >
             ✕

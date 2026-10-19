@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { usePlane } from "./usePlane";
@@ -13,6 +14,7 @@ import { useRafCallback } from "../../ui/useRaf";
 
 
 export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
+  const { t } = useTranslation();
   const bloodline = useScriptorium((s) => s.bloodlines.find((b) => b.id === bloodlineId));
   const images = useScriptorium((s) => s.images);
   const pushToast = useScriptorium((s) => s.pushToast);
@@ -28,8 +30,8 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
   }));
 
   useEffect(() => {
-    if (!bloodline) pushToast("error", "Bloodline not found.");
-  }, [bloodline, pushToast]);
+    if (!bloodline) pushToast("error", t("bloodline.canvas.notFound"));
+  }, [bloodline, pushToast, t]);
 
   const planeSize = useMemo(() => {
     let size = 20000;
@@ -117,13 +119,13 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
       <header className={BOARD_HEADER}>
         <input
           className={BOARD_NAME_INPUT}
-          aria-label="Bloodline name"
+          aria-label={t("bloodline.canvas.name")}
           value={bloodline.name}
           onChange={(e) => useScriptorium.getState().renameBloodline(bloodlineId, e.target.value)}
         />
         <div className={BOARD_ACTIONS}>
-          <button type="button" aria-label="Undo" className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoBL(bloodlineId)}>↶</button>
-          <button type="button" aria-label="Redo" className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoBL(bloodlineId)}>↷</button>
+          <button type="button" aria-label={t("bloodline.canvas.undo")} className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoBL(bloodlineId)}>↶</button>
+          <button type="button" aria-label={t("bloodline.canvas.redo")} className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoBL(bloodlineId)}>↷</button>
           <button type="button" className={BOARD_ACTION_BTN} onClick={() => {
             useScriptorium.getState().pushBLHistory(bloodlineId);
             const rect = stageRef.current?.getBoundingClientRect();
@@ -132,7 +134,7 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
               y: rect ? (window.innerHeight / 2 - rect.top - plane.panY) / plane.scale : 4000,
             });
             if (p) setSelectedId(p.id);
-          }}>Add person</button>
+          }}>{t("bloodline.canvas.addPerson")}</button>
           <button type="button" className={BOARD_ACTION_BTN} onClick={() => {
             useScriptorium.getState().pushBLHistory(bloodlineId);
             const rect = stageRef.current?.getBoundingClientRect();
@@ -141,9 +143,9 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
               y: rect ? (window.innerHeight / 2 - rect.top - plane.panY) / plane.scale - 200 : 3800,
             });
             if (h) setSelectedId(h.id);
-          }}>New house</button>
-          <button type="button" onClick={() => setFindOpen((v) => !v)} aria-label="Search person" className={BOARD_ACTION_BTN}>Search</button>
-          <button type="button" aria-pressed={notesOpen} className={BOARD_ACTION_BTN} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
+          }}>{t("bloodline.canvas.newHouse")}</button>
+          <button type="button" onClick={() => setFindOpen((v) => !v)} aria-label={t("bloodline.canvas.searchPerson")} className={BOARD_ACTION_BTN}>{t("bloodline.canvas.search")}</button>
+          <button type="button" aria-pressed={notesOpen} className={BOARD_ACTION_BTN} onClick={() => setNotesOpen((v) => !v)}>{t("bloodline.canvas.notes")}</button>
         </div>
       </header>
       <div className="grid grid-cols-[1fr_300px] min-h-0 overflow-hidden max-[720px]:grid-cols-1 max-[720px]:grid-rows-[45vh_minmax(0,1fr)]">
@@ -177,7 +179,7 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
             ))}
           </div>
           {bloodline.persons.length === 0 && bloodline.houses.length === 0 ? (
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[calc(1/var(--bl-scale,0.1))] text-slate whitespace-nowrap">Start from the founder — add the first person.</div>
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[calc(1/var(--bl-scale,0.1))] text-slate whitespace-nowrap">{t("bloodline.canvas.startHint")}</div>
           ) : null}
         </div>
         <BloodlinePanel bloodline={bloodline} selectedId={selectedId} onSelect={setSelectedId} />

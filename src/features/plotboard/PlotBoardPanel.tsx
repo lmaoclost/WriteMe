@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useScriptorium } from "../../data/store";
 import type { PlotBoard, PlotCard } from "../../domain/types";
 import { Field } from "../../ui/Field";
@@ -18,11 +19,12 @@ export function PlotBoardPanel({ board, selectedId, onSelect }: {
   selectedId: string | null;
   onSelect(id: string | null): void;
 }) {
+  const { t } = useTranslation();
   const card = board.cards.find((c) => c.id === selectedId);
   if (!card) {
     return (
       <aside className={BOARD_PANEL} data-testid="pb-panel">
-        <p className={BOARD_PANEL_HINT}>Select a card on the board.</p>
+        <p className={BOARD_PANEL_HINT}>{t("plotboard.panel.selectHint")}</p>
       </aside>
     );
   }
@@ -34,6 +36,7 @@ function CardForm({ board, card, onSelect }: {
   card: PlotCard;
   onSelect(id: string | null): void;
 }) {
+  const { t } = useTranslation();
   const store = useScriptorium.getState;
   const pushToast = useScriptorium((s) => s.pushToast);
   const [armDelete, setArmDelete] = useState(false);
@@ -43,38 +46,38 @@ function CardForm({ board, card, onSelect }: {
   const remove = () => {
     if (!armDelete) { setArmDelete(true); return; }
     store().deleteCard(card.id);
-    pushToast("success", "Scene card deleted.");
+    pushToast("success", t("plotboard.panel.cardDeleted"));
     onSelect(null);
   };
 
   return (
     <aside className={BOARD_PANEL} data-testid="pb-panel">
       <header className={BOARD_PANEL_HEAD}>
-        <h2 className={BOARD_PANEL_HEAD_H2}>{card.title || "Untitled Scene"}</h2>
+        <h2 className={BOARD_PANEL_HEAD_H2}>{card.title || t("plotboard.page.untitledScene")}</h2>
         <Button kind={armDelete ? "danger" : "ghost"} className="px-2 py-1 text-xs" onClick={remove}
-          aria-label={armDelete ? "Confirm delete card" : "Delete card"}>
-          {armDelete ? "Confirm?" : "Delete"}
+          aria-label={armDelete ? t("plotboard.panel.confirmDelete") : t("plotboard.panel.deleteCard")}>
+          {armDelete ? t("common.confirm") : t("common.delete")}
         </Button>
       </header>
-      <Field label="Title">
-        <input aria-label="Scene title" defaultValue={card.title} onBlur={(e) => update({ title: e.target.value })} />
+      <Field label={t("plotboard.panel.title")}>
+        <input aria-label={t("plotboard.panel.titleAria")} defaultValue={card.title} onBlur={(e) => update({ title: e.target.value })} />
       </Field>
-      <Field label="Act">
+      <Field label={t("plotboard.panel.act")}>
         <Select value={card.actId} onValueChange={(v) => update({ actId: v })}>
-          <SelectTrigger aria-label="Card act" className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
+          <SelectTrigger aria-label={t("plotboard.panel.actAria")} className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
           <SelectContent className="border-line bg-night text-parchment">
             {board.acts.map((a) => <SelectItem key={a.id} value={a.id} className="text-xs focus:bg-[#24233f] focus:text-parchment">{a.name}</SelectItem>)}
           </SelectContent>
         </Select>
       </Field>
-      <Field label="POV">
-        <input aria-label="POV" defaultValue={card.pov} onBlur={(e) => update({ pov: e.target.value })} />
+      <Field label={t("plotboard.panel.pov")}>
+        <input aria-label={t("plotboard.panel.pov")} defaultValue={card.pov} onBlur={(e) => update({ pov: e.target.value })} />
       </Field>
-      <Field label="Location">
-        <input aria-label="Local" defaultValue={card.location} onBlur={(e) => update({ location: e.target.value })} />
+      <Field label={t("plotboard.panel.location")}>
+        <input aria-label={t("plotboard.panel.location")} defaultValue={card.location} onBlur={(e) => update({ location: e.target.value })} />
       </Field>
-      <Field label="Color">
-        <div className="flex flex-wrap gap-1.5" role="listbox" aria-label="Card color">
+      <Field label={t("plotboard.panel.color")}>
+        <div className="flex flex-wrap gap-1.5" role="listbox" aria-label={t("plotboard.panel.colorGroup")}>
           {withCurrentColor(BOARD_PRESET_COLORS, card.color).map((c) => (
             <button key={c} type="button" role="option" aria-selected={card.color === c}
               className={`color-swatch${card.color === c ? " current" : ""}`} style={{ background: c }}
@@ -83,25 +86,25 @@ function CardForm({ board, card, onSelect }: {
         </div>
       </Field>
       <section className="border-t border-line mt-3.5 pt-2.5 grid gap-2">
-        <h3 className="text-[13px] tracking-[0.08em] uppercase text-slate font-semibold">Beats</h3>
+        <h3 className="text-[13px] tracking-[0.08em] uppercase text-slate font-semibold">{t("plotboard.panel.beats")}</h3>
         <ul className="titles-list list-none m-0 p-0 grid gap-1">
           {card.parts.map((p, i) => (
             <li key={p.id}>
               <input
-                aria-label={`Beat ${i + 1}`}
+                aria-label={t("plotboard.panel.beatAria", { n: i + 1 })}
                 defaultValue={p.text}
                 onBlur={(e) => update({ parts: card.parts.map((pp, j) => (j === i ? { ...pp, text: e.target.value } : pp)) })}
               />
-              <button type="button" aria-label={`Remove beat ${i + 1}`}
+              <button type="button" aria-label={t("plotboard.panel.removeBeat", { n: i + 1 })}
                 onClick={() => update({ parts: card.parts.filter((_, j) => j !== i) })} className="bg-none border-0 text-slate text-xs">✕</button>
             </li>
           ))}
         </ul>
-        <Button kind="ghost" className="justify-self-start px-2 py-1 text-xs" aria-label="Add beat"
+        <Button kind="ghost" className="justify-self-start px-2 py-1 text-xs" aria-label={t("plotboard.panel.addBeat")}
           onClick={() => update({ parts: [...card.parts, { id: `part_${Math.random().toString(36).slice(2, 8)}`, text: "" }] })}
-        >+ Beat</Button>
+        >{t("plotboard.panel.addBeatShort")}</Button>
       </section>
-      <p className="text-slate text-xs">Act: {act?.name ?? "—"}</p>
+      <p className="text-slate text-xs">{t("plotboard.panel.actFooter", { name: act?.name ?? "—" })}</p>
     </aside>
   );
 }

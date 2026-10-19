@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { WorldEntry, EntryCategory } from "../../domain/types";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
-import { CODEX_CATEGORY_CHIPS, CATEGORY_CANONICAL, categoryDot } from "./categories";
+import { codexCategoryChips, CATEGORY_CANONICAL, categoryDot } from "./categories";
 import { Button } from "../../ui/Button";
 import type { EntryKind } from "../../domain/types";
 
@@ -17,41 +18,43 @@ export interface EntryListProps {
 }
 
 export function EntryList({ entries, selectedId, onSelect, onCreate, onCreateKind }: EntryListProps) {
+  const { t, i18n } = useTranslation();
   const [chip, setChip] = useState<EntryCategory | string | null>(null);
   const [query, setQuery] = useState("");
   const customKinds = useScriptorium(useShallow((s) =>
     s.projects.find((p) => p.id === entries[0]?.projectId)?.customCategories ?? NO_KINDS));
 
-  const needle = query.trim().toLowerCase();
+  const needle = query.trim().toLocaleLowerCase(i18n.language);
   const canonical = (c: string) => CATEGORY_CANONICAL[c] ?? c;
   const filtered = entries.filter((e) =>
     (chip === null || canonical(e.category) === chip)
-    && (needle === "" || e.title.toLowerCase().includes(needle)));
+    && (needle === "" || e.title.toLocaleLowerCase(i18n.language).includes(needle)));
+  const chips = codexCategoryChips();
 
   return (
     <aside className="codex-list flex flex-col gap-2.5 min-h-0 p-3 bg-night border-r border-line max-[720px]:border-r-0 max-[720px]:border-b max-[720px]:border-line">
       <div className="grid gap-1 px-1">
-        <h1 className="m-0 font-display text-[15px] font-semibold text-parchment-strong">Lore</h1>
-        <p className="m-0 text-[11px] leading-snug text-slate">Characters, places, creatures and things.</p>
+        <h1 className="m-0 font-display text-[15px] font-semibold text-parchment-strong">{t("entries.list.title")}</h1>
+        <p className="m-0 text-[11px] leading-snug text-slate">{t("entries.list.purpose")}</p>
       </div>
       <div className="flex flex-col gap-2">
         <Button className="codex-new self-start" onClick={onCreate}>
-          New entry
+          {t("entries.list.new")}
         </Button>
         {onCreateKind ? (
-          <button type="button" className="codex-kind-add bg-none border border-line rounded-md text-slate cursor-pointer py-1 px-2.5 text-xs tracking-[0.04em] self-start hover:text-gold hover:border-gold-dim" onClick={onCreateKind}>+ New kind</button>
+          <button type="button" className="codex-kind-add bg-none border border-line rounded-md text-slate cursor-pointer py-1 px-2.5 text-xs tracking-[0.04em] self-start hover:text-gold hover:border-gold-dim" onClick={onCreateKind}>{t("entries.list.newKind")}</button>
         ) : null}
         <input
           type="text"
           className="codex-search w-full bg-ink text-parchment border border-line rounded-lg px-2.5 py-[7px] text-[13px] placeholder:text-slate outline-none focus-visible:border-gold-dim"
-          aria-label="Search entries"
-          placeholder="Search entries..."
+          aria-label={t("entries.list.search")}
+          placeholder={t("entries.list.placeholder")}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
-      <div className="codex-chips codex-chips-codex flex flex-wrap gap-1.5" role="group" aria-label="Filter by category">
-        {CODEX_CATEGORY_CHIPS.map((c) => (
+      <div className="codex-chips codex-chips-codex flex flex-wrap gap-1.5" role="group" aria-label={t("entries.list.filter")}>
+        {chips.map((c) => (
           <button
             type="button"
             key={c.label}
@@ -79,9 +82,9 @@ export function EntryList({ entries, selectedId, onSelect, onCreate, onCreateKin
         ))}
       </div>
       {entries.length === 0 ? (
-        <p className="codex-empty text-parchment-dim text-[13px] mx-0.5 my-2">The codex is empty — register the first entry.</p>
+        <p className="codex-empty text-parchment-dim text-[13px] mx-0.5 my-2">{t("entries.list.empty")}</p>
       ) : filtered.length === 0 ? (
-        <p className="codex-empty text-parchment-dim text-[13px] mx-0.5 my-2">Nenhum resultado.</p>
+        <p className="codex-empty text-parchment-dim text-[13px] mx-0.5 my-2">{t("entries.list.noResults")}</p>
       ) : (
         <ul className="codex-rows list-none m-0 p-0.5 flex flex-col gap-0.5 overflow-y-auto flex-1 min-h-0">
           {filtered.map((e) => (

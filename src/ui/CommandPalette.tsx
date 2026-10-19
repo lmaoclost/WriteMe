@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useScriptorium } from "../data/store";
-import { SECTIONS } from "../app/sections";
+import { GROUPS, SECTIONS } from "../app/sections";
 
 export const OPEN_PALETTE_EVENT = "scriptorium:open-palette";
 
 interface Item { key: string; label: string; group: string; to: string }
 
 export function CommandPalette() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const projectId = useMemo(() => pathname.match(/^\/p\/([^/]+)/)?.[1], [pathname]);
@@ -56,18 +58,25 @@ export function CommandPalette() {
 
   const items = useMemo<Item[]>(() => {
     const out: Item[] = [];
+    const goTo = t("palette.goTo");
     if (currentProject) {
       for (const s of SECTIONS) {
-        out.push({ key: `sec-${s.key}`, label: s.label, group: s.group || "Go to", to: `/p/${projectId}/${s.to}`.replace(/\/$/, "") });
+        const group = GROUPS.find((g) => g.key === s.groupKey);
+        out.push({
+          key: `sec-${s.key}`,
+          label: t(s.labelKey),
+          group: group ? t(group.labelKey) : goTo,
+          to: `/p/${projectId}/${s.to}`.replace(/\/$/, ""),
+        });
       }
-      for (const e of entries) out.push({ key: `ent-${e.id}`, label: e.title, group: "Lore", to: `/p/${projectId}/entries?e=${e.id}` });
-      for (const c of chapters) out.push({ key: `ch-${c.id}`, label: c.heading, group: "Manuscript", to: `/p/${projectId}/manuscript` });
+      for (const e of entries) out.push({ key: `ent-${e.id}`, label: e.title, group: t("sections.lore.label"), to: `/p/${projectId}/entries?e=${e.id}` });
+      for (const c of chapters) out.push({ key: `ch-${c.id}`, label: c.heading, group: t("sections.manuscript.label"), to: `/p/${projectId}/manuscript` });
     } else {
-      out.push({ key: "library", label: "My worlds", group: "Go to", to: "/" });
-      for (const p of projects) out.push({ key: `prj-${p.id}`, label: p.name, group: "Worlds", to: `/p/${p.id}` });
+      out.push({ key: "library", label: t("library.myWorlds"), group: goTo, to: "/" });
+      for (const p of projects) out.push({ key: `prj-${p.id}`, label: p.name, group: t("palette.worlds"), to: `/p/${p.id}` });
     }
     return out;
-  }, [currentProject, entries, chapters, projects, projectId]);
+  }, [currentProject, entries, chapters, projects, projectId, t]);
 
   const needle = query.trim().toLowerCase();
   const results = needle ? items.filter((i) => i.label.toLowerCase().includes(needle)) : items;
@@ -87,14 +96,14 @@ export function CommandPalette() {
   return (
     <Dialog open={open} onOpenChange={(v) => setOpen(v)}>
       {open && (
-        <DialogContent showCloseButton={false} className="gap-0 top-[14%] rounded-lg bg-card p-0 w-[min(520px,92vw)] sm:max-w-[min(520px,92vw)] translate-y-0" aria-label="Search">
-          <DialogTitle className="sr-only">Search</DialogTitle>
+        <DialogContent showCloseButton={false} className="gap-0 top-[14%] rounded-lg bg-card p-0 w-[min(520px,92vw)] sm:max-w-[min(520px,92vw)] translate-y-0" aria-label={t("palette.search")}>
+          <DialogTitle className="sr-only">{t("palette.search")}</DialogTitle>
           <input
             ref={inputRef}
-            aria-label="Search"
+            aria-label={t("palette.search")}
             aria-controls="palette-list"
             aria-activedescendant={results[safeActive] ? `palette-opt-${results[safeActive].key}` : undefined}
-            placeholder="Jump to anything — sections, entries, chapters…"
+            placeholder={t("palette.placeholder")}
             className="w-full bg-transparent border-b border-line px-4 py-3 text-sm text-parchment placeholder:text-slate outline-none"
             value={query}
             onChange={(e) => { setQuery(e.target.value); setActive(0); }}
@@ -105,9 +114,9 @@ export function CommandPalette() {
             }}
           />
           {results.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-slate">No matches.</p>
+            <p className="px-4 py-6 text-sm text-slate">{t("palette.noMatches")}</p>
           ) : (
-            <ul id="palette-list" className="max-h-[52vh] overflow-y-auto py-1.5 m-0 list-none p-0" role="listbox" aria-label="Search results">
+            <ul id="palette-list" className="max-h-[52vh] overflow-y-auto py-1.5 m-0 list-none p-0" role="listbox" aria-label={t("palette.searchResults")}>
               {rows.map((row) => row.type === "group" ? (
                 <li key={row.key} role="presentation" aria-hidden="true" className="px-4 pt-2 pb-1 m-0 text-[9px] uppercase tracking-[0.22em] text-[var(--text-faint)]">{row.label}</li>
               ) : (

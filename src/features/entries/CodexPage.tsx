@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { EntryList } from "./EntryList";
@@ -13,6 +14,7 @@ interface RouteState {
 }
 
 export function CodexPage({ projectId }: { projectId: string }) {
+  const { t } = useTranslation();
   const entries = useScriptorium(
     useShallow((s) => s.entries.filter((e) => e.projectId === projectId)),
   );
@@ -84,18 +86,18 @@ export function CodexPage({ projectId }: { projectId: string }) {
   const createKind = () => {
     const label = kindName.trim();
     if (!label) return;
-    const key = label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || `kind-${Date.now()}`;
+    const key = label.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || `kind-${Date.now()}`;
     const s = useScriptorium.getState();
     const project = s.projects.find((p) => p.id === projectId);
     if (!project) return;
     if (project.customCategories?.some((k) => k.key === key)) {
-      s.pushToast("error", "A kind with this name already exists.");
+      s.pushToast("error", t("entries.codex.kindExists"));
       return;
     }
     s.updateProject(projectId, {
       customCategories: [...(project.customCategories ?? []), { key, label, icon: kindEmoji.trim() || "📜" }],
     });
-    s.pushToast("success", `Kind "${label}" created.`);
+    s.pushToast("success", t("entries.codex.kindCreated", { label }));
     setKindName("");
     setKindEmoji("📜");
     setKindOpen(false);
@@ -105,7 +107,7 @@ export function CodexPage({ projectId }: { projectId: string }) {
     const remaining = useScriptorium.getState().entries
       .filter((e) => e.projectId === projectId && e.id !== id);
     useScriptorium.getState().deleteEntry(id);
-    useScriptorium.getState().pushToast("success", "Entry deleted.");
+    useScriptorium.getState().pushToast("success", t("entries.codex.entryDeleted"));
     setSelectedId(remaining[0]?.id ?? null);
   };
 
@@ -126,17 +128,17 @@ export function CodexPage({ projectId }: { projectId: string }) {
           : null}
       </section>
       {kindOpen ? (
-        <Modal title="New entry kind" onClose={() => setKindOpen(false)}>
+        <Modal title={t("entries.codex.newKind")} onClose={() => setKindOpen(false)}>
           <div className="grid gap-3">
-            <Field label="Kind name">
-              <input aria-label="Kind name" value={kindName} onChange={(e) => setKindName(e.target.value)} placeholder="Religion, Currency, Season..." autoFocus />
+            <Field label={t("entries.codex.kindName")}>
+              <input aria-label={t("entries.codex.kindName")} value={kindName} onChange={(e) => setKindName(e.target.value)} placeholder={t("entries.codex.kindNamePlaceholder")} autoFocus />
             </Field>
-            <Field label="Kind emoji">
-              <input aria-label="Kind emoji" value={kindEmoji} onChange={(e) => setKindEmoji(e.target.value)} maxLength={4} />
+            <Field label={t("entries.codex.kindEmoji")}>
+              <input aria-label={t("entries.codex.kindEmoji")} value={kindEmoji} onChange={(e) => setKindEmoji(e.target.value)} maxLength={4} />
             </Field>
             <div className="mt-3 flex gap-2">
-              <Button onClick={createKind}>Create kind</Button>
-              <Button kind="ghost" onClick={() => setKindOpen(false)}>Cancel</Button>
+              <Button onClick={createKind}>{t("entries.codex.createKind")}</Button>
+              <Button kind="ghost" onClick={() => setKindOpen(false)}>{t("common.cancel")}</Button>
             </div>
           </div>
         </Modal>

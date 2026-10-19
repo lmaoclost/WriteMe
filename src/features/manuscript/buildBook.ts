@@ -3,22 +3,39 @@ import { renderMarkdown } from "../entries/markdown";
 import { defaultBindery } from "../../data/schema";
 import { useScriptorium } from "../../data/store";
 import { BINDERY_FONTS, trimToPage } from "./bindery";
+import { i18n, normalizeLanguage } from "../../i18n";
 
-const EMPTY_PARAGRAPH = '<p class="empty">No content yet.</p>';
+const EMPTY_PARAGRAPH = () => `<p class="empty">${escapeText(i18n.t("manuscript.noContent"))}</p>`;
 
-const ONES = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
-  "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
-const TENS = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+const WORD_NUMBERS = {
+  en: {
+    ones: ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+      "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"],
+    tens: ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"],
+    joiner: "-",
+  },
+  "pt-BR": {
+    ones: ["", "Um", "Dois", "Três", "Quatro", "Cinco", "Seis", "Sete", "Oito", "Nove",
+      "Dez", "Onze", "Doze", "Treze", "Quatorze", "Quinze", "Dezesseis", "Dezessete", "Dezoito", "Dezenove"],
+    tens: ["", "", "Vinte", "Trinta", "Quarenta", "Cinquenta", "Sessenta", "Setenta", "Oitenta", "Noventa"],
+    joiner: " e ",
+  },
+} as const;
 
 function wordNumber(n: number): string {
-  if (n < 20) return ONES[n];
-  if (n < 100) return n % 10 === 0 ? TENS[Math.floor(n / 10)] : `${TENS[Math.floor(n / 10)]}-${ONES[n % 10]}`;
+  const { ones, tens, joiner } = WORD_NUMBERS[normalizeLanguage(i18n.language)];
+  if (n < 20) return ones[n] ?? String(n);
+  if (n < 100) {
+    const ten = tens[Math.floor(n / 10)] ?? "";
+    const one = ones[n % 10] ?? "";
+    return one ? `${ten}${joiner}${one}` : ten;
+  }
   return String(n);
 }
 
 export function chapterNumber(style: NonNullable<Manuscript["bindery"]>["numberingStyle"], n: number): string {
   if (style === "none") return "";
-  if (style === "chapter") return `Chapter ${n}`;
+  if (style === "chapter") return i18n.t("manuscript.chapterNumber", { n });
   if (style === "word") return wordNumber(n);
   return String(n);
 }
@@ -52,10 +69,10 @@ export function copyrightPage(manuscript: Manuscript, config: NonNullable<Manusc
   const holder = info.holder?.trim() || manuscript.author;
   const lines = [
     info.year && holder ? `© ${escapeText(info.year)} ${escapeText(holder)}` : "",
-    escapeText(info.rights?.trim() || "All rights reserved."),
-    info.edition ? `${escapeText(info.edition)} edition` : "",
+    escapeText(info.rights?.trim() || i18n.t("book.rights")),
+    info.edition ? i18n.t("book.edition", { edition: escapeText(info.edition) }) : "",
     info.isbn ? `ISBN ${escapeText(info.isbn)}` : "",
-    "Cover and interior set in Scriptorium.",
+    i18n.t("book.cover"),
   ].filter(Boolean).map((line) => `<p>${line}</p>`).join("");
   return `<section class="front-matter copyright display">${lines}</section>`;
 }
@@ -93,7 +110,7 @@ function chapterHeading(config: NonNullable<Manuscript["bindery"]>, chapter: Cha
 function chapterBody(chapter: Chapter): string {
   let body = chapter.content
     ? renderMarkdown(chapter.content)
-    : EMPTY_PARAGRAPH;
+    : EMPTY_PARAGRAPH();
   if (chapter.noteTop?.trim()) {
     body = `<div class="chapter-note top">${renderMarkdown(chapter.noteTop.trim())}</div>` + body;
   }
@@ -181,7 +198,7 @@ export function buildBookHtml(manuscript: Manuscript): string {
     });
   });
   const toc = b.toc
-    ? `<section class="front-matter toc"><h2>Contents</h2><ul>${tocRows.join("")}</ul></section>`
+    ? `<section class="front-matter toc"><h2>${escapeText(i18n.t("book.contents"))}</h2><ul>${tocRows.join("")}</ul></section>`
     : "";
   return `<article class="book">${halfTitle}${titleBlock}${copyright}${dedication}${epigraph}${toc}${body.join("")}${backMatterFor(manuscript, b)}</article>`;
 }
@@ -190,21 +207,23 @@ export function buildBookHtml(manuscript: Manuscript): string {
 /** Colophon font name: the label of the configured stack, or the first
  *  (house) label when the stack is not one of the known ones. */
 function fontLabel(stack: string): string {
-  return BINDERY_FONTS.find((f) => f.stack === stack)?.label ?? BINDERY_FONTS[0].label;
+  const font = BINDERY_FONTS.find((f) => f.stack === stack);
+  if (font?.id === "sans") return i18n.t("bindery.fontSans");
+  return font?.label ?? BINDERY_FONTS[0].label;
 }
 
 /** About the author section: only when the configured bio has content. */
 export function aboutAuthorSection(config: NonNullable<Manuscript["bindery"]>): string {
   const bio = config.backMatter?.aboutAuthor?.trim();
   return bio
-    ? `<section class="back-matter about-author"><h2>About the author</h2><p>${escapeText(bio)}</p></section>`
+    ? `<section class="back-matter about-author"><h2>${escapeText(i18n.t("book.aboutAuthor"))}</h2><p>${escapeText(bio)}</p></section>`
     : "";
 }
 
 /** Colophon: configured font label and trim, only when the switch is on. */
 export function colophonSection(config: NonNullable<Manuscript["bindery"]>): string {
   return config.backMatter?.colophon
-    ? `<section class="back-matter colophon"><p>Set in ${escapeText(fontLabel(config.font))}.</p><p>Trim ${escapeText(trimToPage(config.trim))} · Scriptorium.</p></section>`
+    ? `<section class="back-matter colophon"><p>${escapeText(i18n.t("book.setIn", { font: fontLabel(config.font) }))}</p><p>${escapeText(i18n.t("book.trim", { size: trimToPage(config.trim) }))}</p></section>`
     : "";
 }
 
@@ -225,5 +244,5 @@ export function glossaryFor(manuscript: Manuscript): string {
     .filter((e) => e.projectId === projectId && (e.summary ?? "").trim())
     .map((e) => `<tr data-glossary="${e.id}"><td>${escapeText(e.title)}</td><td>${escapeText((e.summary ?? "").trim().slice(0, 200))}</td></tr>`);
   if (!entries.length) return "";
-  return `<section class="back-matter glossary"><h2>Glossary</h2><table><tbody>${entries.join("")}</tbody></table></section>`;
+  return `<section class="back-matter glossary"><h2>${escapeText(i18n.t("book.glossary"))}</h2><table><tbody>${entries.join("")}</tbody></table></section>`;
 }

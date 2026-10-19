@@ -1,3 +1,4 @@
+import { i18n } from "../i18n";
 import { useScriptorium } from "../data/store";
 import type { ToastAction } from "../data/store";
 
@@ -10,10 +11,10 @@ import type { ToastAction } from "../data/store";
 export function undoToastAction(): ToastAction {
   const nonce = useScriptorium.getState().undoNonce;
   return {
-    label: "Undo",
+    label: i18n.t("common.undo"),
     run: () => {
       const s = useScriptorium.getState();
-      if (!s.undoDelete(nonce)) s.pushToast("info", "Nothing left to undo.");
+      if (!s.undoDelete(nonce)) s.pushToast("info", i18n.t("common.nothingToUndo"));
     },
   };
 }

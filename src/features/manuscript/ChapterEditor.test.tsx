@@ -28,7 +28,7 @@ describe("ChapterEditor rich", () => {
     void m;
     render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
     expect(document.querySelector('[contenteditable="true"]')?.getAttribute("role")).toBe("textbox");
-    expect(screen.getByRole("button", { name: "Negrito" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Bold" })).toBeInTheDocument();
   });
 
   it("footer shows the store word count on load (tag-stripped)", () => {
@@ -36,7 +36,7 @@ describe("ChapterEditor rich", () => {
     store().addChapter(m.id, "Primeiro");
     store().updateChapter(store().manuscripts[0].chapters[0].id, { content: "<p>Havia um ditado em Vellmora: a cidade se fecha.</p>" });
     render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
-    expect(document.querySelector(".book-words")?.textContent).toBe("9 palavras");
+    expect(document.querySelector(".book-words")?.textContent).toBe("9 words");
   });
 
   it("notes are rich and optional: Prologue / Epilogue commit HTML", () => {
@@ -65,7 +65,7 @@ describe("ChapterEditor rich", () => {
     render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
     // focus body first
     (document.querySelector('[contenteditable="true"]') as HTMLElement).focus();
-    fireEvent.click(screen.getByRole("button", { name: "Negrito" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bold" }));
     expect(exec).toHaveBeenCalledWith("bold", false, undefined);
   });
 
@@ -74,7 +74,7 @@ describe("ChapterEditor rich", () => {
     void m;
     const exec = vi.mocked(document.execCommand);
     render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
-    fireEvent.click(screen.getByRole("button", { name: /Blocos/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Blocks/ }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Heading 1 (H1)" }));
     expect(exec).toHaveBeenCalledWith("formatBlock", false, "h1");
   });
@@ -85,7 +85,7 @@ describe("ChapterEditor rich", () => {
     const exec = vi.mocked(document.execCommand);
     render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
     (document.querySelector('[contenteditable="true"]') as HTMLElement).focus();
-    fireEvent.click(screen.getByRole("button", { name: "Alinhar ao centro" }));
+    fireEvent.click(screen.getByRole("button", { name: "Align center" }));
     expect(exec).toHaveBeenCalledWith("justifyCenter", false, undefined);
   });
 
@@ -108,7 +108,7 @@ describe("ChapterEditor rich", () => {
     body.innerHTML = "<p>Um rio, três pontes, um selo.</p>";
     fireEvent.input(body);
     fireEvent.click(screen.getByRole("button", { name: "Preview" }));
-    fireEvent.click(screen.getByRole("button", { name: "Escrever" }));
+    fireEvent.click(screen.getByRole("button", { name: "Write" }));
     const bodyAgain = document.querySelector('[data-testid="rich-body"]') as HTMLElement;
     expect(bodyAgain.innerHTML).toContain("Um rio, três pontes, um selo.");
   });
@@ -188,8 +188,8 @@ describe("ChapterEditor rich", () => {
       setter.call(el, v);
       el.dispatchEvent(new Event("input", { bubbles: true }));
     };
-    setVal(screen.getByLabelText("Dia") as HTMLElement, "5");
-    fireEvent.click(screen.getByRole("button", { name: "Vincular dia" }));
+    setVal(screen.getByLabelText("Day") as HTMLElement, "5");
+    fireEvent.click(screen.getByRole("button", { name: "Link day" }));
     const ch = store().manuscripts[0].chapters[0];
     expect(ch.linkedCalendarId).toBe(cal.id);
     expect(ch.calendarDayKey).toBe("0:2:4"); // dia 5 humano = índice 4

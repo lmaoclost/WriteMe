@@ -394,17 +394,27 @@ export function serialize(data: ProjectData): string {
   return JSON.stringify({ app: "scriptorium", version: 2, ...data });
 }
 
+export type ParseExportErrorCode = "invalidJson" | "notScriptorium" | "unsupportedVersion" | "invalidStructure";
+
+/** Stable code so callers can translate the message in the active locale. */
+export class ParseExportError extends Error {
+  constructor(readonly code: ParseExportErrorCode, readonly version?: unknown) {
+    super(code);
+    this.name = "ParseExportError";
+  }
+}
+
 export function parseExport(text: string): ProjectData {
   let doc: unknown;
   try {
     doc = JSON.parse(text);
   } catch {
-    throw new Error("Arquivo não é JSON válido.");
+    throw new ParseExportError("invalidJson");
   }
   const d = doc as { app?: unknown; version?: unknown } & ProjectData;
-  if (!d || d.app !== "scriptorium") throw new Error("Arquivo não é um export do scriptorium.");
-  if (d.version !== 1 && d.version !== 2) throw new Error(`Versão ${String(d.version)} não suportada.`);
-  if (!validateProjectData(d)) throw new Error("Arquivo com estrutura inválida.");
+  if (!d || d.app !== "scriptorium") throw new ParseExportError("notScriptorium");
+  if (d.version !== 1 && d.version !== 2) throw new ParseExportError("unsupportedVersion", d.version);
+  if (!validateProjectData(d)) throw new ParseExportError("invalidStructure");
   return {
     projects: d.projects,
     entries: d.entries,

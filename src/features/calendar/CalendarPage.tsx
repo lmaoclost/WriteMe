@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
@@ -14,6 +15,15 @@ import { withCurrentColor } from "../../ui/colors";
 export const EVENT_CATEGORIES = ["Events", "Festivals", "Notes"] as const;
 export const EVENT_PRESET_COLORS = ["#e74c3c", "#e67e22", "#f1c40f", "#2ecc71", "#3498db", "#9b59b6", "#1abc9c", "#e84393", "#636e72", "#b2bec3"];
 
+/** Stored category values stay English; only the visible label is localized. */
+function EventCategoryLabel({ value }: { value: string }) {
+  const { t } = useTranslation();
+  if (value === "Events") return <>{t("calendar.eventCategory.events")}</>;
+  if (value === "Festivals") return <>{t("calendar.eventCategory.festivals")}</>;
+  if (value === "Notes") return <>{t("calendar.eventCategory.notes")}</>;
+  return <>{value}</>;
+}
+
 const MonthSection = memo(function MonthSection({ month, monthIndex, yearIndex, era, weekdays, weekendDays, firstWeekday, eventsByDay, selectedDay, onSelectDay }: {
   month: CustomCalendar["months"][number];
   monthIndex: number;
@@ -26,10 +36,11 @@ const MonthSection = memo(function MonthSection({ month, monthIndex, yearIndex, 
   selectedDay: string | null;
   onSelectDay(dayKey: string): void;
 }) {
+  const { t } = useTranslation();
   const n = weekdays.length;
   return (
     <section className="bg-night border border-line rounded-lg p-3" data-testid="cal-month" aria-label={month.name}>
-      <h2 className="text-[1.125rem] mb-2">{month.name}{era ? ` · A${yearIndex + 1}` : ""}</h2>
+      <h2 className="text-[1.125rem] mb-2">{era ? t("calendar.page.monthHeading", { month: month.name, year: yearIndex + 1 }) : month.name}</h2>
       <div className="grid gap-0.5 mb-1" aria-hidden="true" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
         {weekdays.map((w, i) => (
           <span key={i} className={`cal-wd text-[0.6875rem] text-slate text-center uppercase${weekendDays.includes(i) ? " weekend text-[var(--ember)]" : ""}`}>{w.slice(0, 2)}</span>
@@ -49,7 +60,7 @@ const MonthSection = memo(function MonthSection({ month, monthIndex, yearIndex, 
               type="button"
               data-testid="cal-day"
               className={`cal-day relative aspect-square rounded-sm border border-transparent bg-ink text-parchment-dim text-[11px] p-0.5 grid grid-rows-[auto_1fr] items-start cursor-pointer hover:border-gold-dim${weekendDays.includes(wd) ? " weekend bg-[color-mix(in_srgb,var(--ember)_10%,var(--ink))]" : ""}${selectedDay === key ? " selected border-gold outline outline-1 outline-gold" : ""}`}
-              aria-label={`${di + 1} de ${month.name}`}
+              aria-label={t("calendar.page.dayAria", { day: di + 1, month: month.name })}
               onClick={() => onSelectDay(key)}
             >
               <span className="cal-day-num font-mono text-[0.6875rem] text-left">{di + 1}</span>
@@ -70,6 +81,7 @@ const MonthSection = memo(function MonthSection({ month, monthIndex, yearIndex, 
 });
 
 export function CalendarPage({ calendarId }: { calendarId: string }) {
+  const { t } = useTranslation();
   const cal = useScriptorium((s) => (s.calendars ?? []).find((c) => c.id === calendarId));
   const pushToast = useScriptorium((s) => s.pushToast);
   const flags = useScriptorium(useShallow((s) => {
@@ -83,8 +95,8 @@ export function CalendarPage({ calendarId }: { calendarId: string }) {
   useBoardNotesHotkey(notesOpen, setNotesOpen);
 
   useEffect(() => {
-    if (!cal) pushToast("error", "Calendar not found.");
-  }, [cal, pushToast]);
+    if (!cal) pushToast("error", t("calendar.page.notFound"));
+  }, [cal, pushToast, t]);
 
   const nameDraft = useDebouncedDraft(
     cal?.name ?? "",
@@ -129,20 +141,20 @@ export function CalendarPage({ calendarId }: { calendarId: string }) {
       <header className={BOARD_HEADER}>
         <input
           className={BOARD_NAME_INPUT}
-          aria-label="Calendar name"
+          aria-label={t("calendar.page.name")}
           value={nameDraft.draft}
           onChange={(e) => nameDraft.setDraft(e.target.value)}
           onBlur={() => nameDraft.flush()}
         />
         <span className="text-slate text-[13px]">{cal.era ?? ""}</span>
         <div className={BOARD_ACTIONS}>
-          <button type="button" aria-label="Previous year" className={BOARD_ACTION_BTN} onClick={() => setYearIndex((y) => Math.max(0, y - 1))} disabled={yearIndex === 0}>‹</button>
-          <output aria-label="Current year" className="cal-year text-gold font-mono">Year {yearIndex + 1}</output>
-          <button type="button" aria-label="Next year" className={BOARD_ACTION_BTN} onClick={() => setYearIndex((y) => y + 1)}>›</button>
-          <button type="button" aria-label="Desfazer" className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => store().undoCL(calendarId)}>↶</button>
-          <button type="button" aria-label="Refazer" className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => store().redoCL(calendarId)}>↷</button>
-          <button type="button" className={BOARD_ACTION_BTN} onClick={() => setConfigOpen(true)}>Edit Calendar Settings</button>
-          <button type="button" aria-pressed={notesOpen} className={BOARD_ACTION_BTN} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
+          <button type="button" aria-label={t("calendar.page.prevYear")} className={BOARD_ACTION_BTN} onClick={() => setYearIndex((y) => Math.max(0, y - 1))} disabled={yearIndex === 0}>‹</button>
+          <output aria-label={t("calendar.page.currentYear")} className="cal-year text-gold font-mono">{t("calendar.page.year", { year: yearIndex + 1 })}</output>
+          <button type="button" aria-label={t("calendar.page.nextYear")} className={BOARD_ACTION_BTN} onClick={() => setYearIndex((y) => y + 1)}>›</button>
+          <button type="button" aria-label={t("calendar.page.undo")} className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => store().undoCL(calendarId)}>↶</button>
+          <button type="button" aria-label={t("calendar.page.redo")} className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => store().redoCL(calendarId)}>↷</button>
+          <button type="button" className={BOARD_ACTION_BTN} onClick={() => setConfigOpen(true)}>{t("calendar.page.settings")}</button>
+          <button type="button" aria-pressed={notesOpen} className={BOARD_ACTION_BTN} onClick={() => setNotesOpen((v) => !v)}>{t("calendar.page.notes")}</button>
         </div>
       </header>
       <div className="grid grid-cols-[1fr_300px] min-h-0 overflow-hidden">
@@ -180,6 +192,7 @@ function DayPanel({ cal, dayKey, onClose }: {
   dayKey: string | null;
   onClose(): void;
 }) {
+  const { t } = useTranslation();
   const store = useScriptorium.getState;
   const events = dayKey ? (cal.events[dayKey] ?? []) : [];
   const [text, setText] = useState("");
@@ -189,13 +202,13 @@ function DayPanel({ cal, dayKey, onClose }: {
   const dayLabel = useMemo(() => {
     if (!dayKey) return "";
     const [y, m, d] = dayKey.split(":").map(Number);
-    return `${d + 1} of ${cal.months[m]?.name ?? "?"} · Year ${y + 1}`;
-  }, [dayKey, cal]);
+    return t("calendar.page.dayLabel", { day: d + 1, month: cal.months[m]?.name ?? "?", year: y + 1 });
+  }, [dayKey, cal, t]);
 
   if (!dayKey) {
     return (
       <aside className={BOARD_PANEL} data-testid="cal-panel">
-        <p className={BOARD_PANEL_HINT}>Clique num dia para os eventos dele.</p>
+        <p className={BOARD_PANEL_HINT}>{t("calendar.day.selectHint")}</p>
       </aside>
     );
   }
@@ -203,7 +216,7 @@ function DayPanel({ cal, dayKey, onClose }: {
     <aside className={BOARD_PANEL} data-testid="cal-panel">
       <header className={BOARD_PANEL_HEAD}>
         <h2 className={BOARD_PANEL_HEAD_H2}>{dayLabel}</h2>
-        <button type="button" aria-label="Close day" onClick={onClose} className="bg-none border-0 text-slate">✕</button>
+        <button type="button" aria-label={t("calendar.day.close")} onClick={onClose} className="bg-none border-0 text-slate">✕</button>
       </header>
       <ul className="list-none m-0 p-0 grid gap-2.5">
         {events.map((e) => (
@@ -211,32 +224,32 @@ function DayPanel({ cal, dayKey, onClose }: {
             <span className="w-2.5 h-2.5 rounded-full" style={{ background: e.color ?? "#636e72" }} />
             {editingId === e.id ? (
               <input
-                aria-label="Event text"
+                aria-label={t("calendar.day.eventText")}
                 value={e.text}
                 autoFocus
                 onChange={(ev) => store().updateCalendarEvent(cal.id, dayKey, e.id, { text: ev.target.value })}
                 onKeyDown={(ev) => { if (ev.key === "Enter") setEditingId(null); }}
               />
             ) : (
-              <button type="button" className="cal-event-text bg-none border-0 text-parchment text-left text-[13px] p-0" onClick={() => setEditingId(e.id)} aria-label={`Editar ${e.text}`}>
+              <button type="button" className="cal-event-text bg-none border-0 text-parchment text-left text-[13px] p-0" onClick={() => setEditingId(e.id)} aria-label={t("calendar.day.editEvent", { text: e.text })}>
                 {e.text}
               </button>
             )}
             <Select value={e.category} onValueChange={(v) => store().updateCalendarEvent(cal.id, dayKey, e.id, { category: v })}>
-              <SelectTrigger aria-label={`Categoria de ${e.text}`} className="justify-self-start h-auto rounded-sm border-line bg-ink px-1 py-0.5 text-[11px] text-parchment-dim hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label={t("calendar.day.categoryOf", { text: e.text })} className="justify-self-start h-auto rounded-sm border-line bg-ink px-1 py-0.5 text-[11px] text-parchment-dim hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
               <SelectContent className="border-line bg-night text-parchment">
-                {EVENT_CATEGORIES.map((c) => <SelectItem key={c} value={c} className="text-[11px] focus:bg-[#24233f] focus:text-parchment">{c}</SelectItem>)}
+                {EVENT_CATEGORIES.map((c) => <SelectItem key={c} value={c} className="text-[11px] focus:bg-[#24233f] focus:text-parchment"><EventCategoryLabel value={c} /></SelectItem>)}
               </SelectContent>
             </Select>
             <div className="flex gap-1">
               {withCurrentColor(EVENT_PRESET_COLORS, e.color).map((c) => (
-                <button key={c} type="button" className={`color-swatch w-3.5 h-3.5 rounded-full border border-transparent cursor-pointer${e.color === c ? " outline outline-2 outline-parchment" : ""}`} style={{ background: c }} aria-label={`Cor ${c}`} onClick={() => store().updateCalendarEvent(cal.id, dayKey, e.id, { color: c })} />
+                <button key={c} type="button" className={`color-swatch w-3.5 h-3.5 rounded-full border border-transparent cursor-pointer${e.color === c ? " outline outline-2 outline-parchment" : ""}`} style={{ background: c }} aria-label={t("calendar.day.colorOf", { color: c })} onClick={() => store().updateCalendarEvent(cal.id, dayKey, e.id, { color: c })} />
               ))}
             </div>
-            <Button kind="danger" className="px-1.5 py-0.5 text-xs" aria-label={`Remover ${e.text}`} onClick={() => store().removeCalendarEvent(cal.id, dayKey, e.id)}>✕</Button>
+            <Button kind="danger" className="px-1.5 py-0.5 text-xs" aria-label={t("calendar.day.removeEvent", { text: e.text })} onClick={() => store().removeCalendarEvent(cal.id, dayKey, e.id)}>✕</Button>
           </li>
         ))}
-        {events.length === 0 ? <li className="text-slate">Nenhum evento nesse dia.</li> : null}
+        {events.length === 0 ? <li className="text-slate">{t("calendar.day.empty")}</li> : null}
       </ul>
       <form
         className="grid gap-1.5 mt-3.5 border-t border-line pt-3"
@@ -246,24 +259,25 @@ function DayPanel({ cal, dayKey, onClose }: {
           if (ev) { setText(""); setColor(EVENT_PRESET_COLORS[0]); }
         }}
       >
-        <input aria-label="New event" placeholder="New event..." value={text} onChange={(e) => setText(e.target.value)} className="bg-ink border border-line text-parchment rounded-sm px-2 py-1.5" />
+        <input aria-label={t("calendar.day.newEvent")} placeholder={t("calendar.day.newEventPlaceholder")} value={text} onChange={(e) => setText(e.target.value)} className="bg-ink border border-line text-parchment rounded-sm px-2 py-1.5" />
         <Select value={category} onValueChange={(v) => setCategory(v)}>
-          <SelectTrigger aria-label="Event category" className="justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
+          <SelectTrigger aria-label={t("calendar.day.category")} className="justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
           <SelectContent className="border-line bg-night text-parchment">
-            {EVENT_CATEGORIES.map((c) => <SelectItem key={c} value={c} className="text-xs focus:bg-[#24233f] focus:text-parchment">{c}</SelectItem>)}
+            {EVENT_CATEGORIES.map((c) => <SelectItem key={c} value={c} className="text-xs focus:bg-[#24233f] focus:text-parchment"><EventCategoryLabel value={c} /></SelectItem>)}
           </SelectContent>
         </Select>
-        <Button type="submit">Add</Button>
+        <Button type="submit">{t("calendar.day.add")}</Button>
       </form>
     </aside>
   );
 }
 
 function FirstDayPicker({ cal }: { cal: CustomCalendar }) {
+  const { t } = useTranslation();
   const [first, setFirst] = useState(String(cal.startingWeekday));
   return (
     <Select value={first} onValueChange={(v) => { setFirst(v); useScriptorium.getState().setStartingWeekday(cal.id, Number(v)); }}>
-      <SelectTrigger aria-label="First day" className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
+      <SelectTrigger aria-label={t("calendar.config.firstDayAria")} className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
       <SelectContent className="border-line bg-night text-parchment">
         {cal.weekdays.map((w, i) => <SelectItem key={i} value={String(i)} className="text-xs focus:bg-[#24233f] focus:text-parchment">{w}</SelectItem>)}
       </SelectContent>
@@ -272,37 +286,40 @@ function FirstDayPicker({ cal }: { cal: CustomCalendar }) {
 }
 
 function ConfigPopover({ cal, onClose }: { cal: CustomCalendar; onClose(): void }) {
+  const { t } = useTranslation();
   const store = useScriptorium.getState;
+  const [newMonth, setNewMonth] = useState("");
+  const [newMonthDays, setNewMonthDays] = useState(30);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
   return (
-    <div className="absolute top-[60px] right-[320px] z-45 w-[280px] max-w-[calc(100vw-1.5rem)] max-[720px]:inset-x-3 max-[720px]:top-[52px] max-h-[70vh] overflow-y-auto bg-night-2 border border-line rounded-lg p-3.5 grid gap-2.5" data-testid="cal-config" role="dialog" aria-label="Edit Calendar Settings">
+    <div className="absolute top-[60px] right-[320px] z-45 w-[280px] max-w-[calc(100vw-1.5rem)] max-[720px]:inset-x-3 max-[720px]:top-[52px] max-h-[70vh] overflow-y-auto bg-night-2 border border-line rounded-lg p-3.5 grid gap-2.5" data-testid="cal-config" role="dialog" aria-label={t("calendar.config.title")}>
       <header className={BOARD_PANEL_HEAD}>
-        <h2>Era</h2>
-        <button type="button" aria-label="Close settings" onClick={onClose} className="bg-none border-0 text-slate">✕</button>
+        <h2>{t("calendar.config.eraSection")}</h2>
+        <button type="button" aria-label={t("calendar.config.close")} onClick={onClose} className="bg-none border-0 text-slate">✕</button>
       </header>
-      <Field label="Era (sufixo do ano)">
+      <Field label={t("calendar.config.eraLabel")}>
         <input
-          aria-label="Era"
+          aria-label={t("calendar.config.eraAria")}
           defaultValue={cal.era ?? ""}
           onBlur={(e) => store().setEra(cal.id, e.target.value.trim() || undefined)}
         />
       </Field>
-      <Field label="Dia da semana do 1º dia">
+      <Field label={t("calendar.config.firstDayLabel")}>
         <FirstDayPicker cal={cal} />
       </Field>
       <section>
-        <h3 className="text-[13px] text-slate">Weekdays</h3>
+        <h3 className="text-[13px] text-slate">{t("calendar.config.weekdays")}</h3>
         <ul className="grid gap-1 [&_li]:grid-cols-[28px_1fr_auto] [&_li]:items-center [&_input]:bg-ink [&_input]:border [&_input]:border-line [&_input]:text-parchment [&_input]:px-1.5 [&_input]:py-1 [&_input]:text-xs [&_li]:grid-cols-[28px_1fr_auto]" data-testid="cal-weekdays-config">
           {cal.weekdays.map((w, i) => (
             <li key={i}>
-              <span className="text-slate">{i + 1}º</span>
+              <span className="text-slate">{t("calendar.config.index", { n: i + 1 })}</span>
               <input
-                aria-label={`Weekday ${i + 1}`}
-                placeholder="Weekday name..."
+                aria-label={t("calendar.config.weekdayAria", { n: i + 1 })}
+                placeholder={t("calendar.config.weekdayPlaceholder")}
                 defaultValue={w}
                 className="bg-ink border border-line text-parchment px-1.5 py-1 text-xs w-full min-w-0"
                 onBlur={(e) => {
@@ -311,10 +328,10 @@ function ConfigPopover({ cal, onClose }: { cal: CustomCalendar; onClose(): void 
                   store().setWeekdays(cal.id, next);
                 }}
               />
-              <label className="flex items-center gap-1 text-[11px] text-slate" title="Marcar como fim de semana">
+              <label className="flex items-center gap-1 text-[11px] text-slate" title={t("calendar.config.weekendTitle")}>
                 <input
                   type="checkbox"
-                  aria-label={`Weekend day ${i + 1}`}
+                  aria-label={t("calendar.config.weekendAria", { n: i + 1 })}
                   checked={(cal.weekendDays ?? [0, 6]).includes(i)}
                   onChange={(e) => {
                     const cur = new Set(cal.weekendDays ?? [0, 6]);
@@ -322,20 +339,20 @@ function ConfigPopover({ cal, onClose }: { cal: CustomCalendar; onClose(): void 
                     store().setWeekendDays(cal.id, [...cur]);
                   }}
                 />
-                <span>Weekend</span>
+                <span>{t("calendar.config.weekend")}</span>
               </label>
             </li>
           ))}
         </ul>
       </section>
       <section>
-        <h3 className="text-[13px] text-slate">Months</h3>
+        <h3 className="text-[13px] text-slate">{t("calendar.config.months")}</h3>
         <ul className="grid gap-1 [&_li]:grid-cols-[1.4fr_64px_auto] [&_li]:items-center [&_input]:bg-ink [&_input]:border [&_input]:border-line [&_input]:text-parchment [&_input]:px-1.5 [&_input]:py-1 [&_input]:text-xs">
           {cal.months.map((m, i) => (
             <li key={i}>
               <input
-                aria-label={`Month name ${i + 1}`}
-                placeholder="Month name..."
+                aria-label={t("calendar.config.monthNameAria", { n: i + 1 })}
+                placeholder={t("calendar.config.monthNamePlaceholder")}
                 defaultValue={m.name}
                 className="bg-ink border border-line text-parchment px-1.5 py-1 text-xs w-full min-w-0"
                 onBlur={(e) => store().setMonth(cal.id, i, { name: e.target.value })}
@@ -343,31 +360,30 @@ function ConfigPopover({ cal, onClose }: { cal: CustomCalendar; onClose(): void 
               <input
                 type="number"
                 min={1}
-                aria-label={`Days of ${i + 1}`}
+                aria-label={t("calendar.config.daysOf", { n: i + 1 })}
                 defaultValue={m.days}
                 className="bg-ink border border-line text-parchment px-1.5 py-1 text-xs w-full min-w-0"
                 onBlur={(e) => store().setMonth(cal.id, i, { days: Number(e.target.value) })}
               />
               {cal.months.length > 1 ? (
-                <button type="button" aria-label={`Remove month ${i + 1}`} className="cal-month-remove bg-none border-0 text-slate cursor-pointer px-1.5 py-1 text-xs hover:text-[var(--ember)]"
+                <button type="button" aria-label={t("calendar.config.removeMonth", { n: i + 1 })} className="cal-month-remove bg-none border-0 text-slate cursor-pointer px-1.5 py-1 text-xs hover:text-[var(--ember)]"
                   onClick={() => { store().removeMonth(cal.id, i); onClose(); }}>✕</button>
               ) : null}
             </li>
           ))}
         </ul>
         <div className="grid grid-cols-[1.4fr_64px_auto] gap-1.5 mt-2 [&>input]:w-full [&>input]:min-w-0 [&>input]:bg-ink [&>input]:border [&>input]:border-line [&>input]:text-parchment [&>input]:px-1.5 [&>input]:py-1 [&>input]:text-xs" data-testid="cal-month-add">
-          <input aria-label="New month name" placeholder="New month..." defaultValue=""
-            onBlur={(e) => { if (e.target.value.trim()) { store().addMonth(cal.id, e.target.value.trim(), 30); e.target.value = ""; } }} />
-          <input aria-label="New month days" type="number" min={1} placeholder="Days" defaultValue={30} />
+          <input aria-label={t("calendar.config.newMonthName")} placeholder={t("calendar.config.newMonthPlaceholder")} value={newMonth}
+            onChange={(e) => setNewMonth(e.target.value)} />
+          <input aria-label={t("calendar.config.newMonthDays")} type="number" min={1} placeholder={t("calendar.config.daysPlaceholder")} value={newMonthDays}
+            onChange={(e) => setNewMonthDays(Number(e.target.value))} />
           <button
             type="button"
             onClick={() => {
-              const name = (document.querySelector('[aria-label="New month name"]') as HTMLInputElement)?.value ?? "";
-              const days = Number((document.querySelector('[aria-label="New month days"]') as HTMLInputElement)?.value ?? 30) || 30;
-              if (name.trim()) { store().addMonth(cal.id, name.trim(), days); onClose(); }
+              if (newMonth.trim()) { store().addMonth(cal.id, newMonth.trim(), newMonthDays || 30); onClose(); }
             }}
           className="bg-ink border border-line text-parchment cursor-pointer px-2.5 py-1 text-xs hover:text-gold hover:border-gold-dim"
-          >+ Month</button>
+          >{t("calendar.config.addMonth")}</button>
         </div>
       </section>
     </div>
@@ -375,6 +391,7 @@ function ConfigPopover({ cal, onClose }: { cal: CustomCalendar; onClose(): void 
 }
 
 function CalNotepad({ notes, onNotes, onClose }: { notes: string; onNotes(v: string): void; onClose(): void }) {
+  const { t } = useTranslation();
   const [draft, setDraft] = useState(notes);
   useEffect(() => {
     const id = setTimeout(() => { if (draft !== notes) onNotes(draft); }, 300);
@@ -383,10 +400,10 @@ function CalNotepad({ notes, onNotes, onClose }: { notes: string; onNotes(v: str
   return (
     <div className={BOARD_NOTEPAD} data-testid="cal-notepad">
       <header className={BOARD_NOTEPAD_HEAD}>
-        <span>Notas</span>
-        <button type="button" aria-label="Close notes" onClick={onClose} className="bg-none border-0 text-slate">✕</button>
+        <span>{t("calendar.notepad.title")}</span>
+        <button type="button" aria-label={t("calendar.notepad.close")} onClick={onClose} className="bg-none border-0 text-slate">✕</button>
       </header>
-      <textarea aria-label="Calendar notes" value={draft} onChange={(e) => setDraft(e.target.value)} rows={5} className={BOARD_NOTEPAD_TXT} />
+      <textarea aria-label={t("calendar.notepad.aria")} value={draft} onChange={(e) => setDraft(e.target.value)} rows={5} className={BOARD_NOTEPAD_TXT} />
     </div>
   );
 }

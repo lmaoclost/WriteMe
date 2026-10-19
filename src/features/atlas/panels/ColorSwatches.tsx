@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { pushRecentColor, useRecentColors } from "./recentColors";
 
 export const PIN_PALETTE = [
@@ -10,13 +11,14 @@ export function ColorSwatches({ currentColor, onPickColor, recentLabel }: {
   recentLabel?: string;
 }) {
   const recent = useRecentColors();
+  const { t } = useTranslation();
   const swatch = (c: string) => (
     <button
       type="button"
       key={c}
       className={"swatch size-5 rounded-full border-2 border-transparent p-0 cursor-pointer" + (currentColor === c ? " current border-parchment" : "")}
       style={{ background: c }}
-      aria-label={`Cor ${c}`}
+      aria-label={t("atlas.colors.color", { hex: c })}
       aria-pressed={currentColor === c}
       onClick={() => {
         pushRecentColor(c);
@@ -26,13 +28,13 @@ export function ColorSwatches({ currentColor, onPickColor, recentLabel }: {
   );
   return (
     <>
-      <div className="swatch-row flex flex-wrap gap-1.5" role="group" aria-label="Colors">
+      <div className="swatch-row flex flex-wrap gap-1.5" role="group" aria-label={t("atlas.colors.colors")}>
         {PIN_PALETTE.map(swatch)}
       </div>
       {recent.length > 0 ? (
         <>
-          <div className="swatch-caption text-[11px] text-slate">{recentLabel ?? "Recentes"}</div>
-          <div className="swatch-row flex flex-wrap gap-1.5" role="group" aria-label="Recent colors">
+          <div className="swatch-caption text-[11px] text-slate">{recentLabel ?? t("atlas.colors.recent")}</div>
+          <div className="swatch-row flex flex-wrap gap-1.5" role="group" aria-label={t("atlas.colors.recentColors")}>
             {recent.map(swatch)}
           </div>
         </>

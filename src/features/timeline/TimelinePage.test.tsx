@@ -117,7 +117,7 @@ describe("TimelinePage", () => {
     ]);
     render(timelineRoute(projectId));
     const so = screen.getByRole("button", { name: "Events only" });
-    const tudo = screen.getByRole("button", { name: "Tudo" });
+    const tudo = screen.getByRole("button", { name: "All" });
     expect(tudo.getAttribute("aria-pressed")).toBe("true");
     expect(so.getAttribute("aria-pressed")).toBe("false");
     // Tudo default: dated non-events (e.g. casa/faction) already on the line
@@ -188,7 +188,7 @@ describe("TimelinePage", () => {
     ]);
     render(timelineRoute(projectId));
     expect(
-      screen.getByText("Nenhum evento com data — edite uma entrada de evento e defina a data."),
+      screen.getByText("No dated events — edit an event entry and set its date."),
     ).toBeTruthy();
     expect(document.querySelector(".timeline")).toBeNull();
   });
@@ -202,7 +202,7 @@ describe("TimelinePage", () => {
     const tratado = mainLine().getByRole("button", { name: "Tratado das Três Pontes — 1200 · Maio" });
     const item = tratado.closest(".timeline-item") as HTMLElement;
     expect(item.querySelector(".timeline-dot")).toHaveStyle({ backgroundColor: "#a64b35" });
-    fireEvent.click(screen.getByRole("button", { name: "Tudo" }));
+    fireEvent.click(screen.getByRole("button", { name: "All" }));
     const lei = mainLine().getByRole("button", { name: "Lei do Selo — 1300 · Janeiro" });
     const loreItem = lei.closest(".timeline-item") as HTMLElement;
     expect(loreItem.querySelector(".timeline-dot")).toHaveStyle({ backgroundColor: "#4d8f5f" });
@@ -211,5 +211,19 @@ describe("TimelinePage", () => {
     );
     expect(labels).toEqual(["Vellmora", "← My worlds", "Overview", "Atlas", "Lore", "Chronology", "Bloodline", "Factions", "Oaths", "Calendar", "Plot board", "Timeline", "Ideas", "Language", "Manuscript", "Publishing"]);
     expect(screen.getByRole("link", { name: "Chronology" }).getAttribute("class")).toContain("text-gold");
+  });
+});
+
+describe("TimelinePage — Portuguese", () => {
+  it("renders the heading, filters and empty copy in the active language", async () => {
+    const { setLanguage } = await import("../../i18n");
+    await setLanguage("pt-BR");
+    render(timelineRoute(seedProject([])));
+    expect(screen.getByRole("heading", { name: "Cronologia" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Todos" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Só eventos" })).toBeInTheDocument();
+    expect(
+      screen.getByText("Nenhum evento com data — edite um verbete de evento e defina a data."),
+    ).toBeInTheDocument();
   });
 });

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { dateIsEmpty, dateKey, formatDateWithCalendar, sanitizeDate } from "../../domain/dates";
@@ -26,6 +27,7 @@ const snippet = (body: string): string => {
 };
 
 export function TimelinePage({ projectId }: { projectId: string }) {
+  const { t } = useTranslation();
   const entries = useScriptorium(
     useShallow((s) => s.entries.filter((e) => e.projectId === projectId)),
   );
@@ -66,8 +68,8 @@ export function TimelinePage({ projectId }: { projectId: string }) {
   return (
     <div className="h-full overflow-y-auto py-[22px] px-7 max-w-[920px] max-[720px]:p-[18px] max-[720px]:px-3.5">
       <div className="grid gap-1 mb-4">
-        <h1 className="m-0 font-display text-[22px] font-semibold text-parchment-strong">Chronology</h1>
-        <p className="m-0 text-slate text-sm">Dated events in world order.</p>
+        <h1 className="m-0 font-display text-[22px] font-semibold text-parchment-strong">{t("timeline.title")}</h1>
+        <p className="m-0 text-slate text-sm">{t("timeline.purpose")}</p>
       </div>
       <div className="flex flex-wrap items-center gap-1.5 mb-5">
         {calendar?.era ? <span className="timeline-era font-mono text-[11px] tracking-[0.06em] uppercase text-slate border border-line rounded-full py-[3px] px-2.5" data-testid="timeline-era">{calendar.era}</span> : null}
@@ -77,7 +79,7 @@ export function TimelinePage({ projectId }: { projectId: string }) {
           onClick={() => setOnlyEvents(true)}
           className="bg-none border border-line text-parchment-dim rounded-full py-[3px] px-2.5 text-[11px] tracking-[0.06em] uppercase hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold"
         >
-          Events only
+          {t("timeline.eventsOnly")}
         </button>
         <button
           type="button"
@@ -85,7 +87,7 @@ export function TimelinePage({ projectId }: { projectId: string }) {
           onClick={() => setOnlyEvents(false)}
           className="bg-none border border-line text-parchment-dim rounded-full py-[3px] px-2.5 text-[11px] tracking-[0.06em] uppercase hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold"
         >
-          Tudo
+          {t("timeline.all")}
         </button>
       </div>
       {dated.length > 0 ? (
@@ -120,12 +122,12 @@ export function TimelinePage({ projectId }: { projectId: string }) {
         </ol>
       ) : (
         <p className="text-parchment-dim text-sm my-[18px]">
-          Nenhum evento com data — edite uma entrada de evento e defina a data.
+          {t("timeline.empty")}
         </p>
       )}
       {undated.length > 0 ? (
-        <section className="timeline-undated mt-[26px] border-t border-line pt-3.5" aria-label="Undated">
-          <h2 className="font-semibold text-[11px] tracking-[0.08em] uppercase text-slate">Undated</h2>
+        <section className="timeline-undated mt-[26px] border-t border-line pt-3.5" aria-label={t("timeline.undated")}>
+          <h2 className="font-semibold text-[11px] tracking-[0.08em] uppercase text-slate">{t("timeline.undated")}</h2>
           <ul className="list-none mt-2 mb-0 p-0 flex flex-col">
             {undated.map((row) => (
               <li key={row.id}>

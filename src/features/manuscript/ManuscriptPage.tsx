@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import type { Manuscript } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
@@ -15,6 +16,7 @@ const CONFIRM_RESET_MS = 3000;
 /** Book-level inline edits (title/author) in ONE component keyed by
  *  manuscript.id at the usage site — draft isolation per book. */
 function BookInputs({ manuscript }: { manuscript: Manuscript }) {
+  const { t } = useTranslation();
   const commitTitle = useCallback((v: string) => {
     useScriptorium.getState().renameManuscript(manuscript.id, v);
   }, [manuscript.id]);
@@ -28,7 +30,7 @@ function BookInputs({ manuscript }: { manuscript: Manuscript }) {
       <input
         type="text"
         className="book-title-input flex-1 min-w-0 font-display text-lg font-semibold text-parchment bg-ink border border-line rounded-lg px-2.5 py-1.5 outline-none focus:border-gold"
-        aria-label="Manuscript title"
+        aria-label={t("manuscript.titleAria")}
         value={titleDraft.draft}
         onChange={(e) => titleDraft.setDraft(e.target.value)}
         onBlur={titleDraft.flush}
@@ -36,7 +38,7 @@ function BookInputs({ manuscript }: { manuscript: Manuscript }) {
       <input
         type="text"
         className="book-author-input w-[220px] text-[13px] text-parchment bg-ink border border-line rounded-lg px-2.5 py-1.5 outline-none focus:border-gold"
-        aria-label="Author"
+        aria-label={t("manuscript.author")}
         value={authorDraft.draft}
         onChange={(e) => authorDraft.setDraft(e.target.value)}
         onBlur={authorDraft.flush}
@@ -46,6 +48,7 @@ function BookInputs({ manuscript }: { manuscript: Manuscript }) {
 }
 
 export function ManuscriptPage({ projectId }: { projectId: string }) {
+  const { t } = useTranslation();
   const books = useScriptorium(
     useShallow((s) => s.manuscripts.filter((m) => m.projectId === projectId)),
   );
@@ -110,7 +113,7 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
       const remaining = useScriptorium.getState().manuscripts
         .filter((m) => m.projectId === projectId && m.id !== bookId);
       useScriptorium.getState().deleteManuscript(bookId);
-      useScriptorium.getState().pushToast("success", "Book deleted.", undoToastAction());
+      useScriptorium.getState().pushToast("success", t("manuscript.bookDeleted"), undoToastAction());
       setBookId(remaining[0]?.id ?? null);
       setChapterId(null);
       return;
@@ -142,11 +145,11 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
     return (
       <div className="grid grid-rows-[auto_auto_1fr] h-full min-h-0">
         <div className="flex flex-col items-center justify-center gap-3.5 p-6">
-          <h1 className="m-0 font-display text-[22px] font-semibold text-parchment-strong">Manuscript</h1>
-          <p className="m-0 text-slate text-sm">Write the chapters.</p>
-          <p className="m-0 text-parchment-dim text-sm">Start your book — create the first one.</p>
+          <h1 className="m-0 font-display text-[22px] font-semibold text-parchment-strong">{t("manuscript.title")}</h1>
+          <p className="m-0 text-slate text-sm">{t("manuscript.purpose")}</p>
+          <p className="m-0 text-parchment-dim text-sm">{t("manuscript.empty")}</p>
           <Button onClick={createBook}>
-            New book
+            {t("manuscript.newBook")}
           </Button>
         </div>
       </div>
@@ -160,7 +163,7 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
       <header className="flex items-center gap-2.5 px-4 pt-3">
         {books.length > 1 ? (
           <Select value={book.id} onValueChange={(v) => onBookSelected(v)}>
-            <SelectTrigger aria-label="Book" className="min-w-[180px] justify-between rounded-lg border-line bg-night-2 px-2 py-1.5 text-[13px] text-parchment hover:border-gold data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
+            <SelectTrigger aria-label={t("manuscript.bookAria")} className="min-w-[180px] justify-between rounded-lg border-line bg-night-2 px-2 py-1.5 text-[13px] text-parchment hover:border-gold data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
             <SelectContent className="border-line bg-night text-parchment">
               {books.map((m) => <SelectItem key={m.id} value={m.id} className="text-[13px] focus:bg-[#24233f] focus:text-parchment">{m.title}</SelectItem>)}
             </SelectContent>
@@ -170,14 +173,14 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
         )}
         <div className="flex gap-2 ml-auto">
           <Button onClick={createBook}>
-            New book
+            {t("manuscript.newBook")}
           </Button>
           <button
             type="button"
             className={"book-delete bg-none border border-[var(--ember)] text-[var(--ember)] rounded-lg py-1.5 px-2.5 text-[13px] hover:bg-[color-mix(in_srgb,var(--ember)_18%,transparent)]" + (armed ? " armed bg-[color-mix(in_srgb,var(--ember)_20%,transparent)]" : "")}
             onClick={confirmOrDeleteBook}
           >
-            {armed ? "Confirm?" : "Delete book"}
+            {armed ? t("manuscript.confirm") : t("manuscript.deleteBook")}
           </button>
         </div>
       </header>

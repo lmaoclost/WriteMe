@@ -87,13 +87,13 @@ describe("bloodline CRUD (case 1)", () => {
 });
 
 describe("person CRUD (cases 1-4)", () => {
-  it("addPerson defaults: x/y 4000, 'Sem nome', empty lists, badge off, not twin", () => {
+  it("addPerson defaults: x/y 4000, 'Unnamed', empty lists, badge off, not twin", () => {
     const a = addBloodline();
     const p = addPerson(a);
     expect(p.id).toMatch(/^per_/);
     expect(p.x).toBe(4000);
     expect(p.y).toBe(4000);
-    expect(p.name).toBe("Sem nome");
+    expect(p.name).toBe("Unnamed");
     expect(p.additionalTitles).toEqual([]);
     expect(p.tenures).toEqual([]);
     expect(p.showBadge).toBe(false);
@@ -199,13 +199,13 @@ describe("person CRUD (cases 1-4)", () => {
 });
 
 describe("house CRUD (case 1)", () => {
-  it("addHouse defaults: 'Casa sem nome', flags false; init overrides accepted", () => {
+  it("addHouse defaults: 'Untitled House', flags false; init overrides accepted", () => {
     const a = addBloodline();
     const h = addHouse(a);
     expect(h.id).toMatch(/^hou_/);
     expect(h.x).toBe(4000);
     expect(h.y).toBe(4000);
-    expect(h.name).toBe("Casa sem nome");
+    expect(h.name).toBe("Untitled House");
     expect(h.isMainBranch).toBe(false);
     expect(h.isMonarch).toBe(false);
     const custom = addHouse(a, { x: 50, y: 60, name: "Vellmor" });

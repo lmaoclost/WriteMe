@@ -1,5 +1,7 @@
 import { Link, useOutletContext } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { selectCounts, selectProject, useScriptorium } from "../../data/store";
 import type { ProjectCounts } from "../../data/store";
 import { fileToDataUrl } from "../../data/image";
@@ -11,31 +13,32 @@ export interface WorkspaceContext {
 
 interface LedgerDef {
   letter: string;
-  name: string;
+  nameKey: string;
   path: string;
-  counter: string;
-  desc: string;
-  empty?: string;
-  read: (c: ProjectCounts) => string;
+  counterKey: string;
+  descKey: string;
+  emptyKey?: string;
+  read: (counts: ProjectCounts, t: TFunction) => string;
 }
 
-const LEDGER: LedgerDef[] = [
-  { letter: "T", name: "Lore", path: "entries", counter: "Lore entries", desc: "Characters, places, creatures and things", empty: "Write your first entry", read: (c) => c.entries > 0 ? String(c.entries) : "" },
-  { letter: "A", name: "Atlas", path: "atlas", counter: "Atlas pins", desc: "Map regions and drop pins for places", empty: "Draw your first region", read: (c) => c.atlasPins > 0 ? `${c.atlasRegions} regions · ${c.atlasPins} pins` : "" },
-  { letter: "D", name: "Chronology", path: "timeline", counter: "Chronology events", desc: "Dated events in world order", empty: "Add a dated event", read: (c) => c.chronologyEvents > 0 ? String(c.chronologyEvents) : "" },
-  { letter: "B", name: "Bloodline", path: "bloodline", counter: "Bloodline persons", desc: "Family trees across generations", empty: "Add the first person", read: (c) => c.bloodlinePersons > 0 ? String(c.bloodlinePersons) : "" },
-  { letter: "O", name: "Oaths", path: "oaths", counter: "Oaths members", desc: "Chains of loyalty between groups", empty: "Draw the first oath", read: (c) => c.oathMembers > 0 ? String(c.oathMembers) : "" },
-  { letter: "F", name: "Factions", path: "factions", counter: "Factions", desc: "Who fights whom, who backs whom", empty: "Add the first faction", read: (c) => c.factions > 0 ? String(c.factions) : "" },
-  { letter: "C", name: "Calendar", path: "calendar", counter: "Calendar events", desc: "Your world's own year and months", empty: "Add an event to your calendar", read: (c) => c.calendarEvents > 0 ? String(c.calendarEvents) : "" },
-  { letter: "L", name: "Plot board", path: "plotboard", counter: "Plot board cards", desc: "Story arcs as cards on a board", empty: "Add the first card", read: (c) => c.plotCards > 0 ? String(c.plotCards) : "" },
-  { letter: "W", name: "Timeline", path: "linewheel", counter: "Timeline beads", desc: "Beads strung on a wheel", empty: "String the first bead", read: (c) => c.timelineBeads > 0 ? String(c.timelineBeads) : "" },
-  { letter: "K", name: "Ideas", path: "wellspring", counter: "Ideas", desc: "Loose ideas, before they have a home", empty: "Open an idea board", read: (c) => c.wellspringNodes > 0 ? String(c.wellspringNodes) : "" },
-  { letter: "X", name: "Language", path: "conlang", counter: "Lexicon words", desc: "Words and phonetics for your tongue", empty: "Add the first word", read: (c) => c.conlangWords > 0 ? String(c.conlangWords) : "" },
-  { letter: "M", name: "Manuscript", path: "manuscript", counter: "Manuscript chapters", desc: "Write the chapters", empty: "Write the first chapter", read: (c) => c.chapters > 0 ? String(c.chapters) : "" },
-  { letter: "S", name: "Publishing", path: "bindery", counter: "Publishing trims", desc: "Trim the manuscript for export", read: () => "✦" },
-];
+const LEDGER = [
+  { letter: "T", nameKey: "overview.items.lore.name", path: "entries", counterKey: "overview.items.lore.counter", descKey: "overview.items.lore.desc", emptyKey: "overview.items.lore.empty", read: (c: ProjectCounts) => c.entries > 0 ? String(c.entries) : "" },
+  { letter: "A", nameKey: "overview.items.atlas.name", path: "atlas", counterKey: "overview.items.atlas.counter", descKey: "overview.items.atlas.desc", emptyKey: "overview.items.atlas.empty", read: (c: ProjectCounts, t: TFunction) => c.atlasPins > 0 ? t("overview.items.atlas.count", { regions: c.atlasRegions, pins: c.atlasPins }) : "" },
+  { letter: "D", nameKey: "overview.items.chronology.name", path: "timeline", counterKey: "overview.items.chronology.counter", descKey: "overview.items.chronology.desc", emptyKey: "overview.items.chronology.empty", read: (c: ProjectCounts) => c.chronologyEvents > 0 ? String(c.chronologyEvents) : "" },
+  { letter: "B", nameKey: "overview.items.bloodline.name", path: "bloodline", counterKey: "overview.items.bloodline.counter", descKey: "overview.items.bloodline.desc", emptyKey: "overview.items.bloodline.empty", read: (c: ProjectCounts) => c.bloodlinePersons > 0 ? String(c.bloodlinePersons) : "" },
+  { letter: "O", nameKey: "overview.items.oaths.name", path: "oaths", counterKey: "overview.items.oaths.counter", descKey: "overview.items.oaths.desc", emptyKey: "overview.items.oaths.empty", read: (c: ProjectCounts) => c.oathMembers > 0 ? String(c.oathMembers) : "" },
+  { letter: "F", nameKey: "overview.items.factions.name", path: "factions", counterKey: "overview.items.factions.counter", descKey: "overview.items.factions.desc", emptyKey: "overview.items.factions.empty", read: (c: ProjectCounts) => c.factions > 0 ? String(c.factions) : "" },
+  { letter: "C", nameKey: "overview.items.calendar.name", path: "calendar", counterKey: "overview.items.calendar.counter", descKey: "overview.items.calendar.desc", emptyKey: "overview.items.calendar.empty", read: (c: ProjectCounts) => c.calendarEvents > 0 ? String(c.calendarEvents) : "" },
+  { letter: "L", nameKey: "overview.items.plotboard.name", path: "plotboard", counterKey: "overview.items.plotboard.counter", descKey: "overview.items.plotboard.desc", emptyKey: "overview.items.plotboard.empty", read: (c: ProjectCounts) => c.plotCards > 0 ? String(c.plotCards) : "" },
+  { letter: "W", nameKey: "overview.items.timeline.name", path: "linewheel", counterKey: "overview.items.timeline.counter", descKey: "overview.items.timeline.desc", emptyKey: "overview.items.timeline.empty", read: (c: ProjectCounts) => c.timelineBeads > 0 ? String(c.timelineBeads) : "" },
+  { letter: "K", nameKey: "overview.items.wellspring.name", path: "wellspring", counterKey: "overview.items.wellspring.counter", descKey: "overview.items.wellspring.desc", emptyKey: "overview.items.wellspring.empty", read: (c: ProjectCounts) => c.wellspringNodes > 0 ? String(c.wellspringNodes) : "" },
+  { letter: "X", nameKey: "overview.items.conlang.name", path: "conlang", counterKey: "overview.items.conlang.counter", descKey: "overview.items.conlang.desc", emptyKey: "overview.items.conlang.empty", read: (c: ProjectCounts) => c.conlangWords > 0 ? String(c.conlangWords) : "" },
+  { letter: "M", nameKey: "overview.items.manuscript.name", path: "manuscript", counterKey: "overview.items.manuscript.counter", descKey: "overview.items.manuscript.desc", emptyKey: "overview.items.manuscript.empty", read: (c: ProjectCounts) => c.chapters > 0 ? String(c.chapters) : "" },
+  { letter: "S", nameKey: "overview.items.bindery.name", path: "bindery", counterKey: "overview.items.bindery.counter", descKey: "overview.items.bindery.desc", emptyKey: undefined, read: () => "✦" },
+] as const satisfies readonly LedgerDef[];
 
 export function OverviewPage() {
+  const { t } = useTranslation();
   const { projectId } = useOutletContext<WorkspaceContext>();
   const project = useScriptorium(selectProject(projectId));
   const counts = useScriptorium(useShallow(selectCounts(projectId)));
@@ -53,9 +56,9 @@ export function OverviewPage() {
       const oldKey = project.coverImageKey;
       updateProject(projectId, { coverImageKey: key });
       if (oldKey && oldKey !== key) removeImage(oldKey);
-      pushToast("success", "Cover updated.");
+      pushToast("success", t("overview.coverUpdated"));
     } catch {
-      pushToast("error", "That image could not be loaded.");
+      pushToast("error", t("overview.coverError"));
     }
   };
 
@@ -66,11 +69,11 @@ export function OverviewPage() {
           {project?.coverImageKey && coverUrl && (
             <img src={coverUrl} alt="" className="block h-full w-full object-cover" />
           )}
-          <span className="absolute right-3 bottom-3 bg-[color-mix(in_srgb,var(--ink)_88%,var(--gold)_4%)] text-parchment border border-gold-dim rounded-sm px-2.5 py-1.5 text-xs tracking-[0.04em] shadow-[0_18px_40px_rgb(16_16_30/0.55)] group-hover:border-gold group-hover:text-parchment-strong">Change cover</span>
+          <span className="absolute right-3 bottom-3 bg-[color-mix(in_srgb,var(--ink)_88%,var(--gold)_4%)] text-parchment border border-gold-dim rounded-sm px-2.5 py-1.5 text-xs tracking-[0.04em] shadow-[0_18px_40px_rgb(16_16_30/0.55)] group-hover:border-gold group-hover:text-parchment-strong">{t("overview.changeCover")}</span>
           <input
             type="file"
             accept="image/*"
-            aria-label="Change cover"
+            aria-label={t("overview.changeCover")}
             className="sr-only"
             onChange={(e) => {
               const f = e.target.files?.[0];
@@ -85,29 +88,31 @@ export function OverviewPage() {
         </div>
       </header>
 
-      <section className="mt-[30px]" aria-label="Forge ledger">
+      <section className="mt-[30px]" aria-label={t("overview.forgeLedger")}>
         <ul className="list-none m-0 p-0 grid grid-cols-2 gap-x-14 max-[760px]:grid-cols-1">
           {LEDGER.map((f) => (
             <li
-              key={f.name}
+              key={f.nameKey}
               className="flex items-center justify-between gap-4 py-[13px] border-t border-line odd:pr-6 even:pl-6 [&:nth-child(-n+2)]:border-t-0 max-[760px]:odd:pr-0 max-[760px]:even:pl-0 max-[760px]:[&:nth-child(-n+2)]:border-t max-[760px]:[&:nth-child(-n+2)]:border-line max-[760px]:first:border-t-0"
             >
               <Link className="group flex items-center gap-3.5 text-inherit no-underline min-w-0" to={`/p/${projectId}/${f.path}`}>
                 <span><Seal letter={f.letter.slice(0, 1)} className="size-[30px] text-[13px]" /></span>
                 <span className="grid gap-0.5 min-w-0">
-                  <span className="font-display text-[1.125rem] font-semibold text-parchment whitespace-nowrap group-hover:text-parchment-strong">{f.name}</span>
-                  <span className="text-slate text-xs whitespace-nowrap">{f.desc}</span>
+                  <span className="font-display text-[1.125rem] font-semibold text-parchment whitespace-nowrap group-hover:text-parchment-strong">{t(f.nameKey)}</span>
+                  <span className="text-slate text-xs whitespace-nowrap">{t(f.descKey)}</span>
                 </span>
               </Link>
-              {f.read(counts) ? (
-                <span className="text-slate text-xs tracking-[0.06em] uppercase whitespace-nowrap [font-variant-numeric:tabular-nums]" aria-label={f.counter}>{f.read(counts)}</span>
+              {f.read(counts, t) ? (
+                <span className="text-slate text-xs tracking-[0.06em] uppercase whitespace-nowrap [font-variant-numeric:tabular-nums]" aria-label={t(f.counterKey)}>{f.read(counts, t)}</span>
               ) : (
-                <Link
-                  to={`/p/${projectId}/${f.path}`}
-                  className="text-[var(--text-faint)] hover:text-gold text-xs whitespace-nowrap no-underline transition-colors"
-                >
-                  {f.empty}
-                </Link>
+                f.emptyKey && (
+                  <Link
+                    to={`/p/${projectId}/${f.path}`}
+                    className="text-[var(--text-faint)] hover:text-gold text-xs whitespace-nowrap no-underline transition-colors"
+                  >
+                    {t(f.emptyKey)}
+                  </Link>
+                )
               )}
             </li>
           ))}

@@ -319,16 +319,16 @@ describe("Bindery export buttons", () => {
     const id = seedBook();
     act(() => { store().deleteChapter(store().manuscripts[0].chapters[0].id); });
     render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
-    expect(screen.getByRole("button", { name: "Exportar EPUB" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Exportar Word" })).toBeDisabled();
-    expect(screen.queryByRole("button", { name: "Exportar PDF" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Export EPUB" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Export Word" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Export PDF" })).toBeNull();
   });
 
   it("EPUB and Word enable once the book has chapters", () => {
     const id = seedBook();
     render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
-    expect(screen.getByRole("button", { name: "Exportar EPUB" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Exportar Word" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Export EPUB" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Export Word" })).toBeEnabled();
   });
 });
 
@@ -425,16 +425,16 @@ describe("Bindery preset picker, advanced groups and print hints", () => {
     render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
     expect(estimatePageCount(store().manuscripts[0])).toBe(1);
     const note = screen.getByTestId("page-estimate");
-    expect(note).toHaveTextContent("1 página");
-    expect(note).not.toHaveTextContent("páginas");
+    expect(note).toHaveTextContent("1 page");
+    expect(note).not.toHaveTextContent("pages");
   });
 
   it("warns that running heads and folios only appear in the print dialog", () => {
     const id = seedBook();
     render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
     const hint = screen.getByTestId("print-hint");
-    expect(hint).toHaveTextContent(/diálogo de impressão/i);
-    expect(hint).toHaveTextContent(/nunca na prévia/i);
+    expect(hint).toHaveTextContent(/print dialog/i);
+    expect(hint).toHaveTextContent(/never in the on-screen preview/i);
     expect(hint).toHaveTextContent(/Headers and footers/i);
     expect(hint).toHaveTextContent(/Chrome/);
     expect(hint).toHaveTextContent(/Edge/);
@@ -479,8 +479,8 @@ describe("Bindery preset picker, advanced groups and print hints", () => {
     openGroup("Chapter openers");
     const hint = screen.getByTestId("opener-hint");
     expect(hint).toHaveTextContent(/Chromium/);
-    expect(hint).toHaveTextContent(/página própria/);
-    expect(hint).toHaveTextContent(/próxima página/);
+    expect(hint).toHaveTextContent(/own page/);
+    expect(hint).toHaveTextContent(/next page/);
   });
 
   it("front matter group drives half title, copyright fields, epigraph and roman numerals", () => {

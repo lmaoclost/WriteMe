@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export function Notepad({ notes, onNotes, onClose }: {
   notes: string;
   onNotes(v: string): void;
   onClose(): void;
 }) {
+  const { t } = useTranslation();
   const [draft, setDraft] = useState(notes);
   const [pos, setPos] = useState<{ x?: number; y?: number }>({});
   const [drag, setDrag] = useState<{ dx: number; dy: number } | null>(null);
@@ -28,11 +30,11 @@ export function Notepad({ notes, onNotes, onClose }: {
         onPointerMove={onDragMove}
         onPointerUp={() => setDrag(null)}
       >
-        <span>Notas</span>
-        <button type="button" aria-label="Fechar notas" onClick={onClose} className="bg-none border-0 text-slate">✕</button>
+        <span>{t("bloodline.notepad.title")}</span>
+        <button type="button" aria-label={t("bloodline.notepad.close")} onClick={onClose} className="bg-none border-0 text-slate">✕</button>
       </header>
       <textarea
-        aria-label="Notas da linhagem"
+        aria-label={t("bloodline.notepad.aria")}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         rows={5}

@@ -1,5 +1,7 @@
 /** Shared preview card for a codex entry (atlas pins, wheel beads, bindery,
  *  wiki links): title + category chip + first-line blurb + "Open in codex". */
+import { useTranslation } from "react-i18next";
+
 export interface EntryPreviewData {
   entryId: string;
   title: string;
@@ -12,6 +14,7 @@ export function EntryPreview({ data, onOpen }: {
   data: EntryPreviewData;
   onOpen(entryId: string): void;
 }) {
+  const { t } = useTranslation();
   return (
     <span
       data-testid="entry-preview"
@@ -28,7 +31,7 @@ export function EntryPreview({ data, onOpen }: {
         onClick={() => onOpen(data.entryId)}
         className="justify-self-start bg-none border border-gold-dim rounded-sm text-gold py-[3px] px-2.5 text-[11px] tracking-[0.04em] cursor-pointer hover:border-gold"
       >
-        Open in codex
+        {t("entries.preview.open")}
       </button>
     </span>
   );

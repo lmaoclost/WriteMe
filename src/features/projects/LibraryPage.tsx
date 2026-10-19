@@ -1,23 +1,38 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { useScriptorium } from "../../data/store";
 import { Button } from "../../ui/Button";
 import { Field } from "../../ui/Field";
 import { Modal } from "../../ui/Modal";
 import { Seal } from "../../ui/Seal";
+import { LanguageToggle } from "../../ui/LanguageToggle";
+import { localeFor } from "../../i18n";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-function updatedStamp(ms: number): string {
+function updatedStamp(ms: number, t: TFunction, locale: string): string {
   const s = Math.floor((Date.now() - ms) / 1000);
-  if (s < 45) return "just now";
-  if (s < 3600) { const m = Math.max(1, Math.floor(s / 60)); return `${m} minute${m === 1 ? "" : "s"} ago`; }
-  if (s < 86400) { const h = Math.max(1, Math.floor(s / 3600)); return `${h} hour${h === 1 ? "" : "s"} ago`; }
-  if (s < 7 * 86400) { const d = Math.max(1, Math.floor(s / 86400)); return `${d} day${d === 1 ? "" : "s"} ago`; }
-  return new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  if (s < 45) return t("library.updated", { when: t("library.justNow") });
+  const relative = new Intl.RelativeTimeFormat(locale, { numeric: "always" });
+  if (s < 3600) {
+    return t("library.updated", { when: relative.format(-Math.max(1, Math.floor(s / 60)), "minute") });
+  }
+  if (s < 86400) {
+    return t("library.updated", { when: relative.format(-Math.max(1, Math.floor(s / 3600)), "hour") });
+  }
+  if (s < 7 * 86400) {
+    return t("library.updated", { when: relative.format(-Math.max(1, Math.floor(s / 86400)), "day") });
+  }
+  return t("library.updated", {
+    when: new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }).format(ms),
+  });
 }
 
 export function LibraryPage() {
+  const { t, i18n } = useTranslation();
+  const locale = localeFor(i18n.language);
   const projects = useScriptorium((s) => s.projects);
   const addProject = useScriptorium((s) => s.addProject);
   const deleteProject = useScriptorium((s) => s.deleteProject);
@@ -65,7 +80,7 @@ export function LibraryPage() {
     try {
       text = await readFileText(file);
     } catch {
-      pushToast("error", "That file could not be read.");
+      pushToast("error", t("library.toasts.invalidFile"));
       setRestoring(false);
       setPendingRestore(null);
       return;
@@ -73,7 +88,7 @@ export function LibraryPage() {
     try {
       JSON.parse(text);
     } catch {
-      pushToast("error", "That file is not valid JSON.");
+      pushToast("error", t("library.toasts.invalidJson"));
       setRestoring(false);
       setPendingRestore(null);
       return;
@@ -85,7 +100,7 @@ export function LibraryPage() {
     if (!pendingRestore) return;
     const result = useScriptorium.getState().importData(pendingRestore);
     if (result.ok) {
-      pushToast("success", "Library restored.");
+      pushToast("success", t("library.toasts.restored"));
     } else {
       pushToast("error", result.error);
       return;
@@ -96,80 +111,84 @@ export function LibraryPage() {
 
   const submitCreate = () => {
     const n = name.trim();
-    if (!n) { pushToast("error", "Give the world a name."); return; }
+    if (!n) { pushToast("error", t("library.toasts.nameRequired")); return; }
     addProject(n, description.trim());
     setCreating(false);
     setName("");
     setDescription("");
-    pushToast("success", "World created.");
+    pushToast("success", t("library.toasts.worldCreated"));
   };
 
   const doSeed = () => {
     seedDemo();
-    pushToast("success", "Sample project loaded.");
+    pushToast("success", t("library.toasts.sampleLoaded"));
   };
 
   const target = projects.find((p) => p.id === toDelete);
 
   const worldList = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = query.trim().toLocaleLowerCase(locale);
     const list = projects.filter((p) =>
-      !q || p.name.toLowerCase().includes(q) || (p.description ?? "").toLowerCase().includes(q));
+      !q || p.name.toLocaleLowerCase(locale).includes(q)
+      || (p.description ?? "").toLocaleLowerCase(locale).includes(q));
     if (sortKey === "name") {
-      return [...list].sort((a, b) => a.name.localeCompare(b.name));
+      return [...list].sort((a, b) => a.name.localeCompare(b.name, locale));
     }
     return list;
-  }, [projects, query, sortKey]);
+  }, [projects, query, sortKey, locale]);
 
   return (
     <div className="relative mx-auto max-w-[1080px] px-6 pt-9 pb-16">
-      <header className="grid justify-items-start gap-2.5">
-        <div className="flex items-center gap-2.5">
-          <Seal letter="S" className="size-7 text-sm" />
-          <span className="font-display text-[15px] uppercase tracking-[0.14em] text-parchment">Scriptorium</span>
+      <header className="grid gap-2.5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <Seal letter="S" className="size-7 text-sm" />
+            <span className="font-display text-[15px] uppercase tracking-[0.14em] text-parchment">Scriptorium</span>
+          </div>
+          <LanguageToggle />
         </div>
-        <h1 className="font-display font-semibold text-[clamp(2rem,4.5vw,2.75rem)] tracking-[-0.02em] leading-[1.15] text-parchment-strong">Welcome back</h1>
+        <h1 className="font-display font-semibold text-[clamp(2rem,4.5vw,2.75rem)] tracking-[-0.02em] leading-[1.15] text-parchment-strong">{t("library.welcome")}</h1>
       </header>
 
       <hr className="w-full border-0 border-t border-line my-9" />
 
-      <section aria-label="My worlds">
+      <section aria-label={t("library.myWorlds")}>
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-          <h2 className="font-display text-[1.375rem] font-semibold text-parchment-strong">My worlds</h2>
+          <h2 className="font-display text-[1.375rem] font-semibold text-parchment-strong">{t("library.myWorlds")}</h2>
           {projects.length >= 3 && (
             <div className="flex gap-2.5">
               <input
                 type="search"
                 className="w-[200px] rounded-sm border border-line bg-night px-2.5 py-[7px] text-sm text-parchment placeholder:text-slate outline-none focus-visible:border-gold-dim"
-                placeholder="Search worlds…"
-                aria-label="Search worlds"
+                placeholder={t("library.searchWorldsPlaceholder")}
+                aria-label={t("library.searchWorlds")}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
               <Select value={sortKey} onValueChange={(v) => setSortKey(v as "recent" | "name")}>
                 <SelectTrigger
-                  aria-label="Sort worlds"
+                  aria-label={t("library.sortWorlds")}
                   className="justify-between rounded-sm border-line bg-night px-2.5 py-1.5 text-sm text-parchment hover:border-gold-dim data-[size=default]:h-auto"
                 >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="border-line bg-night text-parchment">
-                  <SelectItem value="recent" className="text-sm focus:bg-[#24233f] focus:text-parchment">Recently updated</SelectItem>
-                  <SelectItem value="name" className="text-sm focus:bg-[#24233f] focus:text-parchment">Name A–Z</SelectItem>
+                  <SelectItem value="recent" className="text-sm focus:bg-[#24233f] focus:text-parchment">{t("library.recentlyUpdated")}</SelectItem>
+                  <SelectItem value="name" className="text-sm focus:bg-[#24233f] focus:text-parchment">{t("library.nameAZ")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           )}
-          <Button className="flex-none" onClick={() => setCreating(true)}>New world</Button>
+          <Button className="flex-none" onClick={() => setCreating(true)}>{t("library.newWorld")}</Button>
         </div>
 
         {projects.length === 0 ? (
           <div className="grid justify-items-center gap-3.5 rounded-lg border border-dashed border-line p-[42px] text-center text-parchment-dim">
-            <p>Create your first world or load the sample project.</p>
-            <Button kind="ghost" onClick={doSeed}>Load the sample project</Button>
+            <p>{t("library.emptyInvite")}</p>
+            <Button kind="ghost" onClick={doSeed}>{t("library.loadSample")}</Button>
           </div>
         ) : worldList.length === 0 ? (
-          <p className="text-slate text-sm">No worlds match “{query.trim()}”.</p>
+          <p className="text-slate text-sm">{t("library.noMatch", { query: query.trim() })}</p>
         ) : (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
             {worldList.map((p) => (
@@ -180,10 +199,10 @@ export function LibraryPage() {
                   )}
                   <h3 className="font-display text-[1.25rem] font-semibold">{p.name}</h3>
                   {p.description && <p className="text-slate text-[0.8125rem] m-0">{p.description}</p>}
-                  <p className="text-[var(--text-faint)] text-xs m-0">Updated {updatedStamp(p.updatedAt)}</p>
+                  <p className="text-[var(--text-faint)] text-xs m-0">{updatedStamp(p.updatedAt, t, locale)}</p>
                 </Link>
                 <button
-                  aria-label="Delete world"
+                  aria-label={t("library.deleteWorld")}
                   className="absolute top-2 right-2 flex size-[26px] items-center justify-center rounded-sm border border-line bg-ink text-xs text-slate transition-colors hover:border-danger hover:text-danger"
                   onClick={() => setToDelete(p.id)}
                 >
@@ -195,39 +214,35 @@ export function LibraryPage() {
         )}
       </section>
 
-      <section aria-label="Backup" className="mt-9">
-        <h2 className="font-display text-[1.375rem] font-semibold text-parchment-strong">Backup</h2>
-        <p className="text-slate text-sm mt-1 mb-3 max-w-[60ch]">
-          Your library lives in this browser only — nothing is sent anywhere. Save a JSON copy from time to time.
-        </p>
+      <section aria-label={t("library.backup")} className="mt-9">
+        <h2 className="font-display text-[1.375rem] font-semibold text-parchment-strong">{t("library.backup")}</h2>
+        <p className="text-slate text-sm mt-1 mb-3 max-w-[60ch]">{t("library.backupNote")}</p>
         <div className="flex gap-2.5">
-          <Button onClick={downloadBackup}>Download backup</Button>
-          <Button kind="ghost" onClick={() => { setPendingRestore(null); setRestoring(true); }}>Restore backup</Button>
+          <Button onClick={downloadBackup}>{t("library.downloadBackup")}</Button>
+          <Button kind="ghost" onClick={() => { setPendingRestore(null); setRestoring(true); }}>{t("library.restoreBackup")}</Button>
         </div>
       </section>
 
       {creating && (
-        <Modal title="New world" onClose={() => setCreating(false)} closeLabel="Close">
+        <Modal title={t("library.newWorld")} onClose={() => setCreating(false)} closeLabel={t("common.close")}>
           <div className="grid gap-3">
-            <Field label="Name"><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
-            <Field label="Description"><textarea aria-label="Description" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} /></Field>
+            <Field label={t("library.name")}><input aria-label={t("library.name")} value={name} onChange={(e) => setName(e.target.value)} /></Field>
+            <Field label={t("library.description")}><textarea aria-label={t("library.description")} value={description} onChange={(e) => setDescription(e.target.value)} rows={3} /></Field>
             <div className="mt-2 flex justify-end gap-2.5">
-              <Button onClick={submitCreate}>Create</Button>
-              <Button kind="ghost" onClick={() => setCreating(false)}>Cancel</Button>
+              <Button onClick={submitCreate}>{t("common.create")}</Button>
+              <Button kind="ghost" onClick={() => setCreating(false)}>{t("common.cancel")}</Button>
             </div>
           </div>
         </Modal>
       )}
 
       {restoring && (
-        <Modal title="Restore backup" onClose={() => { setRestoring(false); setPendingRestore(null); }}>
-          <p className="text-parchment-dim">
-            Restoring replaces the whole library — every world, entry and manuscript — with the file's contents.
-          </p>
+        <Modal title={t("library.restoreTitle")} onClose={() => { setRestoring(false); setPendingRestore(null); }}>
+          <p className="text-parchment-dim">{t("library.restoreBody")}</p>
           <input
             type="file"
             accept="application/json"
-            aria-label="Restore from backup file"
+            aria-label={t("library.restoreFromFile")}
             className="mt-3 text-sm text-slate file:mr-3 file:rounded-sm file:border file:border-line file:bg-night file:px-2.5 file:py-1.5 file:text-parchment"
             onChange={(e) => {
               const f = e.target.files?.[0];
@@ -236,22 +251,20 @@ export function LibraryPage() {
             }}
           />
           <div className="mt-3 flex justify-end gap-2.5">
-            <Button kind="danger" disabled={!pendingRestore} onClick={confirmRestore}>Restore</Button>
-            <Button kind="ghost" onClick={() => { setRestoring(false); setPendingRestore(null); }}>Cancel</Button>
+            <Button kind="danger" disabled={!pendingRestore} onClick={confirmRestore}>{t("common.restore")}</Button>
+            <Button kind="ghost" onClick={() => { setRestoring(false); setPendingRestore(null); }}>{t("common.cancel")}</Button>
           </div>
         </Modal>
       )}
 
       {target && (
-        <Modal title={`Delete "${target.name}"?`} onClose={() => setToDelete(null)} closeLabel="Close">
-          <p className="text-parchment-dim">
-            This removes the world, its entries, atlas and manuscripts. No going back.
-          </p>
+        <Modal title={t("library.deleteTitle", { name: target.name })} onClose={() => setToDelete(null)} closeLabel={t("common.close")}>
+          <p className="text-parchment-dim">{t("library.deleteBody")}</p>
           <div className="mt-2 flex justify-end gap-2.5">
-            <Button kind="danger" onClick={() => { deleteProject(target.id); setToDelete(null); pushToast("success", "World deleted."); }}>
-              Delete
+            <Button kind="danger" onClick={() => { deleteProject(target.id); setToDelete(null); pushToast("success", t("library.toasts.worldDeleted")); }}>
+              {t("common.delete")}
             </Button>
-            <Button kind="ghost" onClick={() => setToDelete(null)}>Cancel</Button>
+            <Button kind="ghost" onClick={() => setToDelete(null)}>{t("common.cancel")}</Button>
           </div>
         </Modal>
       )}

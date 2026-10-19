@@ -1,4 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
+import { useTranslation } from "react-i18next";
+import { i18n } from "../../i18n";
 import type { Chapter, CustomCalendar, Part } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -40,6 +42,7 @@ export function markdownToHtml(md: string): string {
 }
 
 export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEditorProps) {
+  const { t } = useTranslation();
   const chapter = useChapter(chapterId);
   const parts = useChapterParts(chapter.id);
   const [writing, setWriting] = useState(true);
@@ -163,17 +166,17 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
           ref={headingRef}
           type="text"
           className="book-ch-heading-input flex-1 min-w-0 font-display text-[1.375rem] font-semibold text-parchment bg-none border border-transparent rounded-lg px-1.5 py-0.5 hover:border-line focus:border-gold outline-none"
-          aria-label="Chapter title"
+          aria-label={t("manuscript.chapterTitle")}
           value={headingDraft.draft}
           onChange={(e) => headingDraft.setDraft(e.target.value)}
           onBlur={flush}
         />
         <Select value={chapter.partId ?? NO_PART} onValueChange={(v) => useScriptorium.getState().setChapterPart(chapter.id, v === NO_PART ? undefined : v)}>
-          <SelectTrigger aria-label="Part" className="min-w-[150px] justify-between rounded-lg border-line bg-night-2 px-2 py-1.5 text-[13px] text-parchment hover:border-gold data-[size=default]:h-auto">
+          <SelectTrigger aria-label={t("manuscript.part")} className="min-w-[150px] justify-between rounded-lg border-line bg-night-2 px-2 py-1.5 text-[13px] text-parchment hover:border-gold data-[size=default]:h-auto">
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="border-line bg-night text-parchment">
-            <SelectItem value={NO_PART} className="text-[13px] focus:bg-[#24233f] focus:text-parchment">No part</SelectItem>
+            <SelectItem value={NO_PART} className="text-[13px] focus:bg-[#24233f] focus:text-parchment">{t("manuscript.noPart")}</SelectItem>
             {parts.map((p) => <SelectItem key={p.id} value={p.id} className="text-[13px] focus:bg-[#24233f] focus:text-parchment">{p.title}</SelectItem>)}
           </SelectContent>
         </Select>
@@ -183,7 +186,7 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
           aria-pressed={writing}
           onClick={() => setMode(true)}
         >
-          Escrever
+          {t("manuscript.write")}
         </button>
         <button
           type="button"
@@ -191,7 +194,7 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
           aria-pressed={!writing}
           onClick={() => setMode(false)}
         >
-          Preview
+          {t("manuscript.preview")}
         </button>
       </div>
       {writing ? (
@@ -204,14 +207,14 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
             suppressContentEditableWarning
             role="textbox"
             aria-multiline="true"
-            aria-label="Content"
+            aria-label={t("manuscript.content")}
             data-testid="rich-body"
             onInput={onRichInput}
             onBlur={onRichBlur}
           />
         </>
       ) : chapter.content.trim() === "" ? (
-        <p className="mx-1 my-1 text-slate text-sm italic">No content yet.</p>
+        <p className="mx-1 my-1 text-slate text-sm italic">{t("manuscript.noContent")}</p>
       ) : (
         <div className="md-view" dangerouslySetInnerHTML={{ __html: previewHtml }} />
       )}
@@ -230,33 +233,34 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
 }
 
 function RichToolbar({ onExec }: { onExec(cmd: string, value?: string): void }) {
+  const { t } = useTranslation();
   const [blocksOpen, setBlocksOpen] = useState(false);
   return (
-    <div className="sticky top-0 z-2 flex items-center gap-0.5 w-fit max-w-[860px] bg-night-2 border border-line rounded-lg px-1.5 py-0.5 shadow-[0_4px_14px_var(--scrim-canvas)]" role="toolbar" aria-label="Formatting">
+    <div className="sticky top-0 z-2 flex items-center gap-0.5 w-fit max-w-[860px] bg-night-2 border border-line rounded-lg px-1.5 py-0.5 shadow-[0_4px_14px_var(--scrim-canvas)]" role="toolbar" aria-label={t("manuscript.formatting")}>
       <div className="rt-group relative flex gap-0.5 px-1">
-        <button type="button" aria-label="Negrito" className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("bold")}><b>B</b></button>
-        <button type="button" aria-label="Italic" className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("italic")}><i>I</i></button>
-        <button type="button" aria-label="Sublinhado" className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("underline")}><u>U</u></button>
+        <button type="button" aria-label={t("manuscript.bold")} className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("bold")}><b>B</b></button>
+        <button type="button" aria-label={t("manuscript.italic")} className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("italic")}><i>I</i></button>
+        <button type="button" aria-label={t("manuscript.underline")} className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("underline")}><u>U</u></button>
       </div>
       <div className="rt-group relative flex gap-0.5 px-1 border-l border-line">
-        <button type="button" aria-label="Lista com marcadores" className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("insertUnorderedList")}>•</button>
-        <button type="button" aria-label="Lista numerada" className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("insertOrderedList")}>1.</button>
+        <button type="button" aria-label={t("manuscript.bulletList")} className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("insertUnorderedList")}>•</button>
+        <button type="button" aria-label={t("manuscript.numberedList")} className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("insertOrderedList")}>1.</button>
       </div>
       <div className="rt-group relative flex gap-0.5 px-1 border-l border-line">
-        <button type="button" aria-label="Align left" className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("justifyLeft")}>⇤</button>
-        <button type="button" aria-label="Alinhar ao centro" className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("justifyCenter")}>↔</button>
-        <button type="button" aria-label="Align right" className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("justifyRight")}>⇥</button>
-        <button type="button" aria-label="Justificar" className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("justifyFull")}>≡</button>
+        <button type="button" aria-label={t("manuscript.alignLeft")} className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("justifyLeft")}>⇤</button>
+        <button type="button" aria-label={t("manuscript.alignCenter")} className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("justifyCenter")}>↔</button>
+        <button type="button" aria-label={t("manuscript.alignRight")} className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("justifyRight")}>⇥</button>
+        <button type="button" aria-label={t("manuscript.justify")} className="min-w-[26px] h-[26px] bg-transparent border-0 rounded-sm text-[#b9b3c9] text-[12.5px] cursor-pointer px-1.5 hover:bg-[#ffffff14] hover:text-parchment aria-pressed:bg-[rgb(124_92_191)] aria-pressed:text-white" onClick={() => onExec("justifyFull")}>≡</button>
       </div>
-      <button type="button" className="rich-blocks relative w-auto bg-transparent border-0 rounded-sm text-[#b9b3c9] text-xs cursor-pointer px-2.5 py-1 hover:text-parchment" aria-expanded={blocksOpen} onClick={() => setBlocksOpen((v) => !v)}>Blocos ▾</button>
+      <button type="button" className="rich-blocks relative w-auto bg-transparent border-0 rounded-sm text-[#b9b3c9] text-xs cursor-pointer px-2.5 py-1 hover:text-parchment" aria-expanded={blocksOpen} onClick={() => setBlocksOpen((v) => !v)}>{t("manuscript.blocks")}</button>
       {blocksOpen ? (
         <div className="rich-blocks-pop absolute top-[30px] left-0 z-10 min-w-[170px] bg-night-2 border border-line rounded-md p-1 shadow-[0_8px_22px_var(--scrim-canvas)]" role="menu">
           {[
-            ["Heading 1 (H1)", "h1"],
-            ["Heading 2 (H2)", "h2"],
-            ["Heading 3 (H3)", "h3"],
-            ["Paragraph", "p"],
-            ["Quote", "blockquote"],
+            [t("manuscript.heading1"), "h1"],
+            [t("manuscript.heading2"), "h2"],
+            [t("manuscript.heading3"), "h3"],
+            [t("manuscript.paragraph"), "p"],
+            [t("manuscript.quote"), "blockquote"],
           ].map(([label, tag]) => (
             <button
               key={tag}
@@ -283,6 +287,7 @@ const WordCountFooter = memo(function WordCountFooter({ writing, content, richTi
   armed: boolean;
   onConfirmDelete(): void;
 }) {
+  const { t } = useTranslation();
   // Footer follows the live DOM exactly while the user types (dirty), and the
   // tag-stripped store content otherwise — never the raw HTML string.
   const words = useMemo(() => {
@@ -300,13 +305,14 @@ const WordCountFooter = memo(function WordCountFooter({ writing, content, richTi
         className={"book-delete bg-none border border-[var(--ember)] text-[var(--ember)] rounded-lg py-1.5 px-2.5 text-[13px] hover:bg-[color-mix(in_srgb,var(--ember)_18%,transparent)]" + (armed ? " armed bg-[color-mix(in_srgb,var(--ember)_20%,transparent)]" : "")}
         onClick={onConfirmDelete}
       >
-        {armed ? "Confirm?" : "Delete chapter"}
+        {armed ? t("manuscript.confirm") : t("manuscript.deleteChapter")}
       </button>
     </footer>
   );
 });
 
 function NotesAndLinks({ chapter }: { chapter: Chapter }) {
+  const { t } = useTranslation();
   const store = useScriptorium.getState;
   const endMarker = useDebouncedDraft(chapter.endMarker ?? "", (v) =>
     store().updateChapter(chapter.id, { endMarker: v.trim() || undefined }), 300);
@@ -331,25 +337,25 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
         aria-expanded={notesOpen}
         onClick={() => setNotesOpen((v) => !v)}
       >
-        <span aria-hidden="true">{notesOpen ? "▾" : "▸"}</span> Notas e cena
+        <span aria-hidden="true">{notesOpen ? "▾" : "▸"}</span> {t("manuscript.notesAndScene")}
       </button>
       <div hidden={!notesOpen} className="grid gap-3 pt-2.5">
       <div className="book-note-field flex flex-col gap-1.5">
-        <span className="field-label text-xs font-semibold uppercase tracking-[0.08em] text-slate">Prologue</span>
+        <span className="field-label text-xs font-semibold uppercase tracking-[0.08em] text-slate">{t("manuscript.prologue")}</span>
         <RichNoteField
           testid="rich-note-top"
-          ariaLabel="Prologue"
-          placeholder="Optional: context, content note, dedication..."
+          ariaLabel={t("manuscript.prologue")}
+          placeholder={t("manuscript.prologuePlaceholder")}
           value={chapter.noteTop ?? ""}
           onCommit={(v) => store().updateChapter(chapter.id, { noteTop: v || undefined })}
         />
       </div>
       <div className="book-note-field flex flex-col gap-1.5">
-        <span className="field-label text-xs font-semibold uppercase tracking-[0.08em] text-slate">Epilogue</span>
+        <span className="field-label text-xs font-semibold uppercase tracking-[0.08em] text-slate">{t("manuscript.epilogue")}</span>
         <RichNoteField
           testid="rich-note-end"
-          ariaLabel="Epilogue"
-          placeholder="Optional: acknowledgements, next-chapter teaser..."
+          ariaLabel={t("manuscript.epilogue")}
+          placeholder={t("manuscript.epiloguePlaceholder")}
           value={chapter.noteEnd ?? ""}
           onCommit={(v) => store().updateChapter(chapter.id, { noteEnd: v || undefined })}
         />
@@ -358,58 +364,58 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
         <div className="book-end-marker flex items-center gap-2 text-gold">
           <span aria-hidden="true">✦</span>
           <input
-            aria-label="End-of-chapter marker"
-            placeholder={chapter.endMarker || `End of ${chapter.heading} — editable`}
+            aria-label={t("manuscript.endMarker")}
+            placeholder={chapter.endMarker || t("manuscript.endMarkerPlaceholder", { heading: chapter.heading })}
             value={endMarker.draft}
             onChange={(e) => endMarker.setDraft(e.target.value)}
             onBlur={() => endMarker.flush()}
           />
           <button type="button" className="book-mode bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] cursor-pointer hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold" aria-pressed={false}
-            aria-label="Remover marcador do fim"
-            onClick={() => { endMarker.flush(); store().updateChapter(chapter.id, { endMarker: undefined }); }}>remover marcador</button>
+            aria-label={t("manuscript.removeEndMarker")}
+            onClick={() => { endMarker.flush(); store().updateChapter(chapter.id, { endMarker: undefined }); }}>{t("manuscript.removeEndMarkerShort")}</button>
         </div>
       ) : (
         <div className="book-end-marker flex items-center justify-start gap-2 text-gold">
           <button
             type="button"
             className="book-mode bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] cursor-pointer hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold"
-            aria-label="Adicionar marcador do fim"
-            onClick={() => store().updateChapter(chapter.id, { endMarker: `Fim do ${chapter.heading || "chapter"}` })}
-          >+ marcador do fim</button>
+            aria-label={t("manuscript.addEndMarker")}
+            onClick={() => store().updateChapter(chapter.id, { endMarker: t("manuscript.endMarkerDefault", { heading: chapter.heading || t("manuscript.chapterDefault") }) })}
+          >{t("manuscript.addEndMarkerShort")}</button>
         </div>
       )}
 
       <div className="flex items-center gap-2" data-testid="book-cal-link">
         {chapter.linkedCalendarId && cal ? (
           <>
-            <span className="text-xs text-slate">Data: {labelDay(chapter.calendarDayKey, cal)}</span>
-            <button type="button" className="book-mode bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] cursor-pointer hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold" aria-label="Unlink calendar"
-              onClick={() => { setCalId(""); store().setChapterCalendar(chapter.id, undefined); }}>desvincular</button>
+            <span className="text-xs text-slate">{t("manuscript.linkedDate", { date: labelDay(chapter.calendarDayKey, cal) })}</span>
+            <button type="button" className="book-mode bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] cursor-pointer hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold" aria-label={t("manuscript.unlinkCalendar")}
+              onClick={() => { setCalId(""); store().setChapterCalendar(chapter.id, undefined); }}>{t("manuscript.unlink")}</button>
           </>
         ) : (
           <button type="button" className="book-mode bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] cursor-pointer hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold" aria-expanded={calendarPickOpen}
             onClick={() => setCalendarPickOpen((v) => !v)}>
-            {calendars.length ? "Link calendar" : "No calendars in this world"}
+            {calendars.length ? t("manuscript.linkCalendar") : t("manuscript.noCalendars")}
           </button>
         )}
         {calendarPickOpen && calendars.length ? (
           <div className="book-cal-picker flex gap-2 items-end flex-wrap bg-night-2 border border-line rounded-lg p-2.5">
             <Select value={calId} onValueChange={(v) => setCalId(v)}>
-              <SelectTrigger aria-label="Calendar" className="justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto min-w-0"><SelectValue placeholder="Choose…" /></SelectTrigger>
+              <SelectTrigger aria-label={t("manuscript.calendarAria")} className="justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto min-w-0"><SelectValue placeholder={t("manuscript.choose")} /></SelectTrigger>
               <SelectContent className="border-line bg-night text-parchment">
                 {calendars.map((c) => <SelectItem key={c.id} value={c.id} className="text-xs focus:bg-[#24233f] focus:text-parchment">{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={mm} disabled={!cal} onValueChange={(v) => setMm(v)}>
-              <SelectTrigger aria-label="Month" className="justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto min-w-0"><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label={t("manuscript.monthAria")} className="justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto min-w-0"><SelectValue /></SelectTrigger>
               <SelectContent className="border-line bg-night text-parchment">
                 {(cal?.months ?? []).map((m, i) => <SelectItem key={i} value={String(i)} className="text-xs focus:bg-[#24233f] focus:text-parchment">{m.name}</SelectItem>)}
               </SelectContent>
             </Select>
-            <div className="flex flex-col gap-1"><span className="field-label text-xs font-semibold uppercase tracking-[0.08em] text-slate">Ano do evento</span>
-              <input type="number" aria-label="Ano do evento" value={yy} onChange={(e) => setYy(e.target.value)} className="bg-ink border border-line rounded-sm text-parchment px-2 py-1.5 text-xs w-24" /></div>
-            <div className="flex flex-col gap-1"><span className="field-label text-xs font-semibold uppercase tracking-[0.08em] text-slate">Dia</span>
-              <input type="number" aria-label="Dia" value={dd} onChange={(e) => setDd(e.target.value)} className="bg-ink border border-line rounded-sm text-parchment px-2 py-1.5 text-xs w-20" /></div>
+            <div className="flex flex-col gap-1"><span className="field-label text-xs font-semibold uppercase tracking-[0.08em] text-slate">{t("manuscript.eventYear")}</span>
+              <input type="number" aria-label={t("manuscript.eventYear")} value={yy} onChange={(e) => setYy(e.target.value)} className="bg-ink border border-line rounded-sm text-parchment px-2 py-1.5 text-xs w-24" /></div>
+            <div className="flex flex-col gap-1"><span className="field-label text-xs font-semibold uppercase tracking-[0.08em] text-slate">{t("manuscript.day")}</span>
+              <input type="number" aria-label={t("manuscript.day")} value={dd} onChange={(e) => setDd(e.target.value)} className="bg-ink border border-line rounded-sm text-parchment px-2 py-1.5 text-xs w-20" /></div>
             <button
               type="button"
               disabled={!cal}
@@ -423,7 +429,7 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
                 store().setChapterCalendar(chapter.id, cal.id, `${y}:${mIdx}:${dayIdx}`);
                 setCalendarPickOpen(false);
               }}
-            >Vincular dia</button>
+            >{t("manuscript.linkDay")}</button>
           </div>
         ) : null}
       </div>
@@ -433,9 +439,9 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
 }
 
 function labelDay(dayKey: string | undefined, cal: NonNullable<ReturnType<typeof useScriptorium.getState>['calendars']>[number]) {
-  if (!dayKey) return "sem dia";
+  if (!dayKey) return i18n.t("manuscript.noDay");
   const [y, m, d] = dayKey.split(":").map(Number);
-  return `${d + 1} de ${cal.months[m]?.name ?? "?"} · Ano ${(y || 0) + 1}`;
+  return i18n.t("manuscript.dayLabel", { day: d + 1, month: cal.months[m]?.name ?? "?", year: (y || 0) + 1 });
 }
 
 /** Notes and end markers are optional rich text: contenteditable that commits

@@ -144,7 +144,7 @@ describe("AtlasEditor — draw flow (region tool)", () => {
   it("3 clicks + Enter adds the region with the exact normalized points and selects it", () => {
     const atlas = makeAtlas([]);
     const { stageEl, container } = mountEditor(atlas);
-    pickTool("Draw region");
+    pickTool("Region");
     clickStage(stageEl, 100, 60, 11);
     clickStage(stageEl, 300, 120, 12);
     clickStage(stageEl, 260, 220, 13);
@@ -169,7 +169,7 @@ describe("AtlasEditor — draw flow (region tool)", () => {
   it("Escape during draw clears the vertices and adds nothing", () => {
     const atlas = makeAtlas([]);
     const { stageEl, container } = mountEditor(atlas);
-    pickTool("Draw region");
+    pickTool("Region");
     clickStage(stageEl, 100, 60, 11);
     clickStage(stageEl, 300, 120, 12);
     expect(container.querySelector("polygon.draw-preview")).not.toBeNull();
@@ -188,7 +188,7 @@ describe("AtlasEditor — draw flow (region tool)", () => {
   it("click right after the first vertex closes the region (Enter not needed)", () => {
     const atlas = makeAtlas([{ points: BIG, color: "#123456", label: "Grande" }]);
     const { stageEl } = mountEditor(atlas);
-    pickTool("Draw region");
+    pickTool("Region");
     clickStage(stageEl, 100, 60, 11);
     clickStage(stageEl, 300, 120, 12);
     clickStage(stageEl, 260, 220, 13);

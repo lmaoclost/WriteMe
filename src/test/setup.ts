@@ -1,7 +1,8 @@
 import "@testing-library/jest-dom/vitest";
-import { afterEach } from "vitest";
+import { afterEach, beforeEach } from "vitest";
 import { cleanup } from "@testing-library/react";
 import { flushPendingPersist } from "../data/storage";
+import { setLanguage } from "../i18n";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -12,6 +13,11 @@ if (!Element.prototype.scrollIntoView) {
 if (!(HTMLElement.prototype as HTMLElement & { hasPointerCapture?: boolean }).hasPointerCapture) {
   (HTMLElement.prototype as HTMLElement & { hasPointerCapture: () => boolean }).hasPointerCapture = () => false;
 }
+
+beforeEach(async () => {
+  // English is the baseline for the existing suite; language tests opt in to PT.
+  await setLanguage("en");
+});
 
 afterEach(() => {
   cleanup();

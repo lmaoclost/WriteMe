@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback, type ChangeEvent, type MutableRefObject } from "react";
+import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import type { WorldEntry, EntrySection, EntrySectionField } from "../../domain/types";
 import { ENTRY_CATEGORIES } from "../../domain/types";
@@ -8,7 +9,7 @@ import { newId } from "../../domain/id";
 import { dateIsEmpty, formatDate, isValidDate, sanitizeDate } from "../../domain/dates";
 import { LinkPicker } from "../atlas/panels/LinkPicker";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
-import { CATEGORY_LABELS, categoryIcon, categoryDot } from "./categories";
+import { categoryIcon, categoryLabel, categoryDot } from "./categories";
 import { ImagePicker } from "./ImagePicker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MarkdownView } from "./MarkdownView";
@@ -23,6 +24,7 @@ export interface EntryViewProps {
 const CONFIRM_RESET_MS = 3000;
 
 export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryViewProps) {
+  const { t } = useTranslation();
   const project = useScriptorium((s) => s.projects.find((p) => p.id === entry.projectId));
   const siblings = useScriptorium(
     useShallow((s) => s.entries.filter((e) => e.projectId === entry.projectId)),
@@ -131,9 +133,9 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
     try {
       const { dataUrl } = await fileToDataUrl(file);
       const ok = useScriptorium.getState().putEntryImage(entry.id, dataUrl);
-      pushToast(ok ? "success" : "error", ok ? "Cover updated." : "Couldn't update the cover.");
+      pushToast(ok ? "success" : "error", ok ? t("entries.view.coverUpdated") : t("entries.view.coverUpdateError"));
     } catch {
-      pushToast("error", "Couldn't load the cover.");
+      pushToast("error", t("entries.view.coverLoadError"));
     }
   };
 
@@ -161,10 +163,10 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           ref={coverEl}
           className="codex-cover w-full max-h-[220px] object-cover border border-line rounded-lg cursor-col-resize [touch-action:none]"
           src={cover}
-          alt={`Cover of ${entry.title}`}
+          alt={t("entries.view.coverAlt", { title: entry.title })}
           draggable={false}
           style={entry.focal ? { objectPosition: `${entry.focal[0] * 100}% ${entry.focal[1] * 100}%` } : undefined}
-          title="Drag to reframe"
+          title={t("entries.view.dragReframe")}
           onPointerDown={(e) => {
             if (e.button !== 0) return;
             let pending = false;
@@ -200,7 +202,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           ref={titleRef}
           type="text"
           className="codex-title-input flex-1 min-w-0 font-display text-[1.375rem] font-semibold text-parchment bg-none border border-transparent rounded-lg px-1.5 py-0.5 hover:border-line focus:border-gold outline-none"
-          aria-label="Title"
+          aria-label={t("entries.view.title")}
           value={titleDraft.draft}
           onChange={(e) => titleDraft.setDraft(e.target.value)}
           onBlur={flush}
@@ -208,10 +210,10 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
         <Select value={entry.category} onValueChange={(v) => {
             useScriptorium.getState().updateEntry(entry.id, { category: v });
           }}>
-          <SelectTrigger aria-label="Category" className="rounded-lg border-line bg-night-2 text-parchment px-2 py-1.5 text-xs hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
+          <SelectTrigger aria-label={t("entries.view.category")} className="rounded-lg border-line bg-night-2 text-parchment px-2 py-1.5 text-xs hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
           <SelectContent className="border-line bg-night text-parchment">
             {ENTRY_CATEGORIES.map((c) => (
-              <SelectItem key={c} value={c} className="text-xs focus:bg-[#24233f] focus:text-parchment">{categoryIcon(c)} {CATEGORY_LABELS[c]}</SelectItem>
+              <SelectItem key={c} value={c} className="text-xs focus:bg-[#24233f] focus:text-parchment">{categoryIcon(c)} {categoryLabel(c)}</SelectItem>
             ))}
             {(project?.customCategories ?? []).map((k) => (
               <SelectItem key={k.key} value={k.key} className="text-xs focus:bg-[#24233f] focus:text-parchment">{k.icon} {k.label}</SelectItem>
@@ -225,15 +227,15 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
         aria-expanded={summaryOpen}
         onClick={() => { flush(); setSummaryOpen((v) => !v); }}
       >
-        <span className="text-[10px] tracking-[0.12em] uppercase text-slate">Summary</span>
-        <span className={"codex-summary-hint text-slate overflow-hidden text-ellipsis whitespace-nowrap " + (summaryDraft.draft.trim() ? "text-parchment not-italic" : "italic")}>{summaryDraft.draft.trim() || "Add a short blurb..."}</span>
+        <span className="text-[10px] tracking-[0.12em] uppercase text-slate">{t("entries.view.summary")}</span>
+        <span className={"codex-summary-hint text-slate overflow-hidden text-ellipsis whitespace-nowrap " + (summaryDraft.draft.trim() ? "text-parchment not-italic" : "italic")}>{summaryDraft.draft.trim() || t("entries.view.summaryPlaceholder")}</span>
         <span aria-hidden="true">{summaryOpen ? "▾" : "▸"}</span>
       </button>
       {summaryOpen ? (
         <textarea
           className="codex-summary-input w-full bg-night border border-line border-t-0 rounded-lg pt-2 px-3 pb-2 text-parchment resize-y outline-none focus:border-gold-dim max-[720px]:rounded-tl-none max-[720px]:rounded-tr-none"
-          aria-label="Summary"
-          placeholder="Add a short blurb..."
+          aria-label={t("entries.view.summary")}
+          placeholder={t("entries.view.summaryPlaceholder")}
           value={summaryDraft.draft}
           onChange={(e) => summaryDraft.setDraft(e.target.value)}
           onBlur={flush}
@@ -241,18 +243,18 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
         />
       ) : null}
       <div className="flex items-center gap-2.5 flex-wrap">
-        <span className="codex-date-label text-[10px] tracking-[0.12em] uppercase text-slate">Date</span>
+        <span className="codex-date-label text-[10px] tracking-[0.12em] uppercase text-slate">{t("entries.view.date")}</span>
         <input
           type="text"
           className="codex-date-input font-mono text-[13px] text-parchment bg-ink border border-line rounded-lg px-2.5 py-1.5 outline-none focus:border-gold placeholder:text-slate"
-          aria-label="Date"
-          title="Year · Year-Month · Year-Month-Day, e.g. 1200 · 1200-05 · 1200-05-10"
+          aria-label={t("entries.view.date")}
+          title={t("entries.view.dateHint")}
           placeholder="1200 · 1200-05 · 1200-05-10"
           value={dateDraft.draft}
           onChange={(e) => dateDraft.setDraft(e.target.value)}
           onBlur={dateDraft.flush}
         />
-        {dateInvalid ? <p className="text-[var(--ember)] text-xs m-0">Invalid date.</p> : null}
+        {dateInvalid ? <p className="text-[var(--ember)] text-xs m-0">{t("entries.view.invalidDate")}</p> : null}
       </div>
       <div className="flex items-center justify-end flex-wrap gap-2">
         <button
@@ -261,7 +263,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           aria-pressed={writing}
           onClick={() => setMode(true)}
         >
-          Write
+          {t("entries.view.write")}
         </button>
         <button
           type="button"
@@ -269,10 +271,10 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           aria-pressed={!writing}
           onClick={() => setMode(false)}
         >
-          Preview
+          {t("entries.view.preview")}
         </button>
         <label className="codex-action bg-none border border-line text-parchment-dim rounded-lg py-1 px-2.5 text-xs cursor-pointer hover:border-gold-dim">
-          Change cover
+          {t("entries.view.changeCover")}
           <input
             type="file"
             accept="image/*"
@@ -286,11 +288,11 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           aria-pressed={imagePickerOpen}
           onClick={() => setImagePickerOpen((open) => !open)}
         >
-          Entry image
+          {t("entries.view.entryImage")}
         </button>
         {entry.imageKey ? (
           <button type="button" className="codex-action bg-none border border-line text-parchment-dim rounded-lg py-1 px-2.5 text-xs cursor-pointer hover:border-gold-dim" onClick={clearCover}>
-            Remove cover
+            {t("entries.view.removeCover")}
           </button>
         ) : null}
       </div>
@@ -302,7 +304,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           entries={coveredSiblings}
           onPick={(dataUrl) => {
             const ok = useScriptorium.getState().putEntryImage(entry.id, dataUrl);
-            pushToast(ok ? "success" : "error", ok ? "Cover updated." : "Couldn't update the cover.");
+            pushToast(ok ? "success" : "error", ok ? t("entries.view.coverUpdated") : t("entries.view.coverUpdateError"));
             setImagePickerOpen(false);
           }}
         />
@@ -323,7 +325,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
               }}
               onAddField={() => {
                 const sections = (entry.sections ?? []).map((s) => s === sec
-                  ? { ...s, fields: [...s.fields, { label: "New field", content: "", id: newId("fld") }] }
+                  ? { ...s, fields: [...s.fields, { label: t("entries.view.newField"), content: "", id: newId("fld") }] }
                   : s);
                 useScriptorium.getState().updateEntry(entry.id, { sections });
               }}
@@ -348,32 +350,32 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           <button
             type="button"
             className="codex-section-add bg-none border border-line rounded-md text-slate cursor-pointer py-1 px-2.5 text-xs tracking-[0.04em] justify-self-start hover:text-parchment hover:border-gold-dim"
-            aria-label="New section"
+            aria-label={t("entries.view.newSection")}
             onClick={() => {
-              const sections = [...(entry.sections ?? []), { name: "New section", fields: [], id: newId("sec") } satisfies EntrySection];
+              const sections = [...(entry.sections ?? []), { name: t("entries.view.newSection"), fields: [], id: newId("sec") } satisfies EntrySection];
               useScriptorium.getState().updateEntry(entry.id, { sections });
             }}
           >
-            + Section
+            {t("entries.view.addSection")}
           </button>
         </div>
       ) : null}
       {writing ? (
         <textarea
           className="codex-body min-h-[260px] resize-y bg-ink border border-line rounded-lg p-3 text-parchment font-mono text-[13px] leading-[1.6] outline-none focus:border-gold placeholder:text-slate"
-          aria-label="Content"
-          placeholder="No content yet."
+          aria-label={t("entries.view.content")}
+          placeholder={t("entries.view.contentPlaceholder")}
           value={bodyDraft.draft}
           onChange={(e) => bodyDraft.setDraft(e.target.value)}
           onBlur={flush}
         />
       ) : bodyDraft.draft.trim() === "" ? (
-        <p className="text-slate text-sm italic">No content yet.</p>
+        <p className="text-slate text-sm italic">{t("entries.view.noContent")}</p>
       ) : (
         <MarkdownView body={bodyDraft.draft} onSelectEntry={onSelectEntry} />
       )}
-      <section className="flex items-center flex-wrap gap-1.5 border-t border-line pt-2.5" aria-label="Links">
-        <span className="text-[11px] tracking-[0.08em] uppercase text-slate">Links</span>
+      <section className="flex items-center flex-wrap gap-1.5 border-t border-line pt-2.5" aria-label={t("entries.view.links")}>
+        <span className="text-[11px] tracking-[0.08em] uppercase text-slate">{t("entries.view.links")}</span>
         {entry.links.map((id) => {
           const other = siblingById.get(id);
           if (!other) return null;
@@ -394,7 +396,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
               <button
                 type="button"
                 className="codex-link-unlink bg-none border-0 text-slate px-[7px] py-[3px] text-[11px] cursor-pointer hover:text-[var(--ember)]"
-                aria-label={`Unlink ${other.title}`}
+                aria-label={t("entries.view.unlink", { title: other.title })}
                 onClick={() => useScriptorium.getState().unlinkEntries(entry.id, id)}
               >
                 ✕
@@ -408,7 +410,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           aria-pressed={linkPickerOpen}
           onClick={() => setLinkPickerOpen((open) => !open)}
         >
-          + Link
+          {t("entries.view.addLink")}
         </button>
         {linkPickerOpen ? (
           <LinkPicker
@@ -427,7 +429,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           className={"codex-delete bg-none border border-[var(--ember)] text-[var(--ember)] rounded-lg py-1.5 px-2.5 text-[13px] hover:bg-[color-mix(in_srgb,var(--ember)_18%,transparent)]" + (armed ? " armed bg-[color-mix(in_srgb,var(--ember)_20%,transparent)]" : "")}
           onClick={confirmOrDelete}
         >
-          {armed ? "Confirm?" : "Delete"}
+          {armed ? t("entries.view.confirm") : t("entries.view.delete")}
         </button>
       </div>
     </div>
@@ -442,32 +444,33 @@ function SectionBlock({ sec, onField, onAddField, onRemoveField, onRename, onRen
   onRename(name: string): void;
   onRenameField(field: EntrySectionField, label: string): void;
 }) {
+  const { t } = useTranslation();
   return (
     <section className="bg-night border border-line rounded-lg px-3.5 py-3 grid gap-2.5" aria-label={sec.name}>
       <header className="flex items-baseline gap-2">
         <input
           className="codex-section-name font-display text-[15px] font-semibold text-gold bg-none border border-transparent rounded-md px-1.5 py-0.5 flex-1 min-w-0 hover:border-line focus:border-gold-dim outline-none"
-          aria-label={`Section ${sec.name}`}
+          aria-label={t("entries.view.section", { name: sec.name })}
           value={sec.name}
           onChange={(e) => onRename(e.target.value)}
         />
-        <button type="button" className="codex-field-add bg-none border border-line rounded-md text-slate cursor-pointer py-1 px-2.5 text-xs tracking-[0.04em] hover:text-parchment hover:border-gold-dim" aria-label={`Add field to ${sec.name}`} onClick={onAddField}>+ field</button>
+        <button type="button" className="codex-field-add bg-none border border-line rounded-md text-slate cursor-pointer py-1 px-2.5 text-xs tracking-[0.04em] hover:text-parchment hover:border-gold-dim" aria-label={t("entries.view.addFieldTo", { name: sec.name })} onClick={onAddField}>{t("entries.view.addField")}</button>
       </header>
-      {sec.fields.length === 0 ? <p className="text-slate text-[13px] italic px-0.5 py-1">No fields.</p> : null}
+      {sec.fields.length === 0 ? <p className="text-slate text-[13px] italic px-0.5 py-1">{t("entries.view.noFields")}</p> : null}
       {sec.fields.map((f, fi) => (
         <div className="grid grid-cols-[130px_1fr_auto] gap-1.5 items-start" key={f.id ?? fi}>
           <div className="codex-field-label-row min-w-0 pt-[3px]">
             <input
               className="codex-field-label bg-none border border-transparent rounded-md text-[11px] uppercase tracking-[0.08em] text-slate px-0.5 min-w-0 w-full hover:border-line focus:border-gold-dim outline-none"
-              aria-label={`Field label ${f.label}`}
-              placeholder="Label"
+              aria-label={t("entries.view.fieldLabel", { label: f.label })}
+              placeholder={t("entries.view.label")}
               value={f.label}
               onChange={(e) => onRenameField(f, e.target.value)}
             />
             <button
               type="button"
               className="codex-field-remove bg-none border-0 text-slate px-1.5 py-0.5 text-xs cursor-pointer hover:text-[var(--ember)]"
-              aria-label={`Remove field ${f.label}`}
+              aria-label={t("entries.view.removeField", { label: f.label })}
               onClick={() => onRemoveField(f)}
             >✕</button>
           </div>

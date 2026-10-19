@@ -3,8 +3,14 @@ import type { BinderPreset, BinderyConfig } from "../../domain/types";
 /** Preset patch: scalar fields as-is, nested blocks partial (merged field-by-field). */
 type Patch = Partial<{ [K in keyof BinderyConfig]: Partial<NonNullable<BinderyConfig[K]>> | BinderyConfig[K] }>;
 
-export const PRESETS: { id: BinderPreset; label: string; patch: Patch }[] = [
-  { id: "manuscript", label: "Manuscript", patch: {
+type PresetLabelKey =
+  | "bindery.preset.manuscript"
+  | "bindery.preset.classic"
+  | "bindery.preset.commercial"
+  | "bindery.preset.fantasy";
+
+export const PRESETS: { id: BinderPreset; labelKey: PresetLabelKey; patch: Patch }[] = [
+  { id: "manuscript", labelKey: "bindery.preset.manuscript", patch: {
     font: '"Times New Roman", Times, serif', dropCaps: false, runningHead: true, runningHeadMode: "book",
     typography: { bodyPt: 12, leading: 18, indent: 0, justify: false, hyphens: false },
     geometry: { mirrored: false, gutter: 0.5 },
@@ -12,7 +18,7 @@ export const PRESETS: { id: BinderPreset; label: string; patch: Patch }[] = [
     frontMatter: { halfTitle: false, copyright: false, romanNumerals: false },
     sceneOrnament: "blank",
   } },
-  { id: "classic", label: "Literary classic", patch: {
+  { id: "classic", labelKey: "bindery.preset.classic", patch: {
     font: '"EB Garamond", Garamond, "Book Antiqua", serif', dropCaps: true, runningHead: true, runningHeadMode: "chapter",
     typography: { bodyPt: 11, leading: 14.5, indent: 1, justify: true, hyphens: false },
     geometry: { mirrored: true, gutter: "auto" },
@@ -20,7 +26,7 @@ export const PRESETS: { id: BinderPreset; label: string; patch: Patch }[] = [
     frontMatter: { halfTitle: true, copyright: true, romanNumerals: true },
     sceneOrnament: "asterism",
   } },
-  { id: "commercial", label: "Modern commercial", patch: {
+  { id: "commercial", labelKey: "bindery.preset.commercial", patch: {
     font: "Literata, Georgia, serif", dropCaps: false, runningHead: true, runningHeadMode: "chapter",
     typography: { bodyPt: 11, leading: 14.5, indent: 1, justify: false, hyphens: false },
     geometry: { mirrored: true, gutter: "auto" },
@@ -28,7 +34,7 @@ export const PRESETS: { id: BinderPreset; label: string; patch: Patch }[] = [
     frontMatter: { halfTitle: true, copyright: true, romanNumerals: true },
     sceneOrnament: "blank",
   } },
-  { id: "fantasy", label: "Ornamented fantasy", patch: {
+  { id: "fantasy", labelKey: "bindery.preset.fantasy", patch: {
     font: '"Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif', dropCaps: true, runningHead: true, runningHeadMode: "chapter",
     typography: { bodyPt: 11, leading: 15, indent: 1, justify: true, hyphens: false },
     geometry: { mirrored: true, gutter: "auto" },

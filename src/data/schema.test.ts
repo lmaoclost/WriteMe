@@ -67,9 +67,9 @@ describe("parseExport", () => {
     expect(parseExport(text)).toEqual({ ...valid, bloodlines: [], factionWebs: [], calendars: [], plotBoards: [], timelines: [], oathsCharts: [], wellsprings: [], conlangs: [] });
   });
   it("throws with clear message on invalid payload", () => {
-    expect(() => parseExport("not json")).toThrow(/JSON/);
-    expect(() => parseExport(JSON.stringify({ app: "other" }))).toThrow(/scriptorium/);
-    expect(() => parseExport(JSON.stringify({ app: "scriptorium", version: 1 }))).toThrow(/estrutura/);
+    expect(() => parseExport("not json")).toThrow("invalidJson");
+    expect(() => parseExport(JSON.stringify({ app: "other" }))).toThrow("notScriptorium");
+    expect(() => parseExport(JSON.stringify({ app: "scriptorium", version: 1 }))).toThrow("invalidStructure");
   });
   it("emptyProjectData is fresh and valid", () => {
     expect(validateProjectData(emptyProjectData())).toBe(true);

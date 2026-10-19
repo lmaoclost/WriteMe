@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 
 export function WebNotepad({ notes, onNotes, onClose }: {
@@ -6,6 +7,7 @@ export function WebNotepad({ notes, onNotes, onClose }: {
   onNotes(v: string): void;
   onClose(): void;
 }) {
+  const { t } = useTranslation();
   // debounced draft flushes on unmount — closing the notepad must not drop
   // the pending <=300ms commit (the old local timer did exactly that)
   const { draft, setDraft, flush } = useDebouncedDraft(notes, onNotes);
@@ -47,10 +49,10 @@ export function WebNotepad({ notes, onNotes, onClose }: {
       data-testid="web-notepad"
       style={pos.x != null ? { position: "fixed", left: pos.x, top: pos.y, right: "auto" } : undefined}>
       <header className="flex justify-between items-center px-2.5 py-1.5 cursor-move text-gold text-xs tracking-[0.1em] uppercase" {...headerDrag}>
-        <span>Notes</span>
-        <button type="button" aria-label="Close notes" onClick={() => { flush(); onClose(); }} className="bg-none border-0 text-slate">✕</button>
+        <span>{t("factions.notepad.title")}</span>
+        <button type="button" aria-label={t("factions.notepad.close")} onClick={() => { flush(); onClose(); }} className="bg-none border-0 text-slate">✕</button>
       </header>
-      <textarea aria-label="Web notes" value={draft} onChange={(e) => setDraft(e.target.value)} rows={5} className="w-full border-0 border-t border-line bg-transparent text-parchment px-2.5 py-2 resize-y min-h-[90px]" />
+      <textarea aria-label={t("factions.notepad.aria")} value={draft} onChange={(e) => setDraft(e.target.value)} rows={5} className="w-full border-0 border-t border-line bg-transparent text-parchment px-2.5 py-2 resize-y min-h-[90px]" />
     </div>
   );
 }

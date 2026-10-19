@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export function BoardNotepad({ notes, onNotes, onClose }: { notes: string; onNotes(v: string): void; onClose(): void }) {
+  const { t } = useTranslation();
   const [draft, setDraft] = useState(notes);
   const [drag, setDrag] = useState<{ dx: number; dy: number } | null>(null);
   const [pos, setPos] = useState<{ x?: number; y?: number }>({});
@@ -15,10 +17,10 @@ export function BoardNotepad({ notes, onNotes, onClose }: { notes: string; onNot
         onPointerDown={(e) => { if (e.button === 0) setDrag({ dx: e.clientX, dy: e.clientY }); }}
         onPointerMove={(e) => { if (drag) setPos({ x: e.clientX - drag.dx, y: e.clientY - drag.dy }); }}
         onPointerUp={() => setDrag(null)}>
-        <span>Notes</span>
-        <button type="button" aria-label="Close notes" onClick={onClose} className="bg-none border-0 text-slate">✕</button>
+        <span>{t("plotboard.notepad.title")}</span>
+        <button type="button" aria-label={t("plotboard.notepad.close")} onClick={onClose} className="bg-none border-0 text-slate">✕</button>
       </header>
-      <textarea aria-label="Board notes" value={draft} onChange={(e) => setDraft(e.target.value)} rows={5} />
+      <textarea aria-label={t("plotboard.notepad.aria")} value={draft} onChange={(e) => setDraft(e.target.value)} rows={5} />
     </div>
   );
 }

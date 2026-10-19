@@ -24,4 +24,13 @@ One name per concept — use it consistently in code, copy, and docs.
 | Settings | `/settings` | plan/account |
 | Profile | `/profile` | public profile editor |
 
-**UI language:** English for all interface strings. World content is user data (language-free).
+## UI language
+
+- **Supported:** English (`en`) and Brazilian Portuguese (`pt-BR`). EN is the source catalog and the default.
+- **Locale files:** `src/i18n/locales/en.json`, `src/i18n/locales/pt-BR.json`. Both must contain the same keys.
+- **Toggle:** one button in the Library header and in the workspace sidebar; it shows the target language.
+- **Persistence:** `localStorage["scriptorium.lang"]`. It is not part of the project backup.
+- **Scope:** interface strings, aria-labels, placeholders, toasts, and strings generated into print/EPUB/DOCX. World content is user data and is never translated.
+- **PT term for Entry:** **Verbete**.
+
+World content is user data (language-free).
