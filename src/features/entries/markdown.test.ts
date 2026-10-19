@@ -87,6 +87,15 @@ describe("rich editor HTML passthrough", () => {
     expect(renderMarkdown('<div onclick="x()" style="evil">x</div>')).not.toContain("onclick");
     expect(renderMarkdown("<p><img src='https://x' onerror='y'>z</p>")).not.toContain("onerror");
   });
+  it("keeps only text-align in a style attribute, drops the rest", () => {
+    const out = renderMarkdown('<p style="text-align: center; position: fixed; background:url(javascript:x)">x</p>');
+    expect(out).toContain("text-align: center");
+    expect(out).not.toContain("position");
+    expect(out).not.toContain("javascript");
+  });
+  it("drops a style attribute with no allowed declaration", () => {
+    expect(renderMarkdown('<p style="color:red">x</p>')).not.toContain("style");
+  });
   it("markdown still works (mixed content starts with tag = html, else md)", () => {
     expect(renderMarkdown("# Título")).toContain("<h1>");
     expect(isHtmlFragment("# Título")).toBe(false);

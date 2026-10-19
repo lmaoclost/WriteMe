@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { buildDocxChildren, docxPageSetup, docxStyles, htmlToBlocks } from "./docx";
+import { buildDocxChildren, docxPageSetup, docxStyles, htmlToBlocks, importDocxToHtml, MAX_DOCX_BYTES } from "./docx";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { useScriptorium } from "../../data/store";
 import { DocxReplaceButton } from "./ChapterList";
@@ -7,8 +7,10 @@ import { defaultBindery } from "../../data/schema";
 import { renderMarkdown } from "../entries/markdown";
 import type { Manuscript, SceneOrnament } from "../../domain/types";
 
+const mammothMock = vi.hoisted(() => ({ html: "<p>Importado do Word.</p>" }));
+
 vi.mock("mammoth", async () => {
-  const convertToHtml = async () => ({ value: "<p>Importado do Word.</p>" });
+  const convertToHtml = async () => ({ value: mammothMock.html });
   return { default: { convertToHtml }, convertToHtml };
 });
 
@@ -32,6 +34,7 @@ const store = () => useScriptorium.getState();
 beforeEach(() => {
   localStorage.clear();
   useScriptorium.setState(useScriptorium.getInitialState());
+  mammothMock.html = "<p>Importado do Word.</p>";
 });
 
 describe("htmlToBlocks", () => {
@@ -48,6 +51,22 @@ describe("htmlToBlocks", () => {
   it("discards script bodies", () => {
     const blocks = htmlToBlocks("<p>ok</p><script>evil()</script>");
     expect(blocks).toEqual([{ kind: "p", text: "ok" }]);
+  });
+});
+
+describe("importDocxToHtml", () => {
+  it("sanitizes the mammoth HTML before it is stored", async () => {
+    mammothMock.html = '<p>ok</p><img src=x onerror="window.__pwned=1"><a href="javascript:alert(1)">y</a>';
+    const html = await importDocxToHtml(new File([""], "a.docx"));
+    expect(html).not.toContain("onerror");
+    expect(html).not.toContain("javascript:");
+    expect(html).toContain("<p>ok</p>");
+  });
+
+  it("rejects a .docx larger than the size cap before parsing", async () => {
+    const big = new File([""], "big.docx");
+    Object.defineProperty(big, "size", { value: MAX_DOCX_BYTES + 1 });
+    await expect(importDocxToHtml(big)).rejects.toThrow();
   });
 });
 

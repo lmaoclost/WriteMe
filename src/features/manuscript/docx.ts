@@ -6,7 +6,7 @@ import type { BinderyConfig, Manuscript, SceneOrnament } from "../../domain/type
 import { defaultBindery } from "../../data/schema";
 import { bookSections, chapterNumber } from "./buildBook";
 import { kdpGutter, pageMargins } from "./bindery";
-import { renderMarkdown } from "../entries/markdown";
+import { renderMarkdown, sanitizeFragment } from "../entries/markdown";
 import { i18n } from "../../i18n";
 
 /** Block-level conversion of sanitized chapter HTML into flat text blocks. */
@@ -40,13 +40,20 @@ export function htmlToBlocks(html: string): DocxBlock[] {
   return out;
 }
 
-/** Import: mammoth converts .docx to chapter HTML (markdown-agnostic). */
+/** Bound on imported .docx size: parsing is local but unbounded work, and a
+ *  crafted file (zip bomb / huge XML) would freeze the tab. */
+export const MAX_DOCX_BYTES = 25 * 1024 * 1024;
+
+/** Import: mammoth converts .docx to chapter HTML (markdown-agnostic). The
+ *  output is sanitized here so the result is safe for the rich editor's
+ *  innerHTML regardless of what the file carried. */
 export async function importDocxToHtml(file: File): Promise<string> {
+  if (file.size > MAX_DOCX_BYTES) throw new Error("docx too large");
   const mammoth = await import("mammoth");
   const buffer = await fileToArrayBuffer(file);
   const result = await (mammoth.default ?? mammoth).convertToHtml({ arrayBuffer: buffer });
   if (!result?.value) throw new Error("no content");
-  return result.value;
+  return sanitizeFragment(result.value);
 }
 
 async function fileToArrayBuffer(file: File): Promise<ArrayBuffer> {

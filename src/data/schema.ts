@@ -366,7 +366,7 @@ export function validateProjectData(v: unknown): boolean {
     && isArr(d.entries) && d.entries.every(isEntry)
     && isArr(d.atlases) && d.atlases.every(isAtlas)
     && isArr(d.manuscripts) && d.manuscripts.every(isManuscript)
-    && !!d.images && Object.values(d.images).every(isStr)
+    && !!d.images && Object.values(d.images).every((v) => isStr(v) && v.startsWith("data:image/"))
     && (d.bloodlines === undefined
       || (isArr(d.bloodlines) && d.bloodlines.every(isBloodline)))
     && (d.factionWebs === undefined

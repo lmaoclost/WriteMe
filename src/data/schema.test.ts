@@ -22,6 +22,11 @@ describe("validateProjectData", () => {
     expect(validateProjectData({ ...valid, atlases: [{ ...valid.atlases[0], regions: [{ id: "r", points: [{ x: "a", y: 0 }], color: "#fff", fillOpacity: 0.5, label: "" }] }] })).toBe(false);
     expect(validateProjectData({ ...valid, images: { k: 42 } })).toBe(false);
   });
+  it("rejects images that are not data:image urls", () => {
+    expect(validateProjectData({ ...valid, images: { k: "https://evil.example/x.png" } })).toBe(false);
+    expect(validateProjectData({ ...valid, images: { k: "javascript:alert(1)" } })).toBe(false);
+    expect(validateProjectData({ ...valid, images: { k: "data:image/png;base64,AAA" } })).toBe(true);
+  });
   it("rejects points outside [0,1]", () => {
     const bad = {
       ...valid,
