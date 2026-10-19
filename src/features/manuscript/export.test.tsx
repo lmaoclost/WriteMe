@@ -31,15 +31,22 @@ vi.mock("epub-gen-memory", async (importOriginal) => {
 
 const docxMock = vi.hoisted(() => ({
   toBlob: vi.fn(async () => new Blob(["docx-bytes"])),
+  documents: [] as Record<string, unknown>[],
 }));
 
 vi.mock("docx", () => ({
-  Document: class { constructor(public options: unknown) {} },
+  Document: class {
+    constructor(public options: Record<string, unknown>) {
+      docxMock.documents.push(options);
+    }
+  },
   Packer: { toBlob: docxMock.toBlob },
   Paragraph: class { constructor(public options: unknown) {} },
   TextRun: class { constructor(public options: unknown) {} },
   HeadingLevel: { HEADING_2: 2, HEADING_3: 3, HEADING_4: 4 },
-  AlignmentType: { CENTER: "center" },
+  AlignmentType: { CENTER: "center", LEFT: "left", JUSTIFIED: "both" },
+  LineRuleType: { AUTO: "auto" },
+  convertInchesToTwip: (n: number) => Math.round(n * 1440),
 }));
 
 function lastOptions(index: number): Record<string, unknown> {
@@ -109,6 +116,7 @@ beforeEach(() => {
   epubMock.genEpub.mockClear();
   docxMock.toBlob.mockImplementation(async () => new Blob(["docx-bytes"]));
   docxMock.toBlob.mockClear();
+  docxMock.documents.length = 0;
   epubMock.calls.length = 0;
   stubAnchorDownload();
 });
@@ -898,6 +906,30 @@ describe("Word export", () => {
     });
     expect(anchorDownload).toBe("acucar-sal.docx");
     expect(anchorHref).toBe("blob:mock-url");
+  });
+
+  it("carries the print page box and the book styles into the document", async () => {
+    const projectId = seedProject();
+    const book = seedBook(projectId, { title: "Tipos", author: "Ana", chapters: [{ heading: "Um", content: "corpo." }] });
+    render(binderyRoute(projectId, book.id));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar Word" }));
+    await waitFor(() => expect(docxMock.toBlob).toHaveBeenCalledTimes(1));
+    expect(docxMock.documents).toHaveLength(1);
+    const doc = docxMock.documents[0];
+    const styles = (doc.styles as { paragraphStyles: { id: string }[] }).paragraphStyles;
+    expect(styles.map((s) => s.id)).toEqual(["BookBody", "BookHeading"]);
+    const section = (doc.sections as { properties: { page: { size: unknown; margin: { left: number } } }; children: unknown[] }[])[0];
+    expect(section.properties.page.size).toEqual({ width: 8640, height: 12960 }); // 6×9 trim in twips
+    expect(section.properties.page.margin.left).toBe(1080);                       // 0.75in inner margin
+    expect(JSON.stringify(section.children)).toContain("pageBreakBefore");        // chapters open pages
+
+    // typography.hyphens rides the document-level hyphenation switch
+    act(() => {
+      useScriptorium.getState().setBindery(book.id, { typography: { bodyPt: 11, leading: 14.5, indent: 1, justify: true, hyphens: true } });
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Exportar Word" }));
+    await waitFor(() => expect(docxMock.toBlob).toHaveBeenCalledTimes(2));
+    expect(docxMock.documents[1].hyphenation).toEqual({ autoHyphenation: true });
   });
 
   it("toasts the failure message", async () => {

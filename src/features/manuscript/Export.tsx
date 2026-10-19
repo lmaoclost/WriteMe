@@ -7,6 +7,7 @@ import {
   aboutAuthorSection, bookSections, chapterInner, chapterNumber, colophonSection,
   copyrightPage, dedicationSection, epigraphSection, glossaryFor, halfTitleSection, partInner,
 } from "./buildBook";
+import { estimatePageCount } from "./bindery";
 import { buildEpubCss } from "./epubCss";
 
 /** Lowercase, accent-folded, runs of non-alnum become one dash, trimmed; empty → "livro". */
@@ -38,34 +39,20 @@ export function ExportButtons({ manuscript }: ExportButtonsProps) {
     if (disabled) return;
     setBusy(true);
     try {
-      const [{ Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType }, { htmlToBlocks }] = await Promise.all([
+      const [{ Document, Packer }, { buildDocxChildren, docxPageSetup, docxStyles }] = await Promise.all([
         import("docx"),
         import("./docx"),
       ]);
-      const chapters = [...manuscript.chapters].sort((a, b) => a.order - b.order);
-      const children = [
-        new Paragraph({ children: [new TextRun({ text: manuscript.title, bold: true, size: 48 })], alignment: AlignmentType.CENTER }),
-        ...(manuscript.author ? [new Paragraph({ children: [new TextRun({ text: manuscript.author, italics: true, size: 24 })], alignment: AlignmentType.CENTER })] : []),
-      ];
-      for (const ch of chapters) {
-        children.push(new Paragraph({ children: [new TextRun({ text: ch.heading, bold: true })], heading: HeadingLevel.HEADING_2 }));
-        if (ch.noteTop) children.push(new Paragraph({ children: [new TextRun({ text: ch.noteTop, italics: true, color: "7A7A99" })] }));
-        const blocks = htmlToBlocks(ch.content || "");
-        if (!blocks.length) children.push(new Paragraph({ children: [new TextRun({ text: "No content yet.", italics: true })] }));
-        for (const block of blocks) {
-          if (block.kind === "li") {
-            children.push(new Paragraph({ children: [new TextRun({ text: block.text })], bullet: { level: 0 } }));
-          } else if (block.kind === "quote") {
-            children.push(new Paragraph({ children: [new TextRun({ text: block.text, italics: true })], indent: { left: 360 } }));
-          } else if (block.kind === "h1" || block.kind === "h2" || block.kind === "h3") {
-            children.push(new Paragraph({ children: [new TextRun({ text: block.text, bold: true })], heading: block.kind === "h1" ? HeadingLevel.HEADING_2 : block.kind === "h2" ? HeadingLevel.HEADING_3 : HeadingLevel.HEADING_4 }));
-          } else {
-            children.push(new Paragraph({ children: [new TextRun({ text: block.text })] }));
-          }
-        }
-        if (ch.endMarker) children.push(new Paragraph({ children: [new TextRun({ text: ch.endMarker, smallCaps: true })], alignment: AlignmentType.CENTER }));
-      }
-      const blob = await Packer.toBlob(new Document({ sections: [{ children }] }));
+      const config = { ...defaultBindery(), ...(manuscript.bindery ?? {}) } as NonNullable<Manuscript["bindery"]>;
+      const blob = await Packer.toBlob(new Document({
+        styles: docxStyles(config),
+        // Word hyphenates at document level, mirroring typography.hyphens
+        ...(config.typography?.hyphens ? { hyphenation: { autoHyphenation: true } } : {}),
+        sections: [{
+          properties: docxPageSetup(config, { pageCount: estimatePageCount(manuscript) }),
+          children: buildDocxChildren(manuscript),
+        }],
+      }));
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
