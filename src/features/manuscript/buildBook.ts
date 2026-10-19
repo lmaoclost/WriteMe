@@ -16,7 +16,7 @@ function wordNumber(n: number): string {
   return String(n);
 }
 
-function chapterNumber(style: NonNullable<Manuscript["bindery"]>["numberingStyle"], n: number): string {
+export function chapterNumber(style: NonNullable<Manuscript["bindery"]>["numberingStyle"], n: number): string {
   if (style === "none") return "";
   if (style === "chapter") return `Chapter ${n}`;
   if (style === "word") return wordNumber(n);
@@ -47,7 +47,7 @@ export function bookSections(manuscript: Manuscript): { part: Part | null; chapt
 }
 
 /** Copyright page: only the lines that have content ever print. */
-function copyrightPage(manuscript: Manuscript, config: NonNullable<Manuscript["bindery"]>): string {
+export function copyrightPage(manuscript: Manuscript, config: NonNullable<Manuscript["bindery"]>): string {
   const info = config.frontMatter?.copyrightInfo ?? {};
   const holder = info.holder?.trim() || manuscript.author;
   const lines = [
@@ -60,6 +60,63 @@ function copyrightPage(manuscript: Manuscript, config: NonNullable<Manuscript["b
   return `<section class="front-matter copyright display">${lines}</section>`;
 }
 
+/** Half title: the book title alone. Markup only — the front-matter switch
+ *  lives with the caller (print and EPUB both read `fm.halfTitle`). */
+export function halfTitleSection(manuscript: Manuscript): string {
+  return `<section class="front-matter half-title display"><h1 class="ht-title">${escapeText(manuscript.title)}</h1></section>`;
+}
+
+/** Dedication page: configured text, escaped; empty when off. */
+export function dedicationSection(config: NonNullable<Manuscript["bindery"]>): string {
+  return config.dedication
+    ? `<section class="front-matter dedication display">${escapeText(config.dedication)}</section>`
+    : "";
+}
+
+/** Epigraph page: configured markdown, sanitized through renderMarkdown;
+ *  empty when off. */
+export function epigraphSection(config: NonNullable<Manuscript["bindery"]>): string {
+  return config.frontMatter?.epigraph?.trim()
+    ? `<section class="front-matter epigraph display">${renderMarkdown(config.frontMatter.epigraph.trim())}</section>`
+    : "";
+}
+
+/** One chapter's inner markup: the h2 with its print-style number, then the
+ *  body — markdown (or the empty placeholder), top note, scene marker, end
+ *  note. Print and EPUB both wrap this in a section so they cannot drift. */
+export function chapterInner(config: NonNullable<Manuscript["bindery"]>, chapter: Chapter, n: number): string {
+  let body = chapter.content
+    ? renderMarkdown(chapter.content)
+    : EMPTY_PARAGRAPH;
+  if (chapter.noteTop?.trim()) {
+    body = `<div class="chapter-note top">${renderMarkdown(chapter.noteTop.trim())}</div>` + body;
+  }
+  if (chapter.endMarker?.trim()) {
+    // a punctuation marker (* * *, •) becomes the scene ornament; a line
+    // carrying letters or digits is the writer's own words and prints as
+    // written, styled like the ornament
+    body = body + (/[\p{L}\p{N}]/u.test(chapter.endMarker.trim())
+      ? `<div class="scene-marker text">${escapeText(chapter.endMarker.trim())}</div>`
+      : `<div class="scene-marker ornament" aria-hidden="true"></div>`);
+  }
+  if (chapter.noteEnd?.trim()) {
+    body = body + `<div class="chapter-note bottom">${renderMarkdown(chapter.noteEnd.trim())}</div>`;
+  }
+  const num = chapterNumber(config.numberingStyle ?? "arabic", n);
+  const numHtml = num ? `<span class="ch-num">${escapeText(num)}</span>` : "";
+  return `<h2>${numHtml}${escapeText(chapter.heading)}</h2>${body}`;
+}
+
+/** Part divider's inner markup: the part's own number, title and epigraph.
+ *  `num` is the already-rendered numbering label ("" when numbering is off). */
+export function partInner(part: Part, num: string): string {
+  return (
+    (num ? `<p class="part-num">${escapeText(num)}</p>` : "") +
+    `<h1 class="part-title">${escapeText(part.title)}</h1>` +
+    (part.epigraph?.trim() ? `<div class="part-epigraph">${renderMarkdown(part.epigraph.trim())}</div>` : "")
+  );
+}
+
 /** Whole-book HTML: front matter (half title, title, copyright, dedication,
  *  epigraph, TOC with part rows), then the body plan's sections, then the
  *  back matter (glossary, about the author, colophon). Content flows through
@@ -69,9 +126,7 @@ export function buildBookHtml(manuscript: Manuscript): string {
   const b = { ...defaultBindery(), ...(manuscript.bindery ?? {}) } as NonNullable<Manuscript["bindery"]>;
   const fm = b.frontMatter ?? { halfTitle: false, copyright: false, romanNumerals: false };
   const numbering = b.numberingStyle ?? "arabic";
-  const halfTitle = fm.halfTitle
-    ? `<section class="front-matter half-title display"><h1 class="ht-title">${escapeText(manuscript.title)}</h1></section>`
-    : "";
+  const halfTitle = fm.halfTitle ? halfTitleSection(manuscript) : "";
   // The title always opens the book on its own sheet: with the title page on,
   // the branded page carries it (no second book-title before the chapters);
   // without it, a centered book-title page stands in.
@@ -79,39 +134,13 @@ export function buildBookHtml(manuscript: Manuscript): string {
     ? `<section class="front-matter title-page display"><p class="tp-series">Scriptorium</p><h1 class="tp-title">${escapeText(manuscript.title)}</h1>${manuscript.author ? `<p class="tp-author">${escapeText(manuscript.author)}</p>` : ""}</section>`
     : `<section class="front-matter book-title-page display"><h1 class="book-title">${escapeText(manuscript.title)}</h1>${manuscript.author ? `<p class="book-author">${escapeText(manuscript.author)}</p>` : ""}</section>`;
   const copyright = fm.copyright ? copyrightPage(manuscript, b) : "";
-  const dedication = b.dedication
-    ? `<section class="front-matter dedication display">${escapeText(b.dedication)}</section>`
-    : "";
-  const epigraph = fm.epigraph?.trim()
-    ? `<section class="front-matter epigraph display">${renderMarkdown(fm.epigraph.trim())}</section>`
-    : "";
+  const dedication = dedicationSection(b);
+  const epigraph = epigraphSection(b);
   const sections = bookSections(manuscript);
   const tocRow = (chapter: Chapter, n: number) => {
     const num = chapterNumber(numbering, n);
     const numHtml = num ? `<span class="toc-num">${escapeText(num)}</span>` : "";
     return `<li class="toc-row">${numHtml}<span>${escapeText(chapter.heading)}</span><span class="toc-dot" aria-hidden="true"></span></li>`;
-  };
-  const chapterSection = (chapter: Chapter, n: number): string => {
-    let body = chapter.content
-      ? renderMarkdown(chapter.content)
-      : EMPTY_PARAGRAPH;
-    if (chapter.noteTop?.trim()) {
-      body = `<div class="chapter-note top">${renderMarkdown(chapter.noteTop.trim())}</div>` + body;
-    }
-    if (chapter.endMarker?.trim()) {
-      // a punctuation marker (* * *, •) becomes the scene ornament; a line
-      // carrying letters or digits is the writer's own words and prints as
-      // written, styled like the ornament
-      body = body + (/[\p{L}\p{N}]/u.test(chapter.endMarker.trim())
-        ? `<div class="scene-marker text">${escapeText(chapter.endMarker.trim())}</div>`
-        : `<div class="scene-marker ornament" aria-hidden="true"></div>`);
-    }
-    if (chapter.noteEnd?.trim()) {
-      body = body + `<div class="chapter-note bottom">${renderMarkdown(chapter.noteEnd.trim())}</div>`;
-    }
-    const num = chapterNumber(numbering, n);
-    const numHtml = num ? `<span class="ch-num">${escapeText(num)}</span>` : "";
-    return `<section class="chapter" data-ch="${n}"><h2>${numHtml}${escapeText(chapter.heading)}</h2>${body}</section>`;
   };
   // one walk keeps the three chapter consumers in agreement: the flat chapter
   // number feeds data-ch (and the chN named pages built from the same list),
@@ -126,18 +155,12 @@ export function buildBookHtml(manuscript: Manuscript): string {
       const num = chapterNumber(numbering, partNo);
       const numHtml = num ? `<span class="toc-num">${escapeText(num)}</span>` : "";
       tocRows.push(`<li class="toc-row toc-part">${numHtml}<span>${escapeText(part.title)}</span></li>`);
-      body.push(
-        `<section class="part-divider" data-part="${partNo}">` +
-        (num ? `<p class="part-num">${escapeText(num)}</p>` : "") +
-        `<h1 class="part-title">${escapeText(part.title)}</h1>` +
-        (part.epigraph?.trim() ? `<div class="part-epigraph">${renderMarkdown(part.epigraph.trim())}</div>` : "") +
-        `</section>`,
-      );
+      body.push(`<section class="part-divider" data-part="${partNo}">${partInner(part, num)}</section>`);
     }
     chapters.forEach((c) => {
       chapterNo += 1;
       tocRows.push(tocRow(c, chapterNo));
-      body.push(chapterSection(c, chapterNo));
+      body.push(`<section class="chapter" data-ch="${chapterNo}">${chapterInner(b, c, chapterNo)}</section>`);
     });
   });
   const toc = b.toc
@@ -153,19 +176,27 @@ function fontLabel(stack: string): string {
   return BINDERY_FONTS.find((f) => f.stack === stack)?.label ?? BINDERY_FONTS[0].label;
 }
 
+/** About the author section: only when the configured bio has content. */
+export function aboutAuthorSection(config: NonNullable<Manuscript["bindery"]>): string {
+  const bio = config.backMatter?.aboutAuthor?.trim();
+  return bio
+    ? `<section class="back-matter about-author"><h2>About the author</h2><p>${escapeText(bio)}</p></section>`
+    : "";
+}
+
+/** Colophon: configured font label and trim, only when the switch is on. */
+export function colophonSection(config: NonNullable<Manuscript["bindery"]>): string {
+  return config.backMatter?.colophon
+    ? `<section class="back-matter colophon"><p>Set in ${escapeText(fontLabel(config.font))}.</p><p>Trim ${escapeText(trimToPage(config.trim))} · Scriptorium.</p></section>`
+    : "";
+}
+
 /** Back matter after the body: glossary (one effective switch — the v2 block
  *  wins, the legacy glossary field is the fallback for old saved data), then
  *  about the author and the colophon, each only when configured. */
 function backMatterFor(manuscript: Manuscript, config: NonNullable<Manuscript["bindery"]>): string {
-  const bm = config.backMatter;
-  const glossary = (bm?.glossary ?? config.glossary ?? false) ? glossaryFor(manuscript) : "";
-  const aboutAuthor = bm?.aboutAuthor?.trim()
-    ? `<section class="back-matter about-author"><h2>About the author</h2><p>${escapeText(bm.aboutAuthor.trim())}</p></section>`
-    : "";
-  const colophon = bm?.colophon
-    ? `<section class="back-matter colophon"><p>Set in ${escapeText(fontLabel(config.font))}.</p><p>Trim ${escapeText(trimToPage(config.trim))} · Scriptorium.</p></section>`
-    : "";
-  return glossary + aboutAuthor + colophon;
+  const glossary = (config.backMatter?.glossary ?? config.glossary ?? false) ? glossaryFor(manuscript) : "";
+  return glossary + aboutAuthorSection(config) + colophonSection(config);
 }
 
 /** Glossary = entries with a summary (term + short definition), assembled

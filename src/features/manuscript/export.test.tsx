@@ -12,23 +12,22 @@ import { defaultBindery } from "../../data/schema";
 const epubMock = vi.hoisted(() => ({
   genEpub: vi.fn(async () => new Uint8Array([1, 2, 3])),
   calls: [] as { options: unknown; content: unknown }[],
-  expectedOrder: null as string[] | null,
 }));
 
-vi.mock("epub-gen-memory", () => ({
-  EPub: class {
-    constructor(public options: unknown, public content: unknown) {
-      epubMock.calls.push({ options, content });
-      if (epubMock.expectedOrder) {
-        const chapters = Array.isArray(content) ? (content as { title?: unknown }[]) : [];
-        expect(chapters.map((chapter) => chapter?.title)).toEqual(epubMock.expectedOrder);
+vi.mock("epub-gen-memory", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("epub-gen-memory")>();
+  return {
+    ...actual,
+    EPub: class {
+      constructor(public options: unknown, public content: unknown) {
+        epubMock.calls.push({ options, content });
       }
-    }
-    genEpub(): Promise<Uint8Array> {
-      return epubMock.genEpub();
-    }
-  },
-}));
+      genEpub(): Promise<Uint8Array> {
+        return epubMock.genEpub();
+      }
+    },
+  };
+});
 
 const docxMock = vi.hoisted(() => ({
   toBlob: vi.fn(async () => new Blob(["docx-bytes"])),
@@ -111,7 +110,6 @@ beforeEach(() => {
   docxMock.toBlob.mockImplementation(async () => new Blob(["docx-bytes"]));
   docxMock.toBlob.mockClear();
   epubMock.calls.length = 0;
-  epubMock.expectedOrder = null;
   stubAnchorDownload();
 });
 
@@ -638,7 +636,6 @@ describe("EPUB export", () => {
         { heading: "Fim", content: "A última linha." },
       ],
     });
-    epubMock.expectedOrder = ["Prólogo", "Fim"];
     render(binderyRoute(projectId, book.id));
     fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
     await waitFor(() => {
@@ -647,10 +644,9 @@ describe("EPUB export", () => {
     expect(epubMock.calls).toHaveLength(1);
     expect(epubMock.genEpub).toHaveBeenCalledTimes(1);
     const content = epubMock.calls[0].content as { title: string; content: string }[];
-    expect(content).toHaveLength(2);
-    expect(content[0]).toMatchObject({ title: "Prólogo" });
-    expect(content[0].content).toContain("<strong>Negrito</strong>");
-    expect(content[1]).toMatchObject({ title: "Fim" });
+    // default front matter (half title, copyright) rides before the numbered chapters
+    expect(content.map((c) => c.title)).toEqual(["Cantar de Vellmora", "Copyright", "1 Prólogo", "2 Fim"]);
+    expect(content[2].content).toContain("<strong>Negrito</strong>");
     expect(lastOptions(0)).toEqual(expect.objectContaining({ title: "Cantar de Vellmora", author: "Renan", lang: "pt" }));
     expect(anchorDownload).toBe("cantar-de-vellmora.epub");
     expect(anchorHref).toBe("blob:mock-url");
@@ -726,6 +722,164 @@ describe("EPUB export", () => {
     });
     expect(button).toBeEnabled();
     expect(button).not.toHaveAttribute("aria-busy");
+  });
+
+  it("passes bindery typography to the EPUB and keeps print-only settings out", async () => {
+    const projectId = seedProject();
+    const book = seedBook(projectId, { title: "Tipos", chapters: [{ heading: "Um", content: "x." }] });
+    render(binderyRoute(projectId, book.id));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
+    await waitFor(() => expect(epubMock.calls).toHaveLength(1));
+    const def = lastOptions(0).css as string;
+    // default config: the configured indent (1em), never the brief's 1.2em
+    expect(def).toContain("text-indent: 1em");
+    expect(def).not.toContain("text-indent: 1.2em");
+    expect(def).toContain("text-align: justify");
+    expect(def).toContain("::first-letter");
+    // print-only geometry stays out; the package default stylesheet survives (appended to)
+    expect(def).not.toContain("@page");
+    expect(def).not.toContain("6in 9in");
+    expect(def).toContain(".epub-author");
+
+    act(() => {
+      useScriptorium.getState().setBindery(book.id, {
+        typography: { bodyPt: 12, leading: 16, indent: 1.5, justify: false, hyphens: true },
+      });
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
+    await waitFor(() => expect(epubMock.calls).toHaveLength(2));
+    const css = lastOptions(1).css as string;
+    expect(css).toContain("font-size: 12pt");
+    expect(css).toContain("line-height: 1.33");
+    expect(css).toContain("text-indent: 1.5em");
+    expect(css).toContain("text-align: left");
+    expect(css).toContain("hyphens: auto");
+    expect(lastOptions(1).lang).toBe("pt");
+    expect(lastOptions(1).version).toBe(3);
+    const entries = epubMock.calls[1].content as { beforeToc?: boolean }[];
+    expect(entries.some((c) => c.beforeToc)).toBe(true);
+    expect(lastOptions(1).tocTitle).toBe("Contents");
+  });
+
+  it("styles scene ornaments like the print book", async () => {
+    const projectId = seedProject();
+    const book = seedBook(projectId, { title: "Ornamentos", chapters: [{ heading: "Um", content: "x." }] });
+    render(binderyRoute(projectId, book.id));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
+    await waitFor(() => expect(epubMock.calls).toHaveLength(1));
+    const base = lastOptions(0).css as string;
+    expect(base).toContain(".scene-marker { text-align: center;");
+    expect(base).toContain('scene-marker.ornament::before { content: "⁂"; }');
+
+    act(() => { useScriptorium.getState().setBindery(book.id, { sceneOrnament: "fleuron" }); });
+    fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
+    await waitFor(() => expect(epubMock.calls).toHaveLength(2));
+    expect(lastOptions(1).css).toContain('scene-marker.ornament::before { content: "❦"; }');
+
+    act(() => { useScriptorium.getState().setBindery(book.id, { sceneOrnament: "rule" }); });
+    fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
+    await waitFor(() => expect(epubMock.calls).toHaveLength(3));
+    const rule = lastOptions(2).css as string;
+    expect(rule).toContain("border-top: 1px solid currentColor");
+    expect(rule).toContain("width: 4em");
+    expect(rule).not.toContain("scene-marker.ornament::before");
+
+    act(() => { useScriptorium.getState().setBindery(book.id, { sceneOrnament: "blank" }); });
+    fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
+    await waitFor(() => expect(epubMock.calls).toHaveLength(4));
+    const blank = lastOptions(3).css as string;
+    expect(blank).toContain("height: 1.5em");
+    expect(blank).not.toContain("scene-marker.ornament::before");
+  });
+
+  it("builds the spine in bookSections order with part entries and epub:type", async () => {
+    const projectId = seedProject();
+    const book = seedBook(projectId, {
+      title: "Livro em Partes",
+      chapters: [{ heading: "Um" }, { heading: "Dois" }, { heading: "Três", content: "x." }],
+    });
+    act(() => {
+      const part = useScriptorium.getState().addPart(book.id, "Parte I");
+      expect(part).toBeTruthy();
+      useScriptorium.getState().setChapterPart(book.chapters[0].id, part!.id);
+      useScriptorium.getState().setChapterPart(book.chapters[1].id, part!.id);
+    });
+    render(binderyRoute(projectId, book.id));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
+    await waitFor(() => expect(epubMock.calls).toHaveLength(1));
+    const content = epubMock.calls[0].content as { title: string; content: string }[];
+    // ungrouped run first, then the part's divider before its chapters — the
+    // print order; numbering is the flat render-order sequence print uses
+    expect(content.map((c) => c.title)).toEqual([
+      "Livro em Partes", "Copyright", "1 Três", "1 Parte I", "2 Um", "3 Dois",
+    ]);
+    const partEntry = content.find((c) => c.title === "1 Parte I")!;
+    expect(partEntry.content).toContain('epub:type="part"');
+    expect(partEntry.content).toContain('<p class="part-num">1</p>');
+    expect(partEntry.content).toContain('<h1 class="part-title">Parte I</h1>');
+    const tres = content.find((c) => c.title === "1 Três")!;
+    expect(tres.content).toContain('epub:type="chapter"');
+    expect(tres.content).toContain('data-ch="1"');
+    expect(tres.content).toContain('<span class="ch-num">1</span>');
+  });
+
+  it("emits front matter before the TOC and back matter after the chapters", async () => {
+    const projectId = seedProject();
+    const book = seedBook(projectId, { title: "Completo", author: "Ana Silva", chapters: [{ heading: "Um", content: "x." }] });
+    act(() => {
+      const st = useScriptorium.getState();
+      st.setBindery(book.id, {
+        dedication: "Para A. G.",
+        frontMatter: { ...defaultBindery()!.frontMatter!, epigraph: "> Citado aqui." },
+        backMatter: { glossary: true, aboutAuthor: "Ana escreve no Nordeste.", colophon: true },
+      });
+      const entry = st.addEntry(projectId, "lore");
+      st.updateEntry(entry.id, { title: "Termo", summary: "Definição curta." });
+    });
+    render(binderyRoute(projectId, book.id));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
+    await waitFor(() => expect(epubMock.calls).toHaveLength(1));
+    const content = epubMock.calls[0].content as { title: string; content: string; beforeToc?: boolean; excludeFromToc?: boolean }[];
+    expect(content.map((c) => c.title)).toEqual([
+      "Completo", "Copyright", "Dedication", "Epigraph", "1 Um", "Glossary", "About the author", "Colophon",
+    ]);
+    const byTitle = (t: string) => content.find((c) => c.title === t)!;
+    expect(byTitle("Completo")).toMatchObject({ beforeToc: true, excludeFromToc: true });
+    expect(byTitle("Copyright").beforeToc).toBe(true);
+    expect(byTitle("Copyright").excludeFromToc).toBe(true);
+    expect(byTitle("Copyright").content).toContain("All rights reserved.");
+    expect(byTitle("Dedication").beforeToc).toBe(true);
+    expect(byTitle("Dedication").excludeFromToc).toBeFalsy();
+    expect(byTitle("Dedication").content).toContain("Para A. G.");
+    expect(byTitle("Epigraph").beforeToc).toBe(true);
+    expect(byTitle("Epigraph").excludeFromToc).toBeFalsy();
+    expect(byTitle("Epigraph").content).toContain("Citado aqui.");
+    const chapterIdx = content.findIndex((c) => c.title === "1 Um");
+    for (const back of ["Glossary", "About the author", "Colophon"]) {
+      expect(content.findIndex((c) => c.title === back)).toBeGreaterThan(chapterIdx);
+      expect(byTitle(back).beforeToc).toBeFalsy();
+    }
+    expect(byTitle("Glossary").content).toContain("Termo");
+    expect(byTitle("About the author").content).toContain("Ana escreve no Nordeste.");
+    expect(byTitle("Colophon").content).toContain("Set in");
+  });
+
+  it("omits front and back matter that the bindery turns off", async () => {
+    const projectId = seedProject();
+    const book = seedBook(projectId, { title: "Enxuto", chapters: [{ heading: "Um", content: "x." }] });
+    act(() => {
+      useScriptorium.getState().setBindery(book.id, {
+        frontMatter: { halfTitle: false, copyright: false, romanNumerals: false },
+        backMatter: { glossary: false, aboutAuthor: "", colophon: false },
+        glossary: false,
+      });
+    });
+    render(binderyRoute(projectId, book.id));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar EPUB" }));
+    await waitFor(() => expect(epubMock.calls).toHaveLength(1));
+    const content = epubMock.calls[0].content as { title: string; beforeToc?: boolean }[];
+    expect(content.map((c) => c.title)).toEqual(["1 Um"]);
+    expect(content.some((c) => c.beforeToc)).toBe(false);
   });
 });
 
