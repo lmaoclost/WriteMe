@@ -82,8 +82,8 @@ describe("ConlangPage — alfabeto", () => {
       return el as never;
     }) as never);
     render(<ConlangPage conlangId={c.id} />);
-    fireEvent.click(screen.getByRole("button", { name: /Exportar folha/ }));
-    expect(created.some((el) => el.tagName === "A" && (el.download ?? "").includes("alfabeto") && ((el.href || "").includes("blob:") || (el.href || "").includes("svg")))).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: /Export sheet/ }));
+    expect(created.some((el) => el.tagName === "A" && (el.download ?? "").includes("alphabet") && ((el.href || "").includes("blob:") || (el.href || "").includes("svg")))).toBe(true);
     vi.restoreAllMocks();
   });
 });
@@ -103,7 +103,7 @@ describe("ConlangPage — léxico", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
     expect(screen.getByText("águas")).toBeInTheDocument();
     fireEvent.click(screen.getByText("águas"));
-    fireEvent.click(screen.getByLabelText("Remover sarnen"));
+    fireEvent.click(screen.getByLabelText("Remove sarnen"));
     expect(store().conlangs![0].words.map((w) => w.word)).toEqual(["vellmor"]);
   });
 });

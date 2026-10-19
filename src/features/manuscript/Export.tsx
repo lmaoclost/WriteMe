@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { Chapter as EpubChapter } from "epub-gen-memory";
 import type { Manuscript } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
@@ -9,16 +10,17 @@ import {
 } from "./buildBook";
 import { estimatePageCount } from "./bindery";
 import { buildEpubCss } from "./epubCss";
+import { i18n, normalizeLanguage } from "../../i18n";
 
-/** Lowercase, accent-folded, runs of non-alnum become one dash, trimmed; empty → "livro". */
+/** Lowercase, accent-folded, runs of non-alnum become one dash, trimmed; empty → the localized fallback. */
 function slugify(text: string): string {
   return (
     text
-      .toLowerCase()
+      .toLocaleLowerCase(i18n.language)
       .normalize("NFD")
       .replace(/\p{M}/gu, "")
       .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "") || "livro"
+      .replace(/^-+|-+$/g, "") || i18n.t("export.slugFallback")
   );
 }
 
@@ -29,11 +31,12 @@ export interface ExportButtonsProps {
 /** EPUB (lazy epub-gen-memory → blob download) + Word (docx) buttons for the
  *  Publishing header. PDF lives in "Print preview" (bindery-styled print pass). */
 export function ExportButtons({ manuscript }: ExportButtonsProps) {
+  const { t } = useTranslation();
   const pushToast = useScriptorium((s) => s.pushToast);
   const [busy, setBusy] = useState(false);
 
   const disabled = manuscript.chapters.length === 0 || busy;
-  const title = manuscript.chapters.length === 0 ? "Add chapters first" : undefined;
+  const title = manuscript.chapters.length === 0 ? t("bindery.addChaptersFirst") : undefined;
 
   const exportDocx = async () => {
     if (disabled) return;
@@ -59,9 +62,9 @@ export function ExportButtons({ manuscript }: ExportButtonsProps) {
       anchor.download = `${slugify(manuscript.title)}.docx`;
       anchor.click();
       URL.revokeObjectURL(url);
-      useScriptorium.getState().pushToast("success", "Word gerado.");
+      useScriptorium.getState().pushToast("success", t("export.docxSuccess"));
     } catch {
-      useScriptorium.getState().pushToast("error", "Falha ao gerar o Word.");
+      useScriptorium.getState().pushToast("error", t("export.docxError"));
     } finally {
       setBusy(false);
     }
@@ -87,9 +90,9 @@ export function ExportButtons({ manuscript }: ExportButtonsProps) {
         if (html) entries.push({ title, content: html, beforeToc: true, excludeFromToc });
       };
       if (fm.halfTitle) pushFront(halfTitleSection(manuscript), manuscript.title, true);
-      if (fm.copyright) pushFront(copyrightPage(manuscript, bindery), "Copyright", true);
-      pushFront(dedicationSection(bindery), "Dedication");
-      pushFront(epigraphSection(bindery), "Epigraph");
+      if (fm.copyright) pushFront(copyrightPage(manuscript, bindery), t("book.copyright"), true);
+      pushFront(dedicationSection(bindery), t("book.dedication"));
+      pushFront(epigraphSection(bindery), t("book.epigraph"));
       let chapterNo = 0;
       let partNo = 0;
       bookSections(manuscript).forEach(({ part, chapters }) => {
@@ -112,20 +115,20 @@ export function ExportButtons({ manuscript }: ExportButtonsProps) {
       });
       if (bindery.backMatter?.glossary ?? bindery.glossary ?? false) {
         const glossary = glossaryFor(manuscript);
-        if (glossary) entries.push({ title: "Glossary", content: glossary });
+        if (glossary) entries.push({ title: t("book.glossary"), content: glossary });
       }
       const about = aboutAuthorSection(bindery);
-      if (about) entries.push({ title: "About the author", content: about });
+      if (about) entries.push({ title: t("book.aboutAuthor"), content: about });
       const colophon = colophonSection(bindery);
-      if (colophon) entries.push({ title: "Colophon", content: colophon });
+      if (colophon) entries.push({ title: t("book.colophon"), content: colophon });
 
       const defaults = optionsDefaults(3);
       const options = {
         ...defaults,
         title: manuscript.title,
         author: manuscript.author || undefined,
-        lang: "pt",
-        tocTitle: "Contents",
+        lang: normalizeLanguage(i18n.language),
+        tocTitle: t("book.contents"),
         numberChaptersInTOC: false,
         prependChapterTitles: false,
         // append, never replace: the package default carries the template reset
@@ -142,10 +145,10 @@ export function ExportButtons({ manuscript }: ExportButtonsProps) {
       anchor.download = `${slugify(manuscript.title)}.epub`;
       anchor.click();
       URL.revokeObjectURL(url);
-      pushToast("success", "EPUB gerado.");
+      pushToast("success", t("export.epubSuccess"));
     } catch (error) {
       console.error("EPUB export failed:", error);
-      pushToast("error", "Falha ao gerar o EPUB.");
+      pushToast("error", t("export.epubError"));
     } finally {
       setBusy(false);
     }
@@ -161,7 +164,7 @@ export function ExportButtons({ manuscript }: ExportButtonsProps) {
         title={title}
         onClick={() => void exportEpub()}
       >
-        Exportar EPUB
+        {t("export.epub")}
       </button>
       <button
         type="button"
@@ -170,7 +173,7 @@ export function ExportButtons({ manuscript }: ExportButtonsProps) {
         title={title}
         onClick={() => void exportDocx()}
       >
-        Exportar Word
+        {t("export.docx")}
       </button>
     </>
   );

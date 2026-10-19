@@ -1,4 +1,5 @@
 import { Fragment, memo, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { Chapter, Part } from "../../domain/types";
 import type { bookSections } from "./buildBook";
 import { useScriptorium } from "../../data/store";
@@ -52,12 +53,13 @@ const ChapterRow = memo(function ChapterRow({ chapter, index, total, selected, w
   onSelect(id: string): void;
   onMove(id: string, dir: -1 | 1): void;
 }) {
+  const { t } = useTranslation();
   return (
     <li className="flex items-stretch gap-1">
       <button
         type="button"
         className={MOVE_CLASS}
-        aria-label="Move chapter up"
+        aria-label={t("manuscript.moveChapterUp")}
         disabled={index === 0}
         onClick={() => onMove(chapter.id, -1)}
       >
@@ -66,7 +68,7 @@ const ChapterRow = memo(function ChapterRow({ chapter, index, total, selected, w
       <button
         type="button"
         className={MOVE_CLASS}
-        aria-label="Move chapter down"
+        aria-label={t("manuscript.moveChapterDown")}
         disabled={index === total - 1}
         onClick={() => onMove(chapter.id, 1)}
       >
@@ -93,6 +95,7 @@ const PartRow = memo(function PartRow({ part, index, total, words, onReorder, on
   onRename(id: string, title: string): void;
   onDelete(id: string): void;
 }) {
+  const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [armed, setArmed] = useState(false);
   const confirmTimerRef = useRef<number | undefined>(undefined);
@@ -116,7 +119,7 @@ const PartRow = memo(function PartRow({ part, index, total, words, onReorder, on
       <button
         type="button"
         className={MOVE_CLASS}
-        aria-label="Move part up"
+        aria-label={t("manuscript.movePartUp")}
         disabled={index === 0}
         onClick={() => onReorder(part.id, -1)}
       >
@@ -125,7 +128,7 @@ const PartRow = memo(function PartRow({ part, index, total, words, onReorder, on
       <button
         type="button"
         className={MOVE_CLASS}
-        aria-label="Move part down"
+        aria-label={t("manuscript.movePartDown")}
         disabled={index === total - 1}
         onClick={() => onReorder(part.id, 1)}
       >
@@ -136,7 +139,7 @@ const PartRow = memo(function PartRow({ part, index, total, words, onReorder, on
           <input
             type="text"
             autoFocus
-            aria-label="Part title"
+            aria-label={t("manuscript.partTitle")}
             className="w-full min-w-0 bg-ink border border-line rounded-lg px-1.5 py-0.5 text-xs text-parchment outline-none focus:border-gold"
             value={draft.draft}
             onChange={(e) => draft.setDraft(e.target.value)}
@@ -150,7 +153,7 @@ const PartRow = memo(function PartRow({ part, index, total, words, onReorder, on
       <button
         type="button"
         className="w-[26px] bg-none border border-line rounded-lg text-parchment-dim text-xs leading-none hover:border-gold-dim hover:text-gold"
-        aria-label="Rename part"
+        aria-label={t("manuscript.renamePart")}
         onClick={() => setEditing(true)}
       >
         ✎
@@ -160,13 +163,14 @@ const PartRow = memo(function PartRow({ part, index, total, words, onReorder, on
         className={"book-delete bg-none border border-[var(--ember)] text-[var(--ember)] rounded-lg py-1 px-1.5 text-[11px] hover:bg-[color-mix(in_srgb,var(--ember)_18%,transparent)]" + (armed ? " armed bg-[color-mix(in_srgb,var(--ember)_20%,transparent)]" : "")}
         onClick={confirmOrDelete}
       >
-        {armed ? "Confirm?" : "Delete part"}
+        {armed ? t("manuscript.confirm") : t("manuscript.deletePart")}
       </button>
     </li>
   );
 });
 
 export function ChapterList({ sections, selectedId, onSelect, onMove, onCreate, onCreatePart, onReorderPart, onRenamePart, onDeletePart }: ChapterListProps) {
+  const { t } = useTranslation();
   const wordsRef = useRef(new Map<string, WordCacheEntry>());
   const chapters = useMemo(() => sections.flatMap((s) => s.chapters), [sections]);
   const wordsByChapter = useMemo(() => buildWordCounts(chapters, wordsRef.current), [chapters]);
@@ -175,10 +179,10 @@ export function ChapterList({ sections, selectedId, onSelect, onMove, onCreate, 
   return (
     <aside className="book-chapters flex flex-col gap-2.5 min-h-0 p-3 bg-night border-r border-line max-[720px]:border-r-0 max-[720px]:border-b max-[720px]:border-line">
       {chapters.length === 0 ? (
-        <p className="mx-2 my-2 text-parchment-dim text-[13px]">Add the first chapter.</p>
+        <p className="mx-2 my-2 text-parchment-dim text-[13px]">{t("manuscript.addFirstChapter")}</p>
       ) : null}
       {chapters.length > 0 || parts.length > 0 ? (
-        <ul className="book-ch-rows list-none m-0 p-0.5 flex flex-col gap-1 overflow-y-auto flex-1 min-h-0" aria-label="Chapters">
+        <ul className="book-ch-rows list-none m-0 p-0.5 flex flex-col gap-1 overflow-y-auto flex-1 min-h-0" aria-label={t("manuscript.chaptersAria")}>
           {sections.map(({ part, chapters: sectionChapters }) => (
             <Fragment key={part?.id ?? "ungrouped"}>
               {part ? (
@@ -209,16 +213,17 @@ export function ChapterList({ sections, selectedId, onSelect, onMove, onCreate, 
         </ul>
       ) : null}
       <Button className="book-ch-new self-start" onClick={onCreate}>
-        New chapter
+        {t("manuscript.newChapter")}
       </Button>
       <Button className="book-ch-new self-start" onClick={onCreatePart}>
-        New part
+        {t("manuscript.newPart")}
       </Button>
     </aside>
   );
 }
 
 export function DocxReplaceButton({ chapterId }: { chapterId: string }) {
+  const { t } = useTranslation();
   const pushToast = useScriptorium((s) => s.pushToast);
   const onChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -228,14 +233,14 @@ export function DocxReplaceButton({ chapterId }: { chapterId: string }) {
       const { importDocxToHtml } = await import("./docx");
       const html = await importDocxToHtml(file);
       useScriptorium.getState().updateChapter(chapterId, { content: html });
-      pushToast("success", "Chapter replaced by the .docx.");
+      pushToast("success", t("manuscript.chapterReplaced"));
     } catch {
-      pushToast("error", "Import failed. Check that all files are valid .docx.");
+      pushToast("error", t("manuscript.docxImportFailed"));
     }
   };
   return (
-    <label className="book-mode book-docx-btn bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] hover:border-gold-dim cursor-pointer" title="Replace this chapter's body from a .docx">
-      Replace with .docx
+    <label className="book-mode book-docx-btn bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] hover:border-gold-dim cursor-pointer" title={t("manuscript.replaceDocxTitle")}>
+      {t("manuscript.replaceDocx")}
       <input type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="sr-only" onChange={(e) => void onChange(e)} />
     </label>
   );

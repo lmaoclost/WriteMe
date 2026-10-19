@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field } from "../../ui/Field";
@@ -11,14 +12,15 @@ import { useBoardNotesHotkey } from "../../ui/boardNotes";
 import { useRafState, useRafCallback } from "../../ui/useRaf";
 
 
-export const WELL_KIND_META: Record<WellKind, { label: string; icon: string; color: string }> = {
-  character: { label: "Character", icon: "👤", color: "#e74c3c" },
-  setting: { label: "Setting", icon: "🗺", color: "#3498db" },
-  conflict: { label: "Conflict", icon: "⚔", color: "#e67e22" },
-  question: { label: "Question", icon: "❓", color: "#9b59b6" },
-};
+export const WELL_KIND_META = {
+  character: { labelKey: "wellspring.kind.character", icon: "👤", color: "#e74c3c" },
+  setting: { labelKey: "wellspring.kind.setting", icon: "🗺", color: "#3498db" },
+  conflict: { labelKey: "wellspring.kind.conflict", icon: "⚔", color: "#e67e22" },
+  question: { labelKey: "wellspring.kind.question", icon: "❓", color: "#9b59b6" },
+} as const satisfies Record<WellKind, { labelKey: string; icon: string; color: string }>;
 
 export function WellSpringPage({ wellId }: { wellId: string }) {
+  const { t } = useTranslation();
   const well = useScriptorium((s) => (s.wellsprings ?? []).find((w) => w.id === wellId));
   const pushToast = useScriptorium((s) => s.pushToast);
   const pushWSHistory = useScriptorium((s) => s.pushWSHistory);
@@ -65,8 +67,8 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
   }, [scheduleView]);
 
   useEffect(() => {
-    if (!well) pushToast("error", "Idea board not found.");
-  }, [well, pushToast]);
+    if (!well) pushToast("error", t("wellspring.page.notFound"));
+  }, [well, pushToast, t]);
 
   if (!well) return null;
 
@@ -78,7 +80,7 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
       <header className={BOARD_HEADER}>
         <input
           className={BOARD_NAME_INPUT}
-          aria-label="Idea board name"
+          aria-label={t("wellspring.page.name")}
           value={well.name}
           onChange={(e) => useScriptorium.getState().renameWellSpring(wellId, e.target.value)}
         />
@@ -92,14 +94,14 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
               style={{ borderColor: WELL_KIND_META[k].color }}
               onClick={() => setPlacingKind((cur) => (cur === k ? null : k))}
             >
-              {WELL_KIND_META[k].icon} {WELL_KIND_META[k].label}
+              {WELL_KIND_META[k].icon} {t(WELL_KIND_META[k].labelKey)}
             </button>
           ))}
         </div>
         <div className={BOARD_ACTIONS}>
-          <button type="button" aria-label="Undo" className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoWS(wellId)}>↶</button>
-          <button type="button" aria-label="Redo" className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoWS(wellId)}>↷</button>
-          <button type="button" aria-pressed={notesOpen} className={BOARD_ACTION_BTN} onClick={() => setNotesOpen((v) => !v)}>Notes ✎</button>
+          <button type="button" aria-label={t("wellspring.page.undo")} className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoWS(wellId)}>↶</button>
+          <button type="button" aria-label={t("wellspring.page.redo")} className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoWS(wellId)}>↷</button>
+          <button type="button" aria-pressed={notesOpen} className={BOARD_ACTION_BTN} onClick={() => setNotesOpen((v) => !v)}>{t("wellspring.page.notes")}</button>
         </div>
       </header>
       <div className="grid grid-cols-[1fr_320px] min-h-0 overflow-hidden">
@@ -184,7 +186,7 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
                   data-node-id={n.id}
                   style={{ left: n.x - 80, top: n.y - 26, borderColor: meta.color, color: meta.color }}
                   role="button"
-                  aria-label={`Note ${meta.label}: ${n.text || "empty"}`}
+                  aria-label={t("wellspring.page.noteAria", { kind: t(meta.labelKey), text: n.text || t("wellspring.page.emptyText") })}
                   tabIndex={0}
                   onPointerDown={(e) => {
                     if (e.button !== 0) return;
@@ -195,11 +197,11 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
                   }}
                 >
                   <span aria-hidden="true">{meta.icon}</span>
-                  <span className="text-[13px] font-semibold text-parchment">{n.text || meta.label}</span>
+                  <span className="text-[13px] font-semibold text-parchment">{n.text || t(meta.labelKey)}</span>
                   <button
                     type="button"
                     className="conn-btn w-5 h-5 rounded-full bg-gold text-wax border-0 text-[0.6875rem] grid place-items-center cursor-crosshair"
-                    aria-label={`Borda de ${n.text || meta.label}`}
+                    aria-label={t("wellspring.page.borderAria", { name: n.text || t(meta.labelKey) })}
                     onPointerDown={(e) => {
                       e.stopPropagation();
                       setSelectedId(n.id);
@@ -214,8 +216,8 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
           {well.nodes.length === 0 ? (
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[calc(1/var(--bl-scale,0.1))] text-slate whitespace-nowrap">
               {placingKind
-                ? `Escolha onde ancorar: ${WELL_KIND_META[placingKind].label}`
-                : "Choose a type and click the canvas — sketch a loose idea before it has a home."}
+                ? t("wellspring.page.placeHint", { kind: t(WELL_KIND_META[placingKind].labelKey) })
+                : t("wellspring.page.emptyHint")}
             </div>
           ) : null}
           {notesOpen ? <WellNotepad notes={well.notes} onNotes={(v) => useScriptorium.getState().setWellNotes(wellId, v)} onClose={() => setNotesOpen(false)} /> : null}
@@ -232,6 +234,7 @@ function WellPanel({ well, selectedId, onSelect, otherNodes }: {
   onSelect(id: string | null): void;
   otherNodes: WellSpring["nodes"];
 }) {
+  const { t } = useTranslation();
   const store = useScriptorium.getState;
   const pushToast = useScriptorium((s) => s.pushToast);
   const node = well.nodes.find((n) => n.id === selectedId);
@@ -242,7 +245,7 @@ function WellPanel({ well, selectedId, onSelect, otherNodes }: {
   if (!node) {
     return (
       <aside className={BOARD_PANEL} data-testid="well-panel">
-        <p className={BOARD_PANEL_HINT}>Pick a note on the canvas.</p>
+        <p className={BOARD_PANEL_HINT}>{t("wellspring.panel.selectHint")}</p>
       </aside>
     );
   }
@@ -250,7 +253,7 @@ function WellPanel({ well, selectedId, onSelect, otherNodes }: {
   const remove = () => {
     if (!armDelete) { setArmDelete(true); return; }
     store().deleteWellNode(node.id);
-    pushToast("success", "Note deleted.");
+    pushToast("success", t("wellspring.panel.noteDeleted"));
     onSelect(null);
   };
 
@@ -260,28 +263,28 @@ function WellPanel({ well, selectedId, onSelect, otherNodes }: {
   return (
     <aside className={BOARD_PANEL} data-testid="well-panel">
       <header className={BOARD_PANEL_HEAD}>
-        <h2 className={BOARD_PANEL_HEAD_H2}>{node.text || WELL_KIND_META[node.kind].label}</h2>
+        <h2 className={BOARD_PANEL_HEAD_H2}>{node.text || t(WELL_KIND_META[node.kind].labelKey)}</h2>
         <Button kind={armDelete ? "danger" : "ghost"} className="px-2 py-1 text-xs" onClick={remove}
-          aria-label={armDelete ? "Confirm delete note" : "Delete note"}>
-          {armDelete ? "Confirmar?" : "Excluir"}
+          aria-label={armDelete ? t("wellspring.panel.confirmDelete") : t("wellspring.panel.deleteNote")}>
+          {armDelete ? t("common.confirm") : t("common.delete")}
         </Button>
       </header>
-      <Field label="Text">
-        <input aria-label="Node text" value={node.text} onChange={(e) => store().updateWellNode(node.id, { text: e.target.value })} />
+      <Field label={t("wellspring.panel.text")}>
+        <input aria-label={t("wellspring.panel.textAria")} value={node.text} onChange={(e) => store().updateWellNode(node.id, { text: e.target.value })} />
       </Field>
-      <Field label="Type">
+      <Field label={t("wellspring.panel.type")}>
         <Select value={node.kind} onValueChange={(v) => store().updateWellNode(node.id, { kind: v as WellKind })}>
-          <SelectTrigger aria-label="Node type" className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
+          <SelectTrigger aria-label={t("wellspring.panel.typeAria")} className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
           <SelectContent className="border-line bg-night text-parchment">
             {(Object.keys(WELL_KIND_META) as WellKind[]).map((k) => (
-              <SelectItem key={k} value={k} className="text-xs focus:bg-[#24233f] focus:text-parchment">{WELL_KIND_META[k].label}</SelectItem>
+              <SelectItem key={k} value={k} className="text-xs focus:bg-[#24233f] focus:text-parchment">{t(WELL_KIND_META[k].labelKey)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </Field>
       <section className="border-t border-line mt-3.5 pt-2.5 grid gap-2">
-        <h3 className="text-[13px] tracking-[0.08em] uppercase text-slate font-semibold">Fronteiras (bordas)</h3>
-        {bordersMine.length === 0 ? <p className="text-slate">Nenhuma borda.</p> : null}
+        <h3 className="text-[13px] tracking-[0.08em] uppercase text-slate font-semibold">{t("wellspring.panel.borders")}</h3>
+        {bordersMine.length === 0 ? <p className="text-slate">{t("wellspring.panel.none")}</p> : null}
         {bordersMine.map((b) => {
           const otherId = b.fromId === node.id ? b.toId : b.fromId;
           const other = well.nodes.find((n) => n.id === otherId);
@@ -289,36 +292,41 @@ function WellPanel({ well, selectedId, onSelect, otherNodes }: {
             <div key={b.id} className="flex flex-wrap items-center gap-1.5" data-testid="well-border-row">
               <span className="text-slate">{other?.text || "?"}:</span>
               <input
-                aria-label={`Label da borda com ${other?.text ?? "?"}`}
+                aria-label={t("wellspring.panel.borderLabelAria", { name: other?.text ?? "?" })}
                 value={b.label}
                 onChange={(e) => store().updateWellBorder(b.id, e.target.value)}
                 onBlur={() => { if (!b.label.trim()) store().removeWellBorder(b.id); }}
                 className="min-w-0 flex-1 bg-ink border border-line rounded-sm text-parchment px-1.5 py-0.5 text-xs"
               />
-              <button type="button" aria-label="Remove border" onClick={() => store().removeWellBorder(b.id)} className="bg-none border-0 text-slate text-xs">✕</button>
+              <button type="button" aria-label={t("wellspring.panel.removeBorder")} onClick={() => store().removeWellBorder(b.id)} className="bg-none border-0 text-slate text-xs">✕</button>
             </div>
           );
         })}
         <div className="grid gap-1.5">
           <Select value={fromId} onValueChange={(v) => setFromId(v)}>
-            <SelectTrigger aria-label="Border target" className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue placeholder="Connect to..." /></SelectTrigger>
+            <SelectTrigger aria-label={t("wellspring.panel.target")} className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue placeholder={t("wellspring.panel.connectTo")} /></SelectTrigger>
             <SelectContent className="border-line bg-night text-parchment">
-              {others.map((n) => <SelectItem key={n.id} value={n.id} className="text-xs focus:bg-[#24233f] focus:text-parchment">{n.text || WELL_KIND_META[n.kind].label}</SelectItem>)}
+              {others.map((n) => <SelectItem key={n.id} value={n.id} className="text-xs focus:bg-[#24233f] focus:text-parchment">{n.text || t(WELL_KIND_META[n.kind].labelKey)}</SelectItem>)}
             </SelectContent>
           </Select>
-          <input aria-label="Name this border" placeholder="como essa fronteira se chama?" value={borderLabel} onChange={(e) => setBorderLabel(e.target.value)} className="bg-ink border border-line rounded-sm text-parchment px-2 py-1.5 text-xs" />
+          <input aria-label={t("wellspring.panel.nameBorder")} placeholder={t("wellspring.panel.nameBorderPlaceholder")} value={borderLabel} onChange={(e) => setBorderLabel(e.target.value)} className="bg-ink border border-line rounded-sm text-parchment px-2 py-1.5 text-xs" />
           <Button
             disabled={!fromId || !borderLabel.trim()}
             onClick={() => {
               const b = store().addWellBorder(well.id, node.id, fromId, borderLabel.trim());
-              if (!b) { pushToast("error", "Those two are already connected."); return; }
+              if (!b) { pushToast("error", t("wellspring.panel.alreadyConnected")); return; }
               setFromId("");
               setBorderLabel("");
             }}
-          >+ Borda</Button>
+          >{t("wellspring.panel.addBorder")}</Button>
         </div>
       </section>
-      <p className="text-slate text-xs">{well.nodes.length} notes · {well.borders.length} borders</p>
+      <p className="text-slate text-xs">
+        {t("wellspring.panel.counts", {
+          notes: t("wellspring.panel.noteCount", { count: well.nodes.length }),
+          borders: t("wellspring.panel.borderCount", { count: well.borders.length }),
+        })}
+      </p>
     </aside>
   );
 }

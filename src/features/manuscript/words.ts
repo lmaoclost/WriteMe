@@ -1,14 +1,14 @@
 /** Wordcount that survives rich HTML: when content arrives as markup
  *  (the rich editor commits innerHTML), tag names must not count as words. */
+import { i18n } from "../../i18n";
+
 export function countWords(content: string): number {
   const text = htmlToText(content ?? "");
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-export const formatWords = (words: number): string => {
-  if (words === 0) return "sem palavras";
-  return words === 1 ? "1 palavra" : `${words} palavras`;
-};
+export const formatWords = (words: number): string =>
+  i18n.t("manuscript.words", { count: words });
 
 /** Strip tags + decode entities. Block-level closing tags become spaces so
  *  adjacent paragraphs don't glue words together in textContent. */

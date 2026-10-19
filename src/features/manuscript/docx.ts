@@ -7,6 +7,7 @@ import { defaultBindery } from "../../data/schema";
 import { bookSections, chapterNumber } from "./buildBook";
 import { kdpGutter, pageMargins } from "./bindery";
 import { renderMarkdown } from "../entries/markdown";
+import { i18n } from "../../i18n";
 
 /** Block-level conversion of sanitized chapter HTML into flat text blocks. */
 export interface DocxBlock { kind: "p" | "h1" | "h2" | "h3" | "quote" | "li"; text: string }
@@ -230,7 +231,7 @@ export function buildDocxChildren(manuscript: Manuscript): Paragraph[] {
       // markdown would otherwise drop out of the export entirely
       const blocks = htmlToBlocks(renderMarkdown(chapter.content || ""));
       if (!blocks.length) {
-        children.push(new Paragraph({ children: [new TextRun({ text: "No content yet.", italics: true })] }));
+        children.push(new Paragraph({ children: [new TextRun({ text: i18n.t("manuscript.noContent"), italics: true })] }));
       }
       for (const block of blocks) {
         if (block.kind === "li") {

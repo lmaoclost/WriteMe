@@ -52,7 +52,7 @@ function manuscriptRoute(projectId: string) {
 function rowHeadings() {
   const list = screen.getByRole("list", { name: "Chapters" });
   return within(list)
-    .getAllByRole("button", { name: /palavra/ })
+    .getAllByRole("button", { name: /word/ })
     .map((row) => row.querySelector(".book-ch-heading")?.textContent);
 }
 
@@ -240,17 +240,17 @@ describe("ManuscriptPage chapters", () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A", chapters: [{ heading: "Início", content: "um dois três" }] });
     render(manuscriptRoute(projectId));
-    expect(screen.getByRole("button", { name: /Início/ }).textContent).toContain("3 palavras");
+    expect(screen.getByRole("button", { name: /Início/ }).textContent).toContain("3 words");
     // rich body: 6 words typed directly in the contenteditable (footer counts DOM)
     const richBody = () => document.querySelector('[data-testid="rich-body"]') as HTMLElement;
     richBody().textContent = "um dois três quatro mais uma";
     fireEvent.input(richBody());
-    expect(screen.getByText("6 palavras")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Início/ }).textContent).toContain("3 palavras");
+    expect(screen.getByText("6 words")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Início/ }).textContent).toContain("3 words");
     act(() => {
       vi.advanceTimersByTime(300);
     });
-    expect(screen.getByRole("button", { name: /Início/ }).textContent).toContain("6 palavras");
+    expect(screen.getByRole("button", { name: /Início/ }).textContent).toContain("6 words");
     vi.useRealTimers();
   });
 
@@ -274,12 +274,12 @@ describe("ManuscriptPage chapters", () => {
     vi.useRealTimers();
   });
 
-  it("flushes the draft when toggling to Prévia and renders the committed markdown", () => {
+  it("flushes the draft when toggling to Preview and renders the committed markdown", () => {
     vi.useFakeTimers();
     const projectId = seedProject();
     seedBook(projectId, { title: "A", chapters: [{ heading: "Início", content: "" }] });
     render(manuscriptRoute(projectId));
-    expect(screen.getByRole("button", { name: "Escrever" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Write" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Preview" })).toHaveAttribute("aria-pressed", "false");
     // rich editor: blur commits whatever the body holds (markdown text survives
     // as text until the user applies rich formatting)
@@ -292,7 +292,7 @@ describe("ManuscriptPage chapters", () => {
     expect(screen.getByRole("button", { name: "Preview" })).toHaveAttribute("aria-pressed", "true");
     expect(document.querySelector(".md-view")).not.toBeNull();
     expect(document.querySelector(".md-view")?.textContent).toContain("itálico");
-    fireEvent.click(screen.getByRole("button", { name: "Escrever" }));
+    fireEvent.click(screen.getByRole("button", { name: "Write" }));
     act(() => { vi.advanceTimersByTime(1000); });
     expect(bookOf("A").chapters[0].content).toBe("*itálico* e **negrito**");
     vi.useRealTimers();
@@ -345,8 +345,8 @@ describe("ManuscriptPage chapters", () => {
     });
     expect(chapterByHeading("Dois")?.content).toBe("");
     const list = screen.getByRole("list", { name: "Chapters" });
-    expect(within(list).getAllByRole("button", { name: /palavra/ })
-      .some((row) => row.textContent?.includes("1 palavra"))).toBe(true);
+    expect(within(list).getAllByRole("button", { name: /word/ })
+      .some((row) => row.textContent?.includes("1 word"))).toBe(true);
     vi.useRealTimers();
   });
 
@@ -390,7 +390,7 @@ describe("ManuscriptPage parts", () => {
     });
     render(manuscriptRoute(projectId));
     expect(await screen.findByText("A Queda")).toBeInTheDocument();
-    expect(screen.getByTestId("part-words-A Queda")).toHaveTextContent("3 palavras");
+    expect(screen.getByTestId("part-words-A Queda")).toHaveTextContent("3 words");
     expect(partRowOrder()).toEqual(["chapter:Base", "part:A Queda", "chapter:Cinzas"]);
   });
 
@@ -450,7 +450,7 @@ describe("ManuscriptPage parts", () => {
       useScriptorium.getState().setChapterPart(book.chapters[0].id, part.id);
     });
     render(manuscriptRoute(projectId));
-    expect(screen.getByTestId("part-words-A Queda")).toHaveTextContent("5 palavras");
+    expect(screen.getByTestId("part-words-A Queda")).toHaveTextContent("5 words");
     expect(partRowOrder()).toEqual(["part:A Queda", "chapter:Um", "chapter:Dois"]);
   });
 
@@ -509,7 +509,7 @@ describe("ChapterEditor — notes panel", () => {
     const ch = useScriptorium.getState().addChapter(m.id, "Um")!;
     store().updateChapter(ch.id, { noteTop: "Abre a história" });
     render(<ChapterEditor chapterId={ch.id} onDeleted={() => {}} />);
-    const trigger = screen.getByRole("button", { name: /Notas e cena/i });
+    const trigger = screen.getByRole("button", { name: /Notes and scene/i });
     expect(trigger).toHaveAttribute("aria-expanded", "true");
     // all notes blocks are inside the panel
     const panel = trigger.closest("[data-slot='notes-panel']") as HTMLElement;
