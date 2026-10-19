@@ -47,12 +47,22 @@ describe("workspace rail", () => {
     expect(icon).toHaveAttribute("aria-hidden", "true");
   });
 
-  it("rail scrolls instead of clipping on short viewports", () => {
+  it("scrolls the rail links instead of clipping them on short viewports", () => {
     const p = useScriptorium.getState().addProject("Tall");
     render(at(`/p/${p.id}`));
     const nav = screen.getByRole("navigation", { name: /world sections/i });
-    expect(nav.className).toContain("overflow-y-auto");
-    expect(nav.className).not.toContain("overflow-y-hidden");
+    const scroller = screen.getByTestId("rail-scroll");
+    expect(nav.contains(scroller)).toBe(true);
+    expect(scroller.className).toContain("overflow-y-auto");
+    expect(scroller.className).not.toContain("overflow-y-hidden");
+  });
+
+  it("keeps the language toggle out of the scrolling area", () => {
+    const p = useScriptorium.getState().addProject("Docked");
+    render(at(`/p/${p.id}`));
+    const scroller = screen.getByTestId("rail-scroll");
+    expect(scroller).not.toContainElement(screen.getByRole("button", { name: /switch to/i }));
+    expect(scroller).not.toContainElement(screen.getByRole("button", { name: /search/i }));
   });
 
   it("keeps every section label and route", () => {
