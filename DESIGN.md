@@ -214,6 +214,38 @@ Small radii, squared-off utility: 4px on controls, 8px on panels and cards, full
 - **Site nav:** hairline-bordered pills, lilac text, 999px radius — micro-nav only
 - **World selector:** ghost dropdown, truncates long names with ellipsis
 
+## Book Interior
+
+Print styling has three owners: `buildBookCss` (`src/features/manuscript/bookCss.ts`) generates page geometry and typography from the bindery config, `src/app/theme.css` styles the sheet, and `src/app/print.css` holds the `@media print` rules. The rules below are decisions, each with its reason.
+
+### Golden Rules
+
+- **Measure of 60–75 characters.** Trim size and margins keep body lines inside that band. A longer line loses the reader on the return sweep; a shorter one stalls the rhythm with ragged, hyphen-heavy breaks.
+- **The first paragraph after a heading is flush.** An indent says "continues the paragraph above" — under a heading there is nothing above to continue, so the indent reads as a defect. Headings reset the indent for the paragraph that follows.
+- **Never an indent and a blank line together.** The two mark different things: the indent says the paragraph continues the run, a blank line marks a stronger break. Set both and the separation doubles, the column fragments, and the indent stops meaning anything. Paragraphs carry no space of their own; the indent does the separating.
+- **Every chapter opens with a sink.** The opening line sits low under the heading, so a one- or two-word chapter title still lands with weight and the drop cap (when enabled) has room.
+- **No running head or folio on a chapter's opening page.** The opener already carries the title, the sink and the drop cap. A head would repeat the title beside them and a folio would crowd them; named pages switch both off for the first page, and they resume on the next.
+- **The folio runs at the foot**, small and bottom-center: the top edge stays reserved for the running head, and the folio stays out of the measure.
+- **Front matter is roman-numbered.** Lower-roman folios mark the preliminaries as separate from the text, so arabic numbering starts at 1 on chapter one and page references resolve against the body. Display pages — half title, title, copyright, dedication, epigraph — carry no folio and no head at all.
+
+The Manuscript preset opts out of the opener rules: flush openings, no sink, opener suppression off.
+
+### Paged-Media Limits
+
+Chromium implements neither of the two paged-media features the print path would want, and each absence costs something:
+
+- **No `string-set`.** It would give the running head the current chapter's heading automatically — one rule, the page-margin string following the document. Instead, a running head per chapter comes from **named pages**: each chapter gets an `@page chN` whose top margin carries that chapter's title, selected by the chapter's index; book mode puts the book title on the base page instead.
+- **No `target-counter`.** It would resolve every contents entry to its target page (`target-counter(attr(href url), page)`), giving the contents real page numbers. Instead, **the table of contents has no page numbers**: number, title and dotted leader only.
+
+### Format Parity
+
+What each export carries, before putting a feature in the wrong pass:
+
+- **Print/PDF:** page geometry (trim, mirrored margins, gutter, folio, running heads), typography, chapter openers with drop caps, parts, front matter, back matter and scene ornaments.
+- **EPUB:** typography, chapter openers with drop caps, parts, front matter, back matter and scene ornaments. No page geometry: the format is reflowable and the reading system owns the page box — no `@page`, no trim, no folio.
+- **DOCX:** page geometry, typography, parts, chapter numbering and scene ornaments — but no front matter, no back matter and no drop caps.
+- **Navigation differs:** the EPUB's navigation lists the back matter (glossary, about the author, colophon); the printed contents page lists only parts and chapters.
+
 ## Do's and Don'ts
 
 ### Do:
