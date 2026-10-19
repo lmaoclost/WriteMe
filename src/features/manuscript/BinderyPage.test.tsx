@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { useScriptorium } from "../../data/store";
 import { pickSelectOptionSync } from "../../test/selectHelper";
 import { BinderyPage } from "./BinderyPage";
-import { trimToPage, BINDERY_FONTS, BINDERY_TRIMS } from "./bindery";
+import { trimToPage, BINDERY_FONTS, BINDERY_TRIMS, estimatePageCount } from "./bindery";
 import { defaultBindery } from "../../data/schema";
 
 const store = () => useScriptorium.getState();
@@ -343,5 +343,143 @@ describe("Bindery v2 controls", () => {
     const book = screen.getByTestId("bindery-book").innerHTML;
     expect(book).toContain('<section class="chapter" data-ch="2"><h2><span class="ch-num">2</span>O Tribunal</h2>');
     expect(book).toContain('<section class="chapter" data-ch="3"><h2><span class="ch-num">3</span>Rio fundo</h2>');
+  });
+});
+
+describe("Bindery preset picker, advanced groups and print hints", () => {
+  const openGroup = (name: string) => {
+    fireEvent.click(screen.getByText(name, { selector: "summary" }));
+  };
+
+  it("choosing a preset writes the whole patch into the bindery config", async () => {
+    const id = seedBook();
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    await pickSelectOptionSync(() => screen.getByLabelText("Style preset"), "Ornamented fantasy");
+    const b = store().manuscripts[0].bindery!;
+    expect(b.preset).toBe("fantasy");
+    expect(b.typography?.leading).toBe(15);
+    expect(b.sceneOrnament).toBe("fleuron");
+  });
+
+  it("surfaces the page count as an estimate, not a fact", () => {
+    const id = seedBook();
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    const note = screen.getByTestId("page-estimate");
+    expect(note).toHaveTextContent(String(estimatePageCount(store().manuscripts[0])));
+    expect(note).toHaveTextContent(/estimat/i);
+  });
+
+  it("warns that running heads and folios only appear in the print dialog", () => {
+    const id = seedBook();
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    const hint = screen.getByTestId("print-hint");
+    expect(hint).toHaveTextContent(/diálogo de impressão/i);
+    expect(hint).toHaveTextContent(/nunca na prévia/i);
+    expect(hint).toHaveTextContent(/Headers and footers/i);
+    expect(hint).toHaveTextContent(/Chrome/);
+    expect(hint).toHaveTextContent(/Edge/);
+  });
+
+  it("typography group exposes body size, leading, indent, justification and hyphens", () => {
+    const id = seedBook();
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    openGroup("Body text");
+    expect(screen.getByLabelText("Body size (pt)")).toBeVisible();
+    expect(screen.getByLabelText("Leading (pt)")).toBeVisible();
+    expect(screen.getByLabelText("Indent (em)")).toBeVisible();
+    expect(screen.getByRole("checkbox", { name: "Justify" })).toBeVisible();
+    expect(screen.getByRole("checkbox", { name: "Hyphenation" })).toBeVisible();
+  });
+
+  it("geometry group exposes the gutter (auto or manual inches) and mirrored margins", async () => {
+    const id = seedBook();
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    openGroup("Page geometry");
+    expect(screen.getByLabelText("Gutter")).toBeVisible();
+    expect(screen.getByRole("checkbox", { name: "Mirrored margins" })).toBeVisible();
+    await pickSelectOptionSync(() => screen.getByLabelText("Gutter"), "Manual (inches)");
+    fireEvent.change(screen.getByLabelText("Gutter (in)"), { target: { value: "0.625" } });
+    // the write stores the whole geometry block, mirrored included
+    expect(store().manuscripts[0].bindery!.geometry).toEqual({ gutter: 0.625, mirrored: true });
+  });
+
+  it("opener group drives sink and the opener suppressions", () => {
+    const id = seedBook();
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    openGroup("Chapter openers");
+    expect(screen.getByLabelText("Chapter opener sink")).toBeVisible();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Suppress running head on openers" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Suppress folio on openers" }));
+    expect(store().manuscripts[0].bindery!.opener).toEqual({ sink: 0.18, suppressHead: false, suppressFolio: false });
+  });
+
+  it("front matter group drives half title, copyright fields, epigraph and roman numerals", () => {
+    const id = seedBook();
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    openGroup("Front matter");
+    fireEvent.change(screen.getByLabelText("Copyright year"), { target: { value: "2026" } });
+    fireEvent.change(screen.getByLabelText("Copyright holder"), { target: { value: "Ana Rio" } });
+    fireEvent.change(screen.getByLabelText("ISBN"), { target: { value: "978-85-000000-0-0" } });
+    fireEvent.change(screen.getByLabelText("Edition"), { target: { value: "1ª" } });
+    const epi = screen.getByLabelText("Epigraph");
+    fireEvent.change(epi, { target: { value: "Ao rio." } });
+    fireEvent.blur(epi);
+    fireEvent.click(screen.getByRole("checkbox", { name: "Half title" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Roman numerals" }));
+    const fm = store().manuscripts[0].bindery!.frontMatter!;
+    expect(fm.copyrightInfo).toEqual({ year: "2026", holder: "Ana Rio", isbn: "978-85-000000-0-0", edition: "1ª" });
+    expect(fm.epigraph).toBe("Ao rio.");
+    expect(fm.halfTitle).toBe(false);
+    expect(fm.romanNumerals).toBe(false);
+    expect(screen.getByTestId("bindery-book").innerHTML).toContain("epigraph");
+  });
+
+  it("back matter group drives about-the-author and the colophon", () => {
+    const id = seedBook();
+    // the legacy glossary switch must survive back-matter writes
+    act(() => { store().setBindery(id, { glossary: true }); });
+    const prj = store().manuscripts[0].projectId;
+    act(() => {
+      store().addEntry(prj, "artifact");
+      store().updateEntry(store().entries[0].id, { title: "Coroa de Sarnen", summary: "Coroa perdida no rio." });
+    });
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    openGroup("Back matter");
+    const about = screen.getByLabelText("About the author");
+    fireEvent.change(about, { target: { value: "Ana escreve à beira do rio." } });
+    fireEvent.blur(about);
+    fireEvent.click(screen.getByRole("checkbox", { name: "Colophon" }));
+    const bm = store().manuscripts[0].bindery!.backMatter!;
+    // glossary is deliberately absent — the legacy switch keeps driving it
+    expect(bm).toEqual({ aboutAuthor: "Ana escreve à beira do rio.", colophon: true });
+    const book = screen.getByTestId("bindery-book").innerHTML;
+    expect(book).toContain("about-author");
+    expect(book).toContain("colophon");
+    expect(book).toContain("Glossary");
+  });
+
+  it("scene ornament group drives the ornament between scenes", async () => {
+    const id = seedBook();
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    openGroup("Scene ornament");
+    await pickSelectOptionSync(() => screen.getByLabelText("Scene ornament"), "Fleuron");
+    expect(store().manuscripts[0].bindery!.sceneOrnament).toBe("fleuron");
+  });
+
+  it("a nested write over a partial stored block keeps the default siblings", () => {
+    const id = seedBook();
+    // old saved data: a partial typography block must not shed the defaults
+    act(() => {
+      useScriptorium.setState((s) => ({
+        manuscripts: s.manuscripts.map((m) => (m.id === id
+          ? { ...m, bindery: { ...defaultBindery()!, typography: { bodyPt: 10 } as NonNullable<ReturnType<typeof defaultBindery>>["typography"] } }
+          : m)),
+      }));
+    });
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    openGroup("Body text");
+    fireEvent.change(screen.getByLabelText("Leading (pt)"), { target: { value: "16" } });
+    expect(store().manuscripts[0].bindery!.typography)
+      .toEqual({ bodyPt: 10, leading: 16, indent: 1, justify: true, hyphens: false });
   });
 });
