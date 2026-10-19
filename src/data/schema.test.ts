@@ -161,6 +161,7 @@ describe("manuscript parts and bindery layout blocks", () => {
     expect(validateProjectData(withBindery({ frontMatter: { halfTitle: true, copyright: true, romanNumerals: true, copyrightInfo: null } }))).toBe(false);
     expect(validateProjectData(withBindery({ frontMatter: { halfTitle: true, copyright: true, romanNumerals: true, copyrightInfo: { year: 2024 } } }))).toBe(false);
     expect(validateProjectData(withBindery({ backMatter: { glossary: false, colophon: "no" } }))).toBe(false);
+    expect(validateProjectData(withBindery({ backMatter: { aboutAuthor: "Ana" } }))).toBe(true); // panel writes omit both booleans
     expect(validateProjectData(withBindery({ preset: "gothic" }))).toBe(false);
     expect(validateProjectData(withBindery({ sceneOrnament: "diamond" }))).toBe(false);
   });

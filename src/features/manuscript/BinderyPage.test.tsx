@@ -466,6 +466,20 @@ describe("Bindery preset picker, advanced groups and print hints", () => {
     expect(store().manuscripts[0].bindery!.sceneOrnament).toBe("fleuron");
   });
 
+  it("copyright sub-fields are inert while the copyright page is off", () => {
+    const id = seedBook();
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    openGroup("Front matter");
+    const box = screen.getByRole("checkbox", { name: "Copyright page" });
+    fireEvent.click(box); // off
+    expect(screen.getByLabelText("Copyright year")).toBeDisabled();
+    expect(screen.getByLabelText("Copyright holder")).toBeDisabled();
+    expect(screen.getByLabelText("ISBN")).toBeDisabled();
+    expect(screen.getByLabelText("Edition")).toBeDisabled();
+    fireEvent.click(box); // on again
+    expect(screen.getByLabelText("Copyright year")).toBeEnabled();
+  });
+
   it("a nested write over a partial stored block keeps the default siblings", () => {
     const id = seedBook();
     // old saved data: a partial typography block must not shed the defaults

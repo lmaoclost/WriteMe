@@ -50,10 +50,10 @@ function CheckRow({ label, checked, onChange }: { label: string; checked: boolea
 }
 
 /** Short text field committing on every change; callers trim. */
-function TextRow({ label, value, onCommit }: { label: string; value: string | undefined; onCommit: (v: string) => void }) {
+function TextRow({ label, value, disabled, onCommit }: { label: string; value: string | undefined; disabled?: boolean | undefined; onCommit: (v: string) => void }) {
   return (
     <Field label={label}>
-      <input type="text" aria-label={label} value={value ?? ""} onChange={(e) => onCommit(e.target.value)} />
+      <input type="text" aria-label={label} value={value ?? ""} disabled={disabled} onChange={(e) => onCommit(e.target.value)} />
     </Field>
   );
 }
@@ -114,7 +114,10 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
    *  backMatter writes leave glossary absent so buildBook's legacy-glossary
    *  fallback keeps running from the top-level switch. */
   const setBlock = <K extends NestedBlock>(key: K, patch: Partial<NonNullable<BinderyConfig[K]>>) => {
-    set({ [key]: { ...def[key], ...b[key], ...patch } } as unknown as Partial<BinderyConfig>);
+    const block: NonNullable<BinderyConfig[K]> = { ...def[key], ...b[key], ...patch };
+    const next: Partial<BinderyConfig> = {};
+    next[key] = block;
+    set(next);
   };
   const setInfo = (key: "year" | "holder" | "isbn" | "edition", v: string) =>
     setBlock("frontMatter", { copyrightInfo: { ...fm.copyrightInfo, [key]: v.trim() || undefined } });
@@ -257,10 +260,11 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
             <div className={GROUP_BODY}>
               <CheckRow label="Half title" checked={fm.halfTitle} onChange={(v) => setBlock("frontMatter", { halfTitle: v })} />
               <CheckRow label="Copyright page" checked={fm.copyright} onChange={(v) => setBlock("frontMatter", { copyright: v })} />
-              <TextRow label="Copyright year" value={fm.copyrightInfo?.year} onCommit={(v) => setInfo("year", v)} />
-              <TextRow label="Copyright holder" value={fm.copyrightInfo?.holder} onCommit={(v) => setInfo("holder", v)} />
-              <TextRow label="ISBN" value={fm.copyrightInfo?.isbn} onCommit={(v) => setInfo("isbn", v)} />
-              <TextRow label="Edition" value={fm.copyrightInfo?.edition} onCommit={(v) => setInfo("edition", v)} />
+              {/* the sub-fields only act with the copyright page on */}
+              <TextRow label="Copyright year" value={fm.copyrightInfo?.year} disabled={!fm.copyright} onCommit={(v) => setInfo("year", v)} />
+              <TextRow label="Copyright holder" value={fm.copyrightInfo?.holder} disabled={!fm.copyright} onCommit={(v) => setInfo("holder", v)} />
+              <TextRow label="ISBN" value={fm.copyrightInfo?.isbn} disabled={!fm.copyright} onCommit={(v) => setInfo("isbn", v)} />
+              <TextRow label="Edition" value={fm.copyrightInfo?.edition} disabled={!fm.copyright} onCommit={(v) => setInfo("edition", v)} />
               <TextAreaRow label="Epigraph" rows={3} value={fm.epigraph} onCommit={(v) => setBlock("frontMatter", { epigraph: v })} />
               <CheckRow label="Roman numerals" checked={fm.romanNumerals} onChange={(v) => setBlock("frontMatter", { romanNumerals: v })} />
             </div>

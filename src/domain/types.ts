@@ -99,7 +99,7 @@ export type BinderyConfig = {
     epigraph?: string;
     romanNumerals: boolean;
   };
-  backMatter?: { glossary: boolean; aboutAuthor?: string; colophon: boolean };
+  backMatter?: { glossary?: boolean; aboutAuthor?: string; colophon?: boolean };
   sceneOrnament?: SceneOrnament;
 };
 
