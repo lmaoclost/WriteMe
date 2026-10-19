@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { pickSelectOptionSync } from "../../test/selectHelper";
+import { pickSelectOptionSync, selectOption } from "../../test/selectHelper";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppRouter } from "../../app/router";
 import { useScriptorium } from "../../data/store";
@@ -366,6 +366,126 @@ describe("ManuscriptPage chapters", () => {
     expect(bookOf("A").chapters).toHaveLength(0);
     expect(screen.getByText("Add the first chapter.")).toBeInTheDocument();
     expect(screen.queryByLabelText("Content")).toBeNull();
+  });
+});
+
+describe("ManuscriptPage parts", () => {
+  /** DOM order of the list rows: part headers and chapter rows interleaved. */
+  function partRowOrder(): string[] {
+    const list = screen.getByRole("list", { name: "Chapters" });
+    return Array.from(list.querySelectorAll("li")).map((li) =>
+      li.classList.contains("book-part-row")
+        ? `part:${li.querySelector(".book-part-title")?.textContent ?? ""}`
+        : `chapter:${li.querySelector(".book-ch-heading")?.textContent ?? ""}`);
+  }
+
+  it("groups chapters under their part header and shows a block word count", async () => {
+    const projectId = seedProject();
+    const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Base", content: "um" }] });
+    act(() => {
+      const part = useScriptorium.getState().addPart(book.id, "A Queda")!;
+      const ch = useScriptorium.getState().addChapter(book.id, "Cinzas")!;
+      useScriptorium.getState().updateChapter(ch.id, { content: "uma duas três" });
+      useScriptorium.getState().setChapterPart(ch.id, part.id);
+    });
+    render(manuscriptRoute(projectId));
+    expect(await screen.findByText("A Queda")).toBeInTheDocument();
+    expect(screen.getByTestId("part-words-A Queda")).toHaveTextContent("3 palavras");
+    expect(partRowOrder()).toEqual(["chapter:Base", "part:A Queda", "chapter:Cinzas"]);
+  });
+
+  it("assigns a chapter to a part from the editor", async () => {
+    const projectId = seedProject();
+    const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Um" }] });
+    act(() => {
+      useScriptorium.getState().addPart(book.id, "A Queda");
+    });
+    render(manuscriptRoute(projectId));
+    await selectOption(() => screen.getByLabelText("Part"), "A Queda");
+    expect(bookOf("A").chapters[0].partId).toBeTruthy();
+  });
+
+  it("clears the part assignment through the empty No part option", async () => {
+    const projectId = seedProject();
+    const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Um" }] });
+    act(() => {
+      const part = useScriptorium.getState().addPart(book.id, "A Queda")!;
+      useScriptorium.getState().setChapterPart(book.chapters[0].id, part.id);
+    });
+    render(manuscriptRoute(projectId));
+    await selectOption(() => screen.getByLabelText("Part"), "No part");
+    expect(bookOf("A").chapters[0].partId).toBeUndefined();
+  });
+
+  it("creates, renames and reorders parts from the list", () => {
+    const projectId = seedProject();
+    seedBook(projectId, { title: "A", chapters: [{ heading: "Um" }] });
+    render(manuscriptRoute(projectId));
+    const partTitles = () =>
+      [...(bookOf("A").parts ?? [])].sort((a, b) => a.order - b.order).map((p) => p.title);
+    fireEvent.click(screen.getByRole("button", { name: "New part" }));
+    fireEvent.click(screen.getByRole("button", { name: "New part" }));
+    expect(partTitles()).toEqual(["Untitled Part", "Untitled Part"]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Rename part" })[0]);
+    const titleInput = screen.getByLabelText("Part title");
+    fireEvent.change(titleInput, { target: { value: "A Queda" } });
+    fireEvent.blur(titleInput);
+    expect(partTitles()).toEqual(["A Queda", "Untitled Part"]);
+    const up = screen.getAllByRole("button", { name: "Move part up" });
+    const down = screen.getAllByRole("button", { name: "Move part down" });
+    expect(up[0]).toBeDisabled();
+    expect(down[down.length - 1]).toBeDisabled();
+    fireEvent.click(up[1]);
+    expect(partTitles()).toEqual(["Untitled Part", "A Queda"]);
+  });
+
+  it("sums the chapters' words for the part total", () => {
+    const projectId = seedProject();
+    const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "uma duas três" }] });
+    act(() => {
+      const part = useScriptorium.getState().addPart(book.id, "A Queda")!;
+      const ch = useScriptorium.getState().addChapter(book.id, "Dois")!;
+      useScriptorium.getState().updateChapter(ch.id, { content: "quatro cinco" });
+      useScriptorium.getState().setChapterPart(ch.id, part.id);
+      useScriptorium.getState().setChapterPart(book.chapters[0].id, part.id);
+    });
+    render(manuscriptRoute(projectId));
+    expect(screen.getByTestId("part-words-A Queda")).toHaveTextContent("5 palavras");
+    expect(partRowOrder()).toEqual(["part:A Queda", "chapter:Um", "chapter:Dois"]);
+  });
+
+  it("deletes a part with a two-step confirm and releases its chapters", () => {
+    const projectId = seedProject();
+    const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Um" }, { heading: "Dois" }] });
+    act(() => {
+      const part = useScriptorium.getState().addPart(book.id, "A Queda")!;
+      useScriptorium.getState().setChapterPart(book.chapters[1].id, part.id);
+    });
+    render(manuscriptRoute(projectId));
+    fireEvent.click(screen.getByRole("button", { name: "Delete part" }));
+    expect(screen.getByRole("button", { name: "Confirm?" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Confirm?" }));
+    expect(bookOf("A").parts ?? []).toHaveLength(0);
+    expect(bookOf("A").chapters).toHaveLength(2);
+    expect(bookOf("A").chapters[1].partId).toBeUndefined();
+    expect(partRowOrder()).toEqual(["chapter:Um", "chapter:Dois"]);
+  });
+
+  it("resets the part delete confirmation after 3s", () => {
+    vi.useFakeTimers();
+    const projectId = seedProject();
+    const book = seedBook(projectId, { title: "A" });
+    act(() => {
+      useScriptorium.getState().addPart(book.id, "A Queda");
+    });
+    render(manuscriptRoute(projectId));
+    fireEvent.click(screen.getByRole("button", { name: "Delete part" }));
+    expect(screen.getByRole("button", { name: "Confirm?" })).toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(screen.getByRole("button", { name: "Delete part" })).toBeInTheDocument();
+    vi.useRealTimers();
   });
 });
 

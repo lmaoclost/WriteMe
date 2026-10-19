@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
-import type { Chapter, CustomCalendar } from "../../domain/types";
+import type { Chapter, CustomCalendar, Part } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
@@ -7,6 +7,17 @@ import { renderMarkdown, isHtmlFragment } from "../entries/markdown";
 import { countWords, formatWords } from "./words";
 
 const CONFIRM_RESET_MS = 3000;
+
+/** Radix forbids empty SelectItem values; "none" stands for no part. */
+const NO_PART = "none";
+const NO_PARTS: Part[] = [];
+
+/** The chapter's manuscript parts in print order, for the part selector. */
+function useChapterParts(chapterId: string): Part[] {
+  const parts = useScriptorium((s) =>
+    s.manuscripts.find((m) => m.chapters.some((c) => c.id === chapterId))?.parts ?? NO_PARTS);
+  return useMemo(() => [...parts].sort((a, b) => a.order - b.order), [parts]);
+}
 
 export interface ChapterEditorProps {
   chapterId: string;
@@ -30,6 +41,7 @@ export function markdownToHtml(md: string): string {
 
 export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEditorProps) {
   const chapter = useChapter(chapterId);
+  const parts = useChapterParts(chapter.id);
   const [writing, setWriting] = useState(true);
   const [armed, setArmed] = useState(false);
   const confirmTimerRef = useRef<number | undefined>(undefined);
@@ -156,6 +168,15 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
           onChange={(e) => headingDraft.setDraft(e.target.value)}
           onBlur={flush}
         />
+        <Select value={chapter.partId ?? NO_PART} onValueChange={(v) => useScriptorium.getState().setChapterPart(chapter.id, v === NO_PART ? undefined : v)}>
+          <SelectTrigger aria-label="Part" className="min-w-[150px] justify-between rounded-lg border-line bg-night-2 px-2 py-1.5 text-[13px] text-parchment hover:border-gold data-[size=default]:h-auto">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="border-line bg-night text-parchment">
+            <SelectItem value={NO_PART} className="text-[13px] focus:bg-[#24233f] focus:text-parchment">No part</SelectItem>
+            {parts.map((p) => <SelectItem key={p.id} value={p.id} className="text-[13px] focus:bg-[#24233f] focus:text-parchment">{p.title}</SelectItem>)}
+          </SelectContent>
+        </Select>
         <button
           type="button"
           className="book-mode bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] cursor-pointer hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold"

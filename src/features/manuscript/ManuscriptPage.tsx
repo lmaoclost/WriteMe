@@ -6,6 +6,7 @@ import { undoToastAction } from "../../ui/undoAction";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { ChapterList } from "./ChapterList";
 import { ChapterEditor } from "./ChapterEditor";
+import { bookSections } from "./buildBook";
 import { Button } from "../../ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -69,6 +70,9 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
     () => (book ? [...book.chapters].sort((a, b) => a.order - b.order) : []),
     [book],
   );
+  // The list renders exactly the print plan: ungrouped run first, then one
+  // block per part, both in bookSections order.
+  const sections = useMemo(() => (book ? bookSections(book) : []), [book]);
 
   // Keep the chapter selection pointing at a live chapter; default to the first.
   useEffect(() => {
@@ -180,11 +184,15 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
       <BookInputs key={book.id} manuscript={book} />
       <div className="grid grid-cols-[300px_1fr] min-h-0 pt-3 max-[720px]:grid-cols-1 max-[720px]:grid-rows-[auto_1fr]">
         <ChapterList
-          chapters={chapters}
+          sections={sections}
           selectedId={chapterId}
           onSelect={setChapterId}
           onMove={(id, dir) => useScriptorium.getState().moveChapter(id, dir)}
           onCreate={createChapter}
+          onCreatePart={() => { useScriptorium.getState().addPart(book.id); }}
+          onReorderPart={(id, dir) => useScriptorium.getState().reorderPart(id, dir)}
+          onRenamePart={(id, title) => useScriptorium.getState().renamePart(id, title)}
+          onDeletePart={(id) => useScriptorium.getState().removePart(id)}
         />
         <section className="min-h-0 overflow-y-auto py-1 px-6 pb-[18px] flex flex-col gap-3.5">
           {chapter ? (
