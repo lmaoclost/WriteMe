@@ -87,7 +87,7 @@ export function WorkspaceLayout() {
             ))}
           </div>
         ))}
-        <div className="mt-auto flex items-center justify-between gap-2 pt-2 max-[720px]:mt-0 max-[720px]:ml-auto max-[720px]:pt-0">
+        <div className="mt-auto flex flex-col items-start gap-1 pt-2 max-[720px]:mt-0 max-[720px]:ml-auto max-[720px]:flex-row max-[720px]:items-center max-[720px]:pt-0">
           <LanguageToggle />
           <button
             type="button"
