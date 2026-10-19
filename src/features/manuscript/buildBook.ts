@@ -207,7 +207,9 @@ export function buildBookHtml(manuscript: Manuscript): string {
 /** Colophon font name: the label of the configured stack, or the first
  *  (house) label when the stack is not one of the known ones. */
 function fontLabel(stack: string): string {
-  return BINDERY_FONTS.find((f) => f.stack === stack)?.label ?? BINDERY_FONTS[0].label;
+  const font = BINDERY_FONTS.find((f) => f.stack === stack);
+  if (font?.id === "sans") return i18n.t("bindery.fontSans");
+  return font?.label ?? BINDERY_FONTS[0].label;
 }
 
 /** About the author section: only when the configured bio has content. */

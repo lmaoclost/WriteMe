@@ -13,7 +13,8 @@
       "english": "inglês",
       "portuguese": "português"
     },
-    "confirm": "Confirmar?"
+    "confirm": "Confirmar?",
+    "nothingToUndo": "Nada mais para desfazer."
   },
   "sections": {
     "groups": {
@@ -393,7 +394,8 @@
       "kindNamePlaceholder": "Religião, Moeda, Estação...",
       "kindEmoji": "Emoji do tipo",
       "createKind": "Criar tipo"
-    }
+    },
+    "untitledEntry": "Verbete sem título"
   },
   "timeline": {
     "title": "Cronologia",
@@ -459,7 +461,8 @@
       "title": "Notas",
       "close": "Fechar notas",
       "aria": "Notas da linha do tempo"
-    }
+    },
+    "untitled": "Linha do tempo sem título"
   },
   "categories": {
     "all": "Todos",
@@ -685,7 +688,10 @@
       "house": "Casa {{name}}",
       "memberCount_one": "{{count}} membro",
       "memberCount_other": "{{count}} membros"
-    }
+    },
+    "untitledPerson": "Sem nome",
+    "untitledHouse": "Casa sem nome",
+    "untitled": "Linhagem sem título"
   },
   "factions": {
     "connection": {
@@ -750,7 +756,9 @@
       "title": "Notas",
       "close": "Fechar notas",
       "aria": "Notas da teia"
-    }
+    },
+    "untitledWeb": "Teia de facções sem título",
+    "untitledFaction": "Facção sem título"
   },
   "oaths": {
     "link": {
@@ -833,7 +841,10 @@
       "title": "Notas",
       "close": "Fechar notas",
       "aria": "Notas do quadro"
-    }
+    },
+    "alreadyExists": "Esse juramento já existe entre os dois.",
+    "untitledMember": "Sem nome",
+    "untitled": "Hierarquia de juramentos sem título"
   },
   "calendar": {
     "index": {
@@ -919,7 +930,8 @@
       "events": "Eventos",
       "festivals": "Festivais",
       "notes": "Notas"
-    }
+    },
+    "untitled": "Calendário sem título"
   },
   "plotboard": {
     "index": {
@@ -983,7 +995,8 @@
       "title": "Notas",
       "close": "Fechar notas",
       "aria": "Notas do quadro"
-    }
+    },
+    "untitled": "Quadro de trama sem título"
   },
   "wellspring": {
     "index": {
@@ -1052,7 +1065,8 @@
       "title": "Notas",
       "close": "Fechar notas",
       "aria": "Notas da prancha de ideias"
-    }
+    },
+    "untitled": "Prancha de ideias sem título"
   },
   "conlang": {
     "index": {
@@ -1133,7 +1147,8 @@
       "title": "Notas",
       "close": "Fechar notas",
       "aria": "Notas do idioma"
-    }
+    },
+    "untitled": "Idioma sem título"
   },
   "manuscript": {
     "title": "Manuscrito",
@@ -1214,7 +1229,10 @@
     "words_zero": "sem palavras",
     "words_one": "{{count}} palavra",
     "words_other": "{{count}} palavras",
-    "dayLabel": "{{day}} de {{month}} · Ano {{year}}"
+    "dayLabel": "{{day}} de {{month}} · Ano {{year}}",
+    "untitled": "Manuscrito sem título",
+    "untitledChapter": "Capítulo sem título",
+    "untitledPart": "Parte sem título"
   },
   "bindery": {
     "presetLabel": "Predefinição de estilo",
@@ -1292,7 +1310,8 @@
       "asterism": "Asterismo",
       "fleuron": "Florão",
       "rule": "Régua"
-    }
+    },
+    "fontSans": "Sem serifa"
   },
   "book": {
     "contents": "Sumário",
@@ -1316,5 +1335,13 @@
     "epubError": "Falha ao gerar o EPUB.",
     "docxError": "Falha ao gerar o Word.",
     "slugFallback": "livro"
+  },
+  "import": {
+    "errors": {
+      "invalidJson": "Arquivo não é JSON válido.",
+      "notScriptorium": "Arquivo não é um export do scriptorium.",
+      "unsupportedVersion": "Versão {{version}} não suportada.",
+      "invalidStructure": "Arquivo com estrutura inválida."
+    }
   }
 }

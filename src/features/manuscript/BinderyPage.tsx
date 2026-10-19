@@ -167,7 +167,7 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
             <Select value={b.font} onValueChange={(v) => set({ font: v })}>
               <SelectTrigger aria-label={t("bindery.typography")} className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
               <SelectContent className="border-line bg-night text-parchment">
-                {BINDERY_FONTS.map((f) => <SelectItem key={f.id} value={f.stack} className="text-xs focus:bg-[#24233f] focus:text-parchment">{f.label}</SelectItem>)}
+                {BINDERY_FONTS.map((f) => <SelectItem key={f.id} value={f.stack} className="text-xs focus:bg-[#24233f] focus:text-parchment">{f.id === "sans" ? t("bindery.fontSans") : f.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </Field>

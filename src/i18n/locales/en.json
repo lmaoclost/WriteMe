@@ -13,7 +13,8 @@
       "english": "English",
       "portuguese": "Portuguese"
     },
-    "confirm": "Confirm?"
+    "confirm": "Confirm?",
+    "nothingToUndo": "Nothing left to undo."
   },
   "sections": {
     "groups": {
@@ -393,7 +394,8 @@
       "kindNamePlaceholder": "Religion, Currency, Season...",
       "kindEmoji": "Kind emoji",
       "createKind": "Create kind"
-    }
+    },
+    "untitledEntry": "Untitled entry"
   },
   "timeline": {
     "title": "Chronology",
@@ -459,7 +461,8 @@
       "title": "Notes",
       "close": "Close notes",
       "aria": "Timeline notes"
-    }
+    },
+    "untitled": "Untitled Timeline"
   },
   "categories": {
     "all": "All",
@@ -685,7 +688,10 @@
       "house": "House {{name}}",
       "memberCount_one": "{{count}} member",
       "memberCount_other": "{{count}} members"
-    }
+    },
+    "untitledPerson": "Unnamed",
+    "untitledHouse": "Untitled House",
+    "untitled": "Untitled Bloodline"
   },
   "factions": {
     "connection": {
@@ -750,7 +756,9 @@
       "title": "Notes",
       "close": "Close notes",
       "aria": "Web notes"
-    }
+    },
+    "untitledWeb": "Untitled Faction Web",
+    "untitledFaction": "Untitled Faction"
   },
   "oaths": {
     "link": {
@@ -833,7 +841,10 @@
       "title": "Notes",
       "close": "Close notes",
       "aria": "Chart notes"
-    }
+    },
+    "alreadyExists": "That oath already exists between the two.",
+    "untitledMember": "Unnamed",
+    "untitled": "Untitled Oaths Hierarchy"
   },
   "calendar": {
     "index": {
@@ -919,7 +930,8 @@
       "events": "Events",
       "festivals": "Festivals",
       "notes": "Notes"
-    }
+    },
+    "untitled": "Untitled Calendar"
   },
   "plotboard": {
     "index": {
@@ -983,7 +995,8 @@
       "title": "Notes",
       "close": "Close notes",
       "aria": "Board notes"
-    }
+    },
+    "untitled": "Untitled Plot Board"
   },
   "wellspring": {
     "index": {
@@ -1052,7 +1065,8 @@
       "title": "Notes",
       "close": "Close notes",
       "aria": "Idea board notes"
-    }
+    },
+    "untitled": "Untitled Wellspring"
   },
   "conlang": {
     "index": {
@@ -1133,7 +1147,8 @@
       "title": "Notes",
       "close": "Close notes",
       "aria": "Language notes"
-    }
+    },
+    "untitled": "Untitled Conlang"
   },
   "manuscript": {
     "title": "Manuscript",
@@ -1214,7 +1229,10 @@
     "words_zero": "no words",
     "words_one": "{{count}} word",
     "words_other": "{{count}} words",
-    "dayLabel": "{{day}} of {{month}} · Year {{year}}"
+    "dayLabel": "{{day}} of {{month}} · Year {{year}}",
+    "untitled": "Untitled Manuscript",
+    "untitledChapter": "Untitled Chapter",
+    "untitledPart": "Untitled Part"
   },
   "bindery": {
     "presetLabel": "Style preset",
@@ -1292,7 +1310,8 @@
       "asterism": "Asterism",
       "fleuron": "Fleuron",
       "rule": "Rule"
-    }
+    },
+    "fontSans": "Sans serif"
   },
   "book": {
     "contents": "Contents",
@@ -1316,5 +1335,13 @@
     "epubError": "Failed to generate the EPUB.",
     "docxError": "Failed to generate the Word file.",
     "slugFallback": "book"
+  },
+  "import": {
+    "errors": {
+      "invalidJson": "The file is not valid JSON.",
+      "notScriptorium": "The file is not a Scriptorium export.",
+      "unsupportedVersion": "Version {{version}} is not supported.",
+      "invalidStructure": "The file structure is invalid."
+    }
   }
 }
