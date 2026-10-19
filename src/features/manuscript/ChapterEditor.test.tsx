@@ -194,4 +194,24 @@ describe("ChapterEditor rich", () => {
     expect(ch.linkedCalendarId).toBe(cal.id);
     expect(ch.calendarDayKey).toBe("0:2:4"); // dia 5 humano = índice 4
   });
+
+  it("sanitizes stored chapter HTML before it reaches the editor DOM", () => {
+    seedMS();
+    const chId = store().manuscripts[0].chapters[0].id;
+    act(() => { store().updateChapter(chId, { content: '<p>ok</p><img src="x" onerror="window.__pwned=1">' }); });
+    render(<ChapterEditor chapterId={chId} onDeleted={() => {}} />);
+    const body = document.querySelector('[data-testid="rich-body"]') as HTMLElement;
+    expect(body.innerHTML).not.toContain("onerror");
+    expect(body.querySelector("img")).toBeNull();
+  });
+
+  it("sanitizes stored note HTML before it reaches the editor DOM", () => {
+    seedMS();
+    const chId = store().manuscripts[0].chapters[0].id;
+    act(() => { store().updateChapter(chId, { noteTop: '<img src="y" onerror="window.__pwned=1">' }); });
+    render(<ChapterEditor chapterId={chId} onDeleted={() => {}} />);
+    const note = screen.getByTestId("rich-note-top") as HTMLElement;
+    expect(note.innerHTML).not.toContain("onerror");
+    expect(note.querySelector("img")).toBeNull();
+  });
 });

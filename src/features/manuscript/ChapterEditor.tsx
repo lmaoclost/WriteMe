@@ -5,7 +5,7 @@ import type { Chapter, CustomCalendar, Part } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
-import { renderMarkdown, isHtmlFragment } from "../entries/markdown";
+import { renderMarkdown, sanitizeFragment, isHtmlFragment } from "../entries/markdown";
 import { countWords, formatWords } from "./words";
 
 const CONFIRM_RESET_MS = 3000;
@@ -37,8 +37,7 @@ export function useChapter(chapterId: string): Chapter {
 /** Convert legacy/typed markdown into rich-editor HTML (one-way, on first edit). */
 export function markdownToHtml(md: string): string {
   if (typeof document === "undefined") return md;
-  const doc = new DOMParser().parseFromString(md ?? "", "text/html");
-  return doc.body ? doc.body.innerHTML : "";
+  return sanitizeFragment(md ?? "");
 }
 
 export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEditorProps) {
@@ -96,7 +95,9 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
   useEffect(() => {
     // chapter switched (unkeyed) -> reset local html
     richDirtyRef.current = false;
-    if (/^\s*</.test(chapter.content)) setRichHtml(chapter.content);
+    // rich-editor HTML is user/import data (backup JSON, .docx) — sanitize
+    // before it reaches the live contenteditable DOM, same as the preview path
+    if (isHtmlFragment(chapter.content)) setRichHtml(sanitizeFragment(chapter.content));
     else setRichHtml(renderMarkdown(chapter.content) || "");
   }, [chapter.id, chapter.content]);
 
@@ -117,7 +118,7 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
     return () => {
       window.clearTimeout(richTimer.current);
       if (richDirtyRef.current && el) {
-        useScriptorium.getState().updateChapter(chId, { content: el.innerHTML });
+        useScriptorium.getState().updateChapter(chId, { content: sanitizeFragment(el.innerHTML) });
       }
     };
   }, [chapter.id]);
@@ -129,8 +130,9 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
     window.clearTimeout(richTimer.current);
     if (!richDirtyRef.current || !bodyRef.current) return;
     richDirtyRef.current = false;
-    useScriptorium.getState().updateChapter(chapter.id, { content: bodyRef.current.innerHTML });
-    setRichHtml(bodyRef.current.innerHTML);
+    const html = sanitizeFragment(bodyRef.current.innerHTML);
+    useScriptorium.getState().updateChapter(chapter.id, { content: html });
+    setRichHtml(html);
   };
   const scheduleRichCommit = () => {
     window.clearTimeout(richTimer.current);
@@ -460,7 +462,7 @@ function RichNoteField({ testid, ariaLabel, placeholder, value, onCommit }: {
   useEffect(() => {
     const el = ref.current;
     if (el && !dirtyRef.current && el.innerHTML !== value) {
-      el.innerHTML = isHtmlFragment(value) ? value : (value.trim() ? renderMarkdown(value.trim()) : "");
+      el.innerHTML = isHtmlFragment(value) ? sanitizeFragment(value) : (value.trim() ? renderMarkdown(value.trim()) : "");
     }
   }, [value]);
 
@@ -469,7 +471,7 @@ function RichNoteField({ testid, ariaLabel, placeholder, value, onCommit }: {
     const el = ref.current;
     if (!dirtyRef.current || !el) return;
     dirtyRef.current = false;
-    onCommit(el.innerHTML.trim());
+    onCommit(sanitizeFragment(el.innerHTML).trim());
   };
   const schedule = () => {
     window.clearTimeout(timer.current);
@@ -480,7 +482,7 @@ function RichNoteField({ testid, ariaLabel, placeholder, value, onCommit }: {
     const el = ref.current;
     return () => {
       window.clearTimeout(timer.current);
-      if (dirtyRef.current && el) onCommit(el.innerHTML.trim());
+      if (dirtyRef.current && el) onCommit(sanitizeFragment(el.innerHTML).trim());
     };
   }, []);
 

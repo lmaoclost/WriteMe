@@ -26,7 +26,7 @@ export function renderWithLinks(body: string, entries: WorldEntry[]): string {
   try {
     html = marked.parse(body ?? "", { async: false }) as string;
   } catch {
-    return body ?? "";
+    return escapeHtml(body ?? "");
   }
   // mark.wikilink-style: escape happens in the parser; [[Title]] stays literal
   // text (with &-escapes) — replace occurrences with anchor markup.

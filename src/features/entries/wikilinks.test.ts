@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { marked } from "marked";
 import { parseWikilinks, renderWithLinks, resolveWikilink, escapeHtml } from "./wikilinks";
 import type { EntryCategory, WorldEntry } from "../../domain/types";
 
@@ -54,6 +55,13 @@ describe("renderWithLinks", () => {
     const html = renderWithLinks("[[Casa v]] é ambíguo", entries);
     expect(html).toContain("Casa v");
     expect(html).not.toContain("data-entry-link");
+  });
+
+  it("escapes the raw body when the markdown parser throws", () => {
+    const spy = vi.spyOn(marked, "parse").mockImplementation(() => { throw new Error("boom"); });
+    expect(renderWithLinks('<img src=x onerror="window.__pwned=1">', entries))
+      .toBe('&lt;img src=x onerror="window.__pwned=1"&gt;');
+    spy.mockRestore();
   });
 
   it("titles with quotes are escaped in attributes", () => {

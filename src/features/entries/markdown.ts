@@ -11,9 +11,15 @@ const ALLOWED = new Set([
 const KEEP_ATTRS: Record<string, Set<string>> = {
   A: new Set(["title", "class", "data-entry-link"]),
   IMG: new Set(["src", "alt"]),
-  DIV: new Set(["align"]),
+  DIV: new Set(["align", "style"]),
   SPAN: new Set(["class", "aria-hidden"]),
 };
+// execCommand's justify* commands write `style="text-align: …"` on the block
+// element; keep that one declaration (and align on div) so editor alignment
+// survives a reload without letting arbitrary CSS through.
+const STYLE_BLOCKS = ["P", "H1", "H2", "H3", "H4", "H5", "H6", "BLOCKQUOTE", "LI"];
+for (const tag of STYLE_BLOCKS) KEEP_ATTRS[tag] = new Set(["align", "style"]);
+const TEXT_ALIGN_VALUES = new Set(["left", "center", "right", "justify"]);
 const DATA_IMAGE_RE = /^data:image\//;
 const TEXT_NODE = 3;
 const ELEMENT_NODE = 1;
@@ -27,11 +33,30 @@ function escapeHtml(text: string): string {
     .replaceAll("'", "&#39;");
 }
 
+/** Only `text-align` with a fixed keyword survives; every other declaration
+ *  (and any malformed one) is dropped. */
+function sanitizeStyle(value: string): string {
+  const decls: string[] = [];
+  for (const part of value.split(";")) {
+    const i = part.indexOf(":");
+    if (i < 0) continue;
+    const prop = part.slice(0, i).trim().toLowerCase();
+    const val = part.slice(i + 1).trim().toLowerCase();
+    if (prop === "text-align" && TEXT_ALIGN_VALUES.has(val)) decls.push(`text-align: ${val}`);
+  }
+  return decls.join("; ");
+}
+
 function attributeString(el: Element, keep: Set<string>): string {
   let out = "";
   for (const name of keep) {
-    const value = el.getAttribute(name);
-    if (value !== null) out += ` ${name.toLowerCase()}="${escapeHtml(value)}"`;
+    let value = el.getAttribute(name);
+    if (value === null) continue;
+    if (name === "style") {
+      value = sanitizeStyle(value);
+      if (!value) continue;
+    }
+    out += ` ${name.toLowerCase()}="${escapeHtml(value)}"`;
   }
   return out;
 }
