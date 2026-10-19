@@ -164,7 +164,7 @@ export function useDraw({ atlasId, transformApi, tool, mode, onFinish }: UseDraw
     );
   }, []);
 
-  /** legacy confirmCarve: child committed, parent trimmed to the opposite walk
+  /** confirmCarve: child committed, parent trimmed to the opposite walk
    *  when the user path lies inside it (never trims in neighbor mode). */
   const confirmCarve = useCallback((): Region | null => {
     const preview = previewRef.current;
@@ -234,10 +234,10 @@ export function useDraw({ atlasId, transformApi, tool, mode, onFinish }: UseDraw
       if (previewRef.current) {
         return confirmCarve() !== null;
       }
-      // No border parent: legacy falls back to free drawing → normal finish.
+      // No border parent: fall back to free drawing → normal finish.
       if (!entryRef.current) return finishRegion() !== null;
       // Armed entry without a snapped exit must not be a silent dead end (S2):
-      // legacy §7 toast fires and the carve stays armed for a better exit click.
+      // The toast fires and the carve stays armed for a better exit click.
       useScriptorium.getState().pushToast("error", "Move the endpoints to the parent region's edge.");
       return false;
     }

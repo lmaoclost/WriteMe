@@ -33,7 +33,7 @@ export interface PinHoverState {
   stage: { w: number; h: number };
 }
 
-/** Stage-space pin position (legacy pinStyle): the DOM layer renders inside the
+/** Stage-space pin position: the DOM layer renders inside the
  *  transform wrapper with a counter-transform, so panX/imgW/scale here make
  *  the offsets exactly the on-screen stage coordinates. */
 export function pinStyle(pin: Pin, transformApi: TransformApi): CSSProperties {

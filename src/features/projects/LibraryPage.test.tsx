@@ -13,9 +13,8 @@ function wrap() {
   );
 }
 
-const FORGE_NAMES = [
-  "Codex", "Atlas", "Calendar", "Plot board",
-  "Bloodline", "Manuscript", "Bindery Scriptorium",
+const SURFACE_NAMES = [
+  "Lore", "Atlas", "Calendar", "Plot board", "Bloodline", "Manuscript", "Publishing",
 ];
 
 beforeEach(() => {
@@ -32,7 +31,7 @@ describe("LibraryPage hub", () => {
 
   it("forge panels are gone: the library only lists worlds", () => {
     render(wrap());
-    FORGE_NAMES.forEach((f) => expect(screen.queryByText(f)).toBeNull());
+    SURFACE_NAMES.forEach((f) => expect(screen.queryByText(f)).toBeNull());
   });
 
   it("site nav is gone: no chronicles/updates/settings/profile links", () => {

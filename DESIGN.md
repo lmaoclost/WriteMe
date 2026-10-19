@@ -1,6 +1,6 @@
 ---
 name: Scriptorium
-description: Local-first worldbuilding and writing studio — an archivist's take on Scriptorium
+description: Local-first worldbuilding and writing studio with an archivist's visual language
 colors:
   ink: "#1a1a2e"
   night: "#16162a"

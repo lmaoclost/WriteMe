@@ -1,4 +1,4 @@
-/** .docx import/export for chapters — consistency with the legacy Manuscript. */
+/** .docx import/export for chapters. */
 
 import { AlignmentType, HeadingLevel, LineRuleType, Paragraph, TextRun, convertInchesToTwip } from "docx";
 import type { IParagraphStyleOptions, IStylesOptions } from "docx";

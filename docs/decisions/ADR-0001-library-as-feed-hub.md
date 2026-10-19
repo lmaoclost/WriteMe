@@ -15,7 +15,7 @@ The Library (`/`) was a mixed surface: PT copy, project launcher, and navigation
 
 ## Consequences
 - Library is no longer a bare launcher; it is the hub. Project OverviewPage keeps its own dashboard structure.
-- "Bloodline" double card introduces one asymmetry in the grid (8 clickable targets in 7 cards).
+- The Bloodline + Oaths double card introduces one asymmetry in the grid (8 clickable targets in 7 cards).
 - i18n migration touches all feature folders; toasts/modals included.
 - The demo-load button only exists in the empty state; with worlds present, demo has no surface (unchanged from today).
 

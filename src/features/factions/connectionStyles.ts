@@ -1,6 +1,6 @@
 export interface ConnectionStyle { label: string; color: string; dashArray: string }
 
-// legacy relationship types: Ally/Rival/Vassal/Trade/Neutral with the bundle colors.
+// Relationship types: Ally/Rival/Vassal/Trade/Neutral with their colors.
 export const FACTION_CONNECTION_STYLES: Record<string, ConnectionStyle> = {
   ally: { label: "Ally", color: "#27ae60", dashArray: "" },
   rival: { label: "Rival", color: "#e74c3c", dashArray: "8 4" },

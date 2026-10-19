@@ -21,7 +21,7 @@ describe("categories module", () => {
     }
   });
 
-  it("Character template matches the legacy field list", () => {
+  it("Character template matches the configured field list", () => {
     const sections = templateSections("character");
     const labels = sections.flatMap((s) => s.fields.map((f) => f.label));
     expect(labels).toEqual(expect.arrayContaining(["Identity", "Titles", "Appearance", "Personality", "Voice", "Goals & Motivations", "Abilities", "Affiliations", "Relationships", "Equipment", "Backstory"]));

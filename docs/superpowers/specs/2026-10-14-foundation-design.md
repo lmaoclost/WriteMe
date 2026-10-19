@@ -62,10 +62,10 @@ type Chapter   = { id, heading, content (md), order }
 
 Regras:
 
-- IDs: `"<ente>_" + random`, idênticos ao esquema  (`pin_x1y2z3`).
+- IDs: `"<ente>_" + random`, (`pin_x1y2z3`).
 - Coordenadas do atlas já nascem normalizadas (0–1) para casar com o sub-projeto 2.
 - `imageKey`/`coverImageKey` resolvem dataUrls num mapa próprio da store (`images: Record<string, string>`).
-- Upload de imagem: resize por canvas para um cap de 2048px no lado maior, qualidade 0.9, PNG só quando há alpha — a mesma política do `compressMapImage` . Alvo: dataUrl ≤ ~1MB por imagem.
+- Upload de imagem: resize por canvas para um cap de 2048px no lado maior, qualidade 0.9, PNG só quando há alpha — a política do `compressMapImage`. Alvo: dataUrl ≤ ~1MB por imagem.
 - Deleção de projeto é confirmada por modal e remove em cascata (entries, atlases, manuscripts, imagens órfãs).
 
 ## 6. Persistência e versões

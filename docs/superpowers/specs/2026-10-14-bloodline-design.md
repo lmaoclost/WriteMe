@@ -1,7 +1,7 @@
 # Scriptorium — Bloodline Design (sub-projeto 5b)
 
 Data: 2026-10-14
-> Status 2026-10-14: Bloodline implementado (tasks 1–5). Notas: `familyColors`  fica fora (cores por casa = 2 flags); notepad position ephemeral.
+> Status 2026-10-14: Bloodline implementado (tasks 1–5). Notas: `familyColors` fica fora (cores por casa = 2 flags); notepad position ephemeral.
 Escopo: canvas livre editável de genealogia com Casas, Persons, conexões parent/partner/sibling, notepad flutuante, find, undo, cores de família.
 
 ## 1. Modelo (schema v2)
@@ -39,7 +39,7 @@ type Bloodline = { id; projectId; name: string; persons: BloodlinePerson[]; hous
 
 ## 3. Painel person (direita)
 
-name, suffix, portrait (upload fileToDataUrl), title, relationship, bio, birth/death date, additionalTitles (add/remove), tenures (label dropdown 6 labels  + from/to), badge (checkbox + text), conexões: parent picker (persons atuais), partner picker, sibling picker + birthOrder number + isTwin checkbox. Undo em cada commit — padrão pushHistory do atlas (história por bloodline: idem ephemeral).
+name, suffix, portrait (upload fileToDataUrl), title, relationship, bio, birth/death date, additionalTitles (add/remove), tenures (label dropdown 6 labels + from/to), badge (checkbox + text), conexões: parent picker (persons atuais), partner picker, sibling picker + birthOrder number + isTwin checkbox. Undo em cada commit — padrão pushHistory do atlas (história por bloodline: idem ephemeral).
 
 ## 4. Store
 
@@ -60,4 +60,4 @@ name, suffix, portrait (upload fileToDataUrl), title, relationship, bio, birth/d
 
 ## 7. Fora de escopo
 
-Themes (white/dark ), export imagem do canvas, guest mode, register dropdown, twin-dots na linha.
+Themes (white/dark), export imagem do canvas, guest mode, register dropdown, twin-dots na linha.

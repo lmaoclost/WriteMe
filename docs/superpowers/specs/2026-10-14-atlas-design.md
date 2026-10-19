@@ -46,7 +46,7 @@ História por atlas: `undoStack/redoStack` (cap 50) com snapshot `{regions, pins
 **Draw (region)**: cliques adicionam vértices (`drawVertices`); preview: polígono atual + linha do cursor; close: clique ≤14px do primeiro vértice (screen px), **Enter**, ou dblclick → `finishRegion` (region tool) / `attemptFinishRegion` com carve path. Escape → `cancelDraw`. Cursor exibido com o último ponto carregado. `drawCursor`/`carveSnapPoint` atualizam em mousemove quando borderShare.
 
 **Carve/vizinho/fit** (toggle trio mutuamente exclusivo, conforme especificado):
-- **carve**: desenha sobre uma região maior detectada (`detectCarveParent`: região contendo primeiro vértice, menor área ganha). Extremos snapam; `carvePreview` mostra `carvePreviewPoints` (useForward/backward); botões "usar outro lado"/"descartar"; confirm: child criado com `buildCarveChild(..., forward|backward)`; quando `inside` o **pai é trimado** com o caminho oposto (`parent.points = backward`) — igual `confirmCarve` . O caminho `unionMode`  (união de shapes via borda) NÃO entra nesta fase — carve trima pai, neighbor não; simplificação registrada.
+- **carve**: desenha sobre uma região maior detectada (`detectCarveParent`: região contendo primeiro vértice, menor área ganha). Extremos snapam; `carvePreview` mostra `carvePreviewPoints` (useForward/backward); botões "usar outro lado"/"descartar"; confirm: child criado com `buildCarveChild(..., forward|backward)`; quando `inside` o **pai é trimado** com o caminho oposto (`parent.points = backward`) — igual `confirmCarve`. O caminho `unionMode` (união de shapes via borda) NÃO entra nesta fase — carve trima pai, neighbor não; simplificação registrada.
 - **neighbor**: borderShare com a região mais próxima (`regionNearestToPoint`), sem trim; child pode sair do lado de fora.
 - **fit**: desenho livre; confirm → `difference(desenho, todasAsRegiões)` via polygon-clipping; maior área resultante vira a região ("region fitted to its neighbors — name it" toast).
 
@@ -79,7 +79,7 @@ Seed de Foundation ganha +2 regiões esculpidas por carve? Não — o seed já t
 - Imagem grande demais/quota: try/catch putImage → toast "Não coube no armazenamento local." (storage adapter já ignora setItem falho — o putMap confere `storageHealth().bytes` delta? Simples: re-ler images[key] após put; undefined → rollback + toast).
 - Região desenhada área <1e-5 → descartada com toast.
 - polygon-clipping failure → toast "Não consegui calcular os encaixes." — estado intacto.
-- Carve sem extremos na borda → toast  ("extremidades na borda do Estado").
+- Carve sem extremos na borda → toast ("extremidades na borda do Estado").
 
 ## 8. Testes (TDD)
 
@@ -91,4 +91,4 @@ Seed de Foundation ganha +2 regiões esculpidas por carve? Não — o seed já t
 
 ## 9. Fora de escopo
 
-Temas de atlas (white/dark ), publicação/slugs/público (sem server), claim "No un-regioned area" por estado (claim entra mas o copy exato pode variar), export do atlas como PNG (posso pôr em extras 5), version history UI .
+Temas de atlas (white/dark), publicação/slugs/público (sem server), claim "No un-regioned area" por estado (claim entra mas o copy exato pode variar), export do atlas como PNG (posso pôr em extras 5), version history UI.

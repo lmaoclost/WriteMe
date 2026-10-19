@@ -1,7 +1,7 @@
 # Scriptorium — Cronologia Design (sub-projeto 5a)
 
 Data: 2026-10-14
-Escopo: timeline REAL de eventos — o `GregorianTimeline`  é um form sem persistência (stub); o nosso tem valor funcional: eventos do códex, datas opcionais, ordenação, navegação. Compatível com os outros extras do roadmap (Bloodline, Factions, Calendar custom).
+Escopo: timeline REAL de eventos — o `GregorianTimeline` é um form sem persistência (stub); o nosso tem valor funcional: eventos do códex, datas opcionais, ordenação, navegação. Compatível com os outros extras do roadmap (Bloodline, Factions, Calendar custom).
 
 ## 1. Modelo (schema v1 + campo opcional)
 

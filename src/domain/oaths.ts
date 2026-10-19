@@ -1,6 +1,6 @@
 import type { OathMember, OathLink } from "../domain/types";
 
-/** tidyOathsChart: layered tree (tidyChart consistency). Roots = members that are
+/** tidyOathsChart: layered tree. Roots = members that are
  *  nobody's subordinate. Children spread horizontally under their superior.
  *  Positions are absolute canvas px and RECOMPUTED on every structural change —
  *  manual drag does not exist for oaths (the chart stays tidy). */

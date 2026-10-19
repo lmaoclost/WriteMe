@@ -6,8 +6,8 @@ Chronicles is the only page still rendering the light-lilac sub-brand (`#ede7f6`
 ## Decision
 1. Full Archivist migration: ink background, night-2 manuscript cards with hairline borders, Archivist chips/pills/tokens, status pills colored from the existing status palette (validated ≥3:1 on panel), warnings as tokens.
 2. Hero: large wax seal ("C") + "Chronicles" wordmark in Fraunces (replacing the plain-text hero).
-3. Header keeps the site-pills structure (Chronicles active · Scriptorium · Codex) and gains a right-side user cluster — avatar/initial + username linking to `/profile` — only when a username exists.
-4. Parity micro-fixes land with the migration: small-caps group labels (STATUS / GENRES / TAGS) in the filter row, "HIDE WARNINGS" uppercase, leading magnifier in the search input.
+3. Header gains a right-side user cluster — avatar/initial + username linking to `/profile` — only when a username exists.
+4. Visual micro-fixes land with the migration: small-caps group labels (STATUS / GENRES / TAGS) in the filter row, "HIDE WARNINGS" uppercase, leading magnifier in the search input.
 5. Functional behavior (search, status filter, genre/tag dropdowns with counts, warning toggle chips) unchanged.
 
 ## Consequences

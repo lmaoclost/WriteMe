@@ -10,21 +10,21 @@ One human-facing name per surface, aligned to function. Routes, keys, folder and
 |---|---|---|
 | `/p/:id/entries` | Codex (all) | Lore |
 | `/p/:id/timeline` | Timeline / *missing* / — | Chronology |
-| `/p/:id/linewheel` | Timeline canvas / Timeline wheel / Calendar | Timeline |
+| `/p/:id/linewheel` | Timeline canvas / Timeline wheel / — | Timeline |
 | `/p/:id/wellspring` | Wellspring / Wellspring / The Wellspring | Ideas (entity: "idea board") |
 | `/p/:id/conlang` | Conlang (all) | Language |
 | `/p/:id/bindery` | Bindery (all) | Publishing |
-| `/p/:id/atlas` | Atlas / Atlas / Atlas | Atlas |
-| `/p/:id/bloodline` | Bloodline / Bloodline / Bloodline | Bloodline |
-| `/p/:id/plotboard` | Plot board / Plot board / Plot board | Plot board |
+| `/p/:id/atlas` | Atlas / Atlas / — | Atlas |
+| `/p/:id/bloodline` | Bloodline / Bloodline / — | Bloodline |
+| `/p/:id/plotboard` | Plot board / Plot board / — | Plot board |
 | `/p/:id/factions` | Factions / Factions / Faction Webs | Factions |
-| `/p/:id/calendar` | Calendar / Calendar / Calendar | Calendar |
+| `/p/:id/calendar` | Calendar / Calendar / — | Calendar |
 | `/p/:id/oaths` | Oaths / Oaths / Oaths Hierarchy | Oaths (entity: "oath chart") |
 
 - Modal confirm "Forge" → "Create"; "Forge New X" → "New X".
 - PT copy sweep same day: toasts, aria labels, tool labels (Neighbor/Fit), placeholders and block menu went full EN across ui, atlas, bloodline, entries, manuscript, oaths, timelinecanvas and the store. Test data and comments keep PT (data is user content; comments are dev-facing).
 - New ledger row "Chronology" (counter: entries with a valid date) — the row was missing while the rail had the page.
-- Scriptorium brand vocabulary stays only in history docs and export strings; UI copy is plain English.
+- UI copy is plain English; section names follow this glossary.
 
 ## Consequences
 - Tests asserting old labels/counters updated (Overview, TimelinePage, ConlangPage, index modals across features).

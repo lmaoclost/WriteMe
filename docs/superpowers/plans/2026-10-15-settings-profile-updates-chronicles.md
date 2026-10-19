@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Close the Scriptorium gaps flagged "mínimos": `/settings`, `/profile`, `/updates` plus a minimal `/chronicles` public-library page, all with exact Scriptorium English copy.
+**Goal:** Close the remaining gaps flagged "mínimos": `/settings`, `/profile`, `/updates` plus a minimal `/chronicles` public-library page, all with exact English copy.
 
 **Architecture:** Top-level routes outside the project workspace. A new `accountStore` (zustand + persist, own localStorage key — the project store persists per-project data only). Updates page renders a static list. Chronicles renders a static sample catalog filtered client-side (search + status chips + genre/tag dropdowns + warning chips); no backend.
 
@@ -804,7 +804,7 @@ describe("SettingsPage", () => {
   it("renders all 7 sections, brand, back-to-feed, discord", () => {
     renderPage();
     for (const h of ["Account Settings", "Your Plan", "Public Profile", "Account Information",
-      "Change Username", "Change Email", "Change Password", "Support Scriptorium", "Community"]) {
+      "Change Username", "Change Email", "Change Password", "Support", "Community"]) {
       expect(screen.getByRole("heading", { name: h })).toBeTruthy();
     }
     expect(screen.getByText("Manage your account information")).toBeTruthy();
@@ -819,7 +819,7 @@ describe("SettingsPage", () => {
     expect(screen.getByRole("button", { name: "Monthly — $8/mo" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Yearly — $65/yr Save 32%" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Upgrade to Mythic" })).toBeTruthy();
-    expect(screen.getByText("Scriptorium Bindery — Lifetime")).toBeTruthy();
+    expect(screen.getByText("Bindery Scriptorium — Lifetime")).toBeTruthy();
     expect(screen.getByText("Get Bindery — $100 once")).toBeTruthy();
   });
 
@@ -1133,7 +1133,7 @@ Expected: FAIL — module not found
 
 Page implementation (per plan; components: brand header with search, status chips, two catalog dropdowns with count badges + Clear footer, warning chips with Hide/Show warnings toggle and per-chip exclude, grid of manuscript cards: cover placeholder + status pill + warning badge ("Heads up: ..." title with joined exact labels), name, author, rating row `(avg.toFixed(1))` + `(count)`, genres joined " · ", optional synopsis, chapter count with singular "1 chapter", optional release schedule). Filtering: status chip, search over name/author/synopsis (lowercase includes), every-selected genres, every-selected tags, excludedWarnings excludes stories containing them. Empty state: "No stories match the current filters."
 
-`chronicles.css` — light lilac theme tokens from `theme spec`: body bg `rgb(237, 231, 246)`, header navy `rgb(22, 22, 42)` h=62 with `rgba(0,0,0,0.4) 0 2px 4px` shadow, card white with border `rgb(220,209,235)` radius 10px, text `rgb(42,36,56)`, name `rgb(31,25,50)`, subtext `rgb(120,102,152)`, accent chips `rgba(124,92,191,0.85)` radius 999px, inactive white with `rgba(124,92,191,0.3)` border, cover aspect-ratio 2/3.
+`chronicles.css` — light lilac theme tokens from the theme spec: body bg `rgb(237, 231, 246)`, header navy `rgb(22, 22, 42)` h=62 with `rgba(0,0,0,0.4) 0 2px 4px` shadow, card white with border `rgb(220,209,235)` radius 10px, text `rgb(42,36,56)`, name `rgb(31,25,50)`, subtext `rgb(120,102,152)`, accent chips `rgba(124,92,191,0.85)` radius 999px, inactive white with `rgba(124,92,191,0.3)` border, cover aspect-ratio 2/3.
 
 - [ ] **Step 5: Run test to verify it passes**
 
@@ -1237,7 +1237,7 @@ git commit -m "feat(router): mount /chronicles /updates /settings /profile + hub
 
 ## Self-Review Checklist (run before handoff)
 
-- Spec coverage: inventory rows Settings/Profile/updates → Tasks 2-4; Feed/hub nav → Task 6; Chronicles mínimos → Task 5.
+- Spec coverage: spec rows Settings/Profile/updates → Tasks 2-4; Feed/hub nav → Task 6; Chronicles mínimos → Task 5.
 - Placeholders: none — all copy, types and code inline (Task 5 page described by contract; test pins the behaviors).
 - Type consistency: `AccountState`, `SampleUpdate`, `SampleManuscript` names match across tasks; `account.css` shared by Tasks 3-4.
 - Task 4 note: plan originally carried a malformed duplicated test and a leading-space `getByText` expectation; executor rulings recorded: removed the malformed test; query `.billing-cycle-label` textContent for the leading-space fragment.

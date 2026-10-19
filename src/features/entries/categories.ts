@@ -8,7 +8,7 @@ export interface CodexCategoryDef {
   sections: { name: string; fields: string[] }[];
 }
 
-/** Sections templates exact from the legacy TomeEditor field map (Hs). */
+/** Section templates from the Codex editor field map. */
 export const CODEX_CATEGORIES: readonly CodexCategoryDef[] = [
   {
     key: "nation", label: "Nations & Empires", icon: "🏰", tagline: "An empire that shaped the world",

@@ -1,7 +1,6 @@
 node_modules/
 dist/
 *.local
-reference/
 .worktrees
 .playwright-mcp/
 .superpowers/

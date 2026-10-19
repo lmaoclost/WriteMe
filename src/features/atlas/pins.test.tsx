@@ -135,7 +135,7 @@ function firePinHover(btn: Element, type: "pointerover" | "pointerout", x: numbe
 }
 
 describe("pin layer", () => {
-  it("pin tool: a stage click places a pin at normalized coords with the legacy pinStyle offset", () => {
+  it("pin tool: a stage click places a pin at normalized coords with the stage offset", () => {
     const atlas = makeAtlas();
     const { container, stageEl } = mountEditor(atlas);
     pickButton("Pin tool");
@@ -486,7 +486,7 @@ describe("RegionPanel", () => {
     void container;
   });
 
-  it("Claim remaining area creates the L-shaped remainder with the legacy color and toasts", () => {
+  it("Claim remaining area creates the L-shaped remainder with the claim color and toasts", () => {
     const { atlas } = mountClaimAtlas();
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: "Claim remaining area" }));

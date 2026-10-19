@@ -29,7 +29,7 @@ vi.mock("./clip", async (importOriginal) => {
  * 2. putMapImage assigns img_map_* key and frees the previous key.
  * 3. setAtlasMapFromEntry copies the entry image blob copy into a new map key.
  * 4. addRegion defaults (color #3498db, fillOpacity .28, label "") and persists in the atlas; deleteRegion drops it.
- * 5. addPin defaults (type place, color #e74c3c default); movePin changes coords; deletePin.
+ * 5. addPin defaults (type place, color #e74c3c); movePin changes coords; deletePin.
  * 6. pushHistory + undo/redo: addRegion -> pushHistory happened inside action -> undo removes it; redo restores; cap 50.
  * 7. deleteRegion + undo restores region (ids kept; dangling selection is UI-level).
  * 8. claimRemainingArea: original untouched, claimed added as NEW regions, total area preserved.
@@ -183,7 +183,7 @@ describe("regions (case 4)", () => {
 });
 
 describe("pins (case 5)", () => {
-  it("addPin applies legacy defaults, movePin changes coords, deletePin drops it", () => {
+  it("addPin applies defaults, movePin changes coords, deletePin drops it", () => {
     const a = addAtlas();
     let p!: Pin;
     act(() => { p = store().addPin(a.id, { x: 0.2, y: 0.3 }) as Pin; });

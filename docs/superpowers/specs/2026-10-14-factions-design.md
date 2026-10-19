@@ -1,7 +1,7 @@
 # Scriptorium — Frações Design (sub-projeto 5c)
 
 Data: 2026-10-14
-> Status: em implementação (plan `2026-10-14-factions.md`). Bloodline em mecânica; modelo (`FactionWeb`).
+> Status: em implementação (plan `2026-10-14-factions.md`). Paridade do Bloodline em mecânica; modelo `FactionWeb`.
 
 ## 1. Modelo (schema v2, campo opcional)
 
@@ -10,7 +10,7 @@ type Faction = { id; x; y; name; leader?; territory?; goals?; description?; colo
 type FactionConnection = { id; fromId; toId; type: "ally" | "rival" | "vassal" | "trade" | "neutral" }
 type FactionWeb = { id; projectId; name; factions: Faction[]; connections: FactionConnection[]; notes: string }
 ```
-`ProjectData.factionWebs?: FactionWeb[]` — validator valida quando presente; parseExport normaliza `?? []`; serialize v2. CONNECTION_STYLES: ally #27ae60 sólida · rival #e74c3c dash "8 4" · vassal #7c5cbf sólida · trade #d4a017 dash "8 4" · neutral #888 dash "4 4" (12 preset colors p/ faction: lista ).
+`ProjectData.factionWebs?: FactionWeb[]` — validator valida quando presente; parseExport normaliza `?? []`; serialize v2. CONNECTION_STYLES: ally #27ae60 sólida · rival #e74c3c dash "8 4" · vassal #7c5cbf sólida · trade #d4a017 dash "8 4" · neutral #888 dash "4 4" (12 preset colors p/ faction).
 
 ## 2. Store (paridade Bloodline)
 

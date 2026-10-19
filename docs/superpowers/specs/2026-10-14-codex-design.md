@@ -18,7 +18,7 @@ Escopo: códex de entries (person/place/faction/event/item/lore) com edição em
 
 - Textareas para `title` (inline, header) e `body` com **toggle Escrever/Prévia** (markdown render).
 - Markdown render: **`marked`** (única dep nova). Sanitização por allowlist (sem DOMPurify): parse com DOMParser → whitelist de tags (`p h1-6 ul ol li blockquote code pre em strong b i a[title] br img`) → `<img>` só com `src` `data:image/` do store; atributos de estilo/evento/tags fora da lista viram texto; atributos removidos exceto `src`/`title`/alt. marked com `{ breaks: true, mangle: false, headerIds: false }`.
-- Campos: título (header), categoria (select 6), capa (imagem: upload ou de outra entry — reutiliza FilePicker pattern do Atlas), body, links (chips + picker de entries; auto-recíproco? NÃO — um lado só, igual).
+- Campos: título (header), categoria (select 6), capa (imagem: upload ou de outra entry — reutiliza FilePicker pattern do Atlas), body, links (chips + picker de entries; auto-recíproco? NÃO — um lado só).
 
 ## 3. Store (ação mínima, schema v1 intocado)
 

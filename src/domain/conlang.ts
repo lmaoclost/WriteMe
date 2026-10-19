@@ -1,4 +1,4 @@
-/** Freehand strokes → smoothed SVG polyline path (legacy "strokes smooth themselves"). */
+/** Freehand strokes → smoothed SVG polyline path (strokes smooth themselves). */
 
 export interface Pt { x: number; y: number }
 
