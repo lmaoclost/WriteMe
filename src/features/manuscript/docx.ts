@@ -235,8 +235,12 @@ export function buildDocxChildren(manuscript: Manuscript): Paragraph[] {
       for (const block of blocks) {
         if (block.kind === "li") {
           children.push(new Paragraph({ children: [new TextRun({ text: block.text })], bullet: { level: 0 } }));
+          // only a heading or a note resets the flush paragraph: print's
+          // `ul + p` and `blockquote + p` re-indent, so the flag dies here
+          flush = false;
         } else if (block.kind === "quote") {
           children.push(new Paragraph({ children: [new TextRun({ text: block.text, italics: true })], indent: { left: 360 } }));
+          flush = false;
         } else if (block.kind === "h1" || block.kind === "h2" || block.kind === "h3") {
           children.push(new Paragraph({
             children: [new TextRun({ text: block.text, bold: true })],

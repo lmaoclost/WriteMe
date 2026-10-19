@@ -4,6 +4,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { useScriptorium } from "../../data/store";
 import { DocxReplaceButton } from "./ChapterList";
 import { defaultBindery } from "../../data/schema";
+import { renderMarkdown } from "../entries/markdown";
 import type { Manuscript, SceneOrnament } from "../../domain/types";
 
 vi.mock("mammoth", async () => {
@@ -186,6 +187,40 @@ describe("buildDocxChildren", () => {
     expect(texts.some((s) => s.includes("Negrito aqui."))).toBe(true);
     expect(children.some((c) => opts(c).bullet !== undefined)).toBe(true);
     expect(texts.some((s) => s.includes('"text":"fala"'))).toBe(true);
+  });
+
+  it("re-indents the paragraph after a list or a quote, like print", () => {
+    const book = manuscript();
+    const bodyAfter = (content: string, noteTop?: string) =>
+      buildDocxChildren({ ...book, chapters: [{ id: "c1", heading: "Prólogo", content, order: 0, noteTop }] })
+        .filter((c) => opts(c).style === "BookBody");
+    // print resets only h1/h2/h3 + p and .chapter-note + p; ul + p and
+    // blockquote + p keep the first-line indent (bookCss.ts:75-76)
+    const afterList = bodyAfter("- item\n\nParágrafo após lista.");
+    expect(afterList).toHaveLength(1);
+    expect(opts(afterList[0]).indent).toEqual({ firstLine: 360 });
+    const afterQuote = bodyAfter("> fala\n\nParágrafo após citação.");
+    expect(afterQuote).toHaveLength(1);
+    expect(opts(afterQuote[0]).indent).toEqual({ firstLine: 360 });
+    const afterNoteQuote = bodyAfter("> fala\n\nProsa após nota e citação.", "Nota de rascunho");
+    expect(afterNoteQuote).toHaveLength(1);
+    expect(opts(afterNoteQuote[0]).indent).toEqual({ firstLine: 360 });
+  });
+
+  it("keeps already-HTML chapter content intact through the pipeline", () => {
+    const html = '<p>Olá <strong>mundo</strong></p><ul><li>um</li><li>dois</li></ul>';
+    // the sanitize pass keeps allowed inline tags as-is — nothing
+    // double-escaped before htmlToBlocks flattens runs into text
+    expect(renderMarkdown(html)).toBe(html);
+    const children = buildDocxChildren({
+      ...manuscript(),
+      chapters: [{ id: "c1", heading: "Prólogo", content: html, order: 0 }],
+    });
+    const bodies = children.filter((c) => opts(c).style === "BookBody");
+    expect(bodies).toHaveLength(1);
+    expect(runText(bodies[0])).toBe("Olá mundo");
+    expect(children.filter((c) => opts(c).bullet !== undefined).map(runText)).toEqual(["um", "dois"]);
+    expect(JSON.stringify(children)).not.toContain("&lt;");
   });
 });
 
