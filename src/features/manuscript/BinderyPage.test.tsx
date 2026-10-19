@@ -110,18 +110,41 @@ describe("bindery utils", () => {
     expect(chapter).toContain('content: "Capa \\"Um\\"\\\\Final"');
   });
 
-  it("chapter opener drops head and folio, and sinks", async () => {
+  it("chapter opener gets its own page with no head or folio, and sinks", async () => {
     const { buildBookCss } = await import("./bookCss");
     const css = buildBookCss(defaultBindery()!, { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 });
-    expect(css).toContain("@page ch1:first { @top-center { content: none; } @bottom-center { content: none; } }");
-    expect(css).toContain(".print-book .chapter { break-before: page; padding-top: 18%; }");
+    expect(css).toContain("@page opener1 { @top-center { content: none; } @bottom-center { content: none; } }");
+    expect(css).toContain('.print-book .chapter-opener[data-ch="1"] { page: opener1; break-before: page; padding-top: 18%; }');
   });
 
-  it("suppression stays single-spaced when only one margin box is dropped", async () => {
+  it("suppression is per box: dropping only the head keeps the folio on the opener page", async () => {
     const { buildBookCss } = await import("./bookCss");
     const ctx = { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
     const css = buildBookCss({ ...defaultBindery()!, opener: { sink: 0.18, suppressHead: true, suppressFolio: false } }, ctx);
-    expect(css).toContain("@page ch1:first { @top-center { content: none; } }");
+    expect(css).toContain("@page opener1 { @top-center { content: none; } }");
+    expect(css).not.toContain("@page opener1 { @bottom-center");
+  });
+
+  it("with both suppressions off the opener shares its page with the text", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const ctx = { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
+    const css = buildBookCss({ ...defaultBindery()!, opener: { sink: 0.18, suppressHead: false, suppressFolio: false } }, ctx);
+    expect(css).not.toMatch(/chapter-opener\[data-ch="1"\] \{ page:/);
+    expect(css).toContain('.print-book .chapter-opener[data-ch="1"] + .chapter { break-before: avoid; }');
+  });
+
+  it("no page-first suppression rule survives: Chromium drops the selector", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const css = buildBookCss(defaultBindery()!, { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 });
+    // :first-of-type / ::first-letter are allowed; @page ch1:first is not
+    expect(css).not.toMatch(/:first(?!-)/);
+  });
+
+  it("the sink rides the opener section, not the chapter body", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const css = buildBookCss(defaultBindery()!, { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 });
+    expect(css).toContain(".print-book .chapter-opener { break-before: page; padding-top: 18%; }");
+    expect(css).toContain(".print-book .chapter { break-before: page; }");
   });
 
   it("drop cap styles the chapter's opening paragraph only when enabled", async () => {
@@ -146,8 +169,9 @@ describe("bindery utils", () => {
     const fsp = await import("node:fs/promises");
     const theme = await fsp.readFile("src/app/theme.css", "utf8");
     // both copies of the book carry .print-book, so the rule must live there —
-    // not on .bindery-live (screen-only class the portal copy never has)
-    expect(theme).toMatch(/\.print-book \.chapter h2 \.ch-num \{ margin-right: 0\.35em; \}/);
+    // not on .bindery-live (screen-only class the portal copy never has);
+    // the h2 sits in the opener section, not the chapter body
+    expect(theme).toMatch(/\.print-book \.chapter-opener h2 \.ch-num \{ margin-right: 0\.35em; \}/);
     expect(theme).not.toMatch(/\.bindery-live \.chapter \{/);
   });
 });
@@ -341,8 +365,8 @@ describe("Bindery v2 controls", () => {
     expect(styleTag?.textContent).toContain('content: "O Tribunal"');
     expect(styleTag?.textContent).not.toContain('@page ch2 { @top-center { content: "Rio fundo"');
     const book = screen.getByTestId("bindery-book").innerHTML;
-    expect(book).toContain('<section class="chapter" data-ch="2"><h2><span class="ch-num">2</span>O Tribunal</h2>');
-    expect(book).toContain('<section class="chapter" data-ch="3"><h2><span class="ch-num">3</span>Rio fundo</h2>');
+    expect(book).toContain('<section class="chapter-opener" data-ch="2"><h2><span class="ch-num">2</span>O Tribunal</h2></section>');
+    expect(book).toContain('<section class="chapter-opener" data-ch="3"><h2><span class="ch-num">3</span>Rio fundo</h2></section>');
   });
 });
 
@@ -411,6 +435,16 @@ describe("Bindery preset picker, advanced groups and print hints", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: "Suppress running head on openers" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Suppress folio on openers" }));
     expect(store().manuscripts[0].bindery!.opener).toEqual({ sink: 0.18, suppressHead: false, suppressFolio: false });
+  });
+
+  it("warns that suppression puts the chapter opener on its own page", () => {
+    const id = seedBook();
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    openGroup("Chapter openers");
+    const hint = screen.getByTestId("opener-hint");
+    expect(hint).toHaveTextContent(/Chromium/);
+    expect(hint).toHaveTextContent(/página própria/);
+    expect(hint).toHaveTextContent(/próxima página/);
   });
 
   it("front matter group drives half title, copyright fields, epigraph and roman numerals", () => {

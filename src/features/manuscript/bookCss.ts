@@ -1,9 +1,10 @@
 /** Generated print stylesheet — page geometry, mirrored margins, folio,
- *  chapter openers (sink, suppressed head/folio), running heads
- *  (book-wide head on the base page, or per-chapter named pages), part
- *  divider pages (same sink, head/folio suppressed by the partpage named
- *  page) and scene ornaments (glyph, blank, or rule by config).
- *  Ordered geometry first, then typography; structure rules land here too. */
+ *  chapter openers (own page when a head or folio is suppressed, sink),
+ *  running heads (book-wide head on the base page, or per-chapter named
+ *  pages), part divider pages (same sink, head/folio suppressed by the
+ *  partpage named page) and scene ornaments (glyph, blank, or rule by
+ *  config). Ordered geometry first, then typography; structure rules land
+ *  here too. */
 
 import type { BinderyConfig, Part, SceneOrnament } from "../../domain/types";
 import { inches, kdpGutter, pageMargins, trimToPage } from "./bindery";
@@ -77,6 +78,7 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
   );
   if (t.hyphens) rules.push(`.print-book p { hyphens: auto; -webkit-hyphens: auto; }`);
   const opener = config.opener ?? { sink: 0.18, suppressHead: true, suppressFolio: true };
+  const sinkPct = Math.round(opener.sink * 100);
   // running head by chapter: a named page per chapter, tied to the flat
   // 1-based chapter index so numbering stays continuous across parts
   if (config.runningHead && config.runningHeadMode === "chapter") {
@@ -85,19 +87,34 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
         `@page ch${i + 1} { @top-center { content: "${cssStr(ch.heading)}"; font-size: 9pt; letter-spacing: 0.08em; text-transform: uppercase; } }`,
         `.print-book .chapter[data-ch="${i + 1}"] { page: ch${i + 1}; }`,
       );
-      if (opener.suppressHead || opener.suppressFolio) {
-        const suppress = [
-          opener.suppressHead ? "@top-center { content: none; }" : "",
-          opener.suppressFolio ? "@bottom-center { content: none; }" : "",
-        ].filter(Boolean).join(" ");
-        rules.push(`@page ch${i + 1}:first { ${suppress} }`);
-      }
     });
   }
+  // the opener page: Chromium ignores `@page <name>:first`, so the only way
+  // to keep a head or a folio off the opening page is to give the opener its
+  // own page (suppressing exactly the boxes the config asks for) and start
+  // the text on the next one; suppression off, opener and text share a page
+  for (let i = 0; i < ctx.chapters.length; i += 1) {
+    if (opener.suppressHead || opener.suppressFolio) {
+      const suppress = [
+        opener.suppressHead ? "@top-center { content: none; }" : "",
+        opener.suppressFolio ? "@bottom-center { content: none; }" : "",
+      ].filter(Boolean).join(" ");
+      rules.push(
+        `@page opener${i + 1} { ${suppress} }`,
+        `.print-book .chapter-opener[data-ch="${i + 1}"] { page: opener${i + 1}; break-before: page; padding-top: ${sinkPct}%; }`,
+      );
+    } else {
+      rules.push(`.print-book .chapter-opener[data-ch="${i + 1}"] + .chapter { break-before: avoid; }`);
+    }
+  }
+  // the opener section carries the chapter start (its page break and sink);
+  // the body section keeps the generic break that lifts the text off the
+  // opener page, cancelled by the sibling rule above when they share a page
   rules.push(
-    `.print-book .chapter { break-before: page; padding-top: ${Math.round(opener.sink * 100)}%; }`,
-    `.print-book .chapter h2 { margin: 0 0 1.2em; text-align: center; }`,
-    `.print-book .chapter h2 .ch-num { display: block; font-size: 0.8em; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.4em; }`,
+    `.print-book .chapter-opener { break-before: page; padding-top: ${sinkPct}%; }`,
+    `.print-book .chapter { break-before: page; }`,
+    `.print-book .chapter-opener h2 { margin: 0 0 1.2em; text-align: center; }`,
+    `.print-book .chapter-opener h2 .ch-num { display: block; font-size: 0.8em; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.4em; }`,
   );
   // scene break: a punctuation marker prints as the configured ornament (the
   // glyph rides on ::before; blank keeps the air, rule draws a short rule);

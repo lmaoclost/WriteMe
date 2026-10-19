@@ -253,6 +253,9 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
               <NumField label="Chapter opener sink" step={0.01} value={o.sink} onCommit={(n) => setBlock("opener", { sink: n })} />
               <CheckRow label="Suppress running head on openers" checked={o.suppressHead} onChange={(v) => setBlock("opener", { suppressHead: v })} />
               <CheckRow label="Suppress folio on openers" checked={o.suppressFolio} onChange={(v) => setBlock("opener", { suppressFolio: v })} />
+              <p className="text-slate text-xs leading-relaxed" data-testid="opener-hint">
+                O Chromium não esconde cabeça nem fólio no meio da página: qualquer supressão acima coloca a abertura do capítulo em página própria, e o texto começa na próxima página.
+              </p>
             </div>
           </details>
           <details className={GROUP_DETAILS}>

@@ -394,7 +394,26 @@ describe("buildBookHtml front matter + parts", () => {
     const book = plainBook();
     book.chapters.push({ id: "c9", heading: "Órfã", content: "corpo.", order: 1, partId: "deleted-part" });
     const html = buildBookHtml(book);
-    expect(html).toContain('<section class="chapter" data-ch="2"><h2><span class="ch-num">2</span>Órfã</h2>');
+    expect(html).toContain('<section class="chapter-opener" data-ch="2"><h2><span class="ch-num">2</span>Órfã</h2></section><section class="chapter" data-ch="2">');
+  });
+
+  it("a chapter prints an opener section (number + heading) then the body section", () => {
+    const html = buildBookHtml(plainBook());
+    expect(html).toContain('<section class="chapter-opener" data-ch="1"><h2><span class="ch-num">1</span>Um</h2></section><section class="chapter" data-ch="1">');
+    expect(html).toContain("<p>corpo um.</p>");
+  });
+
+  it("the opener section carries no body text: notes, paragraphs and markers stay in the body", () => {
+    const book = plainBook();
+    book.chapters[0] = { ...book.chapters[0], noteTop: "Nota de abertura.", endMarker: "* * *", noteEnd: "Nota final." };
+    const html = buildBookHtml(book);
+    const opener = html.match(/<section class="chapter-opener" data-ch="1">([\s\S]*?)<\/section>/)?.[1];
+    expect(opener).toBe('<h2><span class="ch-num">1</span>Um</h2>');
+    const body = html.match(/<section class="chapter" data-ch="1">([\s\S]*?)<\/section>/)?.[1];
+    expect(body).toContain('<div class="chapter-note top">');
+    expect(body).toContain("<p>corpo um.</p>");
+    expect(body).toContain('<div class="scene-marker ornament" aria-hidden="true"></div>');
+    expect(body).toContain('<div class="chapter-note bottom">');
   });
 
   it("a part opens its own divider and groups its chapters", () => {
@@ -430,7 +449,7 @@ describe("buildBookHtml front matter + parts", () => {
     // flat numbering over the render order, not per part
     const renderOrder = ["Um", "Quatro", "Três", "Dois"];
     renderOrder.forEach((heading, i) => {
-      expect(html).toContain(`<section class="chapter" data-ch="${i + 1}"><h2><span class="ch-num">${i + 1}</span>${heading}</h2>`);
+      expect(html).toContain(`<section class="chapter-opener" data-ch="${i + 1}"><h2><span class="ch-num">${i + 1}</span>${heading}</h2></section><section class="chapter" data-ch="${i + 1}">`);
     });
     const rows = [
       '<li class="toc-row"><span class="toc-num">1</span><span>Um</span>',

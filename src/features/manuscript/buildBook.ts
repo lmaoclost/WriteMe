@@ -81,10 +81,16 @@ export function epigraphSection(config: NonNullable<Manuscript["bindery"]>): str
     : "";
 }
 
-/** One chapter's inner markup: the h2 with its print-style number, then the
- *  body — markdown (or the empty placeholder), top note, scene marker, end
- *  note. Print and EPUB both wrap this in a section so they cannot drift. */
-export function chapterInner(config: NonNullable<Manuscript["bindery"]>, chapter: Chapter, n: number): string {
+/** One chapter's heading: the h2 with its print-style number. */
+function chapterHeading(config: NonNullable<Manuscript["bindery"]>, chapter: Chapter, n: number): string {
+  const num = chapterNumber(config.numberingStyle ?? "arabic", n);
+  const numHtml = num ? `<span class="ch-num">${escapeText(num)}</span>` : "";
+  return `<h2>${numHtml}${escapeText(chapter.heading)}</h2>`;
+}
+
+/** One chapter's body: markdown (or the empty placeholder), top note, scene
+ *  marker, end note. */
+function chapterBody(chapter: Chapter): string {
   let body = chapter.content
     ? renderMarkdown(chapter.content)
     : EMPTY_PARAGRAPH;
@@ -102,9 +108,15 @@ export function chapterInner(config: NonNullable<Manuscript["bindery"]>, chapter
   if (chapter.noteEnd?.trim()) {
     body = body + `<div class="chapter-note bottom">${renderMarkdown(chapter.noteEnd.trim())}</div>`;
   }
-  const num = chapterNumber(config.numberingStyle ?? "arabic", n);
-  const numHtml = num ? `<span class="ch-num">${escapeText(num)}</span>` : "";
-  return `<h2>${numHtml}${escapeText(chapter.heading)}</h2>${body}`;
+  return body;
+}
+
+/** One chapter's inner markup: the heading then the body. The EPUB wraps
+ *  this whole in one section; print splits it across the opener section
+ *  (the heading, on its own page when a head or folio is suppressed) and
+ *  the body section, so both formats read the same pieces. */
+export function chapterInner(config: NonNullable<Manuscript["bindery"]>, chapter: Chapter, n: number): string {
+  return chapterHeading(config, chapter, n) + chapterBody(chapter);
 }
 
 /** Part divider's inner markup: the part's own number, title and epigraph.
@@ -160,7 +172,12 @@ export function buildBookHtml(manuscript: Manuscript): string {
     chapters.forEach((c) => {
       chapterNo += 1;
       tocRows.push(tocRow(c, chapterNo));
-      body.push(`<section class="chapter" data-ch="${chapterNo}">${chapterInner(b, c, chapterNo)}</section>`);
+      // one HTML shape for print: the opener section (heading) then the body
+      // section; the generated CSS decides whether they share a page
+      body.push(
+        `<section class="chapter-opener" data-ch="${chapterNo}">${chapterHeading(b, c, chapterNo)}</section>` +
+        `<section class="chapter" data-ch="${chapterNo}">${chapterBody(c)}</section>`,
+      );
     });
   });
   const toc = b.toc

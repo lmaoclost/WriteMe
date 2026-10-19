@@ -284,7 +284,7 @@ input[type="file"].sr-only {
   }
   .print-book h1 { font-size: var(--fs-paper-h1); color: var(--paper-ink); }
   .print-book h2 { font-size: var(--fs-paper-h2); color: var(--paper-ink); margin-top: 2em; }
-  .print-book .chapter h2 .ch-num { margin-right: 0.35em; }
+  .print-book .chapter-opener h2 .ch-num { margin-right: 0.35em; }
   .print-book .tp-title { text-align: center; font-size: var(--fs-paper-title); margin: 0.6em 0; }
   .print-book .tp-series { text-align: center; letter-spacing: 0.3em; text-transform: uppercase; font-size: var(--fs-paper-body); color: var(--paper-muted); }
   .print-book .tp-author { text-align: center; font-style: italic; }

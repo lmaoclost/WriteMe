@@ -224,18 +224,21 @@ Print styling has three owners: `buildBookCss` (`src/features/manuscript/bookCss
 - **The first paragraph after a heading is flush.** An indent says "continues the paragraph above" — under a heading there is nothing above to continue, so the indent reads as a defect. Headings reset the indent for the paragraph that follows.
 - **Never an indent and a blank line together.** The two mark different things: the indent says the paragraph continues the run, a blank line marks a stronger break. Set both and the separation doubles, the column fragments, and the indent stops meaning anything. Paragraphs carry no space of their own; the indent does the separating.
 - **Every chapter opens with a sink.** The opening line sits low under the heading, so a one- or two-word chapter title still lands with weight and the drop cap (when enabled) has room.
-- **No running head or folio on a chapter's opening page.** The opener already carries the title, the sink and the drop cap. A head would repeat the title beside them and a folio would crowd them; named pages switch both off for the first page, and they resume on the next.
+- **The chapter opener gets its own page.** The opener already carries the title, the sink and the drop cap. A head would repeat the title beside them and a folio would crowd them — and Chromium cannot switch a margin box off for just the first page of a page type (see limits). So when either suppression is on, the opener prints alone on its `@page openerN`, head and folio suppressed exactly as configured, and the text starts on the next page, where the head and folio resume. Suppression off, the opener and the text share one page.
 - **The folio runs at the foot**, small and bottom-center: the top edge stays reserved for the running head, and the folio stays out of the measure.
-- **Front matter is roman-numbered.** Lower-roman folios mark the preliminaries as separate from the text, so arabic numbering starts at 1 on chapter one and page references resolve against the body. Display pages — half title, title, copyright, dedication, epigraph — carry no folio and no head at all.
+- **Front matter is roman-numbered.** Lower-roman folios mark the preliminaries as separate from the text. Both runs count the same physical pages — Chromium ignores a page-counter reset (see limits) — so the body's first folio is not 1. Display pages — half title, title, copyright, dedication, epigraph — carry no folio and no head at all.
 
 The Manuscript preset opts out of the opener rules: flush openings, no sink, opener suppression off.
 
 ### Paged-Media Limits
 
-Chromium implements neither of the two paged-media features the print path would want, and each absence costs something:
+Chromium implements neither of the five paged-media features the print path would want, and each absence costs something:
 
 - **No `string-set`.** It would give the running head the current chapter's heading automatically — one rule, the page-margin string following the document. Instead, a running head per chapter comes from **named pages**: each chapter gets an `@page chN` whose top margin carries that chapter's title, selected by the chapter's index; book mode puts the book title on the base page instead.
 - **No `target-counter`.** It would resolve every contents entry to its target page (`target-counter(attr(href url), page)`), giving the contents real page numbers. Instead, **the table of contents has no page numbers**: number, title and dotted leader only.
+- **No `@page <name>:first`** (nor `:nth()`). It would suppress the running head and the folio on a chapter's first page in place — title and text together on the same sheet. Chromium drops the selector, which is why **the chapter opener gets its own page** instead: a preset that wants the title and the text together (the Manuscript preset) has to give up the suppression, which is what its switches already say.
+- **No page-counter reset.** `counter-reset: page` on an element is ignored, so the body folio cannot restart at 1 after the roman-numbered front matter: the roman and the arabic runs count the same physical pages, and the body's first folio is not 1.
+- **No `break-before: recto`.** It would force a chapter onto an odd page (recto) by inserting a blank page when needed. Chromium ignores it, so chapter 1 cannot be forced onto a recto and the body starts on whatever page the front matter ends on.
 
 ### Format Parity
 
