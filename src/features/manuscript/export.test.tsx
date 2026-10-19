@@ -278,6 +278,35 @@ describe("buildBookHtml v2", () => {
     expect(bookCss).toMatch(/\.print-book \.back-matter \{ break-before: page; \}/);
   });
 
+  it("the generated print CSS never forces a break-after (the blank-page guard reads buildBookCss)", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const { PRESETS, applyPreset } = await import("./presets");
+    // the static files above are only half the story: the blank-page
+    // regression comes from the sheet generated at runtime, so assert against
+    // buildBookCss across every rule branch (chapter pages, opener pages,
+    // part dividers, front/back matter, no parts, no chapters);
+    // `break-after: avoid` is the one legitimate value and is allowed
+    const forbidBreakAfter = (label: string, css: string) => {
+      const strays = (css.match(/break-after:\s*[^;}"]*/g) ?? []).filter((d) => !d.includes("avoid"));
+      expect(strays, label).toEqual([]);
+    };
+    const withParts = { title: "Aldoria", parts: [{ id: "p1", title: "Primeira parte", order: 0 }], pageCount: 200 };
+    const configs: [string, NonNullable<Manuscript["bindery"]>][] = [
+      ["default", defaultBindery()!],
+      ...PRESETS.map((p): [string, NonNullable<Manuscript["bindery"]>] => [p.id, applyPreset(defaultBindery()!, p.id)]),
+      ["front and back matter", {
+        ...defaultBindery()!,
+        frontMatter: { halfTitle: true, copyright: true, romanNumerals: true },
+        backMatter: { glossary: false, aboutAuthor: "Ana Rio", colophon: true },
+      }],
+    ];
+    for (const [label, config] of configs) {
+      forbidBreakAfter(label, buildBookCss(config, { ...withParts, chapters: [{ heading: "Um" }] }));
+    }
+    forbidBreakAfter("no parts", buildBookCss(defaultBindery()!, { title: "Aldoria", chapters: [{ heading: "Um" }], parts: [], pageCount: 200 }));
+    forbidBreakAfter("zero chapters", buildBookCss(defaultBindery()!, { title: "Aldoria", chapters: [], parts: [], pageCount: 20 }));
+  });
+
   it("screen sheet geometry (padding/page width) never reaches the print portal", async () => {
     const fsp = await import("node:fs/promises");
     const theme = await fsp.readFile("src/app/theme.css", "utf8");
@@ -802,7 +831,10 @@ describe("EPUB export", () => {
     await waitFor(() => expect(epubMock.calls).toHaveLength(2));
     const css = lastOptions(1).css as string;
     expect(css).toContain("font-size: 12pt");
-    expect(css).toContain("line-height: 1.33");
+    // pin the declared value, not a substring of its decimal repeat: the
+    // line-height is the configured leading over the body size
+    const declaredLineHeight = css.match(/body \{[^}]*line-height: ([\d.]+);/)?.[1];
+    expect(Number(declaredLineHeight)).toBe(16 / 12);
     expect(css).toContain("text-indent: 1.5em");
     expect(css).toContain("text-align: left");
     expect(css).toContain("hyphens: auto");
