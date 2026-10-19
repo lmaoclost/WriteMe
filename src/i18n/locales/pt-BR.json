@@ -1,4 +1,7 @@
 {
+  "persist": {
+    "quotaFailed": "Não foi possível salvar — o armazenamento do navegador está cheio. Baixe uma cópia de segurança."
+  },
   "common": {
     "cancel": "Cancelar",
     "close": "Fechar",
@@ -104,6 +107,8 @@
     "backupNote": "Sua biblioteca vive só neste navegador — nada é enviado. Salve uma cópia JSON de vez em quando.",
     "downloadBackup": "Baixar cópia",
     "restoreBackup": "Restaurar cópia",
+    "storageUsage": "Armazenamento usado: {{used}} de ~5 MB",
+    "storageWarning": "Armazenamento quase cheio — baixe uma cópia de segurança.",
     "restoreTitle": "Restaurar cópia",
     "restoreBody": "Restaurar substitui a biblioteca inteira — cada mundo, verbete e manuscrito — pelo conteúdo do arquivo.",
     "restoreFromFile": "Restaurar a partir de arquivo",

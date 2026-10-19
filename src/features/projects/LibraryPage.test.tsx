@@ -22,6 +22,26 @@ beforeEach(() => {
   localStorage.clear();
 });
 
+describe("library storage usage", () => {
+  it("shows the storage usage line next to the backup buttons", () => {
+    localStorage.setItem("scriptorium.v1", "x".repeat(2 * 1024 * 1024));
+    render(wrap());
+    expect(screen.getByText(/Storage used: 2\.0 MB of ~5 MB/)).toBeInTheDocument();
+  });
+
+  it("no warning below 80%", () => {
+    localStorage.setItem("scriptorium.v1", "x".repeat(3 * 1024 * 1024));
+    render(wrap());
+    expect(screen.queryByText(/almost full/i)).toBeNull();
+  });
+
+  it("warns at or above 80% of the approximated quota", () => {
+    localStorage.setItem("scriptorium.v1", "x".repeat(Math.ceil(4.2 * 1024 * 1024)));
+    render(wrap());
+    expect(screen.getByText(/almost full/i)).toBeInTheDocument();
+  });
+});
+
 describe("LibraryPage hub", () => {
   it("shows welcome and my-worlds section even with zero worlds", () => {
     render(wrap());

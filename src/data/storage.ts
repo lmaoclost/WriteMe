@@ -7,6 +7,35 @@ export const STORE_KEY = `${PREFIX}.v1`;
 
 const WRITE_DEBOUNCE_MS = 800;
 
+/** localStorage quota ceilings are stable per origin; used for the "almost full" surface. */
+export const APPROX_QUOTA_CHARS = 5 * 1024 * 1024;
+
+type QuotaListener = (failed: boolean) => void;
+const quotaListeners = new Set<QuotaListener>();
+
+/** Subscribe to persist write outcomes: `true` on the first quota failure (deduped
+ *  until a write lands again), `false` on the first success after a failure. */
+export function onPersistQuotaChange(listener: QuotaListener): () => void {
+  quotaListeners.add(listener);
+  return () => quotaListeners.delete(listener);
+}
+
+function emitQuota(failed: boolean): void {
+  for (const listener of [...quotaListeners]) listener(failed);
+}
+
+/** QuotaExceededError (Chromium/Firefox), NS_ERROR_DOM_QUOTA_REACHED (Firefox),
+ *  and Safari's TypeError("Storage quota has been exceeded") all mean "full". */
+function isQuotaError(error: unknown): boolean {
+  const e = error as { name?: unknown; message?: unknown };
+  if (e instanceof TypeError) return true;
+  const name = typeof e?.name === "string" ? e.name : "";
+  return name === "QuotaExceededError" || name === "NS_ERROR_DOM_QUOTA_REACHED"
+    || (error instanceof Error && /quota/i.test(String(error.message)));
+}
+
+let quotaFailed = false;
+
 interface PendingWrite {
   serialized: string;
   timer: number;
@@ -17,8 +46,16 @@ const pendingWrites = new Map<string, PendingWrite>();
 function writeThrough(name: string, serialized: string): void {
   try {
     localStorage.setItem(name, serialized);
-  } catch {
-    /* quota: toast surface happens in actions */
+    if (quotaFailed) {
+      quotaFailed = false;
+      emitQuota(false);
+    }
+  } catch (error) {
+    if (isQuotaError(error) && !quotaFailed) {
+      quotaFailed = true;
+      emitQuota(true);
+    }
+    /* other failures stay silent (storage disabled) */
   }
 }
 

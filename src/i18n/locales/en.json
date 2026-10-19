@@ -1,4 +1,7 @@
 {
+  "persist": {
+    "quotaFailed": "Could not save — browser storage is full. Download a backup copy."
+  },
   "common": {
     "cancel": "Cancel",
     "close": "Close",
@@ -104,6 +107,8 @@
     "backupNote": "Your library lives in this browser only — nothing is sent anywhere. Save a JSON copy from time to time.",
     "downloadBackup": "Download backup",
     "restoreBackup": "Restore backup",
+    "storageUsage": "Storage used: {{used}} of ~5 MB",
+    "storageWarning": "Storage is almost full — download a backup copy.",
     "restoreTitle": "Restore backup",
     "restoreBody": "Restoring replaces the whole library — every world, entry and manuscript — with the file's contents.",
     "restoreFromFile": "Restore from backup file",

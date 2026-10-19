@@ -22,7 +22,8 @@ import { defaultBindery } from "./schema";
 import { seedDemoProject } from "./seed";
 import { claimRest, fitGap } from "./clip";
 import { getLastRegionColor } from "../features/atlas/panels/recentColors";
-import { STORE_KEY, localStoragePersistence, wipeStore, storageHealth, flushPendingPersist, PersistedState } from "./storage";
+import { STORE_KEY, localStoragePersistence, wipeStore, storageHealth, flushPendingPersist, PersistedState, onPersistQuotaChange } from "./storage";
+import { downloadJson } from "./backup";
 
 export type ToastKind = "info" | "error" | "success";
 export interface Toast { id: string; kind: ToastKind; message: string; action?: ToastAction }
@@ -184,6 +185,8 @@ interface ScriptoriumState extends ProjectData {
   toasts: Toast[];
   seedFlag: boolean;
   histories: Record<string, AnyHistory>;
+  /** id of the live "storage full" toast; recovery dismisses exactly this one. */
+  quotaToastId: string | null;
 
   addProject(name: string, description?: string): Project;
   updateProject(id: string, patch: { name?: string; description?: string; coverImageKey?: string; customCategories?: Project["customCategories"] }): void;
@@ -383,6 +386,7 @@ export const useScriptorium = create<ScriptoriumState>()(
       paletteOpen: false,
       seedFlag: false,
       histories: {},
+      quotaToastId: null,
 
       setPaletteOpen(open: boolean) {
         set({ paletteOpen: open });
@@ -3051,10 +3055,11 @@ export const useScriptorium = create<ScriptoriumState>()(
         const p = persisted as Partial<PersistedState>;
         return { ...norm(persisted as PersistedState), bloodlines: p.bloodlines ?? [] } as PersistedState;
       },
-      partialize: ({ histories: _h, paletteOpen: _p, toasts: _t, ...s }): PersistedState => {
+      partialize: ({ histories: _h, paletteOpen: _p, toasts: _t, quotaToastId: _q, ...s }): PersistedState => {
         void _h; // ephemeral histories are never persisted
         void _p; // palette visibility is never persisted
         void _t; // toasts are never persisted
+        void _q; // the live quota toast id is never persisted
         return {
           projects: s.projects,
           entries: s.entries,
@@ -3087,6 +3092,25 @@ export const useScriptorium = create<ScriptoriumState>()(
     },
   ),
 );
+
+// A failed persist write surfaces once as an error toast with a backup
+// shortcut; the first write that lands again removes exactly that toast.
+onPersistQuotaChange((failed) => {
+  const state = useScriptorium.getState();
+  if (failed) {
+    if (state.quotaToastId != null) return;
+    const id = state.pushToast("error", i18n.t("persist.quotaFailed"), {
+      label: i18n.t("library.downloadBackup"),
+      run: () => downloadJson(useScriptorium.getState().exportData()),
+    });
+    useScriptorium.setState({ quotaToastId: id });
+    return;
+  }
+  if (state.quotaToastId != null) {
+    if (state.toasts.some((t) => t.id === state.quotaToastId)) state.dismissToast(state.quotaToastId);
+    useScriptorium.setState({ quotaToastId: null });
+  }
+});
 
 // selectors
 export const selectProject = (id: string) => (s: ScriptoriumState): Project | undefined =>

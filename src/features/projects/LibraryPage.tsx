@@ -4,12 +4,21 @@ import { useShallow } from "zustand/react/shallow";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { useScriptorium } from "../../data/store";
+import { storageHealth, APPROX_QUOTA_CHARS } from "../../data/storage";
+import { downloadJson } from "../../data/backup";
 import { Button } from "../../ui/Button";
 import { Field } from "../../ui/Field";
 import { Modal } from "../../ui/Modal";
 import { Seal } from "../../ui/Seal";
 import { LanguageToggle } from "../../ui/LanguageToggle";
 import { localeFor } from "../../i18n";
+
+const QUOTA_WARN_RATIO = 0.8;
+
+function storageUsageMb(chars: number, locale: string): string {
+  return new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+    .format(chars / (1024 * 1024));
+}
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function updatedStamp(ms: number, t: TFunction, locale: string): string {
@@ -58,14 +67,7 @@ export function LibraryPage() {
   const [pendingRestore, setPendingRestore] = useState<string | null>(null);
 
   const downloadBackup = () => {
-    const json = useScriptorium.getState().exportData();
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `scriptorium-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadJson(useScriptorium.getState().exportData());
   };
 
   const readFileText = (file: File) => new Promise<string>((resolve, reject) => {
@@ -221,6 +223,14 @@ export function LibraryPage() {
           <Button onClick={downloadBackup}>{t("library.downloadBackup")}</Button>
           <Button kind="ghost" onClick={() => { setPendingRestore(null); setRestoring(true); }}>{t("library.restoreBackup")}</Button>
         </div>
+        <p className="text-[var(--text-faint)] text-xs mt-2.5" data-testid="storage-usage">
+          {t("library.storageUsage", { used: `${storageUsageMb(storageHealth().bytes, locale)} MB` })}
+        </p>
+        {storageHealth().bytes / APPROX_QUOTA_CHARS >= QUOTA_WARN_RATIO && (
+          <p role="status" className="text-sm mt-1 text-danger">
+            {t("library.storageWarning")}
+          </p>
+        )}
       </section>
 
       {creating && (
