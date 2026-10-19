@@ -43,9 +43,12 @@ export function buildEpubCss(config: BinderyConfig): string {
   }
   rules.push(
     `.part-divider { text-align: center; }`,
-    `.part-num { font-size: 0.8em; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.4em; }`,
+    // the number is a <p>: the body's `text-align` matches it directly and
+    // beats the divider's inherited centring, so this rule must set it
+    `.part-num { font-size: 0.8em; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.4em; text-align: center; }`,
     `.part-title { font-size: 1.6em; margin: 0 0 1.2em; }`,
     `.part-epigraph { font-style: italic; max-width: 60%; margin: 0 auto; }`,
+    `.epigraph { font-style: italic; max-width: 60%; margin: 0 auto; }`,
     `figure, img { max-width: 100%; height: auto; }`,
   );
   if (config.dropCaps) {

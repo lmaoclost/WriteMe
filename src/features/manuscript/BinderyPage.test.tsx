@@ -67,6 +67,15 @@ describe("bindery utils", () => {
     expect(css).toContain("orphans: 2");
   });
 
+  it("the indent reset keeps only the heading siblings the print markup still has", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const css = buildBookCss(defaultBindery()!, { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 });
+    // the chapter h2 moved to the opener section, so `h2 + p` matches nothing
+    // in the print book (the EPUB, where the pair still exists, keeps it)
+    expect(css).not.toContain("h2 + p");
+    expect(css).toContain(".print-book h1 + p, .print-book h3 + p, .print-book .chapter-note + p { text-indent: 0; }");
+  });
+
   it("one named page per chapter carries the chapter title as a running head", async () => {
     const { buildBookCss } = await import("./bookCss");
     const ctx = { title: "A Coroa e o Rio", chapters: [{ heading: "A Porta" }, { heading: "O Rio" }], parts: [], pageCount: 200 };
@@ -123,6 +132,9 @@ describe("bindery utils", () => {
     const css = buildBookCss({ ...defaultBindery()!, opener: { sink: 0.18, suppressHead: true, suppressFolio: false } }, ctx);
     expect(css).toContain("@page opener1 { @top-center { content: none; } }");
     expect(css).not.toContain("@page opener1 { @bottom-center");
+    const folioOnly = buildBookCss({ ...defaultBindery()!, opener: { sink: 0.18, suppressHead: false, suppressFolio: true } }, ctx);
+    expect(folioOnly).toContain("@page opener1 { @bottom-center { content: none; } }");
+    expect(folioOnly).not.toContain("@page opener1 { @top-center");
   });
 
   it("with both suppressions off the opener shares its page with the text", async () => {

@@ -62,6 +62,10 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
   rules.push(
     `@page display { @bottom-center { content: none; } @top-center { content: none; } }`,
     `.print-book .front-matter.display { page: display; }`,
+    // the front-matter epigraph takes the part epigraph's shape so the two
+    // read as one idea; the block centres itself (its paragraphs still take
+    // the body justification, like the part epigraph's)
+    `.print-book .epigraph { font-style: italic; max-width: 60%; margin: 0 auto; }`,
   );
   if (config.frontMatter?.romanNumerals && config.pageNumbers) {
     rules.push(
@@ -74,7 +78,9 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
     `.print-book p { margin: 0; text-align: ${t.justify ? "justify" : "left"}; widows: 2; orphans: 2; }`,
     `.print-book p + p { text-indent: ${t.indent}em; }`,
     `.print-book blockquote + p, .print-book ul + p, .print-book ol + p { text-indent: ${t.indent}em; }`,
-    `.print-book h1 + p, .print-book h2 + p, .print-book h3 + p, .print-book .chapter-note + p { text-indent: 0; }`,
+    // no h2 + p: the chapter h2 lives in the opener section now, so the pair
+    // never meets (the EPUB, which keeps heading-then-text, still resets it)
+    `.print-book h1 + p, .print-book h3 + p, .print-book .chapter-note + p { text-indent: 0; }`,
   );
   if (t.hyphens) rules.push(`.print-book p { hyphens: auto; -webkit-hyphens: auto; }`);
   const opener = config.opener ?? { sink: 0.18, suppressHead: true, suppressFolio: true };
@@ -142,7 +148,9 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
       `@page partpage { @bottom-center { content: none; } @top-center { content: none; } }`,
       `.print-book .part-divider { page: partpage; }`,
       `.print-book .part-divider { break-before: page; padding-top: ${Math.round(opener.sink * 100)}%; text-align: center; }`,
-      `.print-book .part-num { font-size: 0.8em; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.4em; }`,
+      // the number is a <p>: the body's `text-align` matches it directly and
+      // beats the divider's inherited centring, so this rule must set it
+      `.print-book .part-num { font-size: 0.8em; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.4em; text-align: center; }`,
       `.print-book .part-title { font-size: 1.6em; margin: 0 0 1.2em; }`,
       `.print-book .part-epigraph { font-style: italic; max-width: 60%; margin: 0 auto; }`,
     );

@@ -194,7 +194,7 @@ describe("buildDocxChildren", () => {
     const bodyAfter = (content: string, noteTop?: string) =>
       buildDocxChildren({ ...book, chapters: [{ id: "c1", heading: "Prólogo", content, order: 0, noteTop }] })
         .filter((c) => opts(c).style === "BookBody");
-    // print resets only h1/h2/h3 + p and .chapter-note + p; ul + p and
+    // print resets only h1/h3 + p and .chapter-note + p; ul + p and
     // blockquote + p keep the first-line indent (bookCss.ts:75-76)
     const afterList = bodyAfter("- item\n\nParágrafo após lista.");
     expect(afterList).toHaveLength(1);

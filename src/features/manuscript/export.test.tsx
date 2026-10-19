@@ -493,10 +493,20 @@ describe("buildBookHtml front matter + parts", () => {
     expect(css).toContain(".print-book .part-divider { break-before: page; padding-top: 18%; text-align: center; }");
     expect(css).toContain(".print-book .part-divider { page: partpage; }");
     expect(css).toContain("@page partpage { @bottom-center { content: none; } @top-center { content: none; } }");
-    expect(css).toContain(".print-book .part-num { font-size: 0.8em; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.4em; }");
+    // the number is a <p>: `.print-book p` matches it directly and beats the
+    // inherited centring, so the divider's own rule must set it
+    expect(css).toContain(".print-book .part-num { font-size: 0.8em; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.4em; text-align: center; }");
     expect(css).toMatch(/\.print-book \.part-title \{ font-size: 1\.6em;/);
     expect(css).toMatch(/\.print-book \.part-epigraph \{ font-style: italic;/);
     expect(css).not.toMatch(/break-after:\s*page/);
+  });
+
+  it("the front-matter epigraph takes the part epigraph's shape", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const css = buildBookCss(defaultBindery()!, {
+      title: "Aldoria", chapters: [{ heading: "Um" }], parts: [], pageCount: 100,
+    });
+    expect(css).toContain(".print-book .epigraph { font-style: italic; max-width: 60%; margin: 0 auto; }");
   });
 
   it("a book without parts emits no part-page rules", async () => {
@@ -851,6 +861,17 @@ describe("EPUB export", () => {
     expect(tres.content).toContain('<span class="ch-num">1</span>');
     // data-ch is print-only (chN named pages); EPUB's attribute allow-list would drop it with a warning
     expect(tres.content).not.toContain("data-ch");
+  });
+
+  it("the EPUB stylesheet centres the divider number and shapes the front epigraph, like print", async () => {
+    const { buildEpubCss } = await import("./epubCss");
+    const css = buildEpubCss(defaultBindery()!);
+    // bare `p { text-align: justify }` matches the number directly and beats
+    // the inherited centring from .part-divider — same leak as print
+    expect(css).toContain(".part-num { font-size: 0.8em; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.4em; text-align: center; }");
+    expect(css).toContain(".epigraph { font-style: italic; max-width: 60%; margin: 0 auto; }");
+    // the EPUB chapter keeps h2 and its first p as siblings, so the reset stays
+    expect(css).toContain("h1 + p, h2 + p, h3 + p, .chapter-note + p { text-indent: 0; }");
   });
 
   it("emits front matter before the TOC and back matter after the chapters", async () => {

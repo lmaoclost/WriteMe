@@ -232,7 +232,7 @@ The Manuscript preset opts out of the opener rules: flush openings, no sink, ope
 
 ### Paged-Media Limits
 
-Chromium implements neither of the five paged-media features the print path would want, and each absence costs something:
+Chromium implements none of the five paged-media features the print path would want, and each absence costs something:
 
 - **No `string-set`.** It would give the running head the current chapter's heading automatically — one rule, the page-margin string following the document. Instead, a running head per chapter comes from **named pages**: each chapter gets an `@page chN` whose top margin carries that chapter's title, selected by the chapter's index; book mode puts the book title on the base page instead.
 - **No `target-counter`.** It would resolve every contents entry to its target page (`target-counter(attr(href url), page)`), giving the contents real page numbers. Instead, **the table of contents has no page numbers**: number, title and dotted leader only.
