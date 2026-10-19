@@ -286,7 +286,7 @@ describe("buildBookHtml v2", () => {
 
   it("renders scene markers: endMarker between paragraphs, noteTop/noteEnd around the body", () => {
     const html = buildBookHtml(mkBook({ chapters: [{ id: "c1", heading: "Um", content: "para um.\n\npara dois.", order: 0, endMarker: "⁂", noteTop: "Drafted 1204", noteEnd: "End of draft" }] }));
-    expect(html).toContain('<div class="scene-marker">⁂</div>');
+    expect(html).toContain('<div class="scene-marker ornament" aria-hidden="true"></div>');
     expect(html).toContain('<div class="chapter-note top"><p>Drafted 1204</p>');
     expect(html).toContain('<div class="chapter-note bottom"><p>End of draft</p>');
   });
@@ -495,6 +495,112 @@ describe("buildBookHtml front matter + parts", () => {
     expect(noRoman).not.toContain("@page frontmatter");
     const noFolio = buildBookCss({ ...defaultBindery()!, pageNumbers: false, frontMatter: { halfTitle: true, copyright: true, romanNumerals: true } }, ctx);
     expect(noFolio).not.toContain("@page frontmatter");
+  });
+});
+
+describe("back matter + scene ornament", () => {
+  const mkBook = (patch: Partial<Manuscript> = {}): Manuscript => ({
+    id: "b5", projectId: "p5", title: "A Coroa e o Rio", author: "Renan",
+    bindery: { ...defaultBindery()!, frontMatter: { halfTitle: false, copyright: false, romanNumerals: false } },
+    chapters: [{ id: "c1", heading: "Um", content: "corpo um.", order: 0 }],
+    ...patch,
+  });
+
+  function seedGlossaryEntry(): string {
+    act(() => { useScriptorium.getState().addProject("Vellmora"); });
+    const projectId = useScriptorium.getState().projects[0].id;
+    act(() => { useScriptorium.getState().addEntry(projectId, "faction"); });
+    act(() => {
+      useScriptorium.getState().updateEntry(useScriptorium.getState().entries[0].id,
+        { title: "Casa Vellmor", summary: "Dinastia do rio." });
+    });
+    return projectId;
+  }
+
+  it("about the author and colophon close the book", () => {
+    const html = buildBookHtml(mkBook({
+      bindery: {
+        ...defaultBindery()!,
+        font: "Georgia, serif",
+        backMatter: { glossary: false, aboutAuthor: "Ana escreve em Porto Alegre.", colophon: true },
+      },
+    }));
+    expect(html).toContain('class="back-matter about-author"');
+    expect(html).toContain("Ana escreve em Porto Alegre.");
+    expect(html).toContain('class="back-matter colophon"');
+    // typeset from the config: the label of the configured stack + the trim
+    expect(html).toContain("Set in Georgia.");
+    expect(html).toContain("6in 9in");
+    expect(html).toContain("Scriptorium.");
+    expect(html.indexOf("about-author")).toBeLessThan(html.indexOf("colophon"));
+    expect(html.indexOf("colophon")).toBeLessThan(html.indexOf("</article>"));
+  });
+
+  it("an unknown font stack falls back to the first font label in the colophon", () => {
+    const html = buildBookHtml(mkBook({
+      bindery: { ...defaultBindery()!, font: "Comic Sans, cursive", backMatter: { glossary: false, colophon: true } },
+    }));
+    expect(html).toContain("Set in Georgia.");
+  });
+
+  it("back matter sections print after the glossary and only when configured", () => {
+    const projectId = seedGlossaryEntry();
+    const html = buildBookHtml(mkBook({
+      projectId,
+      bindery: { ...defaultBindery()!, backMatter: { glossary: true, aboutAuthor: "Ana escreve em Porto Alegre.", colophon: true } },
+    }));
+    expect(html.indexOf("back-matter glossary")).toBeLessThan(html.indexOf("back-matter about-author"));
+    expect(html.indexOf("back-matter about-author")).toBeLessThan(html.indexOf("back-matter colophon"));
+    const bare = buildBookHtml(mkBook({ bindery: { ...defaultBindery()! } }));
+    expect(bare).not.toContain("back-matter about-author");
+    expect(bare).not.toContain("back-matter colophon");
+  });
+
+  it("glossary switch: the backMatter block wins, the legacy field is the fallback", () => {
+    const projectId = seedGlossaryEntry();
+    const book = (bindery: NonNullable<Manuscript["bindery"]>) =>
+      buildBookHtml(mkBook({ projectId, bindery }));
+    const base = defaultBindery()!;
+    // advanced block on, legacy off → glossary
+    expect(book({ ...base, glossary: false, backMatter: { glossary: true, colophon: false } })).toContain("back-matter glossary");
+    // advanced block off wins over legacy on → no glossary
+    expect(book({ ...base, glossary: true, backMatter: { glossary: false, colophon: false } })).not.toContain("back-matter glossary");
+    // no block (old saved data): the legacy field decides
+    expect(book({ ...base, glossary: true, backMatter: undefined })).toContain("back-matter glossary");
+    expect(book({ ...base, glossary: false, backMatter: undefined })).not.toContain("back-matter glossary");
+  });
+
+  it("scene ornaments: a punctuation marker becomes the configured glyph, an authored line prints as written", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const ctx = { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
+    const css = buildBookCss({ ...defaultBindery()!, sceneOrnament: "asterism" }, ctx);
+    expect(css).toContain('content: "⁂"');
+    const punct = buildBookHtml(mkBook({
+      bindery: { ...defaultBindery()!, sceneOrnament: "asterism" },
+      chapters: [{ id: "c1", heading: "Um", content: "corpo.", order: 0, endMarker: "***" }],
+    }));
+    expect(punct).toContain('<div class="scene-marker ornament" aria-hidden="true"></div>');
+    expect(punct).not.toContain("***");
+    // the writer's line is never replaced by the glyph
+    const word = buildBookHtml(mkBook({
+      bindery: { ...defaultBindery()!, sceneOrnament: "asterism" },
+      chapters: [{ id: "c1", heading: "Um", content: "corpo.", order: 0, endMarker: "Fim do Um" }],
+    }));
+    expect(word).toContain('<div class="scene-marker text">Fim do Um</div>');
+    expect(word).not.toContain("scene-marker ornament");
+  });
+
+  it("blank and rule ornaments draw no glyph; asterisks and fleuron do", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const ctx = { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
+    const blank = buildBookCss({ ...defaultBindery()!, sceneOrnament: "blank" }, ctx);
+    expect(blank).toContain(".print-book .scene-marker.ornament { height: 1.5em; }");
+    expect(blank).not.toContain("scene-marker.ornament::before");
+    const rule = buildBookCss({ ...defaultBindery()!, sceneOrnament: "rule" }, ctx);
+    expect(rule).toContain(".print-book .scene-marker.ornament { border-top: 1px solid currentColor; width: 4em; }");
+    expect(rule).not.toContain("scene-marker.ornament::before");
+    expect(buildBookCss({ ...defaultBindery()!, sceneOrnament: "asterisks" }, ctx)).toContain('content: "* * *"');
+    expect(buildBookCss({ ...defaultBindery()!, sceneOrnament: "fleuron" }, ctx)).toContain('content: "❦"');
   });
 });
 

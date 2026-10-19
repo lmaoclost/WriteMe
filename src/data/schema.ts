@@ -90,7 +90,6 @@ export function defaultBindery(): Manuscript["bindery"] {
     geometry: { gutter: "auto", mirrored: true },
     opener: { sink: 0.18, suppressHead: true, suppressFolio: true },
     frontMatter: { halfTitle: true, copyright: true, romanNumerals: true },
-    backMatter: { glossary: false, colophon: false },
     sceneOrnament: "asterism",
   };
 }

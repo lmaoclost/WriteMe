@@ -1,11 +1,11 @@
 /** Generated print stylesheet — page geometry, mirrored margins, folio,
  *  chapter openers (sink, suppressed head/folio), running heads
- *  (book-wide head on the base page, or per-chapter named pages) and part
+ *  (book-wide head on the base page, or per-chapter named pages), part
  *  divider pages (same sink, head/folio suppressed by the partpage named
- *  page).
+ *  page) and scene ornaments (glyph, blank, or rule by config).
  *  Ordered geometry first, then typography; structure rules land here too. */
 
-import type { BinderyConfig, Part } from "../../domain/types";
+import type { BinderyConfig, Part, SceneOrnament } from "../../domain/types";
 import { inches, kdpGutter, pageMargins, trimToPage } from "./bindery";
 
 export interface BookCtx {
@@ -17,6 +17,10 @@ export interface BookCtx {
 
 /** CSS string literal: escape backslashes and quotes for content: "...". */
 const cssStr = (text: string) => text.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
+
+const ORNAMENT_GLYPHS: Record<SceneOrnament, string> = {
+  blank: "", asterisks: "* * *", asterism: "⁂", fleuron: "❦", rule: "",
+};
 
 const BASE = (config: BinderyConfig) => ({
   bodyPt: config.typography?.bodyPt ?? 11,
@@ -95,6 +99,18 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
     `.print-book .chapter h2 { margin: 0 0 1.2em; text-align: center; }`,
     `.print-book .chapter h2 .ch-num { display: block; font-size: 0.8em; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.4em; }`,
   );
+  // scene break: a punctuation marker prints as the configured ornament (the
+  // glyph rides on ::before; blank keeps the air, rule draws a short rule);
+  // an authored line (.scene-marker.text) keeps its own words, same shape
+  const ornament = config.sceneOrnament ?? "asterism";
+  rules.push(`.print-book .scene-marker { text-align: center; letter-spacing: 0.3em; margin: 1.5em auto; }`);
+  if (ornament === "blank") {
+    rules.push(`.print-book .scene-marker.ornament { height: 1.5em; }`);
+  } else if (ornament === "rule") {
+    rules.push(`.print-book .scene-marker.ornament { border-top: 1px solid currentColor; width: 4em; }`);
+  } else {
+    rules.push(`.print-book .scene-marker.ornament::before { content: "${cssStr(ORNAMENT_GLYPHS[ornament])}"; }`);
+  }
   // a part divider is its own page: same sink knob as chapter openers, and a
   // named page so the book-mode head and the folio stay off it
   if (ctx.parts.length > 0) {

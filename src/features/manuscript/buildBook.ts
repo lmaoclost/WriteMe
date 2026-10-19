@@ -2,6 +2,7 @@ import type { Chapter, Manuscript, Part } from "../../domain/types";
 import { renderMarkdown } from "../entries/markdown";
 import { defaultBindery } from "../../data/schema";
 import { useScriptorium } from "../../data/store";
+import { BINDERY_FONTS, trimToPage } from "./bindery";
 
 const EMPTY_PARAGRAPH = '<p class="empty">No content yet.</p>';
 
@@ -61,8 +62,9 @@ function copyrightPage(manuscript: Manuscript, config: NonNullable<Manuscript["b
 
 /** Whole-book HTML: front matter (half title, title, copyright, dedication,
  *  epigraph, TOC with part rows), then the body plan's sections, then the
- *  glossary. Content flows through renderMarkdown (already sanitized); the
- *  plain-string pieces (title/author/headings) are escaped here. */
+ *  back matter (glossary, about the author, colophon). Content flows through
+ *  renderMarkdown (already sanitized); the plain-string pieces
+ *  (title/author/headings) are escaped here. */
 export function buildBookHtml(manuscript: Manuscript): string {
   const b = { ...defaultBindery(), ...(manuscript.bindery ?? {}) } as NonNullable<Manuscript["bindery"]>;
   const fm = b.frontMatter ?? { halfTitle: false, copyright: false, romanNumerals: false };
@@ -97,7 +99,12 @@ export function buildBookHtml(manuscript: Manuscript): string {
       body = `<div class="chapter-note top">${renderMarkdown(chapter.noteTop.trim())}</div>` + body;
     }
     if (chapter.endMarker?.trim()) {
-      body = body + `<div class="scene-marker">${escapeText(chapter.endMarker.trim())}</div>`;
+      // a punctuation marker (* * *, •) becomes the scene ornament; a line
+      // carrying letters or digits is the writer's own words and prints as
+      // written, styled like the ornament
+      body = body + (/[\p{L}\p{N}]/u.test(chapter.endMarker.trim())
+        ? `<div class="scene-marker text">${escapeText(chapter.endMarker.trim())}</div>`
+        : `<div class="scene-marker ornament" aria-hidden="true"></div>`);
     }
     if (chapter.noteEnd?.trim()) {
       body = body + `<div class="chapter-note bottom">${renderMarkdown(chapter.noteEnd.trim())}</div>`;
@@ -136,10 +143,30 @@ export function buildBookHtml(manuscript: Manuscript): string {
   const toc = b.toc
     ? `<section class="front-matter toc"><h2>Contents</h2><ul>${tocRows.join("")}</ul></section>`
     : "";
-  const glossary = b.glossary ? glossaryFor(manuscript) : "";
-  return `<article class="book">${halfTitle}${titleBlock}${copyright}${dedication}${epigraph}${toc}${body.join("")}${glossary}</article>`;
+  return `<article class="book">${halfTitle}${titleBlock}${copyright}${dedication}${epigraph}${toc}${body.join("")}${backMatterFor(manuscript, b)}</article>`;
 }
 
+
+/** Colophon font name: the label of the configured stack, or the first
+ *  (house) label when the stack is not one of the known ones. */
+function fontLabel(stack: string): string {
+  return BINDERY_FONTS.find((f) => f.stack === stack)?.label ?? BINDERY_FONTS[0].label;
+}
+
+/** Back matter after the body: glossary (one effective switch — the v2 block
+ *  wins, the legacy glossary field is the fallback for old saved data), then
+ *  about the author and the colophon, each only when configured. */
+function backMatterFor(manuscript: Manuscript, config: NonNullable<Manuscript["bindery"]>): string {
+  const bm = config.backMatter;
+  const glossary = (bm?.glossary ?? config.glossary ?? false) ? glossaryFor(manuscript) : "";
+  const aboutAuthor = bm?.aboutAuthor?.trim()
+    ? `<section class="back-matter about-author"><h2>About the author</h2><p>${escapeText(bm.aboutAuthor.trim())}</p></section>`
+    : "";
+  const colophon = bm?.colophon
+    ? `<section class="back-matter colophon"><p>Set in ${escapeText(fontLabel(config.font))}.</p><p>Trim ${escapeText(trimToPage(config.trim))} · Scriptorium.</p></section>`
+    : "";
+  return glossary + aboutAuthor + colophon;
+}
 
 /** Glossary = entries with a summary (term + short definition), assembled
  *  from the project's códex — the Bindery feature line. */
