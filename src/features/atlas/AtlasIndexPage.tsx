@@ -1,5 +1,6 @@
 import { useState, type KeyboardEvent } from "react";
 import { Link, useNavigate, useOutletContext } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { undoToastAction } from "../../ui/undoAction";
@@ -15,32 +16,34 @@ function AtlasCard({ atlas, confirm, onConfirmArm, onDelete }: {
   onConfirmArm(): void;
   onDelete(): void;
 }) {
+  const { t } = useTranslation();
   const images = useScriptorium((s) => s.images);
   const thumb = atlas.mapImageKey ? images[atlas.mapImageKey] : undefined;
   return (
     <article className="atlas-card relative bg-night-2 border border-line rounded-lg overflow-hidden hover:border-gold-dim transition-[border-color]">
       <Link className="block text-inherit no-underline" to={atlas.id}>
         <div className="h-[110px] flex items-center justify-center bg-ink text-slate text-[1.375rem] [&_img]:w-full [&_img]:h-full [&_img]:object-cover">
-          {thumb ? <img src={thumb} alt={`Map of ${atlas.name}`} /> : <span aria-hidden="true">◇</span>}
+          {thumb ? <img src={thumb} alt={t("atlas.index.mapAlt", { name: atlas.name })} /> : <span aria-hidden="true">◇</span>}
         </div>
         <h2 className="atlas-card-name mx-3 mt-2.5 mb-0.5 text-[15px]">{atlas.name}</h2>
         <p className="atlas-card-counts mx-3 mb-3 font-mono text-xs text-parchment-dim">
-          {atlas.regions.length} regions · {atlas.pins.length} pins
+          {t("atlas.index.counts", { regions: atlas.regions.length, pins: atlas.pins.length })}
         </p>
       </Link>
       <button
         type="button"
         className={"atlas-card-delete absolute top-2 right-2 bg-[color-mix(in_srgb,var(--night)_85%,transparent)] border border-line rounded-lg text-parchment-dim px-2 py-0.5 text-xs cursor-pointer hover:text-[var(--ember)] hover:border-[var(--ember)]" + (confirm ? " armed text-[var(--ember)] border-[var(--ember)] bg-[color-mix(in_srgb,var(--ember)_20%,transparent)]" : "")}
-        aria-label={`Delete atlas ${atlas.name}`}
+        aria-label={t("atlas.index.delete", { name: atlas.name })}
         onClick={() => (confirm ? onDelete() : onConfirmArm())}
       >
-        {confirm ? "Confirm?" : "✕"}
+        {confirm ? t("atlas.index.confirm") : "✕"}
       </button>
     </article>
   );
 }
 
 export function AtlasIndexPage() {
+  const { t } = useTranslation();
   const { projectId } = useOutletContext<WorkspaceContext>();
   const projectAtlases = useScriptorium(
     useShallow((s) => s.atlases.filter((a) => a.projectId === projectId)),
@@ -61,7 +64,7 @@ export function AtlasIndexPage() {
 
   const remove = (atlasId: string) => {
     useScriptorium.getState().deleteAtlas(atlasId);
-    useScriptorium.getState().pushToast("success", "Atlas deleted.", undoToastAction());
+    useScriptorium.getState().pushToast("success", t("atlas.index.deleted"), undoToastAction());
     setConfirmId(null);
   };
 
@@ -76,13 +79,13 @@ export function AtlasIndexPage() {
     <div className="px-7 py-6 flex flex-col gap-[18px] overflow-y-auto h-full">
       <header className="flex items-center justify-between gap-3">
         <div className="grid gap-1">
-          <h1 className="m-0 text-[22px]">Atlas</h1>
-          <p className="m-0 text-slate text-sm">Map regions and drop pins for places.</p>
+          <h1 className="m-0 text-[22px]">{t("sections.atlas.label")}</h1>
+          <p className="m-0 text-slate text-sm">{t("atlas.index.purpose")}</p>
         </div>
-        <Button onClick={() => setCreating(true)}>New atlas</Button>
+        <Button onClick={() => setCreating(true)}>{t("atlas.index.new")}</Button>
       </header>
       {projectAtlases.length === 0 ? (
-        <p className="text-parchment-dim text-[15px]">No saved atlases found. Create a new one first!</p>
+        <p className="text-parchment-dim text-[15px]">{t("atlas.index.empty")}</p>
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3.5">
           {projectAtlases.map((a) => (
@@ -97,20 +100,20 @@ export function AtlasIndexPage() {
         </div>
       )}
       {creating ? (
-        <Modal title="New atlas" onClose={() => setCreating(false)}>
+        <Modal title={t("atlas.index.new")} onClose={() => setCreating(false)}>
           <div className="flex flex-col gap-3.5 min-w-[260px]">
-            <Field label="Name">
+            <Field label={t("atlas.index.name")}>
               <input
                 type="text"
-                aria-label="Name"
+                aria-label={t("atlas.index.name")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 onKeyDown={createOnEnter}
               />
             </Field>
             <div className="flex justify-end gap-2">
-              <Button kind="ghost" onClick={() => setCreating(false)}>Cancel</Button>
-              <Button onClick={create}>Create</Button>
+              <Button kind="ghost" onClick={() => setCreating(false)}>{t("common.cancel")}</Button>
+              <Button onClick={create}>{t("common.create")}</Button>
             </div>
           </div>
         </Modal>

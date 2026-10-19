@@ -9,6 +9,7 @@ import {
 } from "../../domain/geometry";
 import { buildCarveChild, detectCarveParent, regionNearestToPoint } from "../../domain/carve";
 import { useScriptorium } from "../../data/store";
+import { i18n } from "../../i18n";
 import { useRafState } from "../../ui/useRaf";
 import type { TransformApi } from "./stage/useStageTransform";
 
@@ -174,24 +175,24 @@ export function useDraw({ atlasId, transformApi, tool, mode, onFinish }: UseDraw
     const store = useScriptorium.getState();
     if (preview.points.length < 3) {
       clear();
-      store.pushToast("error", "Move the endpoints to the parent region's edge.");
+      store.pushToast("error", i18n.t("atlas.draw.edge"));
       return null;
     }
     const region = store.addRegion(atlasIdRef.current, { points: preview.points });
     if (!region) {
       clear();
-      store.pushToast("error", "Region too small — drawing discarded.");
+      store.pushToast("error", i18n.t("atlas.draw.tooSmall"));
       return null;
     }
     const opposite = preview.useForward ? preview.backward : preview.forward;
     if (!isNeighbor && preview.inside) {
       if (opposite.length < 3) {
-        store.pushToast("error", "Move the endpoints to the parent region's edge.");
+        store.pushToast("error", i18n.t("atlas.draw.edge"));
       } else {
         store.updateRegion(parentId, { points: opposite });
       }
     }
-    store.pushToast("success", isNeighbor ? "Neighbor region carved — name it." : "Region carved — name it.");
+    store.pushToast("success", isNeighbor ? i18n.t("atlas.draw.neighborCarved") : i18n.t("atlas.draw.carved"));
     onFinishRef.current?.(region);
     clear();
     return region;
@@ -205,7 +206,7 @@ export function useDraw({ atlasId, transformApi, tool, mode, onFinish }: UseDraw
     if (region) {
       onFinishRef.current?.(region);
     } else {
-      store.pushToast("error", "Region too small — drawing discarded.");
+      store.pushToast("error", i18n.t("atlas.draw.tooSmall"));
     }
     clear();
     return region;
@@ -220,11 +221,11 @@ export function useDraw({ atlasId, transformApi, tool, mode, onFinish }: UseDraw
     const region = store.fitRegionIntoGap(atlasIdRef.current, points);
     clear();
     if (region) {
-      store.pushToast("success", "Region fitted — name it.");
+      store.pushToast("success", i18n.t("atlas.draw.fitted"));
       onFinishRef.current?.(region);
       return true;
     }
-    store.pushToast("error", "No area left to fit.");
+    store.pushToast("error", i18n.t("atlas.draw.noArea"));
     return false;
   }, [clear]);
 
@@ -238,7 +239,7 @@ export function useDraw({ atlasId, transformApi, tool, mode, onFinish }: UseDraw
       if (!entryRef.current) return finishRegion() !== null;
       // Armed entry without a snapped exit must not be a silent dead end (S2):
       // The toast fires and the carve stays armed for a better exit click.
-      useScriptorium.getState().pushToast("error", "Move the endpoints to the parent region's edge.");
+      useScriptorium.getState().pushToast("error", i18n.t("atlas.draw.edge"));
       return false;
     }
     if (current === "fit") return commitFit();

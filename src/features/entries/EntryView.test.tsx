@@ -269,7 +269,7 @@ describe("EntryView — links", () => {
     fireEvent.click(screen.getByRole("button", { name: "+ Link" }));
     const search = screen.getByLabelText("Search entries");
     fireEvent.change(search, { target: { value: "zzz" } });
-    expect(screen.getByText("No matching entries.")).toBeInTheDocument();
+    expect(screen.getByText("No results.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Rio Sarnen" })).toBeNull();
     fireEvent.change(search, { target: { value: "rio" } });
     fireEvent.click(screen.getByRole("button", { name: "Rio Sarnen" }));

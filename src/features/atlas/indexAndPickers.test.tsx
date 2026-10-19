@@ -129,7 +129,7 @@ function clickStage(stageEl: HTMLElement, x: number, y: number, pointerId = 1) {
 }
 
 function drawTestRegion(stageEl: HTMLElement) {
-  pickTool("Draw region");
+  pickTool("Region");
   clickStage(stageEl, 100, 60, 41);
   clickStage(stageEl, 300, 120, 42);
   clickStage(stageEl, 260, 220, 43);
@@ -200,7 +200,7 @@ describe("MapDropzone", () => {
     const { container } = mountEditor(pid, atlas.id);
     const zone = container.querySelector(".map-dropzone") as HTMLElement;
     expect(zone).toBeTruthy();
-    expect(within(zone).getByText("Arraste um mapa…")).toBeTruthy();
+    expect(within(zone).getByText("Drag a map…")).toBeTruthy();
     const file = new File(["x"], "map.png", { type: "image/png" });
     act(() => {
       fireEvent.drop(zone, { dataTransfer: { files: [file] } });
@@ -209,7 +209,7 @@ describe("MapDropzone", () => {
       const current = store().atlases.find((a) => a.id === atlas.id)!;
       expect(current.mapImageKey).toBeTruthy();
     });
-    expect(store().toasts.some((t) => t.kind === "success" && t.message === "Mapa carregado.")).toBe(true);
+    expect(store().toasts.some((t) => t.kind === "success" && t.message === "Map loaded.")).toBe(true);
     expect(vi.mocked(fileToDataUrl)).toHaveBeenCalledWith(file);
   });
 
@@ -248,7 +248,7 @@ describe("MapDropzone", () => {
     });
     const newKey = store().atlases.find((a) => a.id === atlas.id)!.mapImageKey!;
     expect(newKey).not.toBe(prevKey);
-    expect(store().toasts.some((t) => t.kind === "success" && t.message === "Mapa carregado.")).toBe(true);
+    expect(store().toasts.some((t) => t.kind === "success" && t.message === "Map loaded.")).toBe(true);
   });
 });
 
@@ -276,7 +276,7 @@ describe("EntryImagePicker", () => {
     });
     const after = store().atlases.find((a) => a.id === atlas.id)!.mapImageKey!;
     expect(after).not.toBe(before);
-    expect(store().toasts.some((t) => t.kind === "success" && t.message === "Mapa vinculado ao codex.")).toBe(true);
+    expect(store().toasts.some((t) => t.kind === "success" && t.message === "Map linked to the codex.")).toBe(true);
   });
 
   it("shows the empty state when no entry carries an image", () => {
@@ -372,8 +372,8 @@ describe("editor header", () => {
     const pid = seedProject();
     const atlas = seedAtlas(pid, { withMap: true });
     const { stageEl } = mountEditor(pid, atlas.id);
-    const undo = screen.getByRole("button", { name: "Desfazer" });
-    const redo = screen.getByRole("button", { name: "Refazer" });
+    const undo = screen.getByRole("button", { name: "Undo" });
+    const redo = screen.getByRole("button", { name: "Redo" });
     expect(undo).toBeDisabled();
     expect(redo).toBeDisabled();
     drawTestRegion(stageEl);
@@ -419,18 +419,18 @@ describe("editor header", () => {
     const atlas = seedAtlas(pid, { withMap: true });
     mountEditor(pid, atlas.id);
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Ampliar" }));
+      fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
     });
     expect(screen.getByText("125%")).toBeTruthy();
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Reduzir" }));
+      fireEvent.click(screen.getByRole("button", { name: "Zoom out" }));
     });
     expect(screen.getByText("100%")).toBeTruthy();
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Ampliar" }));
+      fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
     });
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Ajustar" }));
+      fireEvent.click(screen.getByRole("button", { name: "Fit to screen" }));
     });
     expect(screen.getByText("100%")).toBeTruthy();
   });
@@ -440,10 +440,10 @@ describe("editor header", () => {
     const atlas = seedAtlas(pid, { withMap: true });
     mountEditor(pid, atlas.id);
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Excluir atlas" }));
+      fireEvent.click(screen.getByRole("button", { name: "Delete atlas" }));
     });
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Excluir atlas" }));
+      fireEvent.click(screen.getByRole("button", { name: "Delete atlas" }));
     });
     await waitFor(() => {
       expect(store().atlases).toHaveLength(0);

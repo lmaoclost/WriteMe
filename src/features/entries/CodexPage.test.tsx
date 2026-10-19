@@ -74,13 +74,13 @@ describe("CodexPage", () => {
       { title: "Lei do Selo", category: "lore" },
     ]);
     render(codexRoute(projectId));
-    expect(screen.getByRole("button", { name: "Todas" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "All" })).toHaveAttribute("aria-pressed", "true");
     fireEvent.click(screen.getByRole("button", { name: "Characters" }));
     expect(screen.queryByRole("button", { name: "Cidade de Vellmora" })).toBeNull();
     expect(screen.getByRole("button", { name: "Aldric Vellmor" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Characters" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: "Todas" })).toHaveAttribute("aria-pressed", "false");
-    fireEvent.click(screen.getByRole("button", { name: "Todas" }));
+    expect(screen.getByRole("button", { name: "All" })).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(screen.getByRole("button", { name: "All" }));
     expect(screen.getByRole("button", { name: "Lei do Selo" })).toBeInTheDocument();
   });
 
@@ -94,7 +94,7 @@ describe("CodexPage", () => {
     expect(screen.queryByRole("button", { name: "Cidade de Vellmora" })).toBeNull();
     expect(screen.getByRole("button", { name: "Rio Sarnen" })).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Search entries"), { target: { value: "inexistente" } });
-    expect(screen.getByText("Nenhum resultado.")).toBeInTheDocument();
+    expect(screen.getByText("No results.")).toBeInTheDocument();
   });
 
   it("combines the category chip and the search filters", () => {
@@ -106,8 +106,8 @@ describe("CodexPage", () => {
     render(codexRoute(projectId));
     fireEvent.click(screen.getByRole("button", { name: "Characters" }));
     fireEvent.change(screen.getByLabelText("Search entries"), { target: { value: "sarnen" } });
-    expect(screen.getByText("Nenhum resultado.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Todas" }));
+    expect(screen.getByText("No results.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "All" }));
     expect(screen.getByRole("button", { name: "Rio Sarnen" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Cidade de Vellmora" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Aldric Vellmor" })).toBeNull();

@@ -138,7 +138,7 @@ describe("pin layer", () => {
   it("pin tool: a stage click places a pin at normalized coords with the stage offset", () => {
     const atlas = makeAtlas();
     const { container, stageEl } = mountEditor(atlas);
-    pickButton("Pin tool");
+    pickButton("Add pin");
     clickStage(stageEl, 208, 150, 11); // (0.26, 0.25)
     const pins = store().atlases[0].pins;
     expect(pins).toHaveLength(1);
@@ -363,7 +363,7 @@ describe("PinPanel", () => {
     const atlas = makeAtlas({ pins: [{ x: 0.25, y: 0.25, label: "Cidade" }] });
     const { container } = mountEditor(atlas);
     selectPinByClick(container);
-    pickButton("Pessoa");
+    pickButton("Person");
     expect(store().atlases[0].pins[0].type).toBe("person");
     pickButton("Item");
     expect(store().atlases[0].pins[0].type).toBe("item");
@@ -373,11 +373,11 @@ describe("PinPanel", () => {
     const atlas = makeAtlas({ pins: [{ x: 0.25, y: 0.25, label: "Cidade" }] });
     const { container } = mountEditor(atlas);
     selectPinByClick(container);
-    expect(screen.queryByText("Recentes")).toBeNull();
-    pickButton("Cor #2ecc71");
+    expect(screen.queryByText("Recent")).toBeNull();
+    pickButton("Color #2ecc71");
     expect(store().atlases[0].pins[0].color).toBe("#2ecc71");
     expect(getRecentColors()).toContain("#2ecc71");
-    expect(screen.getByText("Recentes")).toBeTruthy();
+    expect(screen.getByText("Recent")).toBeTruthy();
   });
 });
 
@@ -408,7 +408,7 @@ describe("LinkPicker", () => {
     act(() => {
       fireEvent.change(search, { target: { value: "zzz-nada" } });
     });
-    expect(screen.getByText("No matching entries.")).toBeTruthy();
+    expect(screen.getByText("No results.")).toBeTruthy();
   });
 
   it("pick forwards the entry id; unlink is offered for the current entry", () => {
@@ -515,7 +515,7 @@ describe("RegionPanel", () => {
       fireEvent.click(screen.getByRole("button", { name: "Claim remaining area" }));
     });
     expect(store().atlases.find((x) => x.id === atlas.id)!.regions).toHaveLength(2);
-    expect(store().toasts[store().toasts.length - 1].message).toBe("No un-regioned area left in this State.");
+    expect(store().toasts[store().toasts.length - 1].message).toBe("No un-regioned area left in this state.");
   });
 
   it("region delete is a two-step confirm (Delete region → Confirm?) and clears the selection", () => {

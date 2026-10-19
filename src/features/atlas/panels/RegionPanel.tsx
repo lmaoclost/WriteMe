@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { Id, WorldEntry } from "../../../domain/types";
 import type { Region } from "../../../domain/types";
 import { useScriptorium } from "../../../data/store";
@@ -15,6 +16,7 @@ export interface RegionPanelProps {
 }
 
 export function RegionPanel({ atlasId, region, entries, onDelete }: RegionPanelProps) {
+  const { t } = useTranslation();
   const [label, setLabel] = useState(region.label);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -35,22 +37,19 @@ export function RegionPanel({ atlasId, region, entries, onDelete }: RegionPanelP
     const s = useScriptorium.getState();
     const count = s.claimRemainingArea(atlasId, region.id);
     if (count > 0) {
-      s.pushToast(
-        "success",
-        `${count} ${count === 1 ? "area claimed" : "areas claimed"} — name it.`,
-      );
+      s.pushToast("success", t("atlas.region.claimed", { count }));
     } else {
-      s.pushToast("error", "No un-regioned area left in this State.");
+      s.pushToast("error", t("atlas.region.noneLeft"));
     }
   };
 
   return (
     <div className="panel flex flex-col gap-3">
-      <div className="text-xs tracking-[0.08em] uppercase text-slate">Region</div>
-      <Field label="Label">
+      <div className="text-xs tracking-[0.08em] uppercase text-slate">{t("atlas.region.title")}</div>
+      <Field label={t("atlas.region.label")}>
           <input
             id="region-label-input"
-            aria-label="Region label"
+            aria-label={t("atlas.region.regionLabel")}
             type="text"
             value={label}
             onChange={(e) => setLabel(e.target.value)}
@@ -58,13 +57,13 @@ export function RegionPanel({ atlasId, region, entries, onDelete }: RegionPanelP
             onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
           />
       </Field>
-      <Field label="Color">
+      <Field label={t("atlas.region.color")}>
         <ColorSwatches
           currentColor={region.color}
           onPickColor={(color) => patch({ color })}
         />
       </Field>
-      <Field label="Fill">
+      <Field label={t("atlas.region.fill")}>
         <div className="flex items-center gap-2 [&_input[type=range]]:flex-1 [&_input[type=range]]:accent-[var(--gold)] [&_output]:font-mono [&_output]:text-xs [&_output]:text-parchment-dim [&_output]:min-w-[38px]">
           <input
             type="range"
@@ -72,7 +71,7 @@ export function RegionPanel({ atlasId, region, entries, onDelete }: RegionPanelP
             max={1}
             step={0.05}
             value={region.fillOpacity}
-            aria-label="Fill opacity"
+            aria-label={t("atlas.region.opacity")}
             /* slider drag: a snapshot of the pre-drag value once, then
                silent writes per tick — one undo step per drag, not per tick */
             onChange={(e) => {
@@ -88,14 +87,14 @@ export function RegionPanel({ atlasId, region, entries, onDelete }: RegionPanelP
           <output data-testid="opacity-value">{Math.round(region.fillOpacity * 100)}%</output>
         </div>
       </Field>
-      <Field label="Tome entry">
+      <Field label={t("atlas.region.tomeEntry")}>
         <button
           type="button"
           aria-pressed={pickerOpen}
           onClick={() => setPickerOpen((open) => !open)}
           className="bg-none border border-line text-parchment rounded-lg px-2.5 py-1.5 text-[13px] hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold"
         >
-          Link entry
+          {t("atlas.region.linkEntry")}
         </button>
         {pickerOpen ? (
           <LinkPicker
@@ -110,13 +109,13 @@ export function RegionPanel({ atlasId, region, entries, onDelete }: RegionPanelP
         ) : null}
       </Field>
       <div className="text-xs text-parchment-dim">
-        <span data-testid="vertex-count">Vertices: {region.points.length}</span>
+        <span data-testid="vertex-count">{t("atlas.region.vertices", { count: region.points.length })}</span>
       </div>
-      <Field label="Claim area">
-        <button type="button" onClick={claimRemaining} className="bg-none border border-line text-parchment rounded-lg px-2.5 py-1.5 text-[13px] hover:border-gold-dim self-start justify-self-start">Claim remaining area</button>
+      <Field label={t("atlas.region.claimArea")}>
+        <button type="button" onClick={claimRemaining} className="bg-none border border-line text-parchment rounded-lg px-2.5 py-1.5 text-[13px] hover:border-gold-dim self-start justify-self-start">{t("atlas.region.claim")}</button>
       </Field>
       <Button kind="danger" className="panel-delete self-start" onClick={() => (confirming ? onDelete(region.id) : setConfirming(true))}>
-        {confirming ? "Confirm?" : "Delete region"}
+        {confirming ? t("atlas.region.confirm") : t("atlas.region.delete")}
       </Button>
     </div>
   );
