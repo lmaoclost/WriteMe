@@ -119,7 +119,7 @@ export function ExportButtons({ manuscript }: ExportButtonsProps) {
           const num = chapterNumber(numbering, chapterNo);
           entries.push({
             title: num ? `${num} ${chapter.heading}` : chapter.heading,
-            content: `<section class="chapter" epub:type="chapter" data-ch="${chapterNo}">${chapterInner(bindery, chapter, chapterNo)}</section>`,
+            content: `<section class="chapter" epub:type="chapter">${chapterInner(bindery, chapter, chapterNo)}</section>`,
           });
         });
       });

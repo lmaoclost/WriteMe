@@ -734,6 +734,8 @@ describe("EPUB export", () => {
     // default config: the configured indent (1em), never the brief's 1.2em
     expect(def).toContain("text-indent: 1em");
     expect(def).not.toContain("text-indent: 1.2em");
+    // same reset as print: first paragraph after a heading or top note stays flush
+    expect(def).toContain("h1 + p, h2 + p, h3 + p, .chapter-note + p { text-indent: 0; }");
     expect(def).toContain("text-align: justify");
     expect(def).toContain("::first-letter");
     // print-only geometry stays out; the package default stylesheet survives (appended to)
@@ -819,8 +821,9 @@ describe("EPUB export", () => {
     expect(partEntry.content).toContain('<h1 class="part-title">Parte I</h1>');
     const tres = content.find((c) => c.title === "1 Três")!;
     expect(tres.content).toContain('epub:type="chapter"');
-    expect(tres.content).toContain('data-ch="1"');
     expect(tres.content).toContain('<span class="ch-num">1</span>');
+    // data-ch is print-only (chN named pages); EPUB's attribute allow-list would drop it with a warning
+    expect(tres.content).not.toContain("data-ch");
   });
 
   it("emits front matter before the TOC and back matter after the chapters", async () => {

@@ -21,7 +21,8 @@ export function buildEpubCss(config: BinderyConfig): string {
   const rules: string[] = [
     `body { font-family: ${config.font}; font-size: ${bodyPt}pt; line-height: ${leading / bodyPt}; }`,
     `p { margin: 0; text-align: ${justify ? "justify" : "left"}; widows: 2; orphans: 2; }`,
-    `p + p, blockquote + p, ul + p, ol + p, .chapter-note + p { text-indent: ${indent}em; }`,
+    `p + p, blockquote + p, ul + p, ol + p { text-indent: ${indent}em; }`,
+    `h1 + p, h2 + p, h3 + p, .chapter-note + p { text-indent: 0; }`,
   ];
   if (config.typography?.hyphens) rules.push(`p { hyphens: auto; -webkit-hyphens: auto; }`);
   rules.push(
