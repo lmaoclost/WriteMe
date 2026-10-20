@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
@@ -93,6 +94,16 @@ export function CalendarPage({ calendarId }: { calendarId: string }) {
   const [configOpen, setConfigOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   useBoardNotesHotkey(notesOpen, setNotesOpen);
+
+  // a timeline event can deep-link a day: ?d=<yearIndex>:<monthIndex>:<dayIndex>
+  const [searchParams] = useSearchParams();
+  const deepLinkDay = searchParams.get("d");
+  useEffect(() => {
+    if (!deepLinkDay) return;
+    const y = Number(deepLinkDay.split(":")[0]);
+    if (Number.isInteger(y)) setYearIndex(y);
+    setSelectedDay(deepLinkDay);
+  }, [deepLinkDay]);
 
   useEffect(() => {
     if (!cal) pushToast("error", t("calendar.page.notFound"));

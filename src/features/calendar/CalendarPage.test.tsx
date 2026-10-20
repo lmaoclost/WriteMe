@@ -77,15 +77,28 @@ describe("store — calendars", () => {
 
 describe("CalendarPage", () => {
   function mount(c: CustomCalendar) {
-    return render(<CalendarPage calendarId={c.id} />);
+    return render(<MemoryRouter><CalendarPage calendarId={c.id} /></MemoryRouter>);
   }
 
   it("renders 12 months × 30 days with weekday header", () => {
     const c = seed();
-    render(<CalendarPage calendarId={c.id} />);
+    render(<MemoryRouter><CalendarPage calendarId={c.id} /></MemoryRouter>);
     expect(screen.getAllByTestId("cal-month")).toHaveLength(12);
     expect(screen.getAllByTestId("cal-day")).toHaveLength(360);
     expect(document.querySelectorAll(".cal-wd").length).toBe(12 * 7);
+  });
+
+  it("a ?d deep link preselects that day and jumps to its year", () => {
+    const c = seed();
+    render(
+      <MemoryRouter initialEntries={[`/p/prj_1/calendar/${c.id}?d=1:2:4`]}>
+        <CalendarPage calendarId={c.id} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByLabelText("Current year").textContent).toBe("Year 2");
+    const selected = document.querySelectorAll(".cal-day.selected");
+    expect(selected).toHaveLength(1);
+    expect(selected[0].getAttribute("aria-label")).toBe(`5 of ${c.months[2].name}`);
   });
 
   it("year navigation shifts event dayKeys", () => {
@@ -151,7 +164,7 @@ describe("CalendarPage", () => {
 
   it("config popover fits narrow viewports and inputs shrink", () => {
     const c = seed();
-    render(<CalendarPage calendarId={c.id} />);
+    render(<MemoryRouter><CalendarPage calendarId={c.id} /></MemoryRouter>);
     fireEvent.click(screen.getByRole("button", { name: "Edit Calendar Settings" }));
     const pop = screen.getByTestId("cal-config") as HTMLElement;
     expect(pop.className).toContain("max-[720px]:inset-x-3");
@@ -203,7 +216,7 @@ describe("CalendarPage — configurable calendar", () => {
 describe("CalendarPage — config popover", () => {
   it("weekday rename, weekend toggle and + Month flow from the popover", () => {
     const cal = seed();
-    render(<CalendarPage calendarId={cal.id} />);
+    render(<MemoryRouter><CalendarPage calendarId={cal.id} /></MemoryRouter>);
     fireEvent.click(screen.getByRole("button", { name: "Edit Calendar Settings" }));
     expect(screen.getByTestId("cal-weekdays-config")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Weekday 1"), { target: { value: "Alvor" } });
@@ -236,7 +249,7 @@ describe("CalendarPage — Portuguese", () => {
     const { setLanguage } = await import("../../i18n");
     await setLanguage("pt-BR");
     const cal = seed();
-    render(<CalendarPage calendarId={cal.id} />);
+    render(<MemoryRouter><CalendarPage calendarId={cal.id} /></MemoryRouter>);
     expect(screen.getByLabelText("Nome do calendário")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Editar configurações do calendário" })).toBeInTheDocument();
     fireEvent.click(screen.getAllByTestId("cal-day")[0]);
