@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultBindery, emptyProjectData, parseExport, validateProjectData } from "./schema";
+import { defaultBindery, emptyProjectData, parseExport, ParseExportError, validateProjectData, validateProjectDataDetailed } from "./schema";
 import type { ProjectData } from "../domain/types";
 
 const valid: ProjectData = {
@@ -169,5 +169,33 @@ describe("manuscript parts and bindery layout blocks", () => {
     expect(validateProjectData(withBindery({ backMatter: { aboutAuthor: "Ana" } }))).toBe(true); // panel writes omit both booleans
     expect(validateProjectData(withBindery({ preset: "gothic" }))).toBe(false);
     expect(validateProjectData(withBindery({ sceneOrnament: "diamond" }))).toBe(false);
+  });
+});
+
+describe("validateProjectDataDetailed", () => {
+  it("reports the offending path for a wrong-typed field", () => {
+    const bad = { ...valid, entries: [{ ...valid.entries[0], category: 123 as unknown as string }] };
+    const issues = validateProjectDataDetailed(bad);
+    expect(issues.length).toBeGreaterThan(0);
+    expect(issues[0].path).toContain("entries.0.category");
+  });
+
+  it("returns no issues for well-formed data", () => {
+    expect(validateProjectDataDetailed(valid)).toEqual([]);
+  });
+});
+
+describe("parseExport error detail", () => {
+  it("attaches the first issue path to invalidStructure", () => {
+    const payload = { app: "scriptorium", version: 2, ...valid, entries: [{ ...valid.entries[0], body: 9 as unknown as string }] };
+    try {
+      parseExport(JSON.stringify(payload));
+      expect.unreachable("expected a throw");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ParseExportError);
+      const e = error as ParseExportError;
+      expect(e.code).toBe("invalidStructure");
+      expect(e.details).toContain("entries.0.body");
+    }
   });
 });

@@ -1,78 +1,94 @@
-import type {
-  ProjectData, WorldEntry, Atlas, Manuscript, Region, Pin, Project, Part, BinderyConfig,
-  Bloodline, BloodlinePerson, BloodlineHouse, BloodlineTitle, BloodlineTenure,
-  FactionWeb, Faction, FactionConnection,
-  CustomCalendar, CalendarEvent, EntrySection,
-  PlotBoard, PlotCard, PlotWire, PlotPart,
-  TimelineWire, TimelineBead, TimelineSegment,
-  OathsChart, OathMember, OathLink,
-  WellSpring, WellNode, WellBorder,
-  Conlang, ConlangGlyph, ConlangWord,
-} from "../domain/types";
+import * as z from "zod/mini";
+import type { ProjectData, Bloodline, Manuscript } from "../domain/types";
 import { PIN_TYPES } from "../domain/types";
+import type { PinType } from "../domain/types";
 
-const isStr = (v: unknown): v is string => typeof v === "string";
-const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
-const isBool = (v: unknown): v is boolean => typeof v === "boolean";
-const isArr = (v: unknown): v is unknown[] => Array.isArray(v);
-const isObj = (v: unknown): boolean => !!v && typeof v === "object" && !Array.isArray(v);
-const norm01 = (v: unknown): boolean => isNum(v) && v >= 0 && v <= 1;
-const optionalStr = (v: unknown): boolean => v === undefined || isStr(v);
-const optionalNum = (v: unknown): boolean => v === undefined || isNum(v);
-const optionalBool = (v: unknown): boolean => v === undefined || isBool(v);
+const s = z.string();
+const n = z.number(); // Number.isFinite semantics: NaN/Infinity rejected
+const b = z.boolean();
+/** optional field of a typed kind */
+const num01 = n.check(z.gte(0), z.lte(1));
+const dotPath = (path: Array<string | number | symbol>): string =>
+  path.map((p) => String(p)).join(".");
 
-const optionalFocal = (v: unknown): boolean =>
-  v === undefined || (Array.isArray(v) && v.length === 2 && v.every((n) => typeof n === "number" && n >= 0 && n <= 1));
+/** Categories are user-defined entry kinds — any string passes (see types.ts). */
+const EntrySchema = z.object({
+  id: s,
+  projectId: s,
+  title: s,
+  category: s,
+  body: s,
+  links: z.array(s),
+  imageKey: z.optional(s),
+  focal: z.optional(z.tuple([num01, num01])),
+  date: z.optional(s),
+  summary: z.optional(s),
+  sections: z.optional(
+    z.array(
+      z.object({
+        name: s,
+        id: z.optional(s),
+        fields: z.array(
+          z.object({
+            label: s,
+            content: s,
+            id: z.optional(s),
+          }),
+        ),
+      }),
+    ),
+  ),
+});
 
-const isEntry = (v: unknown): v is WorldEntry => {
-  const e = v as WorldEntry;
-  return !!e && isStr(e.id) && isStr(e.projectId) && isStr(e.title)
-    && isStr(e.category) // categories may be user-defined kinds
-    && isStr(e.body) && isArr(e.links) && e.links.every(isStr) && optionalStr(e.imageKey)
-    && optionalFocal(e.focal)
-    && optionalStr(e.summary) && optionalStr(e.date)
-    && (e.sections === undefined
-      || (isArr(e.sections) && e.sections.every((sec) =>
-        !!sec && isStr((sec as EntrySection).name)
-        && isArr((sec as EntrySection).fields)
-        && (sec as EntrySection).fields.every((f) => !!f && isStr(f.label) && isStr(f.content)))));
-};
+const RegionSchema = z.object({
+  id: s,
+  points: z.array(
+    z.object({ x: num01, y: num01 }),
+  ),
+  color: s,
+  fillOpacity: z.optional(num01),
+  label: s,
+  entryId: z.optional(s),
+});
 
-const isRegion = (v: unknown): v is Region => {
-  const r = v as Region;
-  return !!r && isStr(r.id) && isArr(r.points) && r.points.every((p) => {
-    const q = p as { x: unknown; y: unknown };
-    return !!q && norm01(q.x) && norm01(q.y);
-  }) && isStr(r.color) && (r.fillOpacity === undefined || norm01(r.fillOpacity)) && isStr(r.label)
-    && optionalStr(r.entryId);
-};
+const PinSchema = z.object({
+  id: s,
+  x: num01,
+  y: num01,
+  type: z.enum(PIN_TYPES as unknown as [PinType, ...PinType[]]),
+  color: s,
+  label: s,
+  entryId: z.optional(s),
+});
 
-const isPin = (v: unknown): v is Pin => {
-  const p = v as Pin;
-  return !!p && isStr(p.id) && norm01(p.x) && norm01(p.y)
-    && (PIN_TYPES as readonly string[]).includes(p.type) && isStr(p.color) && isStr(p.label)
-    && optionalStr(p.entryId);
-};
+const AtlasSchema = z.object({
+  id: s,
+  projectId: s,
+  name: s,
+  mapImageKey: z.optional(s),
+  regions: z.array(RegionSchema),
+  pins: z.array(PinSchema),
+});
 
-const isAtlas = (v: unknown): v is Atlas => {
-  const a = v as Atlas;
-  return !!a && isStr(a.id) && isStr(a.projectId) && isStr(a.name)
-    && isArr(a.regions) && a.regions.every(isRegion)
-    && isArr(a.pins) && a.pins.every(isPin) && optionalStr(a.mapImageKey);
-};
+const ChapterSchema = z.object({
+  id: s,
+  heading: s,
+  content: s,
+  order: n,
+  noteTop: z.optional(s),
+  noteEnd: z.optional(s),
+  endMarker: z.optional(s),
+  linkedCalendarId: z.optional(s),
+  calendarDayKey: z.optional(s),
+  partId: z.optional(s),
+});
 
-const isChapter = (v: unknown): boolean => {
-  const c = v as Manuscript["chapters"][number];
-  return !!c && isStr(c.id) && isStr(c.heading) && isStr(c.content) && isNum(c.order)
-    && optionalStr(c.noteTop) && optionalStr(c.noteEnd) && optionalStr(c.endMarker)
-    && optionalStr(c.linkedCalendarId) && optionalStr(c.calendarDayKey)
-    && optionalStr(c.partId);
-};
-
-const isPart = (v: unknown): boolean => {
-  const p = v as Part;
-  return !!p && isStr(p.id) && isStr(p.title) && isNum(p.order) && optionalStr(p.epigraph);
-};
+const PartSchema = z.object({
+  id: s,
+  title: s,
+  order: n,
+  epigraph: z.optional(s),
+});
 
 export const BIND_TRIMS = ["6x9", "5x8", "5.5x8.5", "5.25x8", "6.14x9.21", "7x10"];
 export const BIND_NUM_STYLES = ["none", "arabic", "chapter", "word"] as const;
@@ -94,298 +110,368 @@ export function defaultBindery(): Manuscript["bindery"] {
   };
 }
 
-/** Nested bindery blocks: absent blocks/fields (old saved data) are valid;
- *  a present field must carry the right type. */
-const isBinderyTypography = (v: unknown): boolean => {
-  if (v === undefined) return true;
-  const t = v as NonNullable<BinderyConfig["typography"]>;
-  return isObj(t)
-    && optionalNum(t.bodyPt) && optionalNum(t.leading) && optionalNum(t.indent)
-    && optionalBool(t.justify) && optionalBool(t.hyphens);
-};
+const BinderyTypographySchema = z.optional(z.object({
+  bodyPt: z.optional(n),
+  leading: z.optional(n),
+  indent: z.optional(n),
+  justify: z.optional(b),
+  hyphens: z.optional(b),
+}));
 
-const isBinderyGeometry = (v: unknown): boolean => {
-  if (v === undefined) return true;
-  const g = v as NonNullable<BinderyConfig["geometry"]>;
-  return isObj(g)
-    && (g.gutter === undefined || g.gutter === "auto" || isNum(g.gutter))
-    && optionalBool(g.mirrored);
-};
+const BinderyGeometrySchema = z.optional(z.object({
+  gutter: z.optional(z.union([n, z.literal("auto")])),
+  mirrored: z.optional(b),
+}));
 
-const isBinderyOpener = (v: unknown): boolean => {
-  if (v === undefined) return true;
-  const o = v as NonNullable<BinderyConfig["opener"]>;
-  return isObj(o)
-    && optionalNum(o.sink) && optionalBool(o.suppressHead) && optionalBool(o.suppressFolio);
-};
+const BinderyOpenerSchema = z.optional(z.object({
+  sink: z.optional(n),
+  suppressHead: z.optional(b),
+  suppressFolio: z.optional(b),
+}));
 
-const isBinderyFrontMatter = (v: unknown): boolean => {
-  if (v === undefined) return true;
-  if (!isObj(v)) return false;
-  const f = v as NonNullable<BinderyConfig["frontMatter"]>;
-  const info = f.copyrightInfo;
-  return optionalBool(f.halfTitle) && optionalBool(f.copyright) && optionalBool(f.romanNumerals)
-    && optionalStr(f.epigraph)
-    && (info === undefined || (isObj(info)
-      && optionalStr(info.year) && optionalStr(info.holder) && optionalStr(info.isbn)
-      && optionalStr(info.edition) && optionalStr(info.rights)));
-};
+const BinderyFrontMatterSchema = z.optional(z.object({
+  halfTitle: z.optional(b),
+  copyright: z.optional(b),
+  romanNumerals: z.optional(b),
+  epigraph: z.optional(s),
+  copyrightInfo: z.optional(
+    z.object({
+      year: z.optional(s),
+      holder: z.optional(s),
+      isbn: z.optional(s),
+      edition: z.optional(s),
+      rights: z.optional(s),
+    }),
+  ),
+}));
 
-const isBinderyBackMatter = (v: unknown): boolean => {
-  if (v === undefined) return true;
-  const b = v as NonNullable<BinderyConfig["backMatter"]>;
-  return isObj(b)
-    && optionalBool(b.glossary) && optionalBool(b.colophon) && optionalStr(b.aboutAuthor);
-};
+const BinderyBackMatterSchema = z.optional(z.object({
+  glossary: z.optional(b),
+  colophon: z.optional(b),
+  aboutAuthor: z.optional(s),
+}));
 
-const isBindery = (v: unknown): boolean => {
-  const b = v as Manuscript["bindery"];
-  return !!b && isStr(b.font) && isStr(b.trim) && (BIND_TRIMS as string[]).includes(b.trim)
-    && typeof b.dropCaps === "boolean" && typeof b.runningHead === "boolean"
-    && typeof b.titlePage === "boolean" && typeof b.toc === "boolean" && typeof b.glossary === "boolean"
-    && optionalStr(b.dedication)
-    && (b.numberingStyle === undefined || (BIND_NUM_STYLES as readonly string[]).includes(b.numberingStyle))
-    && (b.runningHeadMode === undefined || (BIND_HEAD_MODES as readonly string[]).includes(b.runningHeadMode))
-    && (b.pageNumbers === undefined || typeof b.pageNumbers === "boolean")
-    && (b.preset === undefined || (BIND_PRESETS as readonly string[]).includes(b.preset))
-    && (b.sceneOrnament === undefined || (BIND_SCENE_ORNAMENTS as readonly string[]).includes(b.sceneOrnament))
-    && isBinderyTypography(b.typography) && isBinderyGeometry(b.geometry) && isBinderyOpener(b.opener)
-    && isBinderyFrontMatter(b.frontMatter) && isBinderyBackMatter(b.backMatter);
-};
+const BinderySchema = z.object({
+  font: s,
+  trim: z.enum(BIND_TRIMS as unknown as [string, ...string[]]),
+  dropCaps: b,
+  runningHead: b,
+  titlePage: b,
+  toc: b,
+  glossary: b,
+  dedication: z.optional(s),
+  numberingStyle: z.optional(z.enum(BIND_NUM_STYLES)),
+  runningHeadMode: z.optional(z.enum(BIND_HEAD_MODES)),
+  pageNumbers: z.optional(b),
+  preset: z.optional(z.enum(BIND_PRESETS)),
+  sceneOrnament: z.optional(z.enum(BIND_SCENE_ORNAMENTS)),
+  typography: BinderyTypographySchema,
+  geometry: BinderyGeometrySchema,
+  opener: BinderyOpenerSchema,
+  frontMatter: BinderyFrontMatterSchema,
+  backMatter: BinderyBackMatterSchema,
+});
 
-const isManuscript = (v: unknown): v is Manuscript => {
-  const m = v as Manuscript;
-  return !!m && isStr(m.id) && isStr(m.projectId) && isStr(m.title) && isStr(m.author)
-    && isArr(m.chapters) && m.chapters.every(isChapter)
-    && (m.parts === undefined || (isArr(m.parts) && m.parts.every(isPart)))
-    && (m.bindery === undefined || isBindery(m.bindery));
-};
+const ManuscriptSchema = z.object({
+  id: s,
+  projectId: s,
+  title: s,
+  author: s,
+  chapters: z.array(ChapterSchema),
+  parts: z.optional(z.array(PartSchema)),
+  bindery: z.optional(BinderySchema),
+});
 
-const isProject = (v: unknown): v is Project => {
-  const p = v as Project;
-  return !!p && isStr(p.id) && isStr(p.name) && isStr(p.description)
-    && isNum(p.createdAt) && isNum(p.updatedAt) && optionalStr(p.coverImageKey)
-    && (p.customCategories === undefined
-      || (Array.isArray(p.customCategories) && p.customCategories.every((k) =>
-        !!k && isStr((k as { key: string }).key) && isStr((k as { label: string }).label)
-        && isStr((k as { icon: string }).icon))));
-};
+const ProjectSchema = z.object({
+  id: s,
+  name: s,
+  description: s,
+  coverImageKey: z.optional(s),
+  createdAt: n,
+  updatedAt: n,
+  customCategories: z.optional(
+    z.array(
+      z.object({
+        key: s,
+        label: s,
+        icon: s,
+        color: z.optional(s),
+      }),
+    ),
+  ),
+});
 
-const isBloodlineTitle = (v: unknown): v is BloodlineTitle => {
-  const t = v as BloodlineTitle;
-  return !!t && isStr(t.title);
-};
+const BloodlineTitleSchema = z.object({ title: s });
+const BloodlineTenureSchema = z.object({ label: s, from: s, to: s });
 
-const isBloodlineTenure = (v: unknown): v is BloodlineTenure => {
-  const t = v as BloodlineTenure;
-  return !!t && isStr(t.label) && isStr(t.from) && isStr(t.to);
-};
+const BloodlinePersonSchema = z.object({
+  id: s,
+  x: n,
+  y: n,
+  name: s,
+  suffix: z.optional(s),
+  portraitKey: z.optional(s),
+  title: z.optional(s),
+  relationship: z.optional(s),
+  bio: z.optional(s),
+  birthDate: z.optional(s),
+  deathDate: z.optional(s),
+  additionalTitles: z.array(BloodlineTitleSchema),
+  tenures: z.array(BloodlineTenureSchema),
+  showBadge: b,
+  badgeText: s,
+  connectedTo: z.optional(s),
+  siblingId: z.optional(s),
+  partnerId: z.optional(s),
+  houseId: z.optional(s),
+  birthOrder: z.optional(n),
+  isTwin: b,
+});
 
-const isBloodlinePerson = (v: unknown): v is BloodlinePerson => {
-  const p = v as BloodlinePerson;
-  return !!p && isStr(p.id) && isNum(p.x) && isNum(p.y) && isStr(p.name)
-    && isArr(p.additionalTitles) && p.additionalTitles.every(isBloodlineTitle)
-    && isArr(p.tenures) && p.tenures.every(isBloodlineTenure)
-    && isBool(p.showBadge) && isStr(p.badgeText) && isBool(p.isTwin)
-    && optionalStr(p.suffix) && optionalStr(p.portraitKey) && optionalStr(p.title)
-    && optionalStr(p.relationship) && optionalStr(p.bio)
-    && optionalStr(p.birthDate) && optionalStr(p.deathDate)
-    && optionalStr(p.connectedTo) && optionalStr(p.siblingId) && optionalStr(p.partnerId)
-    && optionalStr(p.houseId)
-    && optionalNum(p.birthOrder);
-};
+const BloodlineHouseSchema = z.object({
+  id: s,
+  x: n,
+  y: n,
+  name: s,
+  subtitle: z.optional(s),
+  isMainBranch: b,
+  isMonarch: b,
+});
 
-const isBloodlineHouse = (v: unknown): v is BloodlineHouse => {
-  const h = v as BloodlineHouse;
-  return !!h && isStr(h.id) && isNum(h.x) && isNum(h.y) && isStr(h.name)
-    && isBool(h.isMainBranch) && isBool(h.isMonarch) && optionalStr(h.subtitle);
-};
+const BloodlineSchema = z.object({
+  id: s,
+  projectId: s,
+  name: s,
+  persons: z.array(BloodlinePersonSchema),
+  houses: z.array(BloodlineHouseSchema),
+  notes: s,
+});
 
-const CONNECTION_TYPES: readonly string[] = ["ally", "rival", "vassal", "trade", "neutral"];
+const FactionSchema = z.object({
+  id: s,
+  x: n,
+  y: n,
+  name: s,
+  leader: z.optional(s),
+  territory: z.optional(s),
+  goals: z.optional(s),
+  description: z.optional(s),
+  color: s,
+});
 
-const isFaction = (v: unknown): v is Faction => {
-  const f = v as Faction;
-  return !!f && isStr(f.id) && isNum(f.x) && isNum(f.y) && isStr(f.name) && isStr(f.color)
-    && optionalStr(f.leader) && optionalStr(f.territory) && optionalStr(f.goals) && optionalStr(f.description);
-};
+const FactionConnectionSchema = z.object({
+  id: s,
+  fromId: s,
+  toId: s,
+  type: z.enum(["ally", "rival", "vassal", "trade", "neutral"]),
+});
 
-const isFactionConnection = (v: unknown): v is FactionConnection => {
-  const c = v as FactionConnection;
-  return !!c && isStr(c.id) && isStr(c.fromId) && isStr(c.toId) && (CONNECTION_TYPES as readonly string[]).includes(c.type);
-};
+const FactionWebSchema = z.object({
+  id: s,
+  projectId: s,
+  name: s,
+  factions: z.array(FactionSchema),
+  connections: z.array(FactionConnectionSchema),
+  notes: s,
+});
 
-const isFactionWeb = (v: unknown): v is FactionWeb => {
-  const w = v as FactionWeb;
-  return !!w && isStr(w.id) && isStr(w.projectId) && isStr(w.name)
-    && isArr(w.factions) && w.factions.every(isFaction)
-    && isArr(w.connections) && w.connections.every(isFactionConnection)
-    && isStr(w.notes);
-};
+const CalendarEventSchema = z.object({
+  id: s,
+  text: s,
+  category: s,
+  color: z.optional(s),
+});
 
-const isCalendarEvent = (v: unknown): v is CalendarEvent => {
-  const e = v as CalendarEvent;
-  return !!e && isStr(e.id) && isStr(e.text) && isStr(e.category) && optionalStr(e.color);
-};
+const CustomCalendarSchema = z.object({
+  id: s,
+  projectId: s,
+  name: s,
+  era: z.optional(s),
+  months: z.array(z.object({ name: s, days: n.check(z.gt(0)) })),
+  weekdays: z.array(s),
+  weekendDays: z.array(n),
+  events: z.record(z.string(), z.array(CalendarEventSchema)),
+  startingWeekday: n,
+  notes: s,
+});
 
-const isCustomCalendar = (v: unknown): v is CustomCalendar => {
-  const c = v as CustomCalendar;
-  return !!c && isStr(c.id) && isStr(c.projectId) && isStr(c.name)
-    && isArr(c.months) && c.months.every((m) => {
-      const mm = m as { name: unknown; days: unknown };
-      return !!mm && isStr(mm.name) && isNum(mm.days) && (mm.days as number) >= 1;
-    })
-    && isArr(c.weekdays) && c.weekdays.every(isStr)
-    && isArr(c.weekendDays) && c.weekendDays.every(isNum)
-    && !!c.events && Object.values(c.events).every((evs) => isArr(evs) && evs.every(isCalendarEvent))
-    && isNum(c.startingWeekday)
-    && isStr(c.notes)
-    && optionalStr(c.era);
-};
+const PlotPartSchema = z.object({ id: s, text: s });
 
-const isPlotPart = (v: unknown): boolean => {
-  const t = v as PlotPart;
-  return !!t && isStr(t.id) && isStr(t.text);
-};
+const PlotCardSchema = z.object({
+  id: s,
+  actId: s,
+  x: n,
+  y: n,
+  title: s,
+  pov: s,
+  location: s,
+  locationEntryId: z.optional(s),
+  parts: z.array(PlotPartSchema),
+  color: s,
+});
 
-const isPlotCard = (v: unknown): boolean => {
-  const c = v as PlotCard;
-  return !!c && isStr(c.id) && isStr(c.actId) && isNum(c.x) && isNum(c.y)
-    && isStr(c.title) && isStr(c.pov) && isStr(c.location) && isStr(c.color)
-    && isArr(c.parts) && c.parts.every(isPlotPart)
-    && optionalStr(c.locationEntryId);
-};
+const PlotBoardSchema = z.object({
+  id: s,
+  projectId: s,
+  name: s,
+  acts: z.array(z.object({ id: s, name: s })),
+  hasPrologue: b,
+  hasEpilogue: b,
+  cards: z.array(PlotCardSchema),
+  wires: z.array(z.object({ id: s, fromCardId: s, toCardId: s })),
+  notes: s,
+});
 
-const isPlotBoard = (v: unknown): boolean => {
-  const b = v as PlotBoard;
-  return !!b && isStr(b.id) && isStr(b.projectId) && isStr(b.name)
-    && isArr(b.acts) && b.acts.every((a) => !!a && isStr((a as PlotBoard["acts"][number]).id) && isStr((a as PlotBoard["acts"][number]).name))
-    && typeof b.hasPrologue === "boolean" && typeof b.hasEpilogue === "boolean"
-    && isArr(b.cards) && b.cards.every(isPlotCard)
-    && isArr(b.wires) && b.wires.every((w) => {
-      const wf = w as PlotWire;
-      return !!wf && isStr(wf.id) && isStr(wf.fromCardId) && isStr(wf.toCardId);
-    })
-    && isStr(b.notes);
-};
+const TimelineBeadSchema = z.object({
+  id: s,
+  x: n,
+  y: n,
+  label: s,
+  dateText: z.optional(s),
+  summary: z.optional(s),
+  color: s,
+  entryId: z.optional(s),
+});
 
-const isTimelineBead = (v: unknown): boolean => {
-  const b = v as TimelineBead;
-  return !!b && isStr(b.id) && isNum(b.x) && isNum(b.y) && isStr(b.label) && isStr(b.color)
-    && optionalStr(b.dateText) && optionalStr(b.summary) && optionalStr(b.entryId);
-};
+const TimelineSegmentSchema = z.object({
+  id: s,
+  fromX: n,
+  toX: n,
+  label: s,
+  lineColor: s,
+});
 
-const isTimelineSegment = (v: unknown): boolean => {
-  const g = v as TimelineSegment;
-  return !!g && isStr(g.id) && isNum(g.fromX) && isNum(g.toX) && isStr(g.label) && isStr(g.lineColor);
-};
+const TimelineWireSchema = z.object({
+  id: s,
+  projectId: s,
+  name: s,
+  beads: z.array(TimelineBeadSchema),
+  segments: z.array(TimelineSegmentSchema),
+  notes: s,
+});
 
-const isTimelineWire = (v: unknown): boolean => {
-  const t = v as TimelineWire;
-  return !!t && isStr(t.id) && isStr(t.projectId) && isStr(t.name)
-    && isArr(t.beads) && t.beads.every(isTimelineBead)
-    && isArr(t.segments) && t.segments.every(isTimelineSegment)
-    && isStr(t.notes);
-};
+const OATH_SEAT_STATUS = ["held", "vacant", "disputed"] as const;
+const OATH_LINK_STATUS = ["sworn", "strained", "broken"] as const;
+const OATH_KINDS = ["primary", "joint"] as const;
 
-const OATH_SEAT_STATUS = ["held", "vacant", "disputed"];
-const OATH_LINK_STATUS = ["sworn", "strained", "broken"];
-const OATH_KINDS = ["primary", "joint"];
+const OathMemberSchema = z.object({
+  id: s,
+  name: s,
+  title: z.optional(s),
+  org: z.optional(s),
+  notes: z.optional(s),
+  seatStatus: z.enum(OATH_SEAT_STATUS),
+  color: s,
+  x: z.optional(n),
+  y: z.optional(n),
+});
 
-const isOathMember = (v: unknown): boolean => {
-  const m = v as OathMember;
-  return !!m && isStr(m.id) && isStr(m.name) && isStr(m.color)
-    && (OATH_SEAT_STATUS as string[]).includes(m.seatStatus)
-    && optionalStr(m.title) && optionalStr(m.org) && optionalStr(m.notes);
-};
+const OathLinkSchema = z.object({
+  id: s,
+  subordinateId: s,
+  superiorId: s,
+  kind: z.enum(OATH_KINDS),
+  status: z.enum(OATH_LINK_STATUS),
+});
 
-const isOathLink = (v: unknown): boolean => {
-  const l = v as OathLink;
-  return !!l && isStr(l.id) && isStr(l.subordinateId) && isStr(l.superiorId)
-    && (OATH_KINDS as string[]).includes(l.kind)
-    && (OATH_LINK_STATUS as string[]).includes(l.status);
-};
+const OathsChartSchema = z.object({
+  id: s,
+  projectId: s,
+  name: s,
+  members: z.array(OathMemberSchema),
+  oathLinks: z.array(OathLinkSchema),
+  notes: s,
+});
 
-const isOathsChart = (v: unknown): boolean => {
-  const c = v as OathsChart;
-  return !!c && isStr(c.id) && isStr(c.projectId) && isStr(c.name)
-    && isArr(c.members) && c.members.every(isOathMember)
-    && isArr(c.oathLinks) && c.oathLinks.every(isOathLink)
-    && isStr(c.notes);
-};
+const WELL_KINDS = ["character", "setting", "conflict", "question"] as const;
 
-const WELL_KINDS = ["character", "setting", "conflict", "question"];
+const WellNodeSchema = z.object({
+  id: s,
+  kind: z.enum(WELL_KINDS),
+  x: n,
+  y: n,
+  text: s,
+});
 
-const isWellNode = (v: unknown): boolean => {
-  const n = v as WellNode;
-  return !!n && isStr(n.id) && (WELL_KINDS as string[]).includes(n.kind)
-    && isNum(n.x) && isNum(n.y) && isStr(n.text);
-};
+const WellBorderSchema = z.object({
+  id: s,
+  fromId: s,
+  toId: s,
+  label: s,
+});
 
-const isWellBorder = (v: unknown): boolean => {
-  const b = v as WellBorder;
-  return !!b && isStr(b.id) && isStr(b.fromId) && isStr(b.toId) && isStr(b.label);
-};
+const WellSpringSchema = z.object({
+  id: s,
+  projectId: s,
+  name: s,
+  nodes: z.array(WellNodeSchema),
+  borders: z.array(WellBorderSchema),
+  notes: s,
+});
 
-const isWellSpring = (v: unknown): boolean => {
-  const w = v as WellSpring;
-  return !!w && isStr(w.id) && isStr(w.projectId) && isStr(w.name)
-    && isArr(w.nodes) && w.nodes.every(isWellNode)
-    && isArr(w.borders) && w.borders.every(isWellBorder)
-    && isStr(w.notes);
-};
+const ConlangGlyphSchema = z.object({
+  id: s,
+  char: s.check(z.maxLength(3)),
+  svgPath: s,
+});
 
-const isConlangGlyph = (v: unknown): boolean => {
-  const g = v as ConlangGlyph;
-  return !!g && isStr(g.id) && isStr(g.char) && (g.char as string).length <= 3 && isStr(g.svgPath);
-};
+const ConlangWordSchema = z.object({
+  id: s,
+  word: s,
+  meaning: s,
+  pos: s,
+  theme: s,
+});
 
-const isConlangWord = (v: unknown): boolean => {
-  const w = v as ConlangWord;
-  return !!w && isStr(w.id) && isStr(w.word) && isStr(w.meaning) && isStr(w.pos) && isStr(w.theme);
-};
+const ConlangSchema = z.object({
+  id: s,
+  projectId: s,
+  name: s,
+  glyphs: z.array(ConlangGlyphSchema),
+  words: z.array(ConlangWordSchema),
+  notes: s,
+});
 
-const isConlang = (v: unknown): boolean => {
-  const c = v as Conlang;
-  return !!c && isStr(c.id) && isStr(c.projectId) && isStr(c.name)
-    && isArr(c.glyphs) && c.glyphs.every(isConlangGlyph)
-    && isArr(c.words) && c.words.every(isConlangWord)
-    && isStr(c.notes);
-};
+const ImagesSchema = z.record(z.string(), s.check(z.startsWith("data:image/")));
 
-const isBloodline = (v: unknown): v is Bloodline => {
-  const b = v as Bloodline;
-  return !!b && isStr(b.id) && isStr(b.projectId) && isStr(b.name)
-    && isArr(b.persons) && b.persons.every(isBloodlinePerson)
-    && isArr(b.houses) && b.houses.every(isBloodlineHouse)
-    && isStr(b.notes);
-};
+/** Fresh shape: bloodlines etc. are OPTIONAL in the schema but a fresh state
+ *  always carries []. */
+const ProjectDataSchema = z.object({
+  projects: z.array(ProjectSchema),
+  entries: z.array(EntrySchema),
+  atlases: z.array(AtlasSchema),
+  manuscripts: z.array(ManuscriptSchema),
+  images: ImagesSchema,
+  bloodlines: z.optional(z.array(BloodlineSchema)),
+  factionWebs: z.optional(z.array(FactionWebSchema)),
+  calendars: z.optional(z.array(CustomCalendarSchema)),
+  plotBoards: z.optional(z.array(PlotBoardSchema)),
+  timelines: z.optional(z.array(TimelineWireSchema)),
+  oathsCharts: z.optional(z.array(OathsChartSchema)),
+  wellsprings: z.optional(z.array(WellSpringSchema)),
+  conlangs: z.optional(z.array(ConlangSchema)),
+});
 
+/** Boolean contract preserved for storage/load round-trips; no output reuse. */
 export function validateProjectData(v: unknown): boolean {
-  const d = v as ProjectData;
-  return !!d && isArr(d.projects) && d.projects.every(isProject)
-    && isArr(d.entries) && d.entries.every(isEntry)
-    && isArr(d.atlases) && d.atlases.every(isAtlas)
-    && isArr(d.manuscripts) && d.manuscripts.every(isManuscript)
-    && !!d.images && Object.values(d.images).every((v) => isStr(v) && v.startsWith("data:image/"))
-    && (d.bloodlines === undefined
-      || (isArr(d.bloodlines) && d.bloodlines.every(isBloodline)))
-    && (d.factionWebs === undefined
-      || (isArr(d.factionWebs) && d.factionWebs.every(isFactionWeb)))
-    && (d.calendars === undefined
-      || (isArr(d.calendars) && d.calendars.every(isCustomCalendar)))
-    && (d.plotBoards === undefined
-      || (isArr(d.plotBoards) && d.plotBoards.every(isPlotBoard)))
-    && (d.timelines === undefined
-      || (isArr(d.timelines) && d.timelines.every(isTimelineWire)))
-    && (d.oathsCharts === undefined
-      || (isArr(d.oathsCharts) && d.oathsCharts.every(isOathsChart)))
-    && (d.wellsprings === undefined
-      || (isArr(d.wellsprings) && d.wellsprings.every(isWellSpring)))
-    && (d.conlangs === undefined
-      || (isArr(d.conlangs) && d.conlangs.every(isConlang)));
+  return ProjectDataSchema.safeParse(v).success;
 }
 
-/** Fresh shape: bloodlines is optional in the schema but a fresh state always carries []. */
+export interface ValidatedIssue {
+  path: string;
+  message: string;
+}
+
+/** Detailed diagnostics for the import UI: dot paths + zod messages. */
+export function validateProjectDataDetailed(v: unknown): ValidatedIssue[] {
+  const result = ProjectDataSchema.safeParse(v);
+  if (result.success) return [];
+  return result.error.issues.map((issue) => ({
+    path: dotPath(issue.path) || "(root)",
+    message: issue.message,
+  }));
+}
+
 export function emptyProjectData(): ProjectData & { bloodlines: Bloodline[] } {
   return { projects: [], entries: [], atlases: [], manuscripts: [], images: {}, bloodlines: [], factionWebs: [], calendars: [], plotBoards: [], timelines: [], oathsCharts: [], wellsprings: [], conlangs: [] };
 }
@@ -398,7 +484,7 @@ export type ParseExportErrorCode = "invalidJson" | "notScriptorium" | "unsupport
 
 /** Stable code so callers can translate the message in the active locale. */
 export class ParseExportError extends Error {
-  constructor(readonly code: ParseExportErrorCode, readonly version?: unknown) {
+  constructor(readonly code: ParseExportErrorCode, readonly version?: unknown, readonly details?: string) {
     super(code);
     this.name = "ParseExportError";
   }
@@ -414,7 +500,10 @@ export function parseExport(text: string): ProjectData {
   const d = doc as { app?: unknown; version?: unknown } & ProjectData;
   if (!d || d.app !== "scriptorium") throw new ParseExportError("notScriptorium");
   if (d.version !== 1 && d.version !== 2) throw new ParseExportError("unsupportedVersion", d.version);
-  if (!validateProjectData(d)) throw new ParseExportError("invalidStructure");
+  const issues = validateProjectDataDetailed(d);
+  if (issues.length > 0) {
+    throw new ParseExportError("invalidStructure", undefined, issues.slice(0, 5).map((i) => `${i.path}: ${i.message}`).join("; "));
+  }
   return {
     projects: d.projects,
     entries: d.entries,
