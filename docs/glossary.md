@@ -9,7 +9,7 @@ One name per concept — use it consistently in code, copy, and docs.
 | Lore | `/p/:id/entries` (CodexPage) | world entries |
 | Atlas | `/p/:id/atlas` | map, regions, pins |
 | Chronology | `/p/:id/timeline` | dated entries, one sorted line |
-| Timeline | `/p/:id/linewheel` | timeline beads |
+| Timeline | `/p/:id/linewheel` | timeline beads + era chain |
 | Bloodline | `/p/:id/bloodline` | genealogy canvas |
 | Oaths | `/p/:id/oaths` | oath ring |
 | Factions | `/p/:id/factions` | faction web |
@@ -34,3 +34,19 @@ One name per concept — use it consistently in code, copy, and docs.
 - **PT term for Entry:** **Verbete**.
 
 World content is user data (language-free).
+
+## Timeline (`/p/:id/linewheel`)
+
+An **era** is a *boundary*, not an interval: it marks where a new span starts, and it ends exactly
+where the next era begins, so eras tile the wire with no gaps (ADR-0010).
+
+- **Origin / Start** — the fixed star bead every timeline gets at `x=0`. Not draggable, not
+  deletable, excluded from the event count.
+- **Bead** — an event on the wire. It links a tome entry (`entryId`) and may link a calendar event
+  (`calendarEvent`).
+- **Era** — a start point (`startX`) plus a label and colour. Its span ends at the next era's start;
+  the last era closes at `contentEnd`.
+- **Boundary** — an era whose start follows a bead (`boundaryBeadId`). One bead is the seam between
+  two eras. Deleting the bead keeps the seam; unbinding freezes the last position.
+
+PT: **era**, **evento** (bead), **início** (origin), **fronteira** (boundary).

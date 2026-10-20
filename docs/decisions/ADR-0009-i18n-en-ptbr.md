@@ -10,7 +10,7 @@ The app shipped with mixed copy: most screens were EN, the Bindery carried PT st
 4. **Default:** EN on first load. The choice persists in `localStorage` under `scriptorium.lang`, separate from the `scriptorium.v1` schema and from the JSON backup.
 5. **Dates:** formatted with `Intl.DateTimeFormat` / `Intl.RelativeTimeFormat` from the active locale. No hardcoded month or relative-time strings.
 6. **Exports:** print, EPUB, and DOCX follow the language active at export time. That covers `Contents`, `Glossary`, `About the author`, `Colophon`, copyright lines, chapter numbering words, the empty-chapter placeholder, and the EPUB `dc:language`.
-7. **Generated content:** codex templates and generated names (for example a new timeline segment) are written in the language active at creation. Existing entries are never retranslated.
+7. **Generated content:** codex templates and generated names (for example a new timeline era) are written in the language active at creation. Existing entries are never retranslated.
 8. **Stored values stay English:** enum values and data keys (`ConnectionType`, oath status/kind, calendar event categories, conlang part of speech, bindery preset ids) remain stable. Only the visible label is translated, through `labelKey` maps or explicit helpers.
 9. **Category lexicon:** labels, taglines, section names, and field names live in `categories.*` in both locales; `categoryLabel`, `codexCategoryChips`, and `templateSections` read the locale for the active language.
 10. **Terminology:** Entry is **Verbete** in PT. The other approved labels are in `docs/glossary.md`.
