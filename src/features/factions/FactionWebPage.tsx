@@ -328,7 +328,7 @@ export function FactionWebPage({ webId }: { webId: string }) {
             <FNodesLayer factions={web.factions} selectedId={selectedId} handleNodeDown={handleNodeDown} handleNodeClick={handleNodeClick} handleConnectDown={handleConnectDown} />
           </div>
           {web.factions.length === 0 ? (
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[calc(1/var(--bl-scale,0.1))] text-slate whitespace-nowrap">{t("factions.web.startHint")}</div>
+            <div className="board-empty-hint absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-slate">{t("factions.web.startHint")}</div>
           ) : null}
           {pendingFrom ? (
             <div className="absolute bottom-3.5 left-1/2 -translate-x-1/2 bg-night-2 border border-line text-parchment-dim px-3 py-1.5 rounded-lg text-[13px]">{t("factions.web.chooseToConnect")}</div>

@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from "react";
+import { memo, useMemo, useState, type PointerEvent as ReactPointerEvent } from "react";
 import type { Id, Region } from "../../../domain/types";
 import { polygonArea, regionCentroid } from "../../../domain/geometry";
 import type { TransformApi } from "./useStageTransform";
@@ -8,6 +8,7 @@ export interface RegionLayerProps {
   transformApi: TransformApi;
   selectedRegionId: Id | null;
   onSelectRegion(regionId: Id): void;
+  onHoverRegion?(regionId: Id | null, at?: { left: number; top: number }): void;
   interactive: boolean;
   carveParentId?: Id | null;
 }
@@ -24,7 +25,7 @@ const RegionRow = memo(function RegionRow({ region, imgW, imgH, selected, hovere
   carveParent: boolean;
   interactive: boolean;
   onSelectRegion(regionId: Id): void;
-  onHover(id: Id | null): void;
+  onHover(id: Id | null, centroid?: { x: number; y: number }): void;
 }) {
   const base = region.fillOpacity ?? 0.28;
   const fillOpacity = selected
@@ -48,8 +49,13 @@ const RegionRow = memo(function RegionRow({ region, imgW, imgH, selected, hovere
         pointerEvents={interactive ? "auto" : "none"}
         vectorEffect="non-scaling-stroke"
         onPointerDown={() => onSelectRegion(region.id)}
-        onPointerEnter={() => onHover(region.id)}
-        onPointerLeave={() => onHover(null)}
+        onPointerEnter={() => onHover(region.id, centroid)}
+        onPointerLeave={(e: ReactPointerEvent<SVGPolygonElement>) => {
+          // moving onto the hover preview keeps it open
+          const to = e.relatedTarget instanceof Element ? e.relatedTarget : null;
+          if (to?.closest?.(".pin-preview-pop")) return;
+          onHover(null);
+        }}
       />
       <text
         className="region-label font-mono text-xs"
@@ -71,11 +77,23 @@ export function RegionLayer({
   transformApi,
   selectedRegionId,
   onSelectRegion,
+  onHoverRegion,
   interactive,
   carveParentId,
 }: RegionLayerProps) {
   const [hoveredId, setHoveredId] = useState<Id | null>(null);
   const { imgW, imgH } = transformApi;
+
+  const handleHover = (id: Id | null, centroid?: { x: number; y: number }) => {
+    setHoveredId(id);
+    if (!onHoverRegion) return;
+    if (!id || !centroid) {
+      onHoverRegion(id);
+      return;
+    }
+    const at = transformApi.toClient(centroid);
+    onHoverRegion(id, { left: at.left, top: at.top });
+  };
 
   // paint order: bigger area first. decorate-sort-undecorate so the O(m·log m)
   // comparisons reuse one computed area instead of rescanning both polygons.
@@ -99,7 +117,7 @@ export function RegionLayer({
           carveParent={region.id === carveParentId}
           interactive={interactive}
           onSelectRegion={onSelectRegion}
-          onHover={setHoveredId}
+          onHover={handleHover}
         />
       ))}
     </g>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { Id, Pin, PinType, WorldEntry } from "../../../domain/types";
+import type { Id, Pin, PinType, Region, WorldEntry } from "../../../domain/types";
 import { useScriptorium } from "../../../data/store";
 import { ColorSwatches } from "./ColorSwatches";
 import { LinkPicker } from "./LinkPicker";
@@ -11,10 +11,13 @@ import { Button } from "../../../ui/Button";
 export interface PinPanelProps {
   pin: Pin;
   entries: WorldEntry[];
+  /** Region under the pin, when there is one — lets the user reach it. */
+  containingRegion?: Region | null;
+  onSelectContainingRegion?(): void;
   onDelete(pinId: Id): void;
 }
 
-export function PinPanel({ pin, entries, onDelete }: PinPanelProps) {
+export function PinPanel({ pin, entries, containingRegion, onSelectContainingRegion, onDelete }: PinPanelProps) {
   const { t } = useTranslation();
   const [label, setLabel] = useState(pin.label);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -86,6 +89,18 @@ export function PinPanel({ pin, entries, onDelete }: PinPanelProps) {
           />
         ) : null}
       </Field>
+      {containingRegion && onSelectContainingRegion ? (
+        <div className="grid gap-1">
+          <button
+            type="button"
+            className="bg-none border border-line text-parchment rounded-lg px-2.5 py-1.5 text-[13px] hover:border-gold-dim"
+            onClick={onSelectContainingRegion}
+          >
+            {t("atlas.pin.selectRegion")}
+          </button>
+          <span className="text-[11px] text-parchment-dim truncate">{containingRegion.label}</span>
+        </div>
+      ) : null}
       <Button kind="danger" className="panel-delete self-start" aria-label={t("atlas.pin.delete")} onClick={() => onDelete(pin.id)}>
         {t("atlas.pin.delete")}
       </Button>

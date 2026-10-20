@@ -13,16 +13,21 @@ export interface NodeHandlers {
   onDragEnd(kind: NodeKind, id: string): void;
 }
 
-export const PersonNode = memo(function PersonNode({ person, images, selected, houseName, handlers }: {
+export const PersonNode = memo(function PersonNode({ person, images, selected, houseName, fallbackPortraitKey, handlers }: {
   person: BloodlinePerson;
   images: Record<string, string>;
   selected: boolean;
   houseName?: string;
+  fallbackPortraitKey?: string;
   handlers: NodeHandlers;
 }) {
   const kind = "person" as const;
   const { t } = useTranslation();
-  const portrait = person.portraitKey ? images[person.portraitKey] : undefined;
+  const portrait = person.portraitKey
+    ? images[person.portraitKey]
+    : fallbackPortraitKey
+      ? images[fallbackPortraitKey]
+      : undefined;
   // drag state lives in a ref: the node re-renders on every move commit and a
   // render-scope variable would be recreated, orphaning the window listeners
   const drag = useRef<{ x: number; y: number; moved: boolean }>({ x: 0, y: 0, moved: false });

@@ -145,6 +145,8 @@ export interface BloodlinePerson {
   x: number;
   y: number;
   name: string;
+  /** Acervo entry this person represents, when linked. */
+  entryId?: Id;
   suffix?: string;
   portraitKey?: string;
   title?: string;
@@ -192,6 +194,7 @@ export type Faction = {
   name: string;
   leader?: string;
   territory?: string;
+  territoryRegionId?: Id;
   goals?: string;
   description?: string;
   color: string;

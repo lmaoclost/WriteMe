@@ -87,6 +87,12 @@ export interface ConlangHistory { undo: ConlangSnapshot[]; redo: ConlangSnapshot
 export type AnyHistory = AtlasHistory | BloodlineHistory | FactionWebHistory | CalendarHistory | PlotBoardHistory | TimelineHistory | OathsChartHistory | WellHistory | ConlangHistory;
 
 const clonePoints = (points: Pt[]): Pt[] => points.map((p) => ({ ...p }));
+/** Region points must stay in [0,1] or persisted data fails validation. Clicks
+ *  outside the map are clamped instead of rejected. */
+const clampPoints = (points: Pt[]): Pt[] => points.map((p) => ({
+  x: Math.min(1, Math.max(0, p.x)),
+  y: Math.min(1, Math.max(0, p.y)),
+}));
 const touchProject = (projects: readonly Project[], id: string): Project[] =>
   projects.map((p) => (p.id === id ? { ...p, updatedAt: Date.now() } : p));
 /** max(orders)+1; 0 when the book is empty. */
@@ -255,7 +261,7 @@ interface ScriptoriumState extends ProjectData {
   addBloodline(projectId: string, name?: string): Bloodline;
   renameBloodline(id: string, name: string): void;
   deleteBloodline(id: string): void;
-  addPerson(bloodlineId: string, init?: { x?: number; y?: number; name?: string; portraitKey?: string }): BloodlinePerson | null;
+  addPerson(bloodlineId: string, init?: { x?: number; y?: number; name?: string; portraitKey?: string; entryId?: string }): BloodlinePerson | null;
   updatePerson(id: string, patch: Partial<Omit<BloodlinePerson, "id">>): void;
   movePerson(id: string, x: number, y: number): void;
   deletePerson(id: string): void;
@@ -968,11 +974,11 @@ export const useScriptorium = create<ScriptoriumState>()(
       addRegion(atlasId, input) {
         const atlas = get().atlases.find((a) => a.id === atlasId);
         if (!atlas) return null;
-        if (input.points.length < 3 || !isMeaningful(input.points)) return null;
+        if (input.points.length < 3 || !isMeaningful(clampPoints(input.points))) return null;
         get().pushHistory(atlasId);
         const region: Region = {
           id: newId("reg"),
-          points: clonePoints(input.points),
+          points: clampPoints(input.points),
           color: input.color ?? getLastRegionColor() ?? REGION_DEFAULT_COLOR,
           fillOpacity: input.fillOpacity ?? REGION_DEFAULT_OPACITY,
           label: input.label ?? "",
@@ -998,7 +1004,7 @@ export const useScriptorium = create<ScriptoriumState>()(
        *  (opacity slider drags) that already pushed a pre-change snapshot. */
       updateRegionSilent(regionId, patch) {
         const safe = { ...patch };
-        if (patch.points) safe.points = clonePoints(patch.points);
+        if (patch.points) safe.points = clampPoints(patch.points);
         set((st) => ({
           atlases: st.atlases.map((a) => ({
             ...a,
@@ -1094,7 +1100,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         get().pushHistory(atlasId);
         const created: Region[] = rest.map((points) => ({
           id: newId("reg"),
-          points,
+          points: clampPoints(points),
           color: CLAIM_COLOR,
           fillOpacity: REGION_DEFAULT_OPACITY,
           label: "",
@@ -1242,6 +1248,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           badgeText: "",
           isTwin: false,
           ...(init?.portraitKey ? { portraitKey: init.portraitKey } : {}),
+          ...(init?.entryId ? { entryId: init.entryId } : {}),
         };
         set((s) => ({
           bloodlines: s.bloodlines.map((b) =>

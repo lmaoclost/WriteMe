@@ -179,6 +179,17 @@ describe("regions (case 4)", () => {
     expect(store().atlases[0].regions).toHaveLength(1);
     expect(tooSmall).toBeNull();
   });
+  it("addRegion clamps out-of-map points so persisted data stays valid", () => {
+    const a = addAtlas();
+    const r = addRegionDirect(a.id, [
+      { x: -0.06, y: 0.5 }, { x: 0.1, y: 0.15 }, { x: 0.49, y: 0.15 },
+      { x: 0.49, y: 0.67 }, { x: 0.12, y: 0.67 },
+    ]);
+    expect(r).not.toBeNull();
+    expect(r!.points.every((p) => p.x >= 0 && p.x <= 1 && p.y >= 0 && p.y <= 1)).toBe(true);
+    act(() => { flushPendingPersist(); });
+    expect(validateProjectData(JSON.parse(localStorage.getItem(STORE_KEY)!).state)).toBe(true);
+  });
 });
 
 describe("pins (case 5)", () => {

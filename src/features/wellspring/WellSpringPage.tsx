@@ -214,7 +214,7 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
             })}
           </div>
           {well.nodes.length === 0 ? (
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[calc(1/var(--bl-scale,0.1))] text-slate whitespace-nowrap">
+            <div className="board-empty-hint absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-slate">
               {placingKind
                 ? t("wellspring.page.placeHint", { kind: t(WELL_KIND_META[placingKind].labelKey) })
                 : t("wellspring.page.emptyHint")}

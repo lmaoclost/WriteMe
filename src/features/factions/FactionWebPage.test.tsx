@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { firePointer } from "../../test/pointer";
+import { selectOption } from "../../test/selectHelper";
 import { MemoryRouter } from "react-router-dom";
 import { useScriptorium } from "../../data/store";
 import { FactionWebPage } from "./FactionWebPage";
@@ -122,6 +123,24 @@ describe("FactionWebPage", () => {
     expect(options).toHaveLength(13); // 12 presets + new-faction default #7a7a99
     fireEvent.click(options[4]); // #27ae60
     expect(store().factionWebs![0].factions.find((f) => f.id === a)!.color).toBe("#27ae60");
+  });
+
+  it("territory is picked from an atlas region", async () => {
+    const { w, a } = seedWeb();
+    const atlas = store().addAtlas("prj_1", "Mundo Conhecido");
+    store().putMapImage(atlas.id, "data:image/png;base64,AAA");
+    const region = store().addRegion(atlas.id, {
+      points: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 1 }],
+      color: "#123456",
+      label: "Terras Altas",
+    })!;
+    render(<FactionWebPage webId={w.id} />);
+    const node = screen.getAllByTestId("fac-node").find((n) => n.getAttribute("data-fac-id") === a)!;
+    firePointer(node, "pointerdown", { clientX: 0, clientY: 0 });
+    await selectOption(() => screen.getByLabelText("Territory"), /Terras Altas/);
+    const faction = store().factionWebs![0].factions.find((f) => f.id === a)!;
+    expect(faction.territoryRegionId).toBe(region.id);
+    expect(faction.territory).toBe("Terras Altas");
   });
 
   it("notepad persists notes", async () => {

@@ -65,6 +65,23 @@ describe("TimelineCanvasPage", () => {
     expect(store().timelines![0].segments[0].label).toBe("Era da Prata");
   });
 
+  it("overlapping eras render on separate lanes and both stay selectable", () => {
+    const tl = store().addTimeline("prj_1", "Fio");
+    store().addSegment(tl.id, 1000, 3000, "Primeira Era");
+    store().addSegment(tl.id, 1800, 3600, "Segunda Era");
+    render(<MemoryRouter><TimelineCanvasPage timelineId={tl.id} /></MemoryRouter>);
+    const segs = screen.getAllByTestId("tl-seg");
+    expect(segs).toHaveLength(2);
+    const ys = segs.map((g) => g.querySelector("line")!.getAttribute("y1"));
+    expect(new Set(ys).size).toBe(2);
+    const second = segs.find((g) => g.textContent?.includes("Segunda Era"))!;
+    firePointer(second, "pointerdown", { clientX: 200, clientY: 200 });
+    expect(document.querySelector("[data-testid=tl-panel]")!.textContent).toContain("Segunda Era");
+    const first = segs.find((g) => g.textContent?.includes("Primeira Era"))!;
+    firePointer(first, "pointerdown", { clientX: 200, clientY: 200 });
+    expect(document.querySelector("[data-testid=tl-panel]")!.textContent).toContain("Primeira Era");
+  });
+
   it("a bead bound to a tome entry previews it and opens the codex", () => {
     const prj = store().addProject("V").id;
     const entry = store().addEntry(prj, "event");

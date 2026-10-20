@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { FACTION_CONNECTION_STYLES, FACTION_PRESET_COLORS } from "./connectionStyles";
 import { Field } from "../../ui/Field";
 import { Button } from "../../ui/Button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BOARD_PANEL, BOARD_PANEL_HINT, BOARD_PANEL_HEAD, BOARD_PANEL_HEAD_H2 } from "../../ui/board";
 import { withCurrentColor } from "../../ui/colors";
 import type { Faction, FactionWeb } from "../../domain/types";
@@ -43,6 +45,18 @@ export function FactionForm({ web, faction, onSelect }: {
   const [armDelete, setArmDelete] = useState(false);
   const update = (patch: Partial<Faction>) => store().updateFaction(faction.id, patch);
   const nameDraft = useNameDraft(faction, update);
+  const atlases = useScriptorium(
+    useShallow((s) => s.atlases.filter((a) => a.projectId === web.projectId)),
+  );
+  const regionOptions = useMemo(
+    () => atlases.flatMap((a) => a.regions.map((r) => ({
+      id: r.id,
+      name: r.label || t("atlas.editor.regionFallback"),
+      label: `${a.name} — ${r.label || t("atlas.editor.regionFallback")}`,
+    }))),
+    [atlases, t],
+  );
+  const selectedRegion = regionOptions.find((r) => r.id === faction.territoryRegionId);
 
   const remove = () => {
     if (!armDelete) { setArmDelete(true); return; }
@@ -64,7 +78,34 @@ export function FactionForm({ web, faction, onSelect }: {
         <input aria-label={t("factions.panel.name")} placeholder={t("factions.panel.namePlaceholder")} value={nameDraft.draft} onChange={(e) => nameDraft.setDraft(e.target.value)} onBlur={() => nameDraft.flush()} />
       </Field>
       <TextDebounced label={t("factions.panel.leader")} value={faction.leader ?? ""} onCommit={(v) => update({ leader: v.trim() || undefined })} />
-      <TextDebounced label={t("factions.panel.territory")} value={faction.territory ?? ""} onCommit={(v) => update({ territory: v.trim() || undefined })} />
+      <Field label={t("factions.panel.territory")}>
+        <Select
+          value={faction.territoryRegionId ?? "__none"}
+          onValueChange={(v) => {
+            if (v === "__none") update({ territoryRegionId: undefined, territory: undefined });
+            else {
+              const region = regionOptions.find((r) => r.id === v);
+              update({ territoryRegionId: v, territory: region?.name });
+            }
+          }}
+        >
+          <SelectTrigger aria-label={t("factions.panel.territory")} className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto">
+            <SelectValue placeholder={faction.territory || t("factions.panel.noTerritory")} />
+          </SelectTrigger>
+          <SelectContent className="border-line bg-night text-parchment">
+            <SelectItem value="__none" className="text-xs focus:bg-[#24233f] focus:text-parchment">{t("factions.panel.noTerritory")}</SelectItem>
+            {regionOptions.map((r) => (
+              <SelectItem key={r.id} value={r.id} className="text-xs focus:bg-[#24233f] focus:text-parchment">{r.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {regionOptions.length === 0 ? (
+          <span className="text-[11px] text-slate">{t("factions.panel.noRegions")}</span>
+        ) : null}
+        {faction.territory && !selectedRegion ? (
+          <span className="text-[11px] text-slate">{t("factions.panel.legacyTerritory", { territory: faction.territory })}</span>
+        ) : null}
+      </Field>
       <TextDebounced label={t("factions.panel.goals")} value={faction.goals ?? ""} onCommit={(v) => update({ goals: v.trim() || undefined })} />
       <TextDebouncedArea label={t("factions.panel.description")} value={faction.description ?? ""} onCommit={(v) => update({ description: v })} />
       <Field label={t("factions.panel.color")}>

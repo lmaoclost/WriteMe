@@ -183,6 +183,22 @@ describe("EntryView — category + cover", () => {
     expect(screen.getByLabelText("Category")).toHaveTextContent(/faction/i);
   });
 
+  it("offers each built-in category once, without legacy duplicates", async () => {
+    const { entries } = seed([{ title: "Aldric" }]);
+    const [entry] = entries;
+    renderView(entry);
+    fireEvent.keyDown(screen.getByLabelText("Category"), { key: "Enter" });
+    await waitFor(() => expect(document.querySelector("[data-slot='select-content']")).toBeInTheDocument());
+    const labels = Array.from(
+      document.querySelectorAll("[data-slot='select-content'] [role='option']"),
+    ).map((o) => (o.textContent ?? "").trim());
+    const count = (name: string) => labels.filter((l) => l.endsWith(name)).length;
+    expect(new Set(labels).size).toBe(labels.length);
+    expect(count("Characters")).toBe(1);
+    expect(count("Locations")).toBe(1);
+    expect(count("Artifacts")).toBe(1);
+  });
+
   it("uploads a cover via hidden file input, swaps and releases the old key", async () => {
     const { entries } = seed([{ title: "Aldric", image: "data:image/jpeg;base64,VELHA" }]);
     const [entry] = entries;
@@ -239,7 +255,7 @@ describe("EntryView — category + cover", () => {
     const rioKey = entryById(rio.id).imageKey as string;
     const oldKey = entryById(aldric.id).imageKey as string;
     renderView(aldric);
-    fireEvent.click(screen.getByRole("button", { name: "Entry image" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use image from another entry" }));
     const picker = screen.getByRole("group", { name: "Entry images" });
     expect(picker.querySelectorAll("ul button")).toHaveLength(1);
     const thumb = picker.querySelector("ul img");
@@ -388,6 +404,19 @@ describe("EntryView — campo Data", () => {
     expect(document.querySelector(".codex-eyebrow")).toBeNull();
   });
 
+  it("formats the eyebrow through the project calendar", () => {
+    const { entries } = seed([{ title: "Batalha de Sarnen", category: "event", date: "1200-05-10" }]);
+    const [entry] = entries;
+    const calendar = store().addCalendar(entry.projectId, "Calendário do Arco");
+    act(() => {
+      store().setMonth(calendar.id, 4, { name: "Sertr" });
+      store().setEra(calendar.id, "Contagem do Arco");
+    });
+    renderView(entry);
+    expect(document.querySelector(".codex-eyebrow")?.textContent).toBe("10 Sertr 1200 · Contagem do Arco");
+    expect(document.querySelector(".codex-date-formatted")?.textContent).toBe("10 Sertr 1200 · Contagem do Arco");
+  });
+
   it("flushes a pending date draft when switching entries", () => {
     const { entries } = seed([
       { title: "Batalha de Sarnen", category: "event" },
@@ -415,11 +444,11 @@ describe("EntryView — pickers close (Escape + outside click)", () => {
     const { entries } = seed([{ title: "Aldric", image: "data:image/jpeg;base64,VELHA" }]);
     const [aldric] = entries;
     renderView(aldric);
-    fireEvent.click(screen.getByRole("button", { name: "Entry image" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use image from another entry" }));
     expect(screen.getByRole("group", { name: "Entry images" })).toBeInTheDocument();
     fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByRole("group", { name: "Entry images" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Entry image" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "Use image from another entry" })).toHaveAttribute("aria-pressed", "false");
   });
 
   it("closes the link chooser on Escape (document keydown)", () => {
@@ -437,12 +466,12 @@ describe("EntryView — pickers close (Escape + outside click)", () => {
     const { entries } = seed([{ title: "Aldric", image: "data:image/jpeg;base64,VELHA" }]);
     const [aldric] = entries;
     renderView(aldric);
-    fireEvent.click(screen.getByRole("button", { name: "Entry image" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use image from another entry" }));
     const backdrop = document.querySelector(".chooser-backdrop") as Element;
     expect(backdrop).not.toBeNull();
     fireEvent.pointerDown(backdrop);
     expect(screen.queryByRole("group", { name: "Entry images" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Entry image" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "Use image from another entry" })).toHaveAttribute("aria-pressed", "false");
   });
 
   it("closes the link chooser on outside click (backdrop pointerdown)", () => {

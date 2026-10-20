@@ -163,12 +163,6 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
         <div className={BOARD_ACTIONS}>
           <button type="button" aria-label={t("plotboard.page.undo")} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoPB(boardId)}>↶</button>
           <button type="button" aria-label={t("plotboard.page.redo")} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoPB(boardId)}>↷</button>
-          {!board.hasPrologue ? (
-            <button type="button" onClick={() => { pushPBHistory(boardId); useScriptorium.getState().setBoardFlags(boardId, { hasPrologue: true }); }}>{t("plotboard.page.prologue")}</button>
-          ) : null}
-          {!board.hasEpilogue ? (
-            <button type="button" onClick={() => { pushPBHistory(boardId); useScriptorium.getState().setBoardFlags(boardId, { hasEpilogue: true }); }}>{t("plotboard.page.epilogue")}</button>
-          ) : null}
           <button
             type="button"
             onClick={() => {
@@ -249,7 +243,7 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
             <PBCardsLayer cards={board.cards} selectedCardId={selectedCardId} handleCardDown={handleCardDown} handleConnect={handleConnect} />
           </div>
           {board.cards.length === 0 ? (
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[calc(1/var(--bl-scale,0.1))] text-slate whitespace-nowrap">{t("plotboard.page.emptyHint")}</div>
+            <div className="board-empty-hint absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-slate">{t("plotboard.page.emptyHint")}</div>
           ) : connecting ? (
             <div className="absolute bottom-3.5 left-1/2 -translate-x-1/2 bg-night-2 border border-line text-parchment-dim px-3 py-1.5 rounded-lg text-[13px]">{t("plotboard.page.chooseScene")}</div>
           ) : null}

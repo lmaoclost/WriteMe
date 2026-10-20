@@ -109,6 +109,16 @@ describe("validateProjectData — bloodlines (schema v2)", () => {
     expect(validateProjectData(withBL([blEnvelope({ persons: [badPerson({ siblingId: 9 })] })]))).toBe(false);
     expect(validateProjectData(withBL([blEnvelope({ persons: [badPerson({ partnerId: 9 })] })]))).toBe(false);
   });
+  it("accepts person.entryId (linked acervo entry) and rejects wrong types", () => {
+    expect(validateProjectData({ ...base, bloodlines: [bloodline({ persons: [person({ entryId: "ent_a" })] })] })).toBe(true);
+    expect(validateProjectData(withBL([blEnvelope({ persons: [badPerson({ entryId: 9 })] })]))).toBe(false);
+  });
+  it("accepts faction.territoryRegionId (atlas region) and rejects wrong types", () => {
+    const faction = { id: "fac_1", x: 10, y: 20, name: "Casa Vellmor", color: "#c0392b", territoryRegionId: "reg_1" };
+    const web = { id: "fw_1", projectId: "prj_a", name: "Teia", factions: [faction], connections: [], notes: "" };
+    expect(validateProjectData({ ...base, factionWebs: [web] })).toBe(true);
+    expect(validateProjectData({ ...base, factionWebs: [{ ...web, factions: [{ ...faction, territoryRegionId: 7 }] }] })).toBe(false);
+  });
   it("rejects malformed bloodline envelope", () => {
     expect(validateProjectData(withBL([{ id: "bl_x", projectId: "prj_a", name: "b", persons: [], houses: [] }]))).toBe(false);
     const noNotes = blEnvelope() as Record<string, unknown>;
