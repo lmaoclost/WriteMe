@@ -303,21 +303,21 @@ describe("persistence + export (case 9)", () => {
   it("state init has bloodlines: []", () => {
     expect(useScriptorium.getInitialState().bloodlines).toEqual([]);
   });
-  it("persisted doc is version 2 and carries bloodlines", () => {
+  it("persisted doc is version 1 and carries bloodlines", () => {
     const a = addBloodline();
     addPerson(a, { name: "Fundador" });
     addHouse(a, { name: "Solar" });
     flushPendingPersist();
     const doc = JSON.parse(localStorage.getItem(STORE_KEY)!) as { version: number; state: { bloodlines: Bloodline[] } };
-    expect(doc.version).toBe(2);
+    expect(doc.version).toBe(1);
     expect(doc.state.bloodlines[0].persons).toHaveLength(1);
     expect(doc.state.bloodlines[0].houses).toHaveLength(1);
   });
-  it("a v1 persisted doc migrates on rehydrate: bloodlines [] injected", () => {
+  it("a persisted doc without bloodlines rehydrates: defaults inject []", () => {
     localStorage.clear();
     const doc = {
       state: {
-        projects: [{ id: "prj_v1", name: "V1", description: "", createdAt: 1, updatedAt: 1 }],
+        projects: [{ id: "prj_v0", name: "V0", description: "", createdAt: 1, updatedAt: 1 }],
         entries: [], atlases: [], manuscripts: [], images: {}, seedFlag: false,
       },
       version: 1,
@@ -325,15 +325,15 @@ describe("persistence + export (case 9)", () => {
     localStorage.setItem(STORE_KEY, JSON.stringify(doc));
     act(() => void useScriptorium.persist.rehydrate());
     const s = store();
-    expect(s.projects[0].id).toBe("prj_v1");
+    expect(s.projects[0].id).toBe("prj_v0");
     expect(s.bloodlines).toEqual([]);
   });
-  it("a v2 persisted doc rehydrates with bloodlines", () => {
+  it("a pre-release doc stamped 2 normalizes on rehydrate and carries bloodlines", () => {
     localStorage.clear();
     const doc = {
       state: {
         projects: [], entries: [], atlases: [], manuscripts: [], images: {}, seedFlag: false,
-        bloodlines: [{ id: "bl_v2", projectId: "prj_v1", name: "N", persons: [], houses: [], notes: "x" }],
+        bloodlines: [{ id: "bl_v2", projectId: "prj_v0", name: "N", persons: [], houses: [], notes: "x" }],
       },
       version: 2,
     };

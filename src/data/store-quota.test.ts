@@ -9,7 +9,7 @@ const ACTION_LABEL = "Download backup";
 type Doc = { state: PersistedState & { marker: string }; version: number };
 
 const docWith = (marker: string): Doc =>
-  ({ state: { projects: [], entries: [], atlases: [], manuscripts: [], images: {}, bloodlines: [], seedFlag: false, marker }, version: 2 });
+  ({ state: { projects: [], entries: [], atlases: [], manuscripts: [], images: {}, bloodlines: [], seedFlag: false, marker }, version: 1 });
 
 let storagePoisoned = false;
 function poisonQuota(): void {

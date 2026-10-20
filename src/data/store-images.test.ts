@@ -29,7 +29,7 @@ function brokenFactory(): void {
   globalThis.indexedDB = { open: () => { throw new Error("boom"); } } as unknown as IDBFactory;
 }
 
-const docOf = (state: Record<string, unknown>): string => JSON.stringify({ state, version: 2 });
+const docOf = (state: Record<string, unknown>): string => JSON.stringify({ state, version: 1 });
 
 const emptyData = (): Record<string, unknown> => ({
   projects: [], entries: [], atlases: [], manuscripts: [], images: {}, bloodlines: [],
@@ -141,7 +141,7 @@ describe("image persistence via IndexedDB", () => {
     const staleKey = store.getState().putImage(PNG_A, "entry");
     await images.imagesPending(staleKey);
     const backup = JSON.stringify({
-      app: "scriptorium", version: 3,
+      app: "scriptorium", version: 1,
       ...emptyData(),
       images: { imgN: PNG_B },
     });

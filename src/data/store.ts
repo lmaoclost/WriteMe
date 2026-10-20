@@ -3066,10 +3066,12 @@ export const useScriptorium = create<ScriptoriumState>()(
     },
     {
       name: STORE_KEY,
-      version: 2,
+      version: 1,
       storage: localStoragePersistence,
-      /** Normalizes default PT copy (Mês/Domingo, event categories) on load. */
-      migrate: (persisted, from) => {
+      /** Normalizes default PT copy (Mês/Domingo, event categories) on load.
+       *  v1 is the project's first released format, so this only fires for docs
+       *  stamped with a pre-release dev version; zustand rewrites them as v1. */
+      migrate: (persisted) => {
         const norm = (s: PersistedState): PersistedState => {
           for (const cal of s.calendars ?? []) {
             cal.months = cal.months.map((m) => ({ ...m, name: m.name.replace(/^Mês (\d+)$/, (_x, n) => `Month ${n}`) }));
@@ -3088,9 +3090,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           }
           return s;
         };
-        if (from !== 1) return norm(persisted as PersistedState);
-        const p = persisted as Partial<PersistedState>;
-        return { ...norm(persisted as PersistedState), bloodlines: p.bloodlines ?? [] } as PersistedState;
+        return norm(persisted as PersistedState);
       },
       partialize: ({ histories: _h, paletteOpen: _p, toasts: _t, quotaToastId: _q, images: _i, imagesReady: _r, ...s }): PersistedState => {
         void _h; // ephemeral histories are never persisted

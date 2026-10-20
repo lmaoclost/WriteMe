@@ -6,7 +6,7 @@ type Doc = { state: PersistedState & { marker: string }; version: number };
 
 const docWith = (marker: string): Doc => ({
   state: { projects: [], entries: [], atlases: [], manuscripts: [], images: {}, bloodlines: [], seedFlag: false, marker } as PersistedState & { marker: string },
-  version: 2,
+  version: 1,
 });
 
 beforeEach(() => {

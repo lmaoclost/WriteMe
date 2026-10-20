@@ -487,7 +487,7 @@ export function emptyProjectData(): ProjectData & { bloodlines: Bloodline[] } {
 }
 
 export function serialize(data: ProjectData): string {
-  return JSON.stringify({ app: "scriptorium", version: 3, ...data });
+  return JSON.stringify({ app: "scriptorium", version: 1, ...data });
 }
 
 export type ParseExportErrorCode = "invalidJson" | "notScriptorium" | "unsupportedVersion" | "invalidStructure";
@@ -509,7 +509,7 @@ export function parseExport(text: string): ProjectData {
   }
   const d = doc as { app?: unknown; version?: unknown } & ProjectData;
   if (!d || d.app !== "scriptorium") throw new ParseExportError("notScriptorium");
-  if (d.version !== 3) throw new ParseExportError("unsupportedVersion", d.version);
+  if (d.version !== 1) throw new ParseExportError("unsupportedVersion", d.version);
   const issues = validateProjectDataDetailed(d);
   if (issues.length > 0) {
     throw new ParseExportError("invalidStructure", undefined, issues.slice(0, 5).map((i) => `${i.path}: ${i.message}`).join("; "));

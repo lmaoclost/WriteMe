@@ -4,11 +4,11 @@ import type { Bloodline, BloodlineHouse, BloodlinePerson, ProjectData } from "..
 
 /**
  * Cases:
- * 1. v1/v2 docs (pre-eras timeline) are rejected with unsupportedVersion.
- * 2. A v3 doc with no bloodlines normalizes to [].
- * 3. v3 with persons and houses validates.
+ * 1. Only version 1 is accepted; any other version throws unsupportedVersion.
+ * 2. A doc with no bloodlines normalizes to [].
+ * 3. Bloodlines with persons and houses validate.
  * 4. Wrong shapes rejected (person without x/y/name; bad houses).
- * 5. serialize writes version 3 and round-trips bloodlines.
+ * 5. serialize writes version 1 and round-trips bloodlines.
  */
 
 const base: ProjectData = {
@@ -51,13 +51,13 @@ const blEnvelope = (over: { persons?: unknown[]; houses?: unknown[]; notes?: unk
   notes: over.notes !== undefined ? over.notes : "",
 });
 
-describe("validateProjectData — bloodlines (schema v3)", () => {
+describe("validateProjectData — bloodlines", () => {
   it("case 1: accepts a doc without bloodlines (field OPTIONAL)", () => {
     expect(validateProjectData(base)).toBe(true);
     expect(validateProjectData({ ...base, bloodlines: [] })).toBe(true);
     expect(validateProjectData(emptyProjectData())).toBe(true);
   });
-  it("case 3: v3 with full persons and houses validates", () => {
+  it("case 3: full persons and houses validate", () => {
     const full = bloodline({
       persons: [
         person({
@@ -131,41 +131,41 @@ describe("validateProjectData — bloodlines (schema v3)", () => {
 });
 
 describe("serialize", () => {
-  it("case 6: writes version 3 with the scriptorium marker", () => {
+  it("case 6: writes version 1 with the scriptorium marker", () => {
     const doc = JSON.parse(serialize(base)) as { app: string; version: number };
     expect(doc.app).toBe("scriptorium");
-    expect(doc.version).toBe(3);
+    expect(doc.version).toBe(1);
   });
   it("keeps data fields alongside the header (bloodlines included)", () => {
     const doc = JSON.parse(serialize({ ...base, bloodlines: [bloodline()] })) as { version: number; bloodlines: Bloodline[] };
-    expect(doc.version).toBe(3);
+    expect(doc.version).toBe(1);
     expect(doc.bloodlines).toEqual([bloodline()]);
   });
 });
 
 describe("parseExport", () => {
-  it("case 2: a v3 doc without bloodlines normalizes to []", () => {
-    const v3 = JSON.stringify({ app: "scriptorium", version: 3, ...base });
-    expect(parseExport(v3).bloodlines).toEqual([]);
+  it("case 2: a doc without bloodlines normalizes to []", () => {
+    const doc = JSON.stringify({ app: "scriptorium", version: 1, ...base });
+    expect(parseExport(doc).bloodlines).toEqual([]);
   });
-  it("case 5: v3 round-trips with bloodlines", () => {
+  it("case 5: v1 round-trips with bloodlines", () => {
     const data: ProjectData = { ...base, bloodlines: [bloodline({ persons: [person({ showBadge: true, badgeText: "b" })] })] };
     const text = serialize(data);
     expect(parseExport(text)).toEqual({ ...data, factionWebs: [], calendars: [], plotBoards: [], timelines: [], oathsCharts: [], wellsprings: [], conlangs: [] });
   });
-  it("case 1: versions 1 and 2 predate the era chain and are rejected", () => {
-    for (const version of [1, 2]) {
+  it("case 1: any version other than 1 is rejected", () => {
+    for (const version of [0, 2, 3]) {
       expect(() => parseExport(JSON.stringify({ app: "scriptorium", version, ...base })))
         .toThrow("unsupportedVersion");
     }
   });
-  it("rejects malformed bloodlines in a v3 doc", () => {
+  it("rejects malformed bloodlines in a valid doc", () => {
     expect(() => parseExport(JSON.stringify({
-      app: "scriptorium", version: 3, ...base,
+      app: "scriptorium", version: 1, ...base,
       bloodlines: [blEnvelope({ persons: [badPerson({ x: "no" })] })],
     })))
       .toThrow("invalidStructure");
-    expect(() => parseExport(JSON.stringify({ app: "scriptorium", version: 3, ...base, bloodlines: null })))
+    expect(() => parseExport(JSON.stringify({ app: "scriptorium", version: 1, ...base, bloodlines: null })))
       .toThrow("invalidStructure");
   });
 });
