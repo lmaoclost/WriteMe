@@ -46,7 +46,7 @@ function stubStageLayout(el: HTMLElement, rect: Rect, client?: { w: number; h: n
 
 type PinFixture = { x: number; y: number; type?: PinType; color?: string; label?: string; entryId?: string };
 
-function makeAtlas(fixtures: { regions?: Array<Pick<Region, "points" | "color" | "label">>; pins?: PinFixture[] } = {}): Atlas {
+function makeAtlas(fixtures: { regions?: Array<Pick<Region, "points" | "color" | "label" | "entryId">>; pins?: PinFixture[] } = {}): Atlas {
   let a!: Atlas;
   act(() => {
     a = store().addAtlas("prj_fix", "Mundo");
@@ -262,6 +262,25 @@ describe("hover tooltip (div hoverCard)", () => {
     const tip = screen.getByTestId("pin-tooltip") as HTMLElement;
     expect(tip.textContent).toContain("Torre");
     expect(tip.textContent).not.toContain("Reinos do Sol");
+  });
+
+  it("hovering a linked region opens the entry preview, and leaving closes it", () => {
+    useScriptorium.setState({
+      entries: [{ ...ENTRIES[0], summary: "Terras do sol nascente." } as WorldEntry],
+    });
+    const atlas = makeAtlas({
+      regions: [{ points: FRAME, color: "#123456", label: "Império", entryId: "ent_sol" }],
+    });
+    const { container } = mountEditor(atlas);
+    const poly = container.querySelector(".region-poly") as SVGPolygonElement;
+    expect(poly).toBeTruthy();
+    firePinHover(poly, "pointerover", 400, 300);
+    const popup = screen.getByTestId("pin-entry-preview");
+    expect(popup.textContent).toContain("Reinos do Sol");
+    expect(popup.textContent).toContain("Terras do sol nascente.");
+    expect(screen.queryByLabelText("Region label")).toBeNull(); // hover does not select
+    firePinHover(poly, "pointerout", 400, 300);
+    expect(screen.queryByTestId("pin-entry-preview")).toBeNull();
   });
 
   it("clicking a linked pin opens the preview popup with blurb and Open-in-codex", () => {
@@ -548,5 +567,20 @@ describe("RegionPanel", () => {
     });
     expect(screen.getByLabelText("Pin label")).toBeTruthy();
     expect(screen.queryByLabelText("Region label")).toBeNull();
+  });
+
+  it("a pin inside a region offers a button to select the region under it", () => {
+    const atlas = makeAtlas({
+      regions: [{ points: FRAME, color: "#123456", label: "Império" }],
+      pins: [{ x: 0.25, y: 0.25, label: "Cidade" }],
+    });
+    const { container } = mountEditor(atlas);
+    selectPinByClick(container);
+    expect(screen.getByLabelText("Pin label")).toBeTruthy();
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Select region below" }));
+    });
+    expect(screen.getByLabelText("Region label")).toBeTruthy();
+    expect(screen.queryByLabelText("Pin label")).toBeNull();
   });
 });

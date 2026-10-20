@@ -113,12 +113,29 @@ describe("BloodlineCanvasPage", () => {
     expect(screen.getByText(/founder|first person/i)).toBeInTheDocument();
   });
 
-  it("add person button creates and selects", () => {
+  it("add person button picks a codex character and selects it", () => {
     const b = makeBloodline();
+    const entry = store().addEntry("prj_1", "character");
+    store().updateEntry(entry.id, { title: "Aldric Vellmor" });
     mount(b);
     fireEvent.click(screen.getByRole("button", { name: /Add person/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Aldric Vellmor/ }));
     expect(store().bloodlines[0].persons).toHaveLength(1);
+    expect(store().bloodlines[0].persons[0]).toMatchObject({ name: "Aldric Vellmor", entryId: entry.id });
     expect(screen.getByTestId("person-node")).toBeInTheDocument();
+    expect(screen.getByLabelText("Name")).toHaveValue("Aldric Vellmor");
+  });
+
+  it("a linked person without a portrait falls back to the entry image", () => {
+    const b = makeBloodline();
+    const key = store().putImage("data:image/png;base64,FACE", "entry");
+    const entry = store().addEntry("prj_1", "character");
+    store().updateEntry(entry.id, { title: "Aldric", imageKey: key });
+    store().addPerson(b.id, { x: 4000, y: 4000, name: "Aldric", entryId: entry.id });
+    mount(b);
+    const portrait = document.querySelector(".person-portrait") as HTMLImageElement;
+    expect(portrait).toBeTruthy();
+    expect(portrait.src).toContain("data:image/png;base64,FACE");
   });
 
   it("drag moves a person by pointer events", () => {

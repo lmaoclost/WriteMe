@@ -8,6 +8,7 @@ import { EntryView } from "./EntryView";
 import { Modal } from "../../ui/Modal";
 import { Field } from "../../ui/Field";
 import { Button } from "../../ui/Button";
+import { CATEGORY_CANONICAL, CODEX_CATEGORIES } from "./categories";
 
 interface RouteState {
   select?: string;
@@ -83,6 +84,10 @@ export function CodexPage({ projectId }: { projectId: string }) {
   const [kindOpen, setKindOpen] = useState(false);
   const [kindName, setKindName] = useState("");
   const [kindEmoji, setKindEmoji] = useState("📜");
+  const [armKindDelete, setArmKindDelete] = useState<string | null>(null);
+  const customKinds = useScriptorium(
+    useShallow((s) => s.projects.find((p) => p.id === projectId)?.customCategories ?? []),
+  );
   const createKind = () => {
     const label = kindName.trim();
     if (!label) return;
@@ -90,7 +95,8 @@ export function CodexPage({ projectId }: { projectId: string }) {
     const s = useScriptorium.getState();
     const project = s.projects.find((p) => p.id === projectId);
     if (!project) return;
-    if (project.customCategories?.some((k) => k.key === key)) {
+    const reserved = CODEX_CATEGORIES.some((c) => c.key === key) || key in CATEGORY_CANONICAL;
+    if (reserved || project.customCategories?.some((k) => k.key === key)) {
       s.pushToast("error", t("entries.codex.kindExists"));
       return;
     }
@@ -101,6 +107,19 @@ export function CodexPage({ projectId }: { projectId: string }) {
     setKindName("");
     setKindEmoji("📜");
     setKindOpen(false);
+  };
+
+  const deleteKind = (key: string, label: string) => {
+    const s = useScriptorium.getState();
+    const project = s.projects.find((p) => p.id === projectId);
+    if (!project) return;
+    const affected = s.entries.filter((e) => e.projectId === projectId && e.category === key);
+    s.updateProject(projectId, {
+      customCategories: (project.customCategories ?? []).filter((k) => k.key !== key),
+    });
+    for (const entry of affected) s.updateEntry(entry.id, { category: "lore" });
+    s.pushToast("success", t("entries.codex.kindDeleted", { label, count: affected.length }));
+    setArmKindDelete(null);
   };
 
   const onEntryDeleted = (id: string) => {
@@ -136,6 +155,30 @@ export function CodexPage({ projectId }: { projectId: string }) {
             <Field label={t("entries.codex.kindEmoji")}>
               <input aria-label={t("entries.codex.kindEmoji")} value={kindEmoji} onChange={(e) => setKindEmoji(e.target.value)} maxLength={4} />
             </Field>
+            {customKinds.length > 0 ? (
+              <div className="grid gap-1.5">
+                <p className="m-0 text-[10px] uppercase tracking-[0.12em] text-slate">{t("entries.codex.customKinds")}</p>
+                <ul className="m-0 grid list-none gap-1 p-0">
+                  {customKinds.map((kind) => (
+                    <li key={kind.key} className="flex items-center gap-2 rounded-md border border-line px-2 py-1.5">
+                      <span className="min-w-0 flex-1 truncate text-xs text-parchment">{kind.icon} {kind.label}</span>
+                      {armKindDelete === kind.key ? (
+                        <Button kind="ghost" onClick={() => deleteKind(kind.key, kind.label)} aria-label={t("entries.codex.confirmDeleteKind", { label: kind.label })}>
+                          {t("entries.codex.confirmDelete")}
+                        </Button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="shrink-0 cursor-pointer border-0 bg-none px-1.5 py-0.5 text-xs text-slate hover:text-[var(--ember)]"
+                          aria-label={t("entries.codex.deleteKind", { label: kind.label })}
+                          onClick={() => setArmKindDelete(kind.key)}
+                        >✕</button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
             <div className="mt-3 flex gap-2">
               <Button onClick={createKind}>{t("entries.codex.createKind")}</Button>
               <Button kind="ghost" onClick={() => setKindOpen(false)}>{t("common.cancel")}</Button>

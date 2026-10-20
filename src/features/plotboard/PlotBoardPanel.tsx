@@ -89,14 +89,15 @@ function CardForm({ board, card, onSelect }: {
         <h3 className="text-[13px] tracking-[0.08em] uppercase text-slate font-semibold">{t("plotboard.panel.beats")}</h3>
         <ul className="titles-list list-none m-0 p-0 grid gap-1">
           {card.parts.map((p, i) => (
-            <li key={p.id}>
+            <li key={p.id} className="flex items-center gap-1.5">
               <input
+                className="min-w-0 flex-1 rounded-sm border border-line bg-ink px-2 py-1.5 text-parchment outline-none placeholder:text-slate focus:border-gold-dim"
                 aria-label={t("plotboard.panel.beatAria", { n: i + 1 })}
                 defaultValue={p.text}
                 onBlur={(e) => update({ parts: card.parts.map((pp, j) => (j === i ? { ...pp, text: e.target.value } : pp)) })}
               />
               <button type="button" aria-label={t("plotboard.panel.removeBeat", { n: i + 1 })}
-                onClick={() => update({ parts: card.parts.filter((_, j) => j !== i) })} className="bg-none border-0 text-slate text-xs">✕</button>
+                onClick={() => update({ parts: card.parts.filter((_, j) => j !== i) })} className="shrink-0 bg-none border-0 text-slate text-xs">✕</button>
             </li>
           ))}
         </ul>

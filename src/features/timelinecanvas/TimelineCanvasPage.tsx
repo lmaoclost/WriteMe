@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
@@ -15,18 +15,48 @@ import { withCurrentColor } from "../../ui/colors";
 import { useBoardNotesHotkey } from "../../ui/boardNotes";
 import { useRafCallback } from "../../ui/useRaf";
 
+const SEG_LINE_Y = 200;
+const SEG_LANE_GAP = 34;
+
+/** Greedy interval lanes: overlapping eras get different rows so both stay
+ *  visible and clickable. Input order is preserved for stable ids. */
+function layoutSegments(segments: TimelineWire["segments"]): Map<string, number> {
+  const sorted = [...segments].sort((a, b) => Math.min(a.fromX, a.toX) - Math.min(b.fromX, b.toX));
+  const laneEnds: number[] = [];
+  const laneById = new Map<string, number>();
+  for (const g of sorted) {
+    const start = Math.min(g.fromX, g.toX);
+    const end = Math.max(g.fromX, g.toX);
+    let lane = laneEnds.findIndex((laneEnd) => laneEnd <= start);
+    if (lane === -1) {
+      lane = laneEnds.length;
+      laneEnds.push(end);
+    } else {
+      laneEnds[lane] = end;
+    }
+    laneById.set(g.id, lane);
+  }
+  return laneById;
+}
+
 const TLSegmentsLayer = memo(function TLSegmentsLayer({ segments, handleSegDown }: {
   segments: TimelineWire["segments"];
   handleSegDown(g: TimelineWire["segments"][number], e: React.PointerEvent): void;
 }) {
+  const lanes = useMemo(() => layoutSegments(segments), [segments]);
   return (
     <>
-      {segments.map((g) => (
-        <g key={g.id} data-testid="tl-seg" className="tl-seg" onPointerDown={(e) => handleSegDown(g, e)}>
-          <line x1={g.fromX} y1={200} x2={g.toX} y2={200} stroke={g.lineColor} strokeWidth={4} />
-          <text x={(g.fromX + g.toX) / 2} y={186} className="tl-seg-label text-sm font-display" fill={g.lineColor} textAnchor="middle">{g.label}</text>
-        </g>
-      ))}
+      {segments.map((g) => {
+        const y = SEG_LINE_Y - (lanes.get(g.id) ?? 0) * SEG_LANE_GAP;
+        return (
+          <g key={g.id} data-testid="tl-seg" className="tl-seg" onPointerDown={(e) => handleSegDown(g, e)}>
+            {/* invisible wide hit area: a 4px line is hard to click */}
+            <line x1={g.fromX} y1={y} x2={g.toX} y2={y} stroke="transparent" strokeWidth={18} className="tl-seg-hit" />
+            <line x1={g.fromX} y1={y} x2={g.toX} y2={y} stroke={g.lineColor} strokeWidth={4} />
+            <text x={(g.fromX + g.toX) / 2} y={y - 14} className="tl-seg-label text-sm font-display" fill={g.lineColor} textAnchor="middle">{g.label}</text>
+          </g>
+        );
+      })}
     </>
   );
 });
@@ -255,7 +285,7 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
             </svg>
           </div>
           {timeline.beads.length === 0 ? (
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[calc(1/var(--bl-scale,0.1))] text-slate whitespace-nowrap">{t("timeline.page.emptyHint")}</div>
+            <div className="board-empty-hint absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-slate">{t("timeline.page.emptyHint")}</div>
           ) : null}
           {notesOpen ? <TLNotepad notes={timeline.notes} onNotes={(v) => useScriptorium.getState().setTimelineNotes(timelineId, v)} onClose={() => setNotesOpen(false)} /> : null}
           {/* invisible selection guard for tests */}

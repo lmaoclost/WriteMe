@@ -2,14 +2,13 @@ import { useEffect, useMemo, useRef, useState, useCallback, type ChangeEvent, ty
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import type { WorldEntry, EntrySection, EntrySectionField } from "../../domain/types";
-import { ENTRY_CATEGORIES } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
 import { fileToDataUrl } from "../../data/image";
 import { newId } from "../../domain/id";
-import { dateIsEmpty, formatDate, isValidDate, sanitizeDate } from "../../domain/dates";
+import { dateIsEmpty, formatDateWithCalendar, isValidDate, sanitizeDate } from "../../domain/dates";
 import { LinkPicker } from "../atlas/panels/LinkPicker";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
-import { categoryIcon, categoryLabel, categoryDot } from "./categories";
+import { categoryLabel, categoryDot, CODEX_CATEGORIES, CATEGORY_CANONICAL } from "./categories";
 import { ImagePicker } from "./ImagePicker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MarkdownView } from "./MarkdownView";
@@ -26,6 +25,7 @@ const CONFIRM_RESET_MS = 3000;
 export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryViewProps) {
   const { t } = useTranslation();
   const project = useScriptorium((s) => s.projects.find((p) => p.id === entry.projectId));
+  const calendar = useScriptorium((s) => (s.calendars ?? []).find((c) => c.projectId === entry.projectId));
   const siblings = useScriptorium(
     useShallow((s) => s.entries.filter((e) => e.projectId === entry.projectId)),
   );
@@ -154,7 +154,9 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
   const coverEl = useRef<HTMLImageElement | null>(null);
   const cover = useScriptorium((s) => (entry.imageKey ? s.images[entry.imageKey] : undefined));
   const entryDate = dateIsEmpty(entry.date ?? "") ? null : sanitizeDate(entry.date ?? "");
-  const dateInvalid = !dateIsEmpty(dateDraft.draft) && !isValidDate(dateDraft.draft);
+  const draftedDate = sanitizeDate(dateDraft.draft);
+  const dateInvalid = !dateIsEmpty(dateDraft.draft) && (!isValidDate(dateDraft.draft) || draftedDate === null);
+  const selectedCategory = CATEGORY_CANONICAL[entry.category] ?? entry.category;
 
   return (
     <div className="codex-view flex flex-col gap-3 max-w-[760px]">
@@ -196,7 +198,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           }}
         />
       ) : null}
-      {entryDate ? <span className="codex-eyebrow text-gold-dim font-mono text-[11px] font-bold tracking-[0.08em] uppercase">{formatDate(entryDate)}</span> : null}
+      {entryDate ? <span className="codex-eyebrow text-gold-dim font-mono text-[11px] font-bold tracking-[0.08em] uppercase">{formatDateWithCalendar(entryDate, calendar)}</span> : null}
       <div className="flex items-baseline gap-2.5">
         <input
           ref={titleRef}
@@ -207,13 +209,13 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           onChange={(e) => titleDraft.setDraft(e.target.value)}
           onBlur={flush}
         />
-        <Select value={entry.category} onValueChange={(v) => {
+        <Select value={selectedCategory} onValueChange={(v) => {
             useScriptorium.getState().updateEntry(entry.id, { category: v });
           }}>
           <SelectTrigger aria-label={t("entries.view.category")} className="rounded-lg border-line bg-night-2 text-parchment px-2 py-1.5 text-xs hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
           <SelectContent className="border-line bg-night text-parchment">
-            {ENTRY_CATEGORIES.map((c) => (
-              <SelectItem key={c} value={c} className="text-xs focus:bg-[#24233f] focus:text-parchment">{categoryIcon(c)} {categoryLabel(c)}</SelectItem>
+            {CODEX_CATEGORIES.map((c) => (
+              <SelectItem key={c.key} value={c.key} className="text-xs focus:bg-[#24233f] focus:text-parchment">{c.icon} {categoryLabel(c.key)}</SelectItem>
             ))}
             {(project?.customCategories ?? []).map((k) => (
               <SelectItem key={k.key} value={k.key} className="text-xs focus:bg-[#24233f] focus:text-parchment">{k.icon} {k.label}</SelectItem>
@@ -255,6 +257,11 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           onBlur={dateDraft.flush}
         />
         {dateInvalid ? <p className="text-[var(--ember)] text-xs m-0">{t("entries.view.invalidDate")}</p> : null}
+        {!dateInvalid && draftedDate ? (
+          <span className="codex-date-formatted text-[11px] text-parchment-dim">
+            {formatDateWithCalendar(draftedDate, calendar)}
+          </span>
+        ) : null}
       </div>
       <div className="flex items-center justify-end flex-wrap gap-2">
         <button
@@ -273,6 +280,12 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
         >
           {t("entries.view.preview")}
         </button>
+      </div>
+      <section className="flex items-center flex-wrap gap-2 border-y border-line py-2" aria-label={t("entries.view.imageGroup")}>
+        <div className="grid gap-0.5 mr-auto">
+          <span className="text-[10px] tracking-[0.12em] uppercase text-slate">{t("entries.view.imageGroup")}</span>
+          <span className="text-[11px] text-parchment-dim">{t("entries.view.imageHint")}</span>
+        </div>
         <label className="codex-action bg-none border border-line text-parchment-dim rounded-lg py-1 px-2.5 text-xs cursor-pointer hover:border-gold-dim">
           {t("entries.view.changeCover")}
           <input
@@ -288,14 +301,14 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           aria-pressed={imagePickerOpen}
           onClick={() => setImagePickerOpen((open) => !open)}
         >
-          {t("entries.view.entryImage")}
+          {t("entries.view.useImageFromEntry")}
         </button>
         {entry.imageKey ? (
           <button type="button" className="codex-action bg-none border border-line text-parchment-dim rounded-lg py-1 px-2.5 text-xs cursor-pointer hover:border-gold-dim" onClick={clearCover}>
             {t("entries.view.removeCover")}
           </button>
         ) : null}
-      </div>
+      </section>
       {pickersOpen ? (
         <div className="chooser-backdrop fixed inset-0 z-29 bg-transparent" aria-hidden="true" onPointerDown={closePickers} />
       ) : null}
@@ -458,10 +471,10 @@ function SectionBlock({ sec, onField, onAddField, onRemoveField, onRename, onRen
       </header>
       {sec.fields.length === 0 ? <p className="text-slate text-[13px] italic px-0.5 py-1">{t("entries.view.noFields")}</p> : null}
       {sec.fields.map((f, fi) => (
-        <div className="grid grid-cols-[130px_1fr_auto] gap-1.5 items-start" key={f.id ?? fi}>
-          <div className="codex-field-label-row min-w-0 pt-[3px]">
+        <div className="codex-field-row grid gap-1 border-t border-line/70 pt-2" key={f.id ?? fi}>
+          <div className="codex-field-label-row flex items-center gap-1.5 min-w-0">
             <input
-              className="codex-field-label bg-none border border-transparent rounded-md text-[11px] uppercase tracking-[0.08em] text-slate px-0.5 min-w-0 w-full hover:border-line focus:border-gold-dim outline-none"
+              className="codex-field-label bg-none border border-transparent rounded-md text-[11px] uppercase tracking-[0.08em] text-slate px-0.5 min-w-0 flex-1 hover:border-line focus:border-gold-dim outline-none"
               aria-label={t("entries.view.fieldLabel", { label: f.label })}
               placeholder={t("entries.view.label")}
               value={f.label}
@@ -469,7 +482,7 @@ function SectionBlock({ sec, onField, onAddField, onRemoveField, onRename, onRen
             />
             <button
               type="button"
-              className="codex-field-remove bg-none border-0 text-slate px-1.5 py-0.5 text-xs cursor-pointer hover:text-[var(--ember)]"
+              className="codex-field-remove shrink-0 bg-none border-0 text-slate px-1.5 py-0.5 text-xs cursor-pointer hover:text-[var(--ember)]"
               aria-label={t("entries.view.removeField", { label: f.label })}
               onClick={() => onRemoveField(f)}
             >✕</button>
@@ -488,6 +501,7 @@ function SectionFieldInput({ label, value, onCommit }: { label: string; value: s
   useEffect(() => () => unmount.current(), []);
   return (
     <input
+      className="codex-field-value w-full bg-ink border border-line rounded-md px-2.5 py-1.5 text-[13px] text-parchment outline-none focus:border-gold-dim placeholder:text-slate"
       aria-label={label}
       value={draft.draft}
       onChange={(e) => draft.setDraft(e.target.value)}

@@ -310,3 +310,15 @@ input[type="file"].sr-only {
   content-visibility: auto;
   contain-intrinsic-size: auto 3.5rem;
 }
+
+/* Empty-board hint: readable at any zoom level. Board placeholders used to
+   counter-scale with an undefined --bl-scale, rendering 10x too large. */
+.board-empty-hint {
+  max-width: min(22rem, 80vw);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+  white-space: normal;
+  pointer-events: none;
+}
+

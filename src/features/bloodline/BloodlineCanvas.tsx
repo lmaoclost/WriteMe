@@ -11,18 +11,27 @@ import { Notepad } from "./Notepad";
 import { BOARD_HEADER, BOARD_NAME_INPUT, BOARD_ACTIONS, BOARD_ACTION_BTN } from "../../ui/board";
 import { useBoardNotesHotkey } from "../../ui/boardNotes";
 import { useRafCallback } from "../../ui/useRaf";
+import { Modal } from "../../ui/Modal";
+import { Button } from "../../ui/Button";
+import { categoryIcon, categoryLabel, CATEGORY_CANONICAL } from "../entries/categories";
+import type { WorldEntry } from "../../domain/types";
 
 
 export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
   const { t } = useTranslation();
   const bloodline = useScriptorium((s) => s.bloodlines.find((b) => b.id === bloodlineId));
   const images = useScriptorium((s) => s.images);
+  const projectEntries = useScriptorium(
+    useShallow((s) => s.entries.filter((e) => e.projectId === bloodline?.projectId)),
+  );
   const pushToast = useScriptorium((s) => s.pushToast);
   const stageRef = useRef<HTMLDivElement>(null);
   const plane = usePlane(stageRef);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [findOpen, setFindOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [addQuery, setAddQuery] = useState("");
   useBoardNotesHotkey(notesOpen, setNotesOpen);
   const flags = useScriptorium(useShallow((s) => {
     const h = s.histories[`bl_${bloodlineId}`];
@@ -114,6 +123,33 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
     onDragEnd: (kind: NodeKind, id: string) => nodeHandlersRef.current?.onDragEnd(kind, id),
   }), []);
 
+  const characterEntries = useMemo(
+    () => projectEntries.filter((e) => (CATEGORY_CANONICAL[e.category] ?? e.category) === "character"),
+    [projectEntries],
+  );
+  const addQueryNorm = addQuery.trim().toLocaleLowerCase();
+  const addMatches = characterEntries.filter((e) => e.title.toLocaleLowerCase().includes(addQueryNorm));
+
+  const createPerson = (entry?: WorldEntry) => {
+    const rect = stageRef.current?.getBoundingClientRect();
+    useScriptorium.getState().pushBLHistory(bloodlineId);
+    const p = useScriptorium.getState().addPerson(bloodlineId, {
+      x: rect ? (window.innerWidth / 2 - rect.left - plane.panX) / plane.scale : 4000,
+      y: rect ? (window.innerHeight / 2 - rect.top - plane.panY) / plane.scale : 4000,
+      ...(entry ? { name: entry.title, entryId: entry.id } : {}),
+    });
+    if (p) setSelectedId(p.id);
+    setAddOpen(false);
+    setAddQuery("");
+  };
+
+  const entryImageKey = (personId: string): string | undefined => {
+    const person = bloodline.persons.find((p) => p.id === personId);
+    if (person?.portraitKey) return person.portraitKey;
+    const entry = person?.entryId ? projectEntries.find((e) => e.id === person.entryId) : undefined;
+    return entry?.imageKey;
+  };
+
   return (
     <div className="grid grid-rows-[auto_1fr] h-full" data-testid="bloodline-page">
       <header className={BOARD_HEADER}>
@@ -126,15 +162,7 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
         <div className={BOARD_ACTIONS}>
           <button type="button" aria-label={t("bloodline.canvas.undo")} className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoBL(bloodlineId)}>↶</button>
           <button type="button" aria-label={t("bloodline.canvas.redo")} className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoBL(bloodlineId)}>↷</button>
-          <button type="button" className={BOARD_ACTION_BTN} onClick={() => {
-            useScriptorium.getState().pushBLHistory(bloodlineId);
-            const rect = stageRef.current?.getBoundingClientRect();
-            const p = useScriptorium.getState().addPerson(bloodlineId, {
-              x: rect ? (window.innerWidth / 2 - rect.left - plane.panX) / plane.scale : 4000,
-              y: rect ? (window.innerHeight / 2 - rect.top - plane.panY) / plane.scale : 4000,
-            });
-            if (p) setSelectedId(p.id);
-          }}>{t("bloodline.canvas.addPerson")}</button>
+          <button type="button" className={BOARD_ACTION_BTN} onClick={() => setAddOpen(true)}>{t("bloodline.canvas.addPerson")}</button>
           <button type="button" className={BOARD_ACTION_BTN} onClick={() => {
             useScriptorium.getState().pushBLHistory(bloodlineId);
             const rect = stageRef.current?.getBoundingClientRect();
@@ -173,13 +201,14 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
             ))}
             {bloodline.persons.map((p) => (
               <PersonNode key={p.id} person={p} images={images} selected={p.id === selectedId}
+                fallbackPortraitKey={entryImageKey(p.id)}
                 houseName={houseById.get(p.houseId ?? "")?.name}
                 handlers={nodeHandlers}
               />
             ))}
           </div>
           {bloodline.persons.length === 0 && bloodline.houses.length === 0 ? (
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[calc(1/var(--bl-scale,0.1))] text-slate whitespace-nowrap">{t("bloodline.canvas.startHint")}</div>
+            <div className="board-empty-hint absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-slate text-center">{t("bloodline.canvas.startHint")}</div>
           ) : null}
         </div>
         <BloodlinePanel bloodline={bloodline} selectedId={selectedId} onSelect={setSelectedId} />
@@ -193,6 +222,40 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
       </div>
       {selected ? "" : ""}
       <div className="hidden" data-selected-id={selected?.id ?? ""} />
+      {addOpen ? (
+        <Modal title={t("bloodline.canvas.pickPerson")} onClose={() => setAddOpen(false)}>
+          <div className="grid gap-3">
+            <p className="m-0 text-[13px] text-parchment-dim">{t("bloodline.canvas.pickPersonHint")}</p>
+            <input
+              className="w-full bg-ink border border-line rounded-sm text-parchment px-2 py-1.5"
+              aria-label={t("bloodline.canvas.searchPeople")}
+              placeholder={t("bloodline.canvas.searchPeople")}
+              value={addQuery}
+              onChange={(e) => setAddQuery(e.target.value)}
+              autoFocus
+            />
+            {characterEntries.length === 0 ? (
+              <p className="m-0 text-[13px] text-slate">{t("bloodline.canvas.noCharacters")}</p>
+            ) : (
+              <ul className="link-list list-none m-0 p-0 grid gap-0.5 max-h-[280px] overflow-y-auto [&_button]:flex [&_button]:w-full [&_button]:items-center [&_button]:gap-2 [&_button]:text-left [&_button]:bg-none [&_button]:border-0 [&_button]:text-parchment [&_button]:text-[13px] [&_button]:py-1.5 [&_button]:px-2 [&_button]:rounded-sm hover:[&_button]:bg-night">
+                {addMatches.map((entry) => (
+                  <li key={entry.id}>
+                    <button type="button" onClick={() => createPerson(entry)}>
+                      <span aria-hidden="true">{categoryIcon(entry.category)}</span>
+                      <span className="min-w-0 flex-1 truncate">{entry.title}</span>
+                      <span className="text-[10px] uppercase tracking-[0.08em] text-slate">{categoryLabel(entry.category)}</span>
+                    </button>
+                  </li>
+                ))}
+                {addMatches.length === 0 ? <li className="px-2 py-1.5 text-[13px] text-slate">{t("entries.list.noResults")}</li> : null}
+              </ul>
+            )}
+            <Button kind="ghost" className="justify-self-start" onClick={() => createPerson()}>
+              {t("bloodline.canvas.blankPerson")}
+            </Button>
+          </div>
+        </Modal>
+      ) : null}
     </div>
   );
 }

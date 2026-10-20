@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useShallow } from "zustand/react/shallow";
 import { useScriptorium } from "../../data/store";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { fileToDataUrl } from "../../data/image";
@@ -8,6 +9,7 @@ import { Field } from "../../ui/Field";
 import { Button } from "../../ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BOARD_PANEL, BOARD_PANEL_HINT, BOARD_PANEL_HEAD, BOARD_PANEL_HEAD_H2 } from "../../ui/board";
+import { LinkPicker } from "../atlas/panels/LinkPicker";
 
 const TENURE_LABELS = ["Reigned", "Served", "Tenure", "Ruled", "Governed", "Appointed"];
 
@@ -73,7 +75,13 @@ function PersonPanel({ bloodline, person, onSelect }: {
   const [armDelete, setArmDelete] = useState(false);
   const [portraitUploading, setPortraitUploading] = useState(false);
   const [newTitle, setNewTitle] = useState("");
+  const [entryPickerOpen, setEntryPickerOpen] = useState(false);
   const update = (patch: Partial<BloodlinePerson>) => store().updatePerson(person.id, patch);
+  const projectEntries = useScriptorium(
+    useShallow((s) => s.entries.filter((e) => e.projectId === bloodline.projectId)),
+  );
+  const linkedEntry = person.entryId ? projectEntries.find((e) => e.id === person.entryId) : undefined;
+  const linkedImageKey = linkedEntry?.imageKey;
 
   const onPortrait = async (file: File) => {
     setPortraitUploading(true);
@@ -109,8 +117,8 @@ function PersonPanel({ bloodline, person, onSelect }: {
       </header>
       <Field label={t("bloodline.panel.portrait")}>
         <div className="flex items-center gap-2">
-          {person.portraitKey ? (
-            <PortraitThumb personId={person.id} />
+          {person.portraitKey || linkedImageKey ? (
+            <PortraitThumb personId={person.id} fallbackKey={linkedImageKey} />
           ) : (
             <span className="portrait-none text-slate text-[13px]">{t("bloodline.panel.noPortrait")}</span>
           )}
@@ -130,6 +138,43 @@ function PersonPanel({ bloodline, person, onSelect }: {
               update({ portraitKey: undefined });
               store().removeImage(key);
             }}>✕</Button>
+          ) : null}
+        </div>
+      </Field>
+      <Field label={t("bloodline.panel.acervoEntry")}>
+        <div className="grid gap-1.5">
+          {linkedEntry ? (
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="min-w-0 flex-1 truncate text-[13px] text-parchment">{linkedEntry.title}</span>
+              <button
+                type="button"
+                className="shrink-0 bg-none border-0 text-xs text-slate hover:text-[var(--ember)]"
+                aria-label={t("bloodline.panel.unlinkEntry", { title: linkedEntry.title })}
+                onClick={() => update({ entryId: undefined })}
+              >✕</button>
+            </div>
+          ) : null}
+          <button
+            type="button"
+            aria-pressed={entryPickerOpen}
+            className="justify-self-start bg-none border border-line text-parchment rounded-lg px-2.5 py-1.5 text-[13px] hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold"
+            onClick={() => setEntryPickerOpen((open) => !open)}
+          >
+            {linkedEntry ? t("bloodline.panel.changeEntry") : t("bloodline.panel.linkEntry")}
+          </button>
+          {entryPickerOpen ? (
+            <LinkPicker
+              entries={projectEntries}
+              currentEntryId={person.entryId}
+              onPick={(entryId) => {
+                update({ entryId });
+                setEntryPickerOpen(false);
+              }}
+              onClear={() => {
+                update({ entryId: undefined });
+                setEntryPickerOpen(false);
+              }}
+            />
           ) : null}
         </div>
       </Field>
@@ -255,10 +300,11 @@ function PersonPanel({ bloodline, person, onSelect }: {
   );
 }
 
-function PortraitThumb({ personId }: { personId: string }) {
+function PortraitThumb({ personId, fallbackKey }: { personId: string; fallbackKey?: string }) {
   const images = useScriptorium((s) => s.images);
   const person = useScriptorium((s) => s.bloodlines.flatMap((b) => b.persons).find((p) => p.id === personId));
-  const src = person?.portraitKey ? images[person.portraitKey] : undefined;
+  const key = person?.portraitKey ?? fallbackKey;
+  const src = key ? images[key] : undefined;
   if (!src) return null;
   return <img className="portrait-thumb size-10 rounded-full object-cover" src={src} alt="" />;
 }

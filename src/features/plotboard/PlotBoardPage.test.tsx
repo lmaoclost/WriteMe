@@ -42,6 +42,13 @@ describe("PlotBoardPage", () => {
     expect(screen.getByText(/drag to pan/i)).toBeInTheDocument();
   });
 
+  it("does not show prologue or epilogue controls in the header", () => {
+    const b = seedBoard();
+    render(<PlotBoardPage boardId={b.id} />);
+    expect(screen.queryByRole("button", { name: /prologue/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /epilogue/i })).toBeNull();
+  });
+
   it("empty-canvas drag pans the view instead of creating a scene", () => {
     const b = seedBoard();
     store().addCard(b.id, { x: 4000, y: 4000 });

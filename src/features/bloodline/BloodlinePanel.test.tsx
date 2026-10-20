@@ -148,6 +148,18 @@ describe("BloodlinePanel — person", () => {
     const person = store().bloodlines[0].persons.find((p) => p.id === p1)!;
     expect(store().images[person.portraitKey!]).toBe("data:image/png;base64,AAA");
   });
+  it("links and unlinks a codex entry from the panel", () => {
+    const { b, p1 } = seed();
+    const entry = store().addEntry("prj_1", "character");
+    store().updateEntry(entry.id, { title: "Aldric Vellmor" });
+    mountCanvas(b.id);
+    firePointer(screen.getAllByTestId("person-node")[0], "pointerdown", { clientX: 0, clientY: 0 });
+    fireEvent.click(screen.getByRole("button", { name: "Link codex entry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Aldric Vellmor" }));
+    expect(store().bloodlines[0].persons.find((p) => p.id === p1)!.entryId).toBe(entry.id);
+    fireEvent.click(screen.getByLabelText("Unlink Aldric Vellmor"));
+    expect(store().bloodlines[0].persons.find((p) => p.id === p1)!.entryId).toBeUndefined();
+  });
 });
 
 describe("BloodlinePanel — house", () => {

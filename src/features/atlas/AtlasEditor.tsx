@@ -110,6 +110,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
   const [selectedRegionId, setSelectedRegionId] = useState<Id | null>(null);
   const [selectedPinId, setSelectedPinId] = useState<Id | null>(null);
   const [hover, setHover] = useState<PinHoverState | null>(null);
+  const [hoverRegion, setHoverRegion] = useState<{ id: Id; left: number; top: number } | null>(null);
   const [chooser, setChooser] = useState<ChooserState | null>(null);
   const [nameDraft, setNameDraft] = useState(atlas?.name ?? "");
   const [armDelete, setArmDelete] = useState(false);
@@ -117,6 +118,15 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
   const [zoom, setZoom] = useState(0);
   const apiRef = useRef<TransformApi | null>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
+  // Selection is exclusive: the side panel shows exactly one target.
+  const selectPin = useCallback((pinId: Id | null) => {
+    setSelectedPinId(pinId);
+    if (pinId) setSelectedRegionId(null);
+  }, []);
+  const selectRegion = useCallback((regionId: Id | null) => {
+    setSelectedRegionId(regionId);
+    if (regionId) setSelectedPinId(null);
+  }, []);
   // True right after an explicit delete — suppresses the "not found" toast.
   const deletedRef = useRef(false);
   const draw = useDraw({
@@ -124,7 +134,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
     transformApi: apiRef,
     tool,
     mode,
-    onFinish: (region) => setSelectedRegionId(region.id),
+    onFinish: (region) => selectRegion(region.id),
   });
   const { drawing, cancelDraw, attemptFinishRegion, confirmCarve } = draw;
 
@@ -223,25 +233,31 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
   const selectedPin = atlas.pins.find((p) => p.id === selectedPinId) ?? null;
   const selectedRegion = atlas.regions.find((r) => r.id === selectedRegionId) ?? null;
   const hoveredPin = hover ? atlas.pins.find((p) => p.id === hover.pinId) ?? null : null;
+  const hoveredRegion = hoverRegion ? atlas.regions.find((r) => r.id === hoverRegion.id) ?? null : null;
   const hoverEntryTitle = hoveredPin?.entryId
     ? projectEntries.find((e) => e.id === hoveredPin.entryId)?.title
     : undefined;
-  // click-pop preview: select a pin/region with a linked entry → popup near it
-  const previewEntry = selectedPin?.entryId ?? selectedRegion?.entryId ?? null;
+  // click-pop preview: select a pin/region with a linked entry → popup near it.
+  // Region hover opens the same preview without selecting.
+  const previewEntry = selectedPin?.entryId ?? selectedRegion?.entryId ?? hoveredRegion?.entryId ?? null;
   const previewEntryObj = previewEntry ? projectEntries.find((e) => e.id === previewEntry) : undefined;
-  const closePreview = () => { setSelectedPinId(null); setSelectedRegionId(null); };
+  const previewFromHover = !selectedPin && !selectedRegion && !!hoverRegion;
+  const closePreview = () => { selectPin(null); selectRegion(null); };
+  const selectedPinRegion = selectedPin
+    ? atlas.regions.find((r) => r.id === smallestContaining(selectedPin, atlas.regions)) ?? null
+    : null;
 
   const handleStageClick = (pt: Pt, clientX: number, clientY: number) => {
     if (tool === "pin") {
       const pin = useScriptorium.getState().addPin(atlasId, { x: clamp01(pt.x), y: clamp01(pt.y) });
-      if (pin) setSelectedPinId(pin.id);
+      if (pin) selectPin(pin.id);
       return;
     }
     if (tool === "region") {
       draw.onStageClick(pt, clientX, clientY);
       return;
     }
-    if (tool === "select") setSelectedRegionId(smallestContaining(pt, atlas.regions));
+    if (tool === "select") selectRegion(smallestContaining(pt, atlas.regions));
   };
 
   const handleStageMove = (pt: Pt, clientX: number, clientY: number) => {
@@ -393,7 +409,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
                   transformApi={api}
                   interactive={tool !== "region"}
                   selectedPinId={selectedPinId}
-                  onSelectPin={setSelectedPinId}
+                  onSelectPin={selectPin}
                   onHoverEnter={(pinId, cursor, stage) => setHover({ pinId, cursor, stage })}
                   onHoverLeave={() => setHover(null)}
                 />
@@ -416,10 +432,25 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
                 {previewEntryObj ? (() => {
                   const cur = hover?.cursor ?? { x: 24, y: 24 };
                   const st = hover?.stage ?? { w: 0, h: 0 };
-                  const left = st.w > 0 ? Math.max(0, Math.min(cur.x + 12, st.w - 300)) : cur.x + 12;
-                  const top = st.h > 0 ? Math.max(0, Math.min(cur.y + 14, st.h - 190)) : cur.y + 14;
+                  const baseLeft = previewFromHover && hoverRegion ? hoverRegion.left + 14 : cur.x + 12;
+                  const baseTop = previewFromHover && hoverRegion ? hoverRegion.top + 14 : cur.y + 14;
+                  const left = st.w > 0 ? Math.max(0, Math.min(baseLeft, st.w - 300)) : baseLeft;
+                  const top = st.h > 0 ? Math.max(0, Math.min(baseTop, st.h - 190)) : baseTop;
+                  const interactivePreview = true; // hover pop may be entered; region keeps it open
                   return (
-                    <div className="pin-tooltip pin-preview-pop absolute z-44 flex flex-col gap-1 w-[300px] px-3 py-2.5 bg-night-2 border border-gold-dim rounded-lg text-xs" data-testid="pin-entry-preview" style={{ left, top }}>
+                    <div
+                      className={`pin-tooltip pin-preview-pop absolute z-44 flex flex-col gap-1 w-[300px] px-3 py-2.5 bg-night-2 border border-gold-dim rounded-lg text-xs ${interactivePreview ? "pointer-events-auto" : "pointer-events-none"}`}
+                      data-testid="pin-entry-preview"
+                      style={{ left, top }}
+                      onPointerLeave={(e) => {
+                        if (previewFromHover) {
+                          const to = e.relatedTarget instanceof Element ? e.relatedTarget : null;
+                          if (!to || (!to.closest(".pin-preview-pop") && !to.closest(".region-poly"))) {
+                            setHoverRegion(null);
+                          }
+                        }
+                      }}
+                    >
                       <button type="button" className="pin-preview-close absolute top-1 right-1.5 bg-none border-0 text-slate cursor-pointer text-xs hover:text-parchment" aria-label={t("atlas.editor.closePreview")} onClick={closePreview}>✕</button>
                       <EntryPreview
                         data={{
@@ -445,7 +476,8 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
                     regions={atlas.regions}
                     transformApi={api}
                     selectedRegionId={selectedRegionId}
-                    onSelectRegion={setSelectedRegionId}
+                    onSelectRegion={selectRegion}
+                    onHoverRegion={(id, at) => setHoverRegion(id && at ? { id, ...at } : null)}
                     interactive={tool === "select"}
                     carveParentId={draw.carveParentId}
                   />
@@ -468,9 +500,13 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
             <PinPanel
               pin={selectedPin}
               entries={projectEntries}
+              containingRegion={selectedPinRegion}
+              onSelectContainingRegion={() => {
+                if (selectedPinRegion) selectRegion(selectedPinRegion.id);
+              }}
               onDelete={(pinId) => {
                 useScriptorium.getState().deletePin(pinId);
-                setSelectedPinId(null);
+                selectPin(null);
               }}
             />
           ) : selectedRegion ? (
@@ -480,7 +516,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
               entries={projectEntries}
               onDelete={(regionId) => {
                 useScriptorium.getState().deleteRegion(regionId);
-                setSelectedRegionId(null);
+                selectRegion(null);
               }}
             />
           ) : (
@@ -507,11 +543,11 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
           options={chooser.options}
           position={chooser}
           onPick={(id) => {
-            setSelectedRegionId(id);
+            selectRegion(id);
             setChooser(null);
           }}
           onClear={() => {
-            setSelectedRegionId(null);
+            selectRegion(null);
             setChooser(null);
           }}
           onClose={() => setChooser(null)}

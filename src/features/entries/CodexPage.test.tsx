@@ -448,6 +448,36 @@ describe("CodexPage — cover framing, summary presentation, custom kinds", () =
     expect(useScriptorium.getState().entries[0].category).toBe("religion");
   });
 
+  it("refuses a custom kind whose slug collides with a built-in kind", () => {
+    const pid = useScriptorium.getState().addProject("V").id;
+    useScriptorium.getState().addEntry(pid, "lore");
+    render(codexRoute(pid));
+    fireEvent.click(screen.getByRole("button", { name: /new kind/i }));
+    fireEvent.change(screen.getByLabelText("Kind name"), { target: { value: "Character" } });
+    fireEvent.click(screen.getByRole("button", { name: /^Create kind$/i }));
+    const proj = useScriptorium.getState().projects.find((p) => p.id === pid)!;
+    expect(proj.customCategories ?? []).toEqual([]);
+    expect(useScriptorium.getState().toasts.some((t) => t.message === "A kind with this name already exists.")).toBe(true);
+  });
+
+  it("deletes a custom kind and moves its entries back to lore", () => {
+    const pid = useScriptorium.getState().addProject("V").id;
+    const proj = useScriptorium.getState().projects.find((p) => p.id === pid)!;
+    useScriptorium.getState().updateProject(pid, {
+      customCategories: [{ key: "religion", label: "Religion", icon: "🕯️" }],
+    });
+    const entry = useScriptorium.getState().addEntry(pid, "religion" as EntryCategory);
+    useScriptorium.getState().updateEntry(entry.id, { title: "Culto do Rio" });
+    render(codexRoute(proj.id));
+    fireEvent.click(screen.getByRole("button", { name: /new kind/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete kind Religion" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm delete kind Religion" }));
+    expect(useScriptorium.getState().projects.find((p) => p.id === pid)!.customCategories).toEqual([]);
+    expect(entryOf("Culto do Rio").category).toBe("lore");
+    expect(screen.queryByTitle("Religion")).toBeNull();
+    expect(useScriptorium.getState().toasts.some((t) => t.message.includes('Kind "Religion" deleted'))).toBe(true);
+  });
+
   it("summary block presents the filled blurb as content, not as a prompt", () => {
     const pid = useScriptorium.getState().addProject("V").id;
     const e = useScriptorium.getState().addEntry(pid, "lore")!;

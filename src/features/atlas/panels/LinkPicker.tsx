@@ -35,7 +35,7 @@ export function LinkPicker({ entries, currentEntryId, onPick, onClear }: LinkPic
     .filter((e) => e.id !== currentEntryId)
     .filter((e) => (q ? e.title.toLocaleLowerCase(i18n.language).includes(q) : true));
   return (
-    <div className="link-picker flex flex-col gap-1.5 p-2 bg-ink border border-line rounded-lg">
+    <div className="link-picker relative z-30 flex flex-col gap-1.5 p-2 bg-ink border border-line rounded-lg">
       <div className="flex items-center justify-between gap-2">
         <span className="text-[11px] tracking-[0.08em] uppercase text-slate">{t("atlas.pin.linkEntry")}</span>
         {current ? (
