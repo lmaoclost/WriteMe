@@ -51,11 +51,11 @@ describe("validateProjectData — timeline eras (schema v3)", () => {
   });
 
   it("3. malformed boundaries and calendar references are rejected", () => {
-    expect(validateProjectData(withWire(wire([], [era({ startX: "400" })])))).toBe(false);
-    expect(validateProjectData(withWire(wire([], [era({ boundaryBeadId: 7 })])))).toBe(false);
-    expect(validateProjectData(withWire(wire([bead({ calendarEvent: { calendarId: "cal_1", dayKey: "0:2:5" } })])))).toBe(false);
-    expect(validateProjectData(withWire(wire([bead({ calendarEvent: { calendarId: 7, dayKey: "0:2:5", eventId: "ce" } })])))).toBe(false);
-    expect(validateProjectData(withWire(wire([bead({ origin: "yes" })])))).toBe(false);
+    expect(validateProjectData(withWire(wire([], [era({ startX: "400" as never })])))).toBe(false);
+    expect(validateProjectData(withWire(wire([], [era({ boundaryBeadId: 7 as never })])))).toBe(false);
+    expect(validateProjectData(withWire(wire([bead({ calendarEvent: { calendarId: "cal_1", dayKey: "0:2:5" } as never })])))).toBe(false);
+    expect(validateProjectData(withWire(wire([bead({ calendarEvent: { calendarId: 7 as never, dayKey: "0:2:5", eventId: "ce" } })])))).toBe(false);
+    expect(validateProjectData(withWire(wire([bead({ origin: "yes" as never })])))).toBe(false);
   });
 });
 

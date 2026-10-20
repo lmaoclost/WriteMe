@@ -487,7 +487,9 @@
       "eventRemoved": "That calendar event no longer exists.",
       "originHint": "Where the timeline starts",
       "tomeEntry": "Tome entry",
-      "opensInCodex": "Opens in the codex"
+      "opensInCodex": "Opens in the codex",
+      "eraTooClose": "There is another era too close to that spot.",
+      "pickCalendarEvent": "No calendar event"
     },
     "notepad": {
       "title": "Notes",
@@ -705,11 +707,11 @@
       "searchPerson": "Search person",
       "notes": "Notes ✎",
       "startHint": "Start from the founder — add the first person.",
-    "pickPerson": "Add person from the codex",
-    "pickPersonHint": "Choose a character created in the codex, or add a blank person.",
-    "searchPeople": "Search characters",
-    "noCharacters": "No character entries yet. Create one in the codex first.",
-    "blankPerson": "Add blank person",
+      "pickPerson": "Add person from the codex",
+      "pickPersonHint": "Choose a character created in the codex, or add a blank person.",
+      "searchPeople": "Search characters",
+      "noCharacters": "No character entries yet. Create one in the codex first.",
+      "blankPerson": "Add blank person",
       "notFound": "Bloodline not found."
     },
     "find": {

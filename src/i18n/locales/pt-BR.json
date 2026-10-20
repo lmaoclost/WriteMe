@@ -487,7 +487,9 @@
       "eventRemoved": "Esse evento do calendário não existe mais.",
       "originHint": "Onde a linha do tempo começa",
       "tomeEntry": "Verbete do tomo",
-      "opensInCodex": "Abre no codex"
+      "opensInCodex": "Abre no codex",
+      "eraTooClose": "Já existe uma era muito perto desse ponto.",
+      "pickCalendarEvent": "Nenhum evento do calendário"
     },
     "notepad": {
       "title": "Notas",
@@ -705,11 +707,11 @@
       "searchPerson": "Buscar pessoa",
       "notes": "Notas ✎",
       "startHint": "Comece pelo fundador — adicione a primeira pessoa.",
-    "pickPerson": "Adicionar pessoa do acervo",
-    "pickPersonHint": "Escolha um personagem criado no acervo ou adicione uma pessoa em branco.",
-    "searchPeople": "Buscar personagens",
-    "noCharacters": "Nenhum personagem no acervo ainda. Crie um no acervo primeiro.",
-    "blankPerson": "Adicionar pessoa em branco",
+      "pickPerson": "Adicionar pessoa do acervo",
+      "pickPersonHint": "Escolha um personagem criado no acervo ou adicione uma pessoa em branco.",
+      "searchPeople": "Buscar personagens",
+      "noCharacters": "Nenhum personagem no acervo ainda. Crie um no acervo primeiro.",
+      "blankPerson": "Adicionar pessoa em branco",
       "notFound": "Linhagem não encontrada."
     },
     "find": {

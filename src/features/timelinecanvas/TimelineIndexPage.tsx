@@ -39,8 +39,8 @@ export function TimelineIndexPage({ projectId }: { projectId: string }) {
                 <h2 className={CARD_NAME}>{line.name}</h2>
                 <p className={CARD_DESC}>
                   {t("timeline.index.counts", {
-                    events: t("timeline.index.eventCount", { count: line.beads.length }),
-                    eras: t("timeline.index.eraCount", { count: line.segments.length }),
+                    events: t("timeline.index.eventCount", { count: line.beads.filter((b) => !b.origin).length }),
+                    eras: t("timeline.index.eraCount", { count: line.eras.length }),
                   })}
                 </p>
               </Link>
