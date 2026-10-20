@@ -129,7 +129,9 @@ describe("image persistence via IndexedDB", () => {
 
   it("exportData still carries the image dataURLs after migration", async () => {
     localStorage.setItem(STORE_KEY, docOf({ ...emptyData(), images: { imgA: PNG_A } }));
-    const { store } = await bootStore();
+    const { store, images } = await bootStore();
+    // the migration lands before asserting anything about exports
+    await vi.waitFor(async () => expect(await images.imageBlob("imgA")).toBeTruthy(), { timeout: 10000 });
     const payload = JSON.parse(store.getState().exportData()) as { images: Record<string, string> };
     expect(bytesOf(payload.images.imgA)).toEqual(bytesOf(PNG_A));
   });

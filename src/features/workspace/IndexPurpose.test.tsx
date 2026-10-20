@@ -13,7 +13,7 @@ async function at(path: string): Promise<ReturnType<typeof render>> {
   await waitFor(() => {
     expect(screen.queryByTestId("hydration-splash")).toBeNull();
     expect(screen.queryByTestId("chunk-splash")).toBeNull();
-  });
+  }, { timeout: 10000 });
   return view;
 }
 

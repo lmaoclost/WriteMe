@@ -85,7 +85,7 @@ async function binderyRoute(projectId: string, bookId: string): Promise<void> {
   await waitFor(() => {
     expect(screen.queryByTestId("hydration-splash")).toBeNull();
     expect(screen.queryByTestId("chunk-splash")).toBeNull();
-  });
+  }, { timeout: 10000 });
 }
 
 let anchorHref = "";

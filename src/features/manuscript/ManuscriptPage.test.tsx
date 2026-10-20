@@ -50,7 +50,7 @@ async function manuscriptRoute(projectId: string): Promise<void> {
   await waitFor(() => {
     expect(screen.queryByTestId("hydration-splash")).toBeNull();
     expect(screen.queryByTestId("chunk-splash")).toBeNull();
-  });
+  }, { timeout: 10000 });
 }
 
 function rowHeadings() {

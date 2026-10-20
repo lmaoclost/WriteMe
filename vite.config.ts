@@ -49,5 +49,8 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
     exclude: ["**/node_modules/**", "**/dist/**", "**/.worktrees/**", "**/.superpowers/**"],
+    // the dev server transforms modules on demand and is single-threaded:
+    // with ~cores workers the transform queue starves RTL's 1s awaits
+    maxWorkers: 4,
   },
 });

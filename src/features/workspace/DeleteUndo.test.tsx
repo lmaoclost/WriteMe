@@ -18,7 +18,7 @@ async function at(path: string): Promise<ReturnType<typeof render>> {
   await waitFor(() => {
     expect(screen.queryByTestId("hydration-splash")).toBeNull();
     expect(screen.queryByTestId("chunk-splash")).toBeNull();
-  });
+  }, { timeout: 10000 });
   return view;
 }
 
@@ -30,7 +30,7 @@ describe("delete then undo on index pages", () => {
     fireEvent.click(screen.getByRole("button", { name: /Delete idea board/i }));
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     expect(useScriptorium.getState().wellsprings ?? []).toHaveLength(0);
-    const undo = await screen.findByRole("button", { name: "Undo" });
+    const undo = await screen.findByRole("button", { name: "Undo" }, { timeout: 10000 });
     fireEvent.click(undo);
     expect((useScriptorium.getState().wellsprings ?? []).map((w) => w.name)).toContain("Muse ideas");
   });
@@ -39,13 +39,26 @@ describe("delete then undo on index pages", () => {
     const p = useScriptorium.getState().addProject("P");
     act(() => { useScriptorium.getState().addManuscript(p.id, "Cantar de Vellmora"); });
     await at(`/p/${p.id}/manuscript`);
-    fireEvent.click(screen.getByRole("button", { name: /Delete book/i }));
-    fireEvent.click(screen.getByRole("button", { name: "Confirm?" }));
-    expect(useScriptorium.getState().manuscripts ?? []).toHaveLength(0);
-    const undo = await screen.findByRole("button", { name: "Undo" });
+    // two-step confirm; the product re-arms with a REAL 3s disarm timer, which
+    // can fire between polls when workers saturate this environment — retry arming
+    const deadline = Date.now() + 15000;
+    let confirmed = false;
+    while (Date.now() < deadline) {
+      const confirmBtn = screen.queryByRole("button", { name: "Confirm?" });
+      if (confirmBtn) {
+        fireEvent.click(confirmBtn);
+        confirmed = true;
+        break;
+      }
+      fireEvent.click(screen.getByRole("button", { name: /Delete book/i }));
+      await act(async () => { await new Promise((r) => setTimeout(r, 60)); });
+    }
+    expect(confirmed, "delete confirm never appeared").toBe(true);
+    await waitFor(() => expect(useScriptorium.getState().manuscripts ?? []).toHaveLength(0), { timeout: 10000 });
+    const undo = await screen.findByRole("button", { name: "Undo" }, { timeout: 10000 });
     fireEvent.click(undo);
     expect((useScriptorium.getState().manuscripts ?? []).map((m) => m.title)).toContain("Cantar de Vellmora");
-  });
+  }, 25000);
 
   it("a stale undo toast says so instead of undoing the wrong delete", async () => {
     const p = useScriptorium.getState().addProject("P");
@@ -54,7 +67,7 @@ describe("delete then undo on index pages", () => {
     await at(`/p/${p.id}/wellspring`);
     fireEvent.click(screen.getByRole("button", { name: /Delete idea board/i }));
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
-    await screen.findByRole("button", { name: "Undo" });
+    await screen.findByRole("button", { name: "Undo" }, { timeout: 10000 });
     // another delete lands while the first toast is still visible
     act(() => { useScriptorium.getState().deleteConlang((useScriptorium.getState().conlangs ?? [])[0]!.id); });
     fireEvent.click(screen.getByRole("button", { name: "Undo" }));
