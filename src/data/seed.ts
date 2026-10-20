@@ -240,8 +240,10 @@ export function seedDemoProject() {
   };
 
   // Calendário do Selo
+  const calId = newId("cal");
+  const siegeAnniversary = newId("ce");
   const calendars: CustomCalendar[] = [{
-    id: newId("cal"),
+    id: calId,
     projectId: project.id,
     name: "Calendário do Selo",
     era: "Contagem do Arco",
@@ -262,7 +264,7 @@ export function seedDemoProject() {
       "1:5:9": [{ id: newId("ce"), text: "Noite da Fala (o rio murmura)", category: "Notes", color: "#8f4d6f" }],
       "1:8:3": [{ id: newId("ce"), text: "Rezeda do Heron-da-Prata", category: "Festivals", color: "#4d8f5f" }],
       "1:10:30": [{ id: newId("ce"), text: "Fecho dos celeiros", category: "Festivals", color: "#c9a227" }],
-      "1:11:16": [{ id: newId("ce"), text: "Aniversário do cerco rompido", category: "Notes", color: "#4d8f5f" }],
+      "1:11:16": [{ id: siegeAnniversary, text: "Aniversário do cerco rompido", category: "Notes", color: "#4d8f5f" }],
       "1:11:31": [{ id: newId("ce"), text: "Véspera do Arco", category: "Festivals", color: "#c9a227" }],
     },
     notes: "Doze luas de 30 dias; Arco fecha o ano com 31. A Fala é o mês mais temido.",
@@ -303,23 +305,31 @@ export function seedDemoProject() {
   }];
 
   // Timeline
+  const warBeadId = newId("tb");
   const timelines: TimelineWire[] = [{
     id: newId("tw"),
     projectId: project.id,
     name: "Fio dos Selos",
     beads: [
+      { id: newId("tb"), x: 420, y: -60, label: "Início", color: "#c9a227", origin: true },
       { id: newId("tb"), x: 620, y: -40, label: "Sarn nasce em Sarnen", dateText: "1148", summary: "Ramo cadete da costa.", color: "#4d6f8f" },
       { id: newId("tb"), x: 820, y: 40, label: "Coroação de Aldric no Arco", dateText: "1160", summary: "Fundação da Casa Vellmor.", color: "#c9a227" },
-      { id: newId("tb"), x: 1020, y: -40, label: "Guerra dos Cinco Invernos", dateText: "1200-05-10", summary: "O rio ficou vermelho; a capital resistiu.", color: "#8f4d6f", entryId: eWar },
+      {
+        id: warBeadId, x: 1020, y: -40, label: "Guerra dos Cinco Invernos", dateText: "1200-05-10",
+        summary: "O rio ficou vermelho; a capital resistiu.", color: "#8f4d6f", entryId: eWar,
+        calendarEvent: { calendarId: calId, dayKey: "1:11:16", eventId: siegeAnniversary },
+      },
       { id: newId("tb"), x: 1210, y: 40, label: "Aldric entrega a Coroa e some", dateText: "1200", summary: "Nono mês do cerco.", color: "#8f4d6f" },
       { id: newId("tb"), x: 1400, y: -40, label: "Mirren assume o Tribunal", dateText: "1204", summary: "Lei do Selo endurecida.", color: "#4d8f5f" },
       { id: newId("tb"), x: 1580, y: 40, label: "Nascimento de Talan", dateText: "1210-03-12", summary: "Herdeiro do ramo real.", color: "#c9a227" },
     ],
-    segments: [
-      { id: newId("ts"), fromX: 1080, toX: 1260, label: "Guerra (1200-1204)", lineColor: "#8f4d6f" },
-      { id: newId("ts"), fromX: 1260, toX: 1600, label: "Paz do Selo", lineColor: "#4d8f5f" },
+    // eras are boundaries: each ends where the next begins
+    eras: [
+      { id: newId("te"), startX: 420, label: "Antes do Selo", lineColor: "#4d6f8f" },
+      { id: newId("te"), startX: 1020, label: "Guerra dos Cinco Invernos", lineColor: "#8f4d6f", boundaryBeadId: warBeadId },
+      { id: newId("te"), startX: 1260, label: "Paz do Selo", lineColor: "#4d8f5f" },
     ],
-    notes: "Do nascimento de Sarn ao nascimento de Talan; segmentos marcam guerra e paz.",
+    notes: "Do nascimento de Sarn ao nascimento de Talan; as eras marcam guerra e paz.",
   }];
 
   // Juramentos

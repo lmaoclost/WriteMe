@@ -68,13 +68,13 @@ describe("validateProjectData", () => {
 
 describe("parseExport", () => {
   it("round-trips", () => {
-    const text = JSON.stringify({ app: "scriptorium", version: 1, ...valid });
+    const text = JSON.stringify({ app: "scriptorium", version: 3, ...valid });
     expect(parseExport(text)).toEqual({ ...valid, bloodlines: [], factionWebs: [], calendars: [], plotBoards: [], timelines: [], oathsCharts: [], wellsprings: [], conlangs: [] });
   });
   it("throws with clear message on invalid payload", () => {
     expect(() => parseExport("not json")).toThrow("invalidJson");
     expect(() => parseExport(JSON.stringify({ app: "other" }))).toThrow("notScriptorium");
-    expect(() => parseExport(JSON.stringify({ app: "scriptorium", version: 1 }))).toThrow("invalidStructure");
+    expect(() => parseExport(JSON.stringify({ app: "scriptorium", version: 3 }))).toThrow("invalidStructure");
   });
   it("emptyProjectData is fresh and valid", () => {
     expect(validateProjectData(emptyProjectData())).toBe(true);
@@ -187,7 +187,7 @@ describe("validateProjectDataDetailed", () => {
 
 describe("parseExport error detail", () => {
   it("attaches the first issue path to invalidStructure", () => {
-    const payload = { app: "scriptorium", version: 2, ...valid, entries: [{ ...valid.entries[0], body: 9 as unknown as string }] };
+    const payload = { app: "scriptorium", version: 3, ...valid, entries: [{ ...valid.entries[0], body: 9 as unknown as string }] };
     try {
       parseExport(JSON.stringify(payload));
       expect.unreachable("expected a throw");

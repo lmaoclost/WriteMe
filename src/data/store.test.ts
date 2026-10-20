@@ -296,7 +296,7 @@ describe("selectCounts full subsystems", () => {
     expect(c.factions).toBe(4);
     expect(c.calendarEvents).toBe(9);
     expect(c.plotCards).toBe(7);
-    expect(c.timelineBeads).toBe(6);
+    expect(c.timelineBeads).toBe(7); // 6 events plus the origin bead
     expect(c.wellspringNodes).toBe(8);
     expect(c.conlangWords).toBe(12);
     expect(c.chronologyEvents).toBe(1);

@@ -420,6 +420,10 @@
   "timeline": {
     "title": "Chronology",
     "purpose": "Dated events in world order.",
+    "origin": "Start",
+    "era": {
+      "untitled": "New era"
+    },
     "eventsOnly": "Events only",
     "all": "All",
     "empty": "No dated events — edit an event entry and set its date.",
@@ -451,8 +455,7 @@
       "zoomIn": "Zoom in",
       "fit": "Fit to screen",
       "addEvent": "Add event",
-      "addSegment": "Add segment",
-      "defaultSegment": "New era",
+      "addEra": "Add era",
       "notes": "Notes ✎",
       "notFound": "Timeline not found.",
       "emptyHint": "Place the first event on the wire — the “Add event” button creates it at the center of the view."
@@ -460,7 +463,7 @@
     "panel": {
       "selectHint": "Pick an event or era on the wire.",
       "eventDeleted": "Event deleted.",
-      "segmentDeleted": "Segment deleted.",
+      "eraDeleted": "Era deleted — the previous era now covers it.",
       "confirmDelete": "Confirm delete",
       "delete": "Delete",
       "label": "Label",
@@ -471,9 +474,18 @@
       "eventSummary": "Event summary",
       "color": "Color",
       "eventColor": "Event color",
-      "segmentName": "Segment name",
-      "lineColor": "Line color",
-      "segmentLineColor": "Segment line color",
+      "eraName": "Era name",
+      "eraLineColor": "Era color",
+      "startsAt": "Starts at",
+      "boundaryEvent": "Starts with event",
+      "pickBoundary": "Pick an event",
+      "clearBoundary": "Clear",
+      "startsAnEra": "Starts a new era",
+      "eventsInEra": "{{count}} events inside",
+      "calendarEvent": "Calendar event",
+      "openInCalendar": "Open in calendar",
+      "eventRemoved": "That calendar event no longer exists.",
+      "originHint": "Where the timeline starts",
       "tomeEntry": "Tome entry",
       "opensInCodex": "Opens in the codex"
     },

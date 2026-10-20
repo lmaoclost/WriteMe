@@ -260,6 +260,12 @@ export type PlotBoard = {
   notes: string;
 };
 
+export type CalendarEventRef = {
+  calendarId: Id;
+  dayKey: string; // `${yearIndex}:${monthIndex}:${dayIndex}`
+  eventId: Id;
+};
+
 export type TimelineBead = {
   id: Id;
   x: number; // posição no fio (plane px)
@@ -268,13 +274,17 @@ export type TimelineBead = {
   dateText?: string;
   summary?: string;
   color: string;
-  entryId?: Id; // tome entry ligado ao evento
+  entryId?: Id; // verbete ligado ao evento
+  calendarEvent?: CalendarEventRef; // evento do calendário ligado ao evento
+  origin?: true; // bead fixo de partida da linha do tempo
 };
 
-export type TimelineSegment = {
+/** Uma era é uma FRONTEIRA, não um intervalo: começa aqui e termina onde a
+ *  próxima começa. boundaryBeadId faz a fronteira seguir um evento. */
+export type TimelineEra = {
   id: Id;
-  fromX: number;
-  toX: number;
+  startX: number;
+  boundaryBeadId?: Id;
   label: string;
   lineColor: string;
 };
@@ -284,7 +294,7 @@ export type TimelineWire = {
   projectId: Id;
   name: string;
   beads: TimelineBead[];
-  segments: TimelineSegment[];
+  eras: TimelineEra[];
   notes: string;
 };
 

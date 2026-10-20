@@ -420,6 +420,10 @@
   "timeline": {
     "title": "Cronologia",
     "purpose": "Eventos datados em ordem.",
+    "origin": "Início",
+    "era": {
+      "untitled": "Nova era"
+    },
     "eventsOnly": "Só eventos",
     "all": "Todos",
     "empty": "Nenhum evento com data — edite um verbete de evento e defina a data.",
@@ -451,8 +455,7 @@
       "zoomIn": "Ampliar",
       "fit": "Ajustar",
       "addEvent": "Adicionar evento",
-      "addSegment": "Adicionar era",
-      "defaultSegment": "Nova era",
+      "addEra": "Adicionar era",
       "notes": "Notas ✎",
       "notFound": "Linha do tempo não encontrada.",
       "emptyHint": "Coloque o primeiro evento no fio — o botão “Adicionar evento” cria no centro da visão."
@@ -460,7 +463,7 @@
     "panel": {
       "selectHint": "Escolha um evento ou era no fio.",
       "eventDeleted": "Evento excluído.",
-      "segmentDeleted": "Era excluída.",
+      "eraDeleted": "Era excluída — a era anterior passa a cobrir esse trecho.",
       "confirmDelete": "Confirmar exclusão",
       "delete": "Excluir",
       "label": "Rótulo",
@@ -471,9 +474,18 @@
       "eventSummary": "Resumo do evento",
       "color": "Cor",
       "eventColor": "Cor do evento",
-      "segmentName": "Nome da era",
-      "lineColor": "Cor da linha",
-      "segmentLineColor": "Cor da linha da era",
+      "eraName": "Nome da era",
+      "eraLineColor": "Cor da era",
+      "startsAt": "Começa em",
+      "boundaryEvent": "Começa com o evento",
+      "pickBoundary": "Escolha um evento",
+      "clearBoundary": "Limpar",
+      "startsAnEra": "Começa uma nova era",
+      "eventsInEra": "{{count}} eventos dentro",
+      "calendarEvent": "Evento do calendário",
+      "openInCalendar": "Abrir no calendário",
+      "eventRemoved": "Esse evento do calendário não existe mais.",
+      "originHint": "Onde a linha do tempo começa",
       "tomeEntry": "Verbete do tomo",
       "opensInCodex": "Abre no codex"
     },

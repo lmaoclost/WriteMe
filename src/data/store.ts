@@ -7,7 +7,7 @@ import type {
   FactionWeb, Faction, FactionConnection, ConnectionType,
   CustomCalendar, CalendarEvent,
   PlotBoard, PlotCard, PlotWire,
-  TimelineWire, TimelineBead, TimelineSegment,
+  TimelineWire, TimelineBead, TimelineEra,
   OathsChart, OathMember, OathLink,
   WellSpring, WellNode, WellBorder, WellKind,
   Conlang, ConlangGlyph, ConlangWord,
@@ -16,6 +16,7 @@ import { newId } from "../domain/id";
 import { dateIsEmpty, sanitizeDate } from "../domain/dates";
 import type { Pt } from "../domain/geometry";
 import { isMeaningful } from "../domain/geometry";
+import { MIN_ERA_WIDTH, clampBeadX, clampBoundary, eraStart, originOf } from "../domain/timeline";
 import { emptyProjectData, ParseExportError, serialize, parseExport } from "./schema";
 import { templateSections } from "../features/entries/categories";
 import { defaultBindery } from "./schema";
@@ -76,7 +77,7 @@ export interface CalendarSnapshot { months: CustomCalendar["months"]; weekdays: 
 export interface CalendarHistory { undo: CalendarSnapshot[]; redo: CalendarSnapshot[] }
 export interface PlotBoardSnapshot { acts: PlotBoard["acts"]; hasPrologue: boolean; hasEpilogue: boolean; cards: PlotCard[]; wires: PlotWire[] }
 export interface PlotBoardHistory { undo: PlotBoardSnapshot[]; redo: PlotBoardSnapshot[] }
-export interface TimelineSnapshot { beads: TimelineBead[]; segments: TimelineSegment[] }
+export interface TimelineSnapshot { beads: TimelineBead[]; eras: TimelineEra[] }
 export interface TimelineHistory { undo: TimelineSnapshot[]; redo: TimelineSnapshot[] }
 export interface OathsSnapshot { members: OathMember[]; oathLinks: OathLink[] }
 export interface OathsChartHistory { undo: OathsSnapshot[]; redo: OathsSnapshot[] }
@@ -146,7 +147,7 @@ const cloneOCLSnapshot = (c: OathsChart): OathsSnapshot => ({
 
 const cloneTLSnapshot = (t: TimelineWire): TimelineSnapshot => ({
   beads: t.beads.map((b) => ({ ...b })),
-  segments: t.segments.map((g) => ({ ...g })),
+  eras: t.eras.map((g) => ({ ...g })),
 });
 
 const clonePBSnapshot = (b: PlotBoard): PlotBoardSnapshot => ({
@@ -330,9 +331,11 @@ interface ScriptoriumState extends ProjectData {
   updateBead(id: string, patch: Partial<Omit<TimelineBead, "id">>): void;
   moveBead(id: string, x: number, y: number): void;
   deleteBead(id: string): void;
-  addSegment(timelineId: string, fromX: number, toX: number, label?: string): TimelineSegment | null;
-  updateSegment(id: string, patch: Partial<Omit<TimelineSegment, "id">>): void;
-  deleteSegment(id: string): void;
+  addEra(timelineId: string, startX: number, label?: string): TimelineEra | null;
+  updateEra(id: string, patch: Partial<Omit<TimelineEra, "id">>): void;
+  deleteEra(id: string): void;
+  bindEraBoundary(eraId: string, beadId: string | null): void;
+  moveEraBoundary(eraId: string, x: number): void;
   setTimelineNotes(id: string, notes: string): void;
   pushTLHistory(id: string): void;
   undoTL(id: string): void;
@@ -2056,12 +2059,19 @@ export const useScriptorium = create<ScriptoriumState>()(
       },
 
       addTimeline(projectId, name = i18n.t("timeline.untitled")) {
+        // Every wire starts fixed: an origin bead and one era tiling from it.
         const timeline: TimelineWire = {
           id: newId("tl"),
           projectId,
           name,
-          beads: [],
-          segments: [],
+          beads: [{
+            id: newId("bead"), x: 0, y: -60, label: i18n.t("timeline.origin"),
+            color: "#c9a227", origin: true,
+          }],
+          eras: [{
+            id: newId("era"), startX: 0,
+            label: i18n.t("timeline.era.untitled"), lineColor: "#e67e22",
+          }],
           notes: "",
         };
         set((s) => ({
@@ -2100,7 +2110,8 @@ export const useScriptorium = create<ScriptoriumState>()(
         get().pushTLHistory(timelineId);
         const bead: TimelineBead = {
           id: newId("bead"),
-          x: init?.x ?? 4000,
+          // an event never sits left of the wire's start point
+          x: clampBeadX(t.beads, t.eras, "", init?.x ?? 4000),
           y: init?.y ?? -60,
           label: init?.label ?? "Event",
           color: init?.color ?? "#e67e22",
@@ -2132,10 +2143,13 @@ export const useScriptorium = create<ScriptoriumState>()(
         const s = get();
         const t = (s.timelines ?? []).find((tl) => tl.beads.some((b) => b.id === id));
         if (!t) return;
+        // the start point is pinned; a boundary bead cannot cross its neighbours
+        if (t.beads.find((b) => b.id === id)?.origin) return;
+        const nextX = clampBeadX(t.beads, t.eras, id, x);
         set((st) => ({
           timelines: (st.timelines ?? []).map((tl) => tl.id !== t.id ? tl : {
             ...tl,
-            beads: tl.beads.map((b) => (b.id === id ? { ...b, x, y } : b)),
+            beads: tl.beads.map((b) => (b.id === id ? { ...b, x: nextX, y } : b)),
           }),
           projects: touchProject(st.projects, t.projectId),
         }));
@@ -2145,53 +2159,102 @@ export const useScriptorium = create<ScriptoriumState>()(
         const s = get();
         const t = (s.timelines ?? []).find((x) => x.beads.some((b) => b.id === id));
         if (!t) return;
+        if (t.beads.find((b) => b.id === id)?.origin) return;
         get().pushTLHistory(t.id);
+        const bead = t.beads.find((b) => b.id === id)!;
+        // an era boundary tied to the event stays where the event stood
+        const eras = t.eras.map((g) => g.boundaryBeadId === id
+          ? { ...g, boundaryBeadId: undefined, startX: bead.x }
+          : g);
         set((st) => ({
           timelines: (st.timelines ?? []).map((x) => x.id !== t.id ? x : {
             ...x,
             beads: x.beads.filter((b) => b.id !== id),
+            eras,
           }),
           projects: touchProject(st.projects, t.projectId),
         }));
       },
 
-      addSegment(timelineId, fromX, toX, label = "") {
+      addEra(timelineId, startX, label = i18n.t("timeline.era.untitled")) {
         const t = (get().timelines ?? []).find((x) => x.id === timelineId);
         if (!t) return null;
-        if (!(toX > fromX)) return null;
+        const origin = originOf(t.beads)?.x ?? 0;
+        const x = Math.max(startX, origin + MIN_ERA_WIDTH);
+        // a boundary right on top of another would create a zero-width era
+        const nearest = Math.min(...t.eras.map((g) => Math.abs(eraStart(g, t.beads) - x)));
+        if (nearest < MIN_ERA_WIDTH) return null;
         get().pushTLHistory(timelineId);
-        const seg: TimelineSegment = { id: newId("seg"), fromX, toX, label, lineColor: "#e67e22" };
+        const era: TimelineEra = { id: newId("era"), startX: x, label, lineColor: "#e67e22" };
         set((s) => ({
           timelines: (s.timelines ?? []).map((x) =>
-            x.id === timelineId ? { ...x, segments: [...x.segments, seg] } : x),
+            x.id === timelineId ? { ...x, eras: [...x.eras, era] } : x),
           projects: touchProject(s.projects, t.projectId),
         }));
-        return seg;
+        return era;
       },
 
-      updateSegment(id, patch) {
+      updateEra(id, patch) {
         const s = get();
-        const t = (s.timelines ?? []).find((x) => x.segments.some((g) => g.id === id));
+        const t = (s.timelines ?? []).find((x) => x.eras.some((g) => g.id === id));
         if (!t) return;
         get().pushTLHistory(t.id);
         set((st) => ({
           timelines: (st.timelines ?? []).map((x) => x.id !== t.id ? x : {
             ...x,
-            segments: x.segments.map((g) => (g.id === id ? { ...g, ...patch, id: g.id } : g)),
+            eras: x.eras.map((g) => (g.id === id ? { ...g, ...patch, id: g.id } : g)),
           }),
           projects: touchProject(st.projects, t.projectId),
         }));
       },
 
-      deleteSegment(id) {
+      deleteEra(id) {
         const s = get();
-        const t = (s.timelines ?? []).find((x) => x.segments.some((g) => g.id === id));
+        const t = (s.timelines ?? []).find((x) => x.eras.some((g) => g.id === id));
         if (!t) return;
+        // the wire always keeps one era; the neighbours close the gap on their own
+        if (t.eras.length <= 1) return;
         get().pushTLHistory(t.id);
         set((st) => ({
           timelines: (st.timelines ?? []).map((x) => x.id !== t.id ? x : {
             ...x,
-            segments: x.segments.filter((g) => g.id !== id),
+            eras: x.eras.filter((g) => g.id !== id),
+          }),
+          projects: touchProject(st.projects, t.projectId),
+        }));
+      },
+
+      bindEraBoundary(eraId, beadId) {
+        const s = get();
+        const t = (s.timelines ?? []).find((x) => x.eras.some((g) => g.id === eraId));
+        if (!t) return;
+        const era = t.eras.find((g) => g.id === eraId)!;
+        const bead = beadId ? t.beads.find((b) => b.id === beadId) : null;
+        // binding keeps a fresh fallback; unbinding freezes the last bead position
+        const startX = bead
+          ? bead.x
+          : (era.boundaryBeadId ? t.beads.find((b) => b.id === era.boundaryBeadId)?.x ?? era.startX : era.startX);
+        get().pushTLHistory(t.id);
+        set((st) => ({
+          timelines: (st.timelines ?? []).map((x) => x.id !== t.id ? x : {
+            ...x,
+            eras: x.eras.map((g) => g.id === eraId
+              ? { ...g, boundaryBeadId: bead ? bead.id : undefined, startX }
+              : g),
+          }),
+          projects: touchProject(st.projects, t.projectId),
+        }));
+      },
+
+      moveEraBoundary(eraId, x) {
+        const s = get();
+        const t = (s.timelines ?? []).find((tl) => tl.eras.some((g) => g.id === eraId));
+        if (!t) return;
+        const nextX = clampBoundary(t.eras, t.beads, eraId, x);
+        set((st) => ({
+          timelines: (st.timelines ?? []).map((tl) => tl.id !== t.id ? tl : {
+            ...tl,
+            eras: tl.eras.map((g) => (g.id === eraId ? { ...g, startX: nextX } : g)),
           }),
           projects: touchProject(st.projects, t.projectId),
         }));
@@ -2233,7 +2296,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           return {
             histories: { ...st.histories, [key]: entry },
             timelines: (st.timelines ?? []).map((x) => x.id === id
-              ? { ...x, beads: snap.beads.map((b) => ({ ...b })), segments: snap.segments.map((g) => ({ ...g })) }
+              ? { ...x, beads: snap.beads.map((b) => ({ ...b })), eras: snap.eras.map((g) => ({ ...g })) }
               : x),
           };
         });
@@ -2253,7 +2316,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           return {
             histories: { ...st.histories, [key]: entry },
             timelines: (st.timelines ?? []).map((x) => x.id === id
-              ? { ...x, beads: snap.beads.map((b) => ({ ...b })), segments: snap.segments.map((g) => ({ ...g })) }
+              ? { ...x, beads: snap.beads.map((b) => ({ ...b })), eras: snap.eras.map((g) => ({ ...g })) }
               : x),
           };
         });

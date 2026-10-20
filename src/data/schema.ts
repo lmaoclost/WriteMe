@@ -324,6 +324,12 @@ const PlotBoardSchema = z.object({
   notes: s,
 });
 
+const CalendarEventRefSchema = z.object({
+  calendarId: s,
+  dayKey: s,
+  eventId: s,
+});
+
 const TimelineBeadSchema = z.object({
   id: s,
   x: n,
@@ -333,12 +339,14 @@ const TimelineBeadSchema = z.object({
   summary: z.optional(s),
   color: s,
   entryId: z.optional(s),
+  calendarEvent: z.optional(CalendarEventRefSchema),
+  origin: z.optional(z.literal(true)),
 });
 
-const TimelineSegmentSchema = z.object({
+const TimelineEraSchema = z.object({
   id: s,
-  fromX: n,
-  toX: n,
+  startX: n,
+  boundaryBeadId: z.optional(s),
   label: s,
   lineColor: s,
 });
@@ -348,7 +356,7 @@ const TimelineWireSchema = z.object({
   projectId: s,
   name: s,
   beads: z.array(TimelineBeadSchema),
-  segments: z.array(TimelineSegmentSchema),
+  eras: z.array(TimelineEraSchema),
   notes: s,
 });
 
@@ -479,7 +487,7 @@ export function emptyProjectData(): ProjectData & { bloodlines: Bloodline[] } {
 }
 
 export function serialize(data: ProjectData): string {
-  return JSON.stringify({ app: "scriptorium", version: 2, ...data });
+  return JSON.stringify({ app: "scriptorium", version: 3, ...data });
 }
 
 export type ParseExportErrorCode = "invalidJson" | "notScriptorium" | "unsupportedVersion" | "invalidStructure";
@@ -501,7 +509,7 @@ export function parseExport(text: string): ProjectData {
   }
   const d = doc as { app?: unknown; version?: unknown } & ProjectData;
   if (!d || d.app !== "scriptorium") throw new ParseExportError("notScriptorium");
-  if (d.version !== 1 && d.version !== 2) throw new ParseExportError("unsupportedVersion", d.version);
+  if (d.version !== 3) throw new ParseExportError("unsupportedVersion", d.version);
   const issues = validateProjectDataDetailed(d);
   if (issues.length > 0) {
     throw new ParseExportError("invalidStructure", undefined, issues.slice(0, 5).map((i) => `${i.path}: ${i.message}`).join("; "));

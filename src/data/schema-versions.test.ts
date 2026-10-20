@@ -3,13 +3,12 @@ import { emptyProjectData, parseExport, serialize, validateProjectData } from ".
 import type { Bloodline, BloodlineHouse, BloodlinePerson, ProjectData } from "../domain/types";
 
 /**
- * Cases (plan Task 1):
- * 1. v1 doc (no bloodlines) validates.
- * 2. v1 → migrate adds `bloodlines: []` (parseExport returns the field).
- * 3. v2 with persons validates.
+ * Cases:
+ * 1. v1/v2 docs (pre-eras timeline) are rejected with unsupportedVersion.
+ * 2. A v3 doc with no bloodlines normalizes to [].
+ * 3. v3 with persons and houses validates.
  * 4. Wrong shapes rejected (person without x/y/name; bad houses).
- * 5. parseExport v1 text WORKS (returns bloodlines: [] after migrate) and v2 works.
- * 6. serialize writes version 2.
+ * 5. serialize writes version 3 and round-trips bloodlines.
  */
 
 const base: ProjectData = {
@@ -52,13 +51,13 @@ const blEnvelope = (over: { persons?: unknown[]; houses?: unknown[]; notes?: unk
   notes: over.notes !== undefined ? over.notes : "",
 });
 
-describe("validateProjectData — bloodlines (schema v2)", () => {
-  it("case 1: accepts a v1-shaped doc without bloodlines (field OPTIONAL)", () => {
+describe("validateProjectData — bloodlines (schema v3)", () => {
+  it("case 1: accepts a doc without bloodlines (field OPTIONAL)", () => {
     expect(validateProjectData(base)).toBe(true);
     expect(validateProjectData({ ...base, bloodlines: [] })).toBe(true);
     expect(validateProjectData(emptyProjectData())).toBe(true);
   });
-  it("case 3: v2 with full persons and houses validates", () => {
+  it("case 3: v3 with full persons and houses validates", () => {
     const full = bloodline({
       persons: [
         person({
@@ -132,47 +131,41 @@ describe("validateProjectData — bloodlines (schema v2)", () => {
 });
 
 describe("serialize", () => {
-  it("case 6: writes version 2 with the scriptorium marker", () => {
+  it("case 6: writes version 3 with the scriptorium marker", () => {
     const doc = JSON.parse(serialize(base)) as { app: string; version: number };
     expect(doc.app).toBe("scriptorium");
-    expect(doc.version).toBe(2);
+    expect(doc.version).toBe(3);
   });
   it("keeps data fields alongside the header (bloodlines included)", () => {
     const doc = JSON.parse(serialize({ ...base, bloodlines: [bloodline()] })) as { version: number; bloodlines: Bloodline[] };
-    expect(doc.version).toBe(2);
+    expect(doc.version).toBe(3);
     expect(doc.bloodlines).toEqual([bloodline()]);
   });
 });
 
 describe("parseExport", () => {
-  it("case 2/5: v1 text works and migrate adds bloodlines: [] in the returned data", () => {
-    const v1 = JSON.stringify({ app: "scriptorium", version: 1, ...base });
-    const parsed = parseExport(v1);
-    expect(parsed.projects).toEqual(base.projects);
-    expect(parsed.bloodlines).toEqual([]);
+  it("case 2: a v3 doc without bloodlines normalizes to []", () => {
+    const v3 = JSON.stringify({ app: "scriptorium", version: 3, ...base });
+    expect(parseExport(v3).bloodlines).toEqual([]);
   });
-  it("accepts a v1 doc that already carries valid bloodlines", () => {
-    const v1 = JSON.stringify({ app: "scriptorium", version: 1, ...base, bloodlines: [bloodline()] });
-    expect(parseExport(v1).bloodlines).toEqual([bloodline()]);
-  });
-  it("case 5: v2 round-trips with bloodlines", () => {
+  it("case 5: v3 round-trips with bloodlines", () => {
     const data: ProjectData = { ...base, bloodlines: [bloodline({ persons: [person({ showBadge: true, badgeText: "b" })] })] };
     const text = serialize(data);
     expect(parseExport(text)).toEqual({ ...data, factionWebs: [], calendars: [], plotBoards: [], timelines: [], oathsCharts: [], wellsprings: [], conlangs: [] });
   });
-  it("v2 without bloodlines normalizes to [] in the returned data", () => {
-    const v2 = JSON.stringify({ app: "scriptorium", version: 2, ...base });
-    expect(parseExport(v2).bloodlines).toEqual([]);
+  it("case 1: versions 1 and 2 predate the era chain and are rejected", () => {
+    for (const version of [1, 2]) {
+      expect(() => parseExport(JSON.stringify({ app: "scriptorium", version, ...base })))
+        .toThrow("unsupportedVersion");
+    }
   });
-  it("rejects unsupported versions and malformed bloodlines", () => {
-    expect(() => parseExport(JSON.stringify({ app: "scriptorium", version: 3, ...base, bloodlines: [] })))
-      .toThrow("unsupportedVersion");
+  it("rejects malformed bloodlines in a v3 doc", () => {
     expect(() => parseExport(JSON.stringify({
-      app: "scriptorium", version: 2, ...base,
+      app: "scriptorium", version: 3, ...base,
       bloodlines: [blEnvelope({ persons: [badPerson({ x: "no" })] })],
     })))
       .toThrow("invalidStructure");
-    expect(() => parseExport(JSON.stringify({ app: "scriptorium", version: 2, ...base, bloodlines: null })))
+    expect(() => parseExport(JSON.stringify({ app: "scriptorium", version: 3, ...base, bloodlines: null })))
       .toThrow("invalidStructure");
   });
 });

@@ -100,12 +100,35 @@ describe("seedDemoProject", () => {
     });
   });
 
-  it("one timeline with beads and segments", () => {
+  it("one timeline with an origin, beads and an era chain", () => {
     expect(data.timelines).toHaveLength(1);
     const t = data.timelines![0];
     expect(t.beads.length).toBeGreaterThanOrEqual(5);
-    expect(t.segments.length).toBeGreaterThanOrEqual(1);
-    t.segments.forEach((s) => expect(s.toX).toBeGreaterThan(s.fromX));
+    // a wire starts fixed: exactly one origin bead, left of everything else
+    const origins = t.beads.filter((b) => b.origin);
+    expect(origins).toHaveLength(1);
+    expect(origins[0].x).toBe(Math.min(...t.beads.map((b) => b.x)));
+    // eras are boundaries in ascending order, the first one at the origin
+    expect(t.eras.length).toBeGreaterThanOrEqual(2);
+    const xs = t.eras.map((e) => e.startX);
+    expect([...xs].sort((a, b) => a - b)).toEqual(xs);
+    expect(xs[0]).toBe(origins[0].x);
+    // a boundary bound to an event must point at a real bead of this wire
+    t.eras.forEach((e) => {
+      if (e.boundaryBeadId) expect(t.beads.some((b) => b.id === e.boundaryBeadId)).toBe(true);
+    });
+  });
+
+  it("a bead linked to a calendar event resolves inside the project calendar", () => {
+    const t = data.timelines![0];
+    const linked = t.beads.filter((b) => b.calendarEvent);
+    expect(linked.length).toBeGreaterThanOrEqual(1);
+    for (const b of linked) {
+      const ref = b.calendarEvent!;
+      const cal = data.calendars.find((c) => c.id === ref.calendarId)!;
+      expect(cal).toBeTruthy();
+      expect(cal.events[ref.dayKey]?.some((e) => e.id === ref.eventId)).toBe(true);
+    }
   });
   it("one oaths chart with mixed seats and link statuses", () => {
     expect(data.oathsCharts).toHaveLength(1);
