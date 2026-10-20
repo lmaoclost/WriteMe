@@ -3,6 +3,10 @@
     "quotaFailed": "Não foi possível salvar — o armazenamento do navegador está cheio. Baixe uma cópia de segurança.",
     "imageNotSaved": "Não foi possível salvar essa imagem para próximas visitas — ela permanece visível até recarregar a página. Exporte uma cópia e tente de novo."
   },
+  "pwa": {
+    "updateReady": "Nova versão disponível.",
+    "reload": "Recarregar"
+  },
   "common": {
     "cancel": "Cancelar",
     "close": "Fechar",

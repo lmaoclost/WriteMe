@@ -3,6 +3,10 @@
     "quotaFailed": "Could not save — browser storage is full. Download a backup copy.",
     "imageNotSaved": "That image could not be saved for future visits — it remains visible until the page reloads. Export a backup and try again."
   },
+  "pwa": {
+    "updateReady": "New version available.",
+    "reload": "Reload"
+  },
   "common": {
     "cancel": "Cancel",
     "close": "Close",
