@@ -15,12 +15,17 @@ vi.mock("../../data/image", async (importOriginal) => ({
 const store = () => useScriptorium.getState();
 const MOCK_DATA_URL = "data:image/png;base64,MOCKMAP";
 
-function at(path: string) {
-  return (
+async function at(path: string): Promise<ReturnType<typeof render>> {
+  const view = render(
     <MemoryRouter initialEntries={[path]}>
       <AppRouter />
-    </MemoryRouter>
+    </MemoryRouter>,
   );
+  await waitFor(() => {
+    expect(screen.queryByTestId("hydration-splash")).toBeNull();
+    expect(screen.queryByTestId("chunk-splash")).toBeNull();
+  });
+  return view;
 }
 
 beforeEach(() => {
@@ -96,8 +101,8 @@ function stubStageLayout(stageEl: HTMLElement) {
   }
 }
 
-function mountEditor(pid: string, atlasId: string): { container: HTMLElement; stageEl: HTMLElement } {
-  const { container } = render(at(`/p/${pid}/atlas/${atlasId}`));
+async function mountEditor(pid: string, atlasId: string): Promise<{ container: HTMLElement; stageEl: HTMLElement }> {
+  const { container } = await at(`/p/${pid}/atlas/${atlasId}`);
   const stageEl = screen.getByTestId("stage");
   stubStageLayout(stageEl);
   return { container, stageEl };
@@ -139,10 +144,10 @@ function drawTestRegion(stageEl: HTMLElement) {
 }
 
 describe("AtlasIndexPage", () => {
-  it("renders cards with name, counts and thumbnail from images[mapImageKey]", () => {
+  it("renders cards with name, counts and thumbnail from images[mapImageKey]", async () => {
     const pid = seedProject();
     const atlas = seedAtlas(pid, { withMap: true, regions: 3, pins: 4 });
-    render(at(`/p/${pid}/atlas`));
+    await at(`/p/${pid}/atlas`);
     const card = screen.getByText("Terras do Véu").closest("article");
     expect(card).toBeTruthy();
     expect(within(card as HTMLElement).getByText("3 regions · 4 pins")).toBeTruthy();
@@ -151,15 +156,15 @@ describe("AtlasIndexPage", () => {
     expect(screen.queryByText("No saved atlases found. Create a new one first!")).toBeNull();
   });
 
-  it("shows the empty state when the project has no atlas", () => {
+  it("shows the empty state when the project has no atlas", async () => {
     const pid = seedProject();
-    render(at(`/p/${pid}/atlas`));
+    await at(`/p/${pid}/atlas`);
     expect(screen.getByText("No saved atlases found. Create a new one first!")).toBeTruthy();
   });
 
-  it("creates an atlas via the modal and navigates to its editor", () => {
+  it("creates an atlas via the modal and navigates to its editor", async () => {
     const pid = seedProject();
-    render(at(`/p/${pid}/atlas`));
+    await at(`/p/${pid}/atlas`);
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: "New atlas" }));
     });
@@ -173,13 +178,13 @@ describe("AtlasIndexPage", () => {
     });
     const created = store().atlases.find((a) => a.projectId === pid && a.name === "Novo Mundo");
     expect(created).toBeTruthy();
-    expect(document.querySelector(".atlas-editor")).toBeTruthy();
+    await waitFor(() => expect(document.querySelector(".atlas-editor")).toBeTruthy());
   });
 
-  it("deletes an atlas with the two-step confirm", () => {
+  it("deletes an atlas with the two-step confirm", async () => {
     const pid = seedProject();
     const atlas = seedAtlas(pid, { withMap: true });
-    render(at(`/p/${pid}/atlas`));
+    await at(`/p/${pid}/atlas`);
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: `Delete atlas ${atlas.name}` }));
     });
@@ -197,7 +202,7 @@ describe("MapDropzone", () => {
   it("renders when the atlas has no map; dropping a file loads it via putMapImage", async () => {
     const pid = seedProject();
     const atlas = seedAtlas(pid, { withMap: false });
-    const { container } = mountEditor(pid, atlas.id);
+    const { container } = await mountEditor(pid, atlas.id);
     const zone = container.querySelector(".map-dropzone") as HTMLElement;
     expect(zone).toBeTruthy();
     expect(within(zone).getByText("Drag a map…")).toBeTruthy();
@@ -217,7 +222,7 @@ describe("MapDropzone", () => {
     vi.mocked(fileToDataUrl).mockRejectedValueOnce(new Error("boom"));
     const pid = seedProject();
     const atlas = seedAtlas(pid, { withMap: false });
-    const { container } = mountEditor(pid, atlas.id);
+    const { container } = await mountEditor(pid, atlas.id);
     const zone = container.querySelector(".map-dropzone") as HTMLElement;
     const file = new File(["x"], "map.png", { type: "image/png" });
     act(() => {
@@ -232,7 +237,7 @@ describe("MapDropzone", () => {
   it("dropzone is gone when a map exists; 'Substituir mapa' runs the same flow", async () => {
     const pid = seedProject();
     const atlas = seedAtlas(pid, { withMap: true });
-    const { container } = mountEditor(pid, atlas.id);
+    const { container } = await mountEditor(pid, atlas.id);
     const prevKey = atlas.mapImageKey!;
     expect(container.querySelector(".map-dropzone")).toBeNull();
     expect(screen.getByRole("button", { name: "Replace map" })).toBeTruthy();
@@ -259,7 +264,7 @@ describe("EntryImagePicker", () => {
     addEntry(pid, "Ponte dos Ossos", true);
     addEntry(pid, "Registro vazio", false);
     const atlas = seedAtlas(pid, { withMap: true });
-    mountEditor(pid, atlas.id);
+    await mountEditor(pid, atlas.id);
     const before = store().atlases.find((a) => a.id === atlas.id)!.mapImageKey!;
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: "Entry image" }));
@@ -279,11 +284,11 @@ describe("EntryImagePicker", () => {
     expect(store().toasts.some((t) => t.kind === "success" && t.message === "Map linked to the codex.")).toBe(true);
   });
 
-  it("shows the empty state when no entry carries an image", () => {
+  it("shows the empty state when no entry carries an image", async () => {
     const pid = seedProject();
     addEntry(pid, "Registro vazio", false);
     const atlas = seedAtlas(pid, { withMap: true });
-    mountEditor(pid, atlas.id);
+    await mountEditor(pid, atlas.id);
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: "Entry image" }));
     });
@@ -291,16 +296,15 @@ describe("EntryImagePicker", () => {
     expect(within(dialog).getByText("No entries with images.")).toBeTruthy();
   });
 
-  it("toasts an error when the store cannot apply the entry image", async () => {
+  it("keeps the picker closed and raises the persist toast when the durable write fails", async () => {
     const pid = seedProject();
     addEntry(pid, "Cidadela", true);
     const atlas = seedAtlas(pid, { withMap: true });
-    mountEditor(pid, atlas.id);
-    // localStorage writes fail → putMapImage's storage re-check fails → false
-    const orig = Storage.prototype.setItem;
-    Storage.prototype.setItem = () => {
-      throw new Error("quota exceeded");
-    };
+    await mountEditor(pid, atlas.id);
+    // IndexedDB writes fail → the durable sync cannot land → image survives in
+    // memory for the session; the persist listener raises the shared toast.
+    const restored = globalThis.indexedDB;
+    globalThis.indexedDB = { open: () => { throw new Error("boom"); } } as unknown as IDBFactory;
     try {
       act(() => {
         fireEvent.click(screen.getByRole("button", { name: "Entry image" }));
@@ -312,25 +316,27 @@ describe("EntryImagePicker", () => {
       await waitFor(() => {
         expect(screen.queryByRole("dialog", { name: "Entry image" })).toBeNull();
       });
-      expect(store().toasts.some((t) => t.kind === "error" && t.message === "Couldn't link the image.")).toBe(true);
+      await waitFor(() => {
+        expect(store().toasts.some((t) => t.kind === "error" && t.message.includes("image"))).toBe(true);
+      });
     } finally {
-      Storage.prototype.setItem = orig;
+      globalThis.indexedDB = restored;
     }
   });
 });
 
 describe("atlas routes", () => {
-  it("/p/:id/atlas renders the index, not the placeholder", () => {
+  it("/p/:id/atlas renders the index, not the placeholder", async () => {
     const pid = seedProject();
     seedAtlas(pid);
-    render(at(`/p/${pid}/atlas`));
+    await at(`/p/${pid}/atlas`);
     expect(screen.getByText("Terras do Véu")).toBeTruthy();
     expect(screen.queryByText(/cravar pinos sobre o mapa/i)).toBeNull();
   });
 
   it("unknown atlasId redirects to the index with a toast", async () => {
     const pid = seedProject();
-    render(at(`/p/${pid}/atlas/atl_missing`));
+    await at(`/p/${pid}/atlas/atl_missing`);
     await waitFor(() => {
       expect(store().toasts.some((t) => t.kind === "error" && t.message === "Atlas not found.")).toBe(true);
     });
@@ -339,10 +345,10 @@ describe("atlas routes", () => {
 });
 
 describe("editor header", () => {
-  it("commits the rename on Enter", () => {
+  it("commits the rename on Enter", async () => {
     const pid = seedProject();
     const atlas = seedAtlas(pid, { withMap: true });
-    mountEditor(pid, atlas.id);
+    await mountEditor(pid, atlas.id);
     const input = screen.getByRole("textbox", { name: "Atlas name" }) as HTMLInputElement;
     expect(input.value).toBe("Terras do Véu");
     act(() => {
@@ -354,10 +360,10 @@ describe("editor header", () => {
     expect(store().atlases[0].name).toBe("Vale Sombrio");
   });
 
-  it("commits the rename on blur", () => {
+  it("commits the rename on blur", async () => {
     const pid = seedProject();
     const atlas = seedAtlas(pid, { withMap: true });
-    mountEditor(pid, atlas.id);
+    await mountEditor(pid, atlas.id);
     const input = screen.getByRole("textbox", { name: "Atlas name" }) as HTMLInputElement;
     act(() => {
       fireEvent.change(input, { target: { value: "Outro Nome" } });
@@ -368,10 +374,10 @@ describe("editor header", () => {
     expect(store().atlases[0].name).toBe("Outro Nome");
   });
 
-  it("undo/redo: disabled at start; a draw enables undo; ctrl+z undoes and redo restores", () => {
+  it("undo/redo: disabled at start; a draw enables undo; ctrl+z undoes and redo restores", async () => {
     const pid = seedProject();
     const atlas = seedAtlas(pid, { withMap: true });
-    const { stageEl } = mountEditor(pid, atlas.id);
+    const { stageEl } = await mountEditor(pid, atlas.id);
     const undo = screen.getByRole("button", { name: "Undo" });
     const redo = screen.getByRole("button", { name: "Redo" });
     expect(undo).toBeDisabled();
@@ -390,10 +396,10 @@ describe("editor header", () => {
     expect(store().atlases[0].regions).toHaveLength(1);
   });
 
-  it("ctrl+shift+z and ctrl+y both redo (each restores the region ctrl+z removed)", () => {
+  it("ctrl+shift+z and ctrl+y both redo (each restores the region ctrl+z removed)", async () => {
     const pid = seedProject();
     const atlas = seedAtlas(pid, { withMap: true });
-    const { stageEl } = mountEditor(pid, atlas.id);
+    const { stageEl } = await mountEditor(pid, atlas.id);
     drawTestRegion(stageEl);
     expect(store().atlases[0].regions).toHaveLength(1);
     act(() => {
@@ -414,10 +420,10 @@ describe("editor header", () => {
     expect(store().atlases[0].regions).toHaveLength(1);
   });
 
-  it("zoom label follows the scale; Ajustar restores fit scale", () => {
+  it("zoom label follows the scale; Ajustar restores fit scale", async () => {
     const pid = seedProject();
     const atlas = seedAtlas(pid, { withMap: true });
-    mountEditor(pid, atlas.id);
+    await mountEditor(pid, atlas.id);
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
     });
@@ -438,7 +444,7 @@ describe("editor header", () => {
   it("delete-atlas in the header is two-step and exits to the index", async () => {
     const pid = seedProject();
     const atlas = seedAtlas(pid, { withMap: true });
-    mountEditor(pid, atlas.id);
+    await mountEditor(pid, atlas.id);
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: "Delete atlas" }));
     });

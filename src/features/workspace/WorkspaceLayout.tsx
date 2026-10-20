@@ -2,6 +2,7 @@ import { Navigate, NavLink, Outlet, useParams, Link } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { GROUPS, SECTIONS } from "../../app/sections";
+import { preloadSection } from "../../app/lazyRoutes";
 import { selectProject, useScriptorium } from "../../data/store";
 import { Seal } from "../../ui/Seal";
 import { LanguageToggle } from "../../ui/LanguageToggle";
@@ -59,6 +60,8 @@ export function WorkspaceLayout() {
               to={`/p/${projectId}/${s.to}`.replace(/\/$/, "")}
               end={s.key === "overview" || undefined}
               title={t(s.tipKey)}
+              onMouseEnter={() => preloadSection(s.key)}
+              onFocus={() => preloadSection(s.key)}
               className={({ isActive }) =>
                 RAIL_LINK +
                 (isActive
@@ -78,6 +81,8 @@ export function WorkspaceLayout() {
                   key={s.key}
                   to={`/p/${projectId}/${s.to}`}
                   title={t(s.tipKey)}
+                  onMouseEnter={() => preloadSection(s.key)}
+                  onFocus={() => preloadSection(s.key)}
                   className={({ isActive }) =>
                     RAIL_LINK +
                     (isActive

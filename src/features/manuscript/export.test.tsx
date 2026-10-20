@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppRouter } from "../../app/router";
@@ -76,12 +76,16 @@ function seedBook(projectId: string, spec: {
   return book as Manuscript;
 }
 
-function binderyRoute(projectId: string, bookId: string) {
-  return (
+async function binderyRoute(projectId: string, bookId: string): Promise<void> {
+  render(
     <MemoryRouter initialEntries={[`/p/${projectId}/bindery/${bookId}`]}>
       <AppRouter />
-    </MemoryRouter>
+    </MemoryRouter>,
   );
+  await waitFor(() => {
+    expect(screen.queryByTestId("hydration-splash")).toBeNull();
+    expect(screen.queryByTestId("chunk-splash")).toBeNull();
+  });
 }
 
 let anchorHref = "";
@@ -132,7 +136,7 @@ afterEach(() => {
 });
 
 describe("buildBookHtml", () => {
-  it("renders h1 title + optional author + chapters in order with rendered markdown", () => {
+  it("renders h1 title + optional author + chapters in order with rendered markdown", async () => {
     const book: Manuscript = {
       id: "b1",
       projectId: "p1",
@@ -152,7 +156,7 @@ describe("buildBookHtml", () => {
     expect(html).toContain("<strong>Negrito</strong>");
   });
 
-  it("title page is the first page; toc follows it", () => {
+  it("title page is the first page; toc follows it", async () => {
     const book: Manuscript = {
       id: "b1", projectId: "p1", title: "T", author: "A",
       chapters: [{ id: "c1", heading: "Um", content: "x.", order: 0 }],
@@ -161,7 +165,7 @@ describe("buildBookHtml", () => {
     expect(html.indexOf("title-page")).toBeLessThan(html.indexOf("front-matter toc"));
   });
 
-  it("dropping the title page still gives the book its own centered title page (not glued to chapter 1)", () => {
+  it("dropping the title page still gives the book its own centered title page (not glued to chapter 1)", async () => {
     const book: Manuscript = {
       id: "b1", projectId: "p1", title: "T", author: "A",
       bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: false, titlePage: false, toc: true, glossary: false },
@@ -174,7 +178,7 @@ describe("buildBookHtml", () => {
     expect(html.indexOf('<h1 class="book-title">')).toBeLessThan(html.indexOf('<section class="chapter"'));
   });
 
-  it("with the title page on, no second book-title is glued before the chapters", () => {
+  it("with the title page on, no second book-title is glued before the chapters", async () => {
     const book: Manuscript = {
       id: "b1", projectId: "p1", title: "Título Página", author: "Renan",
       chapters: [{ id: "c1", heading: "Um", content: "x.", order: 0 }],
@@ -184,7 +188,7 @@ describe("buildBookHtml", () => {
     expect(html.indexOf("tp-title")).toBeLessThan(html.indexOf("front-matter toc"));
   });
 
-  it("omits the author paragraph when the author is empty", () => {
+  it("omits the author paragraph when the author is empty", async () => {
     const book: Manuscript = {
       id: "b1",
       projectId: "p1",
@@ -195,7 +199,7 @@ describe("buildBookHtml", () => {
     expect(buildBookHtml(book)).not.toContain("book-author");
   });
 
-  it("renders the empty-content paragraph for chapters without body", () => {
+  it("renders the empty-content paragraph for chapters without body", async () => {
     const book: Manuscript = {
       id: "b1",
       projectId: "p1",
@@ -206,7 +210,7 @@ describe("buildBookHtml", () => {
     expect(buildBookHtml(book)).toContain('<p class="empty">No content yet.</p>');
   });
 
-  it("escapes book title, author and heading text", () => {
+  it("escapes book title, author and heading text", async () => {
     const book: Manuscript = {
       id: "b1",
       projectId: "p1",
@@ -228,13 +232,13 @@ describe("buildBookHtml v2", () => {
     ...patch,
   });
 
-  it("numbers chapters in arabic by default", () => {
+  it("numbers chapters in arabic by default", async () => {
     const html = buildBookHtml(mkBook({}));
     expect(html).toContain('<h2><span class="ch-num">1</span>Prólogo</h2>');
     expect(html).toContain('<h2><span class="ch-num">2</span>Fim</h2>');
   });
 
-  it("word numbering covers 1-99 with compounds, falls back to arabic at 100", () => {
+  it("word numbering covers 1-99 with compounds, falls back to arabic at 100", async () => {
     const mkAt = (n: number) => {
       const chapters = Array.from({ length: n }, (_, i) => ({ id: `c${i}`, heading: `C${i + 1}`, content: "x.", order: i }));
       const html = buildBookHtml(mkBook({ chapters, bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: false, titlePage: false, toc: false, glossary: false, numberingStyle: "word" } }));
@@ -245,14 +249,14 @@ describe("buildBookHtml v2", () => {
     expect(mkAt(100)).toContain('<span class="ch-num">100</span>');
   });
 
-  it("toc rows carry the chapter number prefix when numbering is on", () => {
+  it("toc rows carry the chapter number prefix when numbering is on", async () => {
     const on = buildBookHtml(mkBook({}));
     expect(on).toContain('<li class="toc-row"><span class="toc-num">1</span><span>Prólogo</span>');
     const off = buildBookHtml(mkBook({ bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: false, numberingStyle: "none" } }));
     expect(off).toContain('<li class="toc-row"><span>Prólogo</span>');
   });
 
-  it("numbering styles: none, chapter, word", () => {
+  it("numbering styles: none, chapter, word", async () => {
     const none = buildBookHtml(mkBook({ bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: false, numberingStyle: "none" } }));
     expect(none).not.toContain('ch-num');
     const chap = buildBookHtml(mkBook({ bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: false, numberingStyle: "chapter" } }));
@@ -320,7 +324,7 @@ describe("buildBookHtml v2", () => {
     expect(theme).not.toContain("7in");
   });
 
-  it("renders scene markers: endMarker between paragraphs, noteTop/noteEnd around the body", () => {
+  it("renders scene markers: endMarker between paragraphs, noteTop/noteEnd around the body", async () => {
     const html = buildBookHtml(mkBook({ chapters: [{ id: "c1", heading: "Um", content: "para um.\n\npara dois.", order: 0, endMarker: "⁂", noteTop: "Drafted 1204", noteEnd: "End of draft" }] }));
     expect(html).toContain('<div class="scene-marker ornament" aria-hidden="true"></div>');
     expect(html).toContain('<div class="chapter-note top"><p>Drafted 1204</p>');
@@ -343,7 +347,7 @@ describe("buildBookHtml v2", () => {
     expect(book).not.toContain('<span class="running-head"');
   });
 
-  it("book strings are EN: Contents, Glossary, No content yet", () => {
+  it("book strings are EN: Contents, Glossary, No content yet", async () => {
     const html = buildBookHtml(mkBook({ bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: true, dedication: "To the river." } }));
     expect(html).toContain("<h2>Contents</h2>");
     const emptyBody = buildBookHtml(mkBook({ chapters: [{ id: "c9", heading: "Vazio", content: "", order: 0 }] }));
@@ -411,7 +415,7 @@ describe("buildBookHtml front matter + parts", () => {
     ],
   });
 
-  it("renders the canonical front matter order", () => {
+  it("renders the canonical front matter order", async () => {
     const html = buildBookHtml(frontMatterBook(
       { halfTitle: true, copyright: true, romanNumerals: true, copyrightInfo: { year: "2026", holder: "Ana" }, epigraph: "*Leve, como fumo.*" },
       { dedication: "Ao rio." },
@@ -425,7 +429,7 @@ describe("buildBookHtml front matter + parts", () => {
     expect(html).toContain('class="front-matter half-title display"');
   });
 
-  it("copyright omits empty optional lines", () => {
+  it("copyright omits empty optional lines", async () => {
     const html = buildBookHtml(frontMatterBook(
       { halfTitle: false, copyright: true, romanNumerals: false, copyrightInfo: { holder: "Ana" } },
     ));
@@ -435,20 +439,20 @@ describe("buildBookHtml front matter + parts", () => {
     expect(html).toContain("Cover and interior set in Scriptorium.");
   });
 
-  it("a chapter whose part no longer exists renders with the ungrouped ones", () => {
+  it("a chapter whose part no longer exists renders with the ungrouped ones", async () => {
     const book = plainBook();
     book.chapters.push({ id: "c9", heading: "Órfã", content: "corpo.", order: 1, partId: "deleted-part" });
     const html = buildBookHtml(book);
     expect(html).toContain('<section class="chapter-opener" data-ch="2"><h2><span class="ch-num">2</span>Órfã</h2></section><section class="chapter" data-ch="2">');
   });
 
-  it("a chapter prints an opener section (number + heading) then the body section", () => {
+  it("a chapter prints an opener section (number + heading) then the body section", async () => {
     const html = buildBookHtml(plainBook());
     expect(html).toContain('<section class="chapter-opener" data-ch="1"><h2><span class="ch-num">1</span>Um</h2></section><section class="chapter" data-ch="1">');
     expect(html).toContain("<p>corpo um.</p>");
   });
 
-  it("the opener section carries no body text: notes, paragraphs and markers stay in the body", () => {
+  it("the opener section carries no body text: notes, paragraphs and markers stay in the body", async () => {
     const book = plainBook();
     book.chapters[0] = { ...book.chapters[0], noteTop: "Nota de abertura.", endMarker: "* * *", noteEnd: "Nota final." };
     const html = buildBookHtml(book);
@@ -461,7 +465,7 @@ describe("buildBookHtml front matter + parts", () => {
     expect(body).toContain('<div class="chapter-note bottom">');
   });
 
-  it("a part opens its own divider and groups its chapters", () => {
+  it("a part opens its own divider and groups its chapters", async () => {
     const html = buildBookHtml(mixedBook());
     expect(html).toContain('<section class="part-divider" data-part="1"><p class="part-num">1</p><h1 class="part-title">Primeira parte</h1>');
     // pin the body, not the TOC (whose part rows precede every chapter):
@@ -481,7 +485,7 @@ describe("buildBookHtml front matter + parts", () => {
     expect(chPos(4)).toBeLessThan(html.indexOf("</article>"));
   });
 
-  it("front matter off and no parts keeps the pre-parts markup", () => {
+  it("front matter off and no parts keeps the pre-parts markup", async () => {
     const html = buildBookHtml(plainBook());
     expect(html).not.toContain("part-divider");
     expect(html).not.toContain("half-title");
@@ -489,7 +493,7 @@ describe("buildBookHtml front matter + parts", () => {
     expect(html).toContain('<section class="chapter" data-ch="1">');
   });
 
-  it("data-ch and the TOC follow the render order: ungrouped chapters first, then each part's chapters", () => {
+  it("data-ch and the TOC follow the render order: ungrouped chapters first, then each part's chapters", async () => {
     const html = buildBookHtml(mixedBook());
     // flat numbering over the render order, not per part
     const renderOrder = ["Um", "Quatro", "Três", "Dois"];
@@ -610,7 +614,7 @@ describe("back matter + scene ornament", () => {
     return projectId;
   }
 
-  it("about the author and colophon close the book", () => {
+  it("about the author and colophon close the book", async () => {
     const html = buildBookHtml(mkBook({
       bindery: {
         ...defaultBindery()!,
@@ -629,14 +633,14 @@ describe("back matter + scene ornament", () => {
     expect(html.indexOf("colophon")).toBeLessThan(html.indexOf("</article>"));
   });
 
-  it("an unknown font stack falls back to the first font label in the colophon", () => {
+  it("an unknown font stack falls back to the first font label in the colophon", async () => {
     const html = buildBookHtml(mkBook({
       bindery: { ...defaultBindery()!, font: "Comic Sans, cursive", backMatter: { glossary: false, colophon: true } },
     }));
     expect(html).toContain("Set in Georgia.");
   });
 
-  it("back matter sections print after the glossary and only when configured", () => {
+  it("back matter sections print after the glossary and only when configured", async () => {
     const projectId = seedGlossaryEntry();
     const html = buildBookHtml(mkBook({
       projectId,
@@ -649,7 +653,7 @@ describe("back matter + scene ornament", () => {
     expect(bare).not.toContain("back-matter colophon");
   });
 
-  it("glossary switch: the backMatter block wins, the legacy field is the fallback", () => {
+  it("glossary switch: the backMatter block wins, the legacy field is the fallback", async () => {
     const projectId = seedGlossaryEntry();
     const book = (bindery: NonNullable<Manuscript["bindery"]>) =>
       buildBookHtml(mkBook({ projectId, bindery }));
@@ -704,7 +708,7 @@ describe("EPUB export", () => {
     act(() => { key = useScriptorium.getState().putImage("data:image/png;base64,CAPACOVER", "cover"); });
     act(() => { useScriptorium.getState().updateProject(projectId, { coverImageKey: key }); });
     const book = seedBook(projectId, { title: "Livro Com Capa", chapters: [{ heading: "Um", content: "x." }] });
-    render(binderyRoute(projectId, book.id));
+    await binderyRoute(projectId, book.id);
     fireEvent.click(screen.getByRole("button", { name: "Export EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
     expect((epubMock.calls[0].options as { cover?: string }).cover).toBe("data:image/png;base64,CAPACOVER");
@@ -713,7 +717,7 @@ describe("EPUB export", () => {
   it("omits the cover option when the project has none", async () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "Livro Sem Capa", chapters: [{ heading: "Um", content: "x." }] });
-    render(binderyRoute(projectId, book.id));
+    await binderyRoute(projectId, book.id);
     fireEvent.click(screen.getByRole("button", { name: "Export EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
     expect((epubMock.calls[0].options as { cover?: string }).cover).toBeUndefined();
@@ -731,7 +735,7 @@ describe("EPUB export", () => {
         { heading: "Fim", content: "A última linha." },
       ],
     });
-    render(binderyRoute(projectId, book.id));
+    await binderyRoute(projectId, book.id);
     fireEvent.click(screen.getByRole("button", { name: "Export EPUB" }));
     await waitFor(() => {
       expect(useScriptorium.getState().toasts.some((t) => t.message === "EPUB generated.")).toBe(true);
@@ -754,16 +758,16 @@ describe("EPUB export", () => {
     const key = useScriptorium.getState().putImage("data:image/png;base64,COVER", "cover");
     useScriptorium.getState().updateProject(projectId, { coverImageKey: key });
     const coveredBook = seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "x" }] });
-    const covered = render(binderyRoute(projectId, coveredBook.id));
+    await binderyRoute(projectId, coveredBook.id);
     fireEvent.click(screen.getByRole("button", { name: "Export EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
     expect(lastOptions(0)).toEqual(expect.objectContaining({ cover: "data:image/png;base64,COVER" }));
-    covered.unmount();
+    cleanup();
 
     useScriptorium.setState(useScriptorium.getInitialState());
     const bareId = seedProject();
     const bareBook = seedBook(bareId, { title: "B", chapters: [{ heading: "Um", content: "x" }] });
-    render(binderyRoute(bareId, bareBook.id));
+    await binderyRoute(bareId, bareBook.id);
     fireEvent.click(screen.getByRole("button", { name: "Export EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(2));
     expect("cover" in lastOptions(1)).toBe(false);
@@ -772,7 +776,7 @@ describe("EPUB export", () => {
   it("falls back to the 'book' slug when the title has no alnum characters", async () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "???", chapters: [{ heading: "Um", content: "x" }] });
-    render(binderyRoute(projectId, book.id));
+    await binderyRoute(projectId, book.id);
     fireEvent.click(screen.getByRole("button", { name: "Export EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
     expect(anchorDownload).toBe("book.epub");
@@ -781,7 +785,7 @@ describe("EPUB export", () => {
   it("folds accents out of the download filename slug", async () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "Época Antiga", chapters: [{ heading: "Um", content: "x" }] });
-    render(binderyRoute(projectId, book.id));
+    await binderyRoute(projectId, book.id);
     fireEvent.click(screen.getByRole("button", { name: "Export EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
     expect(anchorDownload).toBe("epoca-antiga.epub");
@@ -794,7 +798,7 @@ describe("EPUB export", () => {
     epubMock.genEpub.mockImplementationOnce(
       () => new Promise<never>((res) => { resolve = res; }),
     );
-    render(binderyRoute(projectId, book.id));
+    await binderyRoute(projectId, book.id);
     const button = screen.getByRole("button", { name: "Export EPUB" });
     fireEvent.click(button);
     await waitFor(() => expect(button).toBeDisabled());
@@ -809,7 +813,7 @@ describe("EPUB export", () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "x" }] });
     epubMock.genEpub.mockRejectedValueOnce(new Error("boom"));
-    render(binderyRoute(projectId, book.id));
+    await binderyRoute(projectId, book.id);
     const button = screen.getByRole("button", { name: "Export EPUB" });
     fireEvent.click(button);
     await waitFor(() => {
@@ -822,7 +826,7 @@ describe("EPUB export", () => {
   it("passes bindery typography to the EPUB and keeps print-only settings out", async () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "Tipos", chapters: [{ heading: "Um", content: "x." }] });
-    render(binderyRoute(projectId, book.id));
+    await binderyRoute(projectId, book.id);
     fireEvent.click(screen.getByRole("button", { name: "Export EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
     const def = lastOptions(0).css as string;
@@ -864,7 +868,7 @@ describe("EPUB export", () => {
   it("styles scene ornaments like the print book", async () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "Ornamentos", chapters: [{ heading: "Um", content: "x." }] });
-    render(binderyRoute(projectId, book.id));
+    await binderyRoute(projectId, book.id);
     fireEvent.click(screen.getByRole("button", { name: "Export EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
     const base = lastOptions(0).css as string;
@@ -904,7 +908,7 @@ describe("EPUB export", () => {
       useScriptorium.getState().setChapterPart(book.chapters[0].id, part!.id);
       useScriptorium.getState().setChapterPart(book.chapters[1].id, part!.id);
     });
-    render(binderyRoute(projectId, book.id));
+    await binderyRoute(projectId, book.id);
     fireEvent.click(screen.getByRole("button", { name: "Export EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
     const content = epubMock.calls[0].content as { title: string; content: string }[];
@@ -952,7 +956,7 @@ describe("EPUB export", () => {
       const entry = st.addEntry(projectId, "lore");
       st.updateEntry(entry.id, { title: "Termo", summary: "Definição curta." });
     });
-    render(binderyRoute(projectId, book.id));
+    await binderyRoute(projectId, book.id);
     fireEvent.click(screen.getByRole("button", { name: "Export EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
     const content = epubMock.calls[0].content as { title: string; content: string; beforeToc?: boolean; excludeFromToc?: boolean }[];
@@ -990,7 +994,7 @@ describe("EPUB export", () => {
         glossary: false,
       });
     });
-    render(binderyRoute(projectId, book.id));
+    await binderyRoute(projectId, book.id);
     fireEvent.click(screen.getByRole("button", { name: "Export EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(1));
     const content = epubMock.calls[0].content as { title: string; beforeToc?: boolean }[];
@@ -1003,7 +1007,7 @@ describe("Word export", () => {
   it("downloads <slug>.docx and toasts success", async () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "Açúcar & Sal", chapters: [{ heading: "Um", content: "Um parágrafo." }] });
-    render(binderyRoute(projectId, book.id));
+    await binderyRoute(projectId, book.id);
     fireEvent.click(screen.getByRole("button", { name: "Export Word" }));
     await waitFor(() => expect(docxMock.toBlob).toHaveBeenCalledTimes(1));
     await waitFor(() => {
@@ -1016,7 +1020,7 @@ describe("Word export", () => {
   it("carries the print page box and the book styles into the document", async () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "Tipos", author: "Ana", chapters: [{ heading: "Um", content: "corpo." }] });
-    render(binderyRoute(projectId, book.id));
+    await binderyRoute(projectId, book.id);
     fireEvent.click(screen.getByRole("button", { name: "Export Word" }));
     await waitFor(() => expect(docxMock.toBlob).toHaveBeenCalledTimes(1));
     expect(docxMock.documents).toHaveLength(1);
@@ -1041,7 +1045,7 @@ describe("Word export", () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "x" }] });
     docxMock.toBlob.mockRejectedValueOnce(new Error("boom"));
-    render(binderyRoute(projectId, book.id));
+    await binderyRoute(projectId, book.id);
     fireEvent.click(screen.getByRole("button", { name: "Export Word" }));
     await waitFor(() => {
       expect(useScriptorium.getState().toasts.some((t) => t.message === "Failed to generate the Word file.")).toBe(true);

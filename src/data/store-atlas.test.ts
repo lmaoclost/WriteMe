@@ -113,23 +113,22 @@ describe("map images (cases 2-3)", () => {
     expect(store().images[atl.mapImageKey!]).toBe("data:image/png;base64,TWO");
     expect(Object.values(store().images).some((v) => v.includes("ONE"))).toBe(false);
   });
-  it("putMapImage returns false on quota failure and leaves the atlas unchanged", () => {
+  it("durable write failure keeps the map (with the persist toast), doc stays clean", async () => {
     const a = addAtlas();
-    const proto = Object.getPrototypeOf(localStorage) as Storage;
-    const native = proto.setItem;
-    proto.setItem = function patched(k: string, v: string) {
-      if (v.includes("QUOTA_BOMB")) throw new Error("QuotaExceededError");
-      return native.call(this, k, v);
-    };
-    let ok: boolean | undefined;
+    const restored = globalThis.indexedDB;
+    globalThis.indexedDB = { open: () => { throw new Error("boom"); } } as unknown as typeof globalThis.indexedDB;
     try {
+      let ok: boolean | undefined;
       act(() => { ok = store().putMapImage(a.id, "data:image/png;base64,QUOTA_BOMB"); });
+      expect(ok).toBe(true);
+      await vi.waitFor(() =>
+        expect(store().toasts.some((t) => t.kind === "error")).toBe(true),
+      );
+      expect(store().atlases[0].mapImageKey).toMatch(/^img_map_/);
+      expect(Object.values(store().images).some((v) => v.includes("QUOTA_BOMB"))).toBe(true);
     } finally {
-      proto.setItem = native;
+      globalThis.indexedDB = restored;
     }
-    expect(ok).toBe(false);
-    expect(store().atlases[0].mapImageKey).toBeUndefined();
-    expect(Object.values(store().images).some((v) => v.includes("QUOTA_BOMB"))).toBe(false);
   });
   it("setAtlasMapFromEntry copies the entry image into a new map key", () => {
     const a = addAtlas();

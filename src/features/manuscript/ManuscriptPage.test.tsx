@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { pickSelectOptionSync, selectOption } from "../../test/selectHelper";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -41,12 +41,16 @@ function bookOf(title: string): Manuscript {
   return book as Manuscript;
 }
 
-function manuscriptRoute(projectId: string) {
-  return (
+async function manuscriptRoute(projectId: string): Promise<void> {
+  render(
     <MemoryRouter initialEntries={[`/p/${projectId}/manuscript`]}>
       <AppRouter />
-    </MemoryRouter>
+    </MemoryRouter>,
   );
+  await waitFor(() => {
+    expect(screen.queryByTestId("hydration-splash")).toBeNull();
+    expect(screen.queryByTestId("chunk-splash")).toBeNull();
+  });
 }
 
 function rowHeadings() {
@@ -67,17 +71,17 @@ afterEach(() => {
 });
 
 describe("ManuscriptPage books", () => {
-  it("renders the book page on the manuscript route, replacing the placeholder", () => {
+  it("renders the book page on the manuscript route, replacing the placeholder", async () => {
     const projectId = seedProject();
     seedBook(projectId, { chapters: [{ heading: "Prólogo", content: "Uma noite." }] });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
     expect(screen.getByRole("button", { name: "New book" })).toBeInTheDocument();
     expect(screen.queryByText(/sub-projeto 4/i)).not.toBeInTheDocument();
   });
 
-  it("shows the empty-state copy and creates the first book", () => {
+  it("shows the empty-state copy and creates the first book", async () => {
     const projectId = seedProject();
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
     expect(screen.getByText("Start your book — create the first one.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "New book" }));
     const books = projectBooks(projectId);
@@ -87,13 +91,13 @@ describe("ManuscriptPage books", () => {
     expect(screen.getByLabelText("Manuscript title")).toHaveValue("Untitled Manuscript");
   });
 
-  it("auto-selects the single book, shows its title as a heading and opens its first chapter", () => {
+  it("auto-selects the single book, shows its title as a heading and opens its first chapter", async () => {
     const projectId = seedProject();
     seedBook(projectId, {
       title: "Cantar de Vellmora",
       chapters: [{ heading: "Prólogo", content: "Uma noite." }],
     });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
     expect(screen.queryByLabelText("Livro")).toBeNull();
     expect(screen.getByRole("heading", { name: "Cantar de Vellmora" })).toBeInTheDocument();
     expect(screen.getByLabelText("Manuscript title")).toHaveValue("Cantar de Vellmora");
@@ -112,7 +116,7 @@ describe("ManuscriptPage books", () => {
       title: "Segundo Livro",
       chapters: [{ heading: "Capítulo A", content: "Aqui." }],
     });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
     const select = screen.getByLabelText("Book");
     expect(select).toHaveTextContent("Cantar de Vellmora"); // most recent book
     await pickSelectOptionSync(() => screen.getByLabelText("Book"), "Segundo Livro");
@@ -121,11 +125,11 @@ describe("ManuscriptPage books", () => {
     expect(screen.getByLabelText("Chapter title")).toHaveValue("Capítulo A");
   });
 
-  it("commits book title and author edits debounced and on blur, updating the heading", () => {
-    vi.useFakeTimers();
+  it("commits book title and author edits debounced and on blur, updating the heading", async () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "Cantar", author: "Renan" });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
+    vi.useFakeTimers();
     fireEvent.change(screen.getByLabelText("Manuscript title"), { target: { value: "Cantar Completo" } });
     fireEvent.change(screen.getByLabelText("Author"), { target: { value: "Outro" } });
     expect(projectBooks(projectId)[0].title).toBe("Cantar");
@@ -142,12 +146,12 @@ describe("ManuscriptPage books", () => {
     expect(projectBooks(projectId)[0].author).toBe("Nova");
   });
 
-  it("does not leak a dirty book title draft when switching books", () => {
-    vi.useFakeTimers();
+  it("does not leak a dirty book title draft when switching books", async () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A" });
     seedBook(projectId, { title: "B" });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
+    vi.useFakeTimers();
     fireEvent.change(screen.getByLabelText("Manuscript title"), { target: { value: "A editado" } });
     pickSelectOptionSync(() => screen.getByLabelText("Book"), "B");
     expect(screen.getByLabelText("Manuscript title")).toHaveValue("B");
@@ -159,11 +163,11 @@ describe("ManuscriptPage books", () => {
     vi.useRealTimers();
   });
 
-  it("deletes the selected book with a two-step confirm and selects the first remaining, then none", () => {
+  it("deletes the selected book with a two-step confirm and selects the first remaining, then none", async () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A", chapters: [{ heading: "Um" }] });
     seedBook(projectId, { title: "B", chapters: [{ heading: "Dois" }] });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
     pickSelectOptionSync(() => screen.getByLabelText("Book"), "B");
     fireEvent.click(screen.getByRole("button", { name: "Delete book" }));
     expect(screen.getByRole("button", { name: "Confirm?" })).toBeInTheDocument();
@@ -176,11 +180,11 @@ describe("ManuscriptPage books", () => {
     expect(screen.getByText("Start your book — create the first one.")).toBeInTheDocument();
   });
 
-  it("resets the book delete confirmation after 3s", () => {
-    vi.useFakeTimers();
+  it("resets the book delete confirmation after 3s", async () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A" });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
+    vi.useFakeTimers();
     fireEvent.click(screen.getByRole("button", { name: "Delete book" }));
     expect(screen.getByRole("button", { name: "Confirm?" })).toBeInTheDocument();
     act(() => {
@@ -192,10 +196,10 @@ describe("ManuscriptPage books", () => {
 });
 
 describe("ManuscriptPage chapters", () => {
-  it("creates a chapter, selects it and focuses the heading", () => {
+  it("creates a chapter, selects it and focuses the heading", async () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A" });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
     expect(screen.getByText("Add the first chapter.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "New chapter" }));
     const chapters = bookOf("A").chapters;
@@ -207,7 +211,7 @@ describe("ManuscriptPage chapters", () => {
     expect(screen.queryByText("Add the first chapter.")).toBeNull();
   });
 
-  it("lists chapters in order, disables edge arrows and swaps orders on move", () => {
+  it("lists chapters in order, disables edge arrows and swaps orders on move", async () => {
     const projectId = seedProject();
     seedBook(projectId, {
       title: "A",
@@ -217,7 +221,7 @@ describe("ManuscriptPage chapters", () => {
         { heading: "Fim", content: "um dois três" },
       ],
     });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
     expect(rowHeadings()).toEqual(["Início", "Meio", "Fim"]);
     const list = screen.getByRole("list", { name: "Chapters" });
     const upButtons = within(list).getAllByRole("button", { name: "Move chapter up" });
@@ -235,11 +239,11 @@ describe("ManuscriptPage chapters", () => {
     expect(screen.getByRole("button", { name: /Início/ })).toHaveClass("active");
   });
 
-  it("shows store wordcounts in rows and keeps the editor footer live from the draft", () => {
-    vi.useFakeTimers();
+  it("shows store wordcounts in rows and keeps the editor footer live from the draft", async () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A", chapters: [{ heading: "Início", content: "um dois três" }] });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
+    vi.useFakeTimers();
     expect(screen.getByRole("button", { name: /Início/ }).textContent).toContain("3 words");
     // rich body: 6 words typed directly in the contenteditable (footer counts DOM)
     const richBody = () => document.querySelector('[data-testid="rich-body"]') as HTMLElement;
@@ -254,11 +258,11 @@ describe("ManuscriptPage chapters", () => {
     vi.useRealTimers();
   });
 
-  it("commits chapter heading and body edits debounced and on blur", () => {
-    vi.useFakeTimers();
+  it("commits chapter heading and body edits debounced and on blur", async () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A", chapters: [{ heading: "Início", content: "" }] });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
+    vi.useFakeTimers();
     fireEvent.change(screen.getByLabelText("Chapter title"), { target: { value: "Chegada" } });
     const richBody = document.querySelector('[data-testid="rich-body"]') as HTMLElement;
     richBody.textContent = "Torres de pedra.";
@@ -274,11 +278,11 @@ describe("ManuscriptPage chapters", () => {
     vi.useRealTimers();
   });
 
-  it("flushes the draft when toggling to Preview and renders the committed markdown", () => {
-    vi.useFakeTimers();
+  it("flushes the draft when toggling to Preview and renders the committed markdown", async () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A", chapters: [{ heading: "Início", content: "" }] });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
+    vi.useFakeTimers();
     expect(screen.getByRole("button", { name: "Write" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Preview" })).toHaveAttribute("aria-pressed", "false");
     // rich editor: blur commits whatever the body holds (markdown text survives
@@ -298,11 +302,11 @@ describe("ManuscriptPage chapters", () => {
     vi.useRealTimers();
   });
 
-  it("commits pending rich content synchronously on Preview click (no blur needed)", () => {
-    vi.useFakeTimers();
+  it("commits pending rich content synchronously on Preview click (no blur needed)", async () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A", chapters: [{ heading: "Início", content: "" }] });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
+    vi.useFakeTimers();
     const richBody = document.querySelector('[data-testid="rich-body"]') as HTMLElement;
     richBody.textContent = "texto pendente sem blur";
     fireEvent.input(richBody);
@@ -313,23 +317,23 @@ describe("ManuscriptPage chapters", () => {
     vi.useRealTimers();
   });
 
-  it("shows the empty preview copy when the committed content is empty", () => {
+  it("shows the empty preview copy when the committed content is empty", async () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A", chapters: [{ heading: "Início", content: "" }] });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
     fireEvent.click(screen.getByRole("button", { name: "Preview" }));
     expect(screen.getByText("No content yet.")).toBeInTheDocument();
     expect(document.querySelector(".md-view")).toBeNull();
   });
 
-  it("does not leak a dirty chapter draft into another chapter (remount isolation)", () => {
-    vi.useFakeTimers();
+  it("does not leak a dirty chapter draft into another chapter (remount isolation)", async () => {
     const projectId = seedProject();
     seedBook(projectId, {
       title: "A",
       chapters: [{ heading: "Um", content: "" }, { heading: "Dois", content: "" }],
     });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
+    vi.useFakeTimers();
     const richBody1 = document.querySelector('[data-testid="rich-body"]') as HTMLElement;
     richBody1.textContent = "rascunho";
     fireEvent.input(richBody1);
@@ -350,10 +354,10 @@ describe("ManuscriptPage chapters", () => {
     vi.useRealTimers();
   });
 
-  it("deletes a chapter with a two-step confirm and selects the next remaining", () => {
+  it("deletes a chapter with a two-step confirm and selects the next remaining", async () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A", chapters: [{ heading: "Um" }, { heading: "Dois" }] });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
     fireEvent.click(screen.getByRole("button", { name: "Delete chapter" }));
     expect(screen.getByRole("button", { name: "Confirm?" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Confirm?" }));
@@ -388,7 +392,7 @@ describe("ManuscriptPage parts", () => {
       useScriptorium.getState().updateChapter(ch.id, { content: "uma duas três" });
       useScriptorium.getState().setChapterPart(ch.id, part.id);
     });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
     expect(await screen.findByText("A Queda")).toBeInTheDocument();
     expect(screen.getByTestId("part-words-A Queda")).toHaveTextContent("3 words");
     expect(partRowOrder()).toEqual(["chapter:Base", "part:A Queda", "chapter:Cinzas"]);
@@ -400,7 +404,7 @@ describe("ManuscriptPage parts", () => {
     act(() => {
       useScriptorium.getState().addPart(book.id, "A Queda");
     });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
     await selectOption(() => screen.getByLabelText("Part"), "A Queda");
     expect(bookOf("A").chapters[0].partId).toBeTruthy();
   });
@@ -412,15 +416,15 @@ describe("ManuscriptPage parts", () => {
       const part = useScriptorium.getState().addPart(book.id, "A Queda")!;
       useScriptorium.getState().setChapterPart(book.chapters[0].id, part.id);
     });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
     await selectOption(() => screen.getByLabelText("Part"), "No part");
     expect(bookOf("A").chapters[0].partId).toBeUndefined();
   });
 
-  it("creates, renames and reorders parts from the list", () => {
+  it("creates, renames and reorders parts from the list", async () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A", chapters: [{ heading: "Um" }] });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
     const partTitles = () =>
       [...(bookOf("A").parts ?? [])].sort((a, b) => a.order - b.order).map((p) => p.title);
     fireEvent.click(screen.getByRole("button", { name: "New part" }));
@@ -439,7 +443,7 @@ describe("ManuscriptPage parts", () => {
     expect(partTitles()).toEqual(["Untitled Part", "A Queda"]);
   });
 
-  it("sums the chapters' words for the part total", () => {
+  it("sums the chapters' words for the part total", async () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "uma duas três" }] });
     act(() => {
@@ -449,19 +453,19 @@ describe("ManuscriptPage parts", () => {
       useScriptorium.getState().setChapterPart(ch.id, part.id);
       useScriptorium.getState().setChapterPart(book.chapters[0].id, part.id);
     });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
     expect(screen.getByTestId("part-words-A Queda")).toHaveTextContent("5 words");
     expect(partRowOrder()).toEqual(["part:A Queda", "chapter:Um", "chapter:Dois"]);
   });
 
-  it("deletes a part with a two-step confirm and releases its chapters", () => {
+  it("deletes a part with a two-step confirm and releases its chapters", async () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Um" }, { heading: "Dois" }] });
     act(() => {
       const part = useScriptorium.getState().addPart(book.id, "A Queda")!;
       useScriptorium.getState().setChapterPart(book.chapters[1].id, part.id);
     });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
     fireEvent.click(screen.getByRole("button", { name: "Delete part" }));
     expect(screen.getByRole("button", { name: "Confirm?" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Confirm?" }));
@@ -471,14 +475,14 @@ describe("ManuscriptPage parts", () => {
     expect(partRowOrder()).toEqual(["chapter:Um", "chapter:Dois"]);
   });
 
-  it("resets the part delete confirmation after 3s", () => {
-    vi.useFakeTimers();
+  it("resets the part delete confirmation after 3s", async () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "A" });
     act(() => {
       useScriptorium.getState().addPart(book.id, "A Queda");
     });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
+    vi.useFakeTimers();
     fireEvent.click(screen.getByRole("button", { name: "Delete part" }));
     expect(screen.getByRole("button", { name: "Confirm?" })).toBeInTheDocument();
     act(() => {
@@ -490,10 +494,10 @@ describe("ManuscriptPage parts", () => {
 });
 
 describe("export belongs to Publishing", () => {
-  it("the manuscript page shows no export controls", () => {
+  it("the manuscript page shows no export controls", async () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "x" }] });
-    render(manuscriptRoute(projectId));
+    await manuscriptRoute(projectId);
     expect(screen.queryByRole("button", { name: "Exportar EPUB" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Exportar Word" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Exportar PDF" })).toBeNull();
@@ -504,7 +508,7 @@ describe("export belongs to Publishing", () => {
 const store = useScriptorium.getState;
 
 describe("ChapterEditor — notes panel", () => {
-  it("notes and calendar link live inside ONE collapsible panel, open by default", () => {
+  it("notes and calendar link live inside ONE collapsible panel, open by default", async () => {
     const m = useScriptorium.getState().addManuscript("prj_1", "Livro A");
     const ch = useScriptorium.getState().addChapter(m.id, "Um")!;
     store().updateChapter(ch.id, { noteTop: "Abre a história" });

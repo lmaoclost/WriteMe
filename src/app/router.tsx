@@ -1,38 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Navigate, Route, Routes, useParams, useOutletContext } from "react-router-dom";
 import { useScriptorium } from "../data/store";
 import { Toasts } from "../ui/Toasts";
 import { LibraryPage } from "../features/projects/LibraryPage";
-import { AtlasIndexPage } from "../features/atlas/AtlasIndexPage";
-import { AtlasEditor } from "../features/atlas/AtlasEditor";
 import { CodexPage } from "../features/entries/CodexPage";
 import { TimelinePage } from "../features/timeline/TimelinePage";
-import { BloodlineIndexPage } from "../features/bloodline/BloodlineIndexPage";
-import { BloodlineCanvasPage } from "../features/bloodline/BloodlineCanvas";
-import { FactionWebServicePage } from "../features/factions/FactionPageIndex";
-import { FactionWebPage } from "../features/factions/FactionWebPage";
-import { CalendarIndexPage } from "../features/calendar/CalendarIndexPage";
-import { CalendarPage } from "../features/calendar/CalendarPage";
-import { PlotBoardPage } from "../features/plotboard/PlotBoardPage";
-import { PlotBoardIndexPage } from "../features/plotboard/PlotBoardIndexPage";
-import { TimelineIndexPage } from "../features/timelinecanvas/TimelineIndexPage";
-import { TimelineCanvasPage } from "../features/timelinecanvas/TimelineCanvasPage";
-import { OathsIndexPage } from "../features/oaths/OathsIndexPage";
-import { OathsChartPage } from "../features/oaths/OathsChartPage";
-import { WellSpringIndexPage } from "../features/wellspring/WellSpringIndexPage";
-import { WellSpringPage } from "../features/wellspring/WellSpringPage";
-import { ConlangIndexPage } from "../features/conlang/ConlangIndexPage";
-import { ConlangPage } from "../features/conlang/ConlangPage";
-import { BinderyPage, BinderyIndex } from "../features/manuscript/BinderyPage";
 import type { WorkspaceContext } from "../features/workspace/OverviewPage";
-import { ManuscriptPage } from "../features/manuscript/ManuscriptPage";
 import { OverviewPage } from "../features/workspace/OverviewPage";
 import { WorkspaceLayout } from "../features/workspace/WorkspaceLayout";
 import { CommandPalette } from "../ui/CommandPalette";
+import {
+  LazyAtlasIndex, LazyAtlasEditor, LazyBloodlineIndex, LazyBloodlineCanvas,
+  LazyFactionIndex, LazyFactionWeb, LazyCalendarIndex, LazyCalendar,
+  LazyPlotIndex, LazyPlotBoard, LazyWheelIndex, LazyWheelCanvas,
+  LazyOathsIndex, LazyOathsChart, LazyWellIndex, LazyWellSpring,
+  LazyConlangIndex, LazyConlang, LazyBindery, LazyBinderyIndex, LazyManuscript,
+} from "./lazyRoutes";
 
 function AtlasEditorRoute() {
   const { projectId, atlasId } = useParams();
-  return <AtlasEditor atlasId={atlasId ?? ""} projectId={projectId} />;
+  return <LazyAtlasEditor atlasId={atlasId ?? ""} projectId={projectId} />;
 }
 
 function CodexRoute() {
@@ -42,7 +29,7 @@ function CodexRoute() {
 
 function ManuscriptRoute() {
   const { projectId } = useParams();
-  return <ManuscriptPage projectId={projectId ?? ""} />;
+  return <LazyManuscript projectId={projectId ?? ""} />;
 }
 
 function TimelineRoute() {
@@ -52,113 +39,118 @@ function TimelineRoute() {
 
 function BloodlineCanvasRoute() {
   const { bloodlineId } = useParams();
-  return <BloodlineCanvasPage bloodlineId={bloodlineId ?? ""} />;
+  return <LazyBloodlineCanvas bloodlineId={bloodlineId ?? ""} />;
 }
 
 function BloodlineIndexRoute() {
   const { projectId } = useParams();
-  return <BloodlineIndexPage projectId={projectId ?? ""} />;
+  return <LazyBloodlineIndex projectId={projectId ?? ""} />;
 }
 
 function FactionsIndexRoute() {
   const { projectId } = useParams();
-  return <FactionWebServicePage projectId={projectId ?? ""} />;
+  return <LazyFactionIndex projectId={projectId ?? ""} />;
 }
 
 function FactionWebRoute() {
   const { webId } = useParams();
-  return <FactionWebPage webId={webId ?? ""} />;
+  return <LazyFactionWeb webId={webId ?? ""} />;
 }
 
 function CalendarIndexRoute() {
   const { projectId } = useParams();
-  return <CalendarIndexPage projectId={projectId ?? ""} />;
+  return <LazyCalendarIndex projectId={projectId ?? ""} />;
 }
 
 function CalendarRoute() {
   const { calendarId } = useParams();
-  return <CalendarPage calendarId={calendarId ?? ""} />;
+  return <LazyCalendar calendarId={calendarId ?? ""} />;
 }
 
 function PlotBoardIndexRoute() {
   const { projectId } = useParams();
-  return <PlotBoardIndexPage projectId={projectId ?? ""} />;
+  return <LazyPlotIndex projectId={projectId ?? ""} />;
 }
 
 function PlotBoardRoute() {
   const { boardId } = useParams();
-  return <PlotBoardPage boardId={boardId ?? ""} />;
+  return <LazyPlotBoard boardId={boardId ?? ""} />;
 }
 
 function TimelineIndexRoute() {
   const { projectId } = useParams();
-  return <TimelineIndexPage projectId={projectId ?? ""} />;
+  return <LazyWheelIndex projectId={projectId ?? ""} />;
 }
 
 function TimelineWheelRoute() {
   const { timelineId } = useParams();
-  return <TimelineCanvasPage timelineId={timelineId ?? ""} />;
+  return <LazyWheelCanvas timelineId={timelineId ?? ""} />;
 }
 
 function OathsIndexRoute() {
   const { projectId } = useParams();
-  return <OathsIndexPage projectId={projectId ?? ""} />;
+  return <LazyOathsIndex projectId={projectId ?? ""} />;
 }
 
 function OathsChartRoute() {
   const { chartId } = useParams();
-  return <OathsChartPage chartId={chartId ?? ""} />;
+  return <LazyOathsChart chartId={chartId ?? ""} />;
 }
 
 function WellSpringIndexRoute() {
   const { projectId } = useParams();
-  return <WellSpringIndexPage projectId={projectId ?? ""} />;
+  return <LazyWellIndex projectId={projectId ?? ""} />;
 }
 
 function WellSpringRoute() {
   const { wellId } = useParams();
-  return <WellSpringPage wellId={wellId ?? ""} />;
+  return <LazyWellSpring wellId={wellId ?? ""} />;
 }
 
 function ConlangIndexRoute() {
   const { projectId } = useParams();
-  return <ConlangIndexPage projectId={projectId ?? ""} />;
+  return <LazyConlangIndex projectId={projectId ?? ""} />;
 }
 
 function ConlangRoute() {
   const { conlangId } = useParams();
-  return <ConlangPage conlangId={conlangId ?? ""} />;
+  return <LazyConlang conlangId={conlangId ?? ""} />;
 }
 
 function BinderyIndexRoute() {
   const { projectId } = useOutletContext<WorkspaceContext>();
-  return <BinderyIndex projectId={projectId} />;
+  return <LazyBinderyIndex projectId={projectId} />;
 }
 
 function BinderyRoute() {
   const { manuscriptId } = useParams();
-  return <BinderyPage manuscriptId={manuscriptId ?? ""} />;
+  return <LazyBindery manuscriptId={manuscriptId ?? ""} />;
 }
 
 export function AppRouter() {
-  // Deep-link safety: zustand/persist rehydrates async — blocking the first
-  // render until hydration completes keeps WorkspaceLayout from falsely
-  // redirecting to "/" on plen reloads (URL paste / F5 on /p/:id/...).
+  // Deep-link safety: zustand/persist rehydrates async and IndexedDB images load
+  // async after that — blocking the first render until both complete keeps
+  // WorkspaceLayout from falsely redirecting to "/" on plen reloads (URL paste /
+  // F5 on /p/:id/...) and keeps cover/map/avatar surfaces free of placeholders.
   const [hydrated, setHydrated] = useState(() => useScriptorium.persist.hasHydrated());
+  const imagesReady = useScriptorium((s) => s.imagesReady);
   useEffect(() => {
     if (hydrated) return;
     return useScriptorium.persist.onFinishHydration(() => setHydrated(true));
   }, [hydrated]);
 
-  if (!hydrated) return <div className="min-h-screen bg-background" data-testid="hydration-splash" />;
+  if (!hydrated || !imagesReady) return <div className="min-h-screen bg-background" data-testid="hydration-splash" />;
 
   return (
     <>
-      <Routes>
+      <Suspense
+        fallback={<div className="min-h-screen bg-background" data-testid="chunk-splash" />}
+      >
+        <Routes>
         <Route path="/" element={<LibraryPage />} />
         <Route path="/p/:projectId" element={<WorkspaceLayout />}>
         <Route index element={<OverviewPage />} />
-        <Route path="atlas" element={<AtlasIndexPage />} />
+        <Route path="atlas" element={<LazyAtlasIndex />} />
         <Route path="atlas/:atlasId" element={<AtlasEditorRoute />} />
         <Route path="entries" element={<CodexRoute />} />
         <Route path="timeline" element={<TimelineRoute />} />
@@ -182,8 +174,9 @@ export function AppRouter() {
         <Route path="bindery/:manuscriptId" element={<BinderyRoute />} />
         <Route path="manuscript" element={<ManuscriptRoute />} />
       </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
       <CommandPalette />
       <Toasts />
     </>

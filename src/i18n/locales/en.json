@@ -1,6 +1,7 @@
 {
   "persist": {
-    "quotaFailed": "Could not save — browser storage is full. Download a backup copy."
+    "quotaFailed": "Could not save — browser storage is full. Download a backup copy.",
+    "imageNotSaved": "That image could not be saved for future visits — it remains visible until the page reloads. Export a backup and try again."
   },
   "common": {
     "cancel": "Cancel",

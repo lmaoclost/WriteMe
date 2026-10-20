@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act } from "@testing-library/react";
 import { useScriptorium } from "./store";
 import { STORE_KEY, flushPendingPersist } from "./storage";
+import { blobToDataUrl, imageBlob } from "./imageStore";
 import { validateProjectData } from "./schema";
 import type { Project, WorldEntry, EntryCategory } from "../domain/types";
 
@@ -196,7 +197,7 @@ describe("putEntryImage", () => {
   it("returns false for an unknown entry", () => {
     expect(store().putEntryImage("ent_missing", DATA_URL)).toBe(false);
   });
-  it("assigns an img_entry_ key and the payload persists read-back", () => {
+  it("assigns an img_entry_ key and the payload lands in IndexedDB, never in the doc", async () => {
     const entry = makeEntry();
     let ok = false;
     act(() => { ok = store().putEntryImage(entry.id, DATA_URL); });
@@ -205,10 +206,13 @@ describe("putEntryImage", () => {
     expect(imageKey).toMatch(/^img_entry_/);
     expect(store().images[imageKey]).toBe(DATA_URL);
     flushPendingPersist();
-    const doc = JSON.parse(localStorage.getItem(STORE_KEY)!) as {
-      state: { images: Record<string, string> };
-    };
-    expect(doc.state.images[imageKey]).toBe(DATA_URL);
+    const doc = JSON.parse(localStorage.getItem(STORE_KEY)!) as { state: { images: Record<string, string> } };
+    expect(Object.keys(doc.state.images)).toHaveLength(0);
+    await vi.waitFor(async () => {
+      const blob = await imageBlob(imageKey);
+      expect(blob).toBeTruthy();
+      expect((await blobToDataUrl(blob!)).startsWith("data:image/png;base64,")).toBe(true);
+    });
   });
   it("swaps the cover and releases the previous key", () => {
     const entry = makeEntry();

@@ -9,12 +9,17 @@ vi.mock("../../data/image", () => ({
   fileToDataUrl: vi.fn(async () => ({ dataUrl: "data:image/png;base64,COVER", keptPng: true })),
 }));
 
-function at(path: string) {
-  return (
+async function at(path: string): Promise<ReturnType<typeof render>> {
+  const view = render(
     <MemoryRouter initialEntries={[path]}>
       <AppRouter />
-    </MemoryRouter>
+    </MemoryRouter>,
   );
+  await waitFor(() => {
+    expect(screen.queryByTestId("hydration-splash")).toBeNull();
+    expect(screen.queryByTestId("chunk-splash")).toBeNull();
+  });
+  return view;
 }
 
 beforeEach(() => {
@@ -23,22 +28,22 @@ beforeEach(() => {
 });
 
 describe("shell routes", () => {
-  it("root shows library", () => {
-    render(at("/"));
+  it("root shows library", async () => {
+    await at("/");
     expect(screen.getByText("Scriptorium")).toBeInTheDocument();
   });
 
   it("unknown project redirects to library with a toast", async () => {
-    render(at("/p/does-not-exist"));
+    await at("/p/does-not-exist");
     await waitFor(() => {
       expect(useScriptorium.getState().toasts.some((t) => /removed/i.test(t.message))).toBe(true);
     });
     expect(screen.getByText("Scriptorium")).toBeInTheDocument();
   });
 
-  it("workspace overview shows counts and rail sections", () => {
+  it("workspace overview shows counts and rail sections", async () => {
     const p = useScriptorium.getState().addProject("Shimradis");
-    render(at(`/p/${p.id}`));
+    await at(`/p/${p.id}`);
     expect(screen.getAllByText(/Shimradis/).length).toBeGreaterThan(0);
     const rail = within(screen.getByRole("navigation", { name: /World sections/i }));
     expect(rail.getByRole("link", { name: /Overview/i })).toHaveAttribute("href", `/p/${p.id}`);
@@ -48,9 +53,9 @@ describe("shell routes", () => {
     expect(rail.getByRole("link", { name: /My worlds/i })).toHaveAttribute("href", "/");
   });
 
-  it("atlas route shows the atlas index (not a placeholder)", () => {
+  it("atlas route shows the atlas index (not a placeholder)", async () => {
     const p = useScriptorium.getState().addProject("X");
-    render(at(`/p/${p.id}/atlas`));
+    await at(`/p/${p.id}/atlas`);
     expect(screen.getByText("No saved atlases found. Create a new one first!")).toBeInTheDocument();
     expect(screen.queryByText(/sub-projeto 2/i)).not.toBeInTheDocument();
   });
@@ -60,7 +65,7 @@ describe("shell routes", () => {
 describe("overview cover", () => {
   it("uploads a cover from file and records image key", async () => {
     const p = useScriptorium.getState().addProject("Coberto");
-    render(at(`/p/${p.id}`));
+    await at(`/p/${p.id}`);
     fireEvent.change(screen.getByLabelText("Change cover"), {
       target: { files: [new File(["c"], "capa.png", { type: "image/png" })] },
     });
@@ -79,7 +84,7 @@ describe("overview cover", () => {
     let oldKey!: string;
     act(() => { oldKey = useScriptorium.getState().putImage("data:image/png;base64,OLD", "cover"); });
     act(() => { useScriptorium.getState().updateProject(p.id, { coverImageKey: oldKey }); });
-    render(at(`/p/${p.id}`));
+    await at(`/p/${p.id}`);
     fireEvent.change(screen.getByLabelText("Change cover"), {
       target: { files: [new File(["c"], "capa.png", { type: "image/png" })] },
     });
@@ -97,7 +102,7 @@ describe("overview cover", () => {
   it("shows an error toast when cover upload fails", async () => {
     vi.mocked(fileToDataUrl).mockRejectedValueOnce(new Error("boom"));
     const p = useScriptorium.getState().addProject("Falha");
-    render(at(`/p/${p.id}`));
+    await at(`/p/${p.id}`);
     fireEvent.change(screen.getByLabelText("Change cover"), {
       target: { files: [new File(["c"], "capa.png", { type: "image/png" })] },
     });
@@ -114,9 +119,9 @@ describe("overview dashboard", () => {
     return id;
   }
 
-  it("ledger lists all 13 forge rows with counters after seeding", () => {
+  it("ledger lists all 13 forge rows with counters after seeding", async () => {
     const pid = seeded();
-    render(at(`/p/${pid}`));
+    await at(`/p/${pid}`);
     const ledger = within(screen.getByRole("region", { name: "Forge ledger" }));
     expect(ledger.getAllByRole("listitem")).toHaveLength(13);
     ["Lore", "Atlas", "Chronology", "Bloodline", "Oaths", "Factions",
@@ -124,9 +129,9 @@ describe("overview dashboard", () => {
       .forEach((n) => expect(ledger.getByText(n)).toBeInTheDocument());
   });
 
-  it("counter numbers match the world state", () => {
+  it("counter numbers match the world state", async () => {
     const pid = seeded();
-    render(at(`/p/${pid}`));
+    await at(`/p/${pid}`);
     const ledger = within(screen.getByRole("region", { name: "Forge ledger" }));
     expect(ledger.getByLabelText("Lore entries")).toHaveTextContent("16");
     expect(ledger.getByLabelText("Chronology events")).toHaveTextContent("1");
@@ -136,9 +141,9 @@ describe("overview dashboard", () => {
     expect(ledger.getByLabelText("Plot board cards")).toHaveTextContent("7");
   });
 
-  it("rows link to each forge page", () => {
+  it("rows link to each forge page", async () => {
     const pid = seeded();
-    render(at(`/p/${pid}`));
+    await at(`/p/${pid}`);
     const ledger = within(screen.getByRole("region", { name: "Forge ledger" }));
     expect(ledger.getByRole("link", { name: /Plot board/i })).toHaveAttribute("href", `/p/${pid}/plotboard`);
     expect(ledger.getByRole("link", { name: /Ideas/i })).toHaveAttribute("href", `/p/${pid}/wellspring`);
@@ -147,24 +152,24 @@ describe("overview dashboard", () => {
     expect(ledger.getByRole("link", { name: /Chronology/i })).toHaveAttribute("href", `/p/${pid}/timeline`);
   });
 
-  it("portability actions are gone from the overview", () => {
+  it("portability actions are gone from the overview", async () => {
     const pid = seeded();
-    render(at(`/p/${pid}`));
+    await at(`/p/${pid}`);
     expect(screen.queryByRole("button", { name: /export/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /import/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /example/i })).toBeNull();
   });
 
-  it("hero shows the world name in EN with a cover control", () => {
+  it("hero shows the world name in EN with a cover control", async () => {
     const pid = seeded();
-    render(at(`/p/${pid}`));
+    await at(`/p/${pid}`);
     expect(screen.getByRole("heading", { level: 1, name: /Vellmora/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/change cover/i)).toBeInTheDocument();
   });
 
-  it("empty rows show a purpose line and an action call instead of a dash", () => {
+  it("empty rows show a purpose line and an action call instead of a dash", async () => {
     const pid = useScriptorium.getState().addProject("Blank world").id;
-    render(at(`/p/${pid}`));
+    await at(`/p/${pid}`);
     const ledger = within(screen.getByRole("region", { name: "Forge ledger" }));
     expect(ledger.getByText("Characters, places, creatures and things")).toBeInTheDocument();
     expect(ledger.getByText("Map regions and drop pins for places")).toBeInTheDocument();
@@ -175,30 +180,30 @@ describe("overview dashboard", () => {
     expect(ledger.getByRole("link", { name: "Open an idea board" })).toBeInTheDocument();
   });
 
-  it("non-empty rows keep counters over the action call", () => {
+  it("non-empty rows keep counters over the action call", async () => {
     const pid = seeded();
-    render(at(`/p/${pid}`));
+    await at(`/p/${pid}`);
     const ledger = within(screen.getByRole("region", { name: "Forge ledger" }));
     expect(ledger.getByLabelText("Lore entries")).toHaveTextContent("16");
     expect(ledger.queryByText(/Write your first entry/i)).toBeNull();
   });
 });
 describe("Bindery index", () => {
-  it("rail gains a Publishing item and the ledger row points at the index", () => {
+  it("rail gains a Publishing item and the ledger row points at the index", async () => {
     const p = useScriptorium.getState().addProject("Shimradis");
-    render(at(`/p/${p.id}`));
+    await at(`/p/${p.id}`);
     const rail = within(screen.getByRole("navigation", { name: /world sections/i }));
     expect(rail.getByRole("link", { name: "Publishing" })).toHaveAttribute("href", `/p/${p.id}/bindery`);
     const ledger = within(screen.getByRole("region", { name: "Forge ledger" }));
     expect(ledger.getByRole("link", { name: /Publishing/i })).toHaveAttribute("href", `/p/${p.id}/bindery`);
   });
 
-  it("index lists manuscripts with chapter counts and links into the deep route", () => {
+  it("index lists manuscripts with chapter counts and links into the deep route", async () => {
     const p = useScriptorium.getState().addProject("Shimradis");
     act(() => { useScriptorium.getState().addManuscript(p.id, "Cantar de Vellmora"); });
     act(() => { useScriptorium.getState().addChapter(useScriptorium.getState().manuscripts[0].id, "Arco da Coroa"); });
     act(() => { useScriptorium.getState().setBindery(useScriptorium.getState().manuscripts[0].id, { trim: "5x8" }); });
-    render(at(`/p/${p.id}/bindery`));
+    await at(`/p/${p.id}/bindery`);
     expect(screen.getByRole("heading", { name: "Publishing" })).toBeInTheDocument();
     const row = screen.getByRole("link", { name: /Cantar de Vellmora/i });
     expect(row.getAttribute("href")).toBe(`/p/${p.id}/bindery/${useScriptorium.getState().manuscripts[0].id}`);
@@ -206,17 +211,17 @@ describe("Bindery index", () => {
     expect(screen.getByText(/5 × 8/i)).toBeInTheDocument();
   });
 
-  it("empty index invites creating a manuscript in the Manuscript forge", () => {
+  it("empty index invites creating a manuscript in the Manuscript forge", async () => {
     const p = useScriptorium.getState().addProject("Shimradis");
-    render(at(`/p/${p.id}/bindery`));
+    await at(`/p/${p.id}/bindery`);
     expect(screen.getByText(/no manuscripts yet/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /open the manuscript/i })).toHaveAttribute("href", `/p/${p.id}/manuscript`);
   });
 
-  it("deep route still configures the specific manuscript", () => {
+  it("deep route still configures the specific manuscript", async () => {
     const p = useScriptorium.getState().addProject("Shimradis");
     act(() => { useScriptorium.getState().addManuscript(p.id, "Cantar"); });
-    render(at(`/p/${p.id}/bindery/${useScriptorium.getState().manuscripts[0].id}`));
+    await at(`/p/${p.id}/bindery/${useScriptorium.getState().manuscripts[0].id}`);
     expect(screen.getByLabelText("Typography")).toBeInTheDocument();
   });
 });

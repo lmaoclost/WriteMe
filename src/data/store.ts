@@ -22,8 +22,9 @@ import { defaultBindery } from "./schema";
 import { seedDemoProject } from "./seed";
 import { claimRest, fitGap } from "./clip";
 import { getLastRegionColor } from "../features/atlas/panels/recentColors";
-import { STORE_KEY, localStoragePersistence, wipeStore, storageHealth, flushPendingPersist, PersistedState, onPersistQuotaChange } from "./storage";
+import { STORE_KEY, localStoragePersistence, wipeStore, storageHealth, PersistedState, onPersistQuotaChange } from "./storage";
 import { downloadJson } from "./backup";
+import { allImageBlobs, blobToDataUrl, dataUrlToBlob, deleteImageBlob, onImageWriteFailure, putImageBlob } from "./imageStore";
 
 export type ToastKind = "info" | "error" | "success";
 export interface Toast { id: string; kind: ToastKind; message: string; action?: ToastAction }
@@ -187,6 +188,9 @@ interface ScriptoriumState extends ProjectData {
   histories: Record<string, AnyHistory>;
   /** id of the live "storage full" toast; recovery dismisses exactly this one. */
   quotaToastId: string | null;
+  /** true when idle or done; the boot pass flips it false while merging IndexedDB
+   *  images into the in-memory map (router splash). */
+  imagesReady: boolean;
 
   addProject(name: string, description?: string): Project;
   updateProject(id: string, patch: { name?: string; description?: string; coverImageKey?: string; customCategories?: Project["customCategories"] }): void;
@@ -387,6 +391,7 @@ export const useScriptorium = create<ScriptoriumState>()(
       seedFlag: false,
       histories: {},
       quotaToastId: null,
+      imagesReady: true,
 
       setPaletteOpen(open: boolean) {
         set({ paletteOpen: open });
@@ -629,25 +634,6 @@ export const useScriptorium = create<ScriptoriumState>()(
         if (!atlas) return false;
         const key = `img_map_${newId("")}`;
         set((st) => ({ images: { ...st.images, [key]: dataUrl } }));
-        flushPendingPersist(); // coalesced write must land before the quota readback
-        let stored = false;
-        try {
-          const raw = localStorage.getItem(STORE_KEY);
-          if (raw) {
-            const doc = JSON.parse(raw) as { state: { images: Record<string, string> } };
-            stored = doc.state.images[key] === dataUrl;
-          }
-        } catch {
-          stored = false;
-        }
-        if (!stored) {
-          set((st) => {
-            const images = { ...st.images };
-            delete images[key];
-            return { images };
-          });
-          return false;
-        }
         const prevKey = atlas.mapImageKey;
         set((st) => ({
           atlases: st.atlases.map((a) => (a.id === atlasId ? { ...a, mapImageKey: key } : a)),
@@ -735,25 +721,6 @@ export const useScriptorium = create<ScriptoriumState>()(
         if (!entry) return false;
         const key = `img_entry_${newId("")}`;
         set((st) => ({ images: { ...st.images, [key]: dataUrl } }));
-        flushPendingPersist(); // coalesced write must land before the quota readback
-        let stored = false;
-        try {
-          const raw = localStorage.getItem(STORE_KEY);
-          if (raw) {
-            const doc = JSON.parse(raw) as { state: { images: Record<string, string> } };
-            stored = doc.state.images[key] === dataUrl;
-          }
-        } catch {
-          stored = false;
-        }
-        if (!stored) {
-          set((st) => {
-            const images = { ...st.images };
-            delete images[key];
-            return { images };
-          });
-          return false;
-        }
         const prevKey = entry.imageKey;
         set((st) => ({
           entries: st.entries.map((e) =>
@@ -3055,17 +3022,19 @@ export const useScriptorium = create<ScriptoriumState>()(
         const p = persisted as Partial<PersistedState>;
         return { ...norm(persisted as PersistedState), bloodlines: p.bloodlines ?? [] } as PersistedState;
       },
-      partialize: ({ histories: _h, paletteOpen: _p, toasts: _t, quotaToastId: _q, ...s }): PersistedState => {
+      partialize: ({ histories: _h, paletteOpen: _p, toasts: _t, quotaToastId: _q, images: _i, imagesReady: _r, ...s }): PersistedState => {
         void _h; // ephemeral histories are never persisted
         void _p; // palette visibility is never persisted
         void _t; // toasts are never persisted
         void _q; // the live quota toast id is never persisted
+        void _i; // image payloads live in IndexedDB; the doc keeps an EMPTY record
+        void _r; // boot image readiness is never persisted
         return {
           projects: s.projects,
           entries: s.entries,
           atlases: s.atlases,
           manuscripts: s.manuscripts,
-          images: s.images,
+          images: {},
           bloodlines: s.bloodlines,
           factionWebs: s.factionWebs,
           calendars: s.calendars,
@@ -3111,6 +3080,66 @@ onPersistQuotaChange((failed) => {
     useScriptorium.setState({ quotaToastId: null });
   }
 });
+
+// ---- durable image sync (IndexedDB) ------------------------------------
+type ImageMapRecord = Record<string, string>;
+
+onImageWriteFailure((key) => {
+  void key;
+  useScriptorium.getState().pushToast("error", i18n.t("persist.imageNotSaved"));
+});
+
+function syncImageDeltas(next: ImageMapRecord, prev: ImageMapRecord): void {
+  for (const key of Object.keys(next)) {
+    if (!(key in prev)) {
+      // fire-and-forget: failures surface through onImageWriteFailure, never unhandled
+      void putImageBlob(key, next[key]).catch(() => {});
+    }
+  }
+  for (const key of Object.keys(prev)) {
+    if (!(key in next)) void deleteImageBlob(key);
+  }
+}
+
+useScriptorium.subscribe((state, prev) => {
+  if (state.images === prev.images) return;
+  syncImageDeltas(state.images, prev.images);
+});
+
+/** Remove image payloads from the persisted doc once they live in IndexedDB. */
+function stripLegacyImages(): void {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return;
+    const doc = JSON.parse(raw) as { state?: { images?: ImageMapRecord } };
+    if (doc.state?.images && Object.keys(doc.state.images).length > 0) {
+      doc.state.images = {};
+      localStorage.setItem(STORE_KEY, JSON.stringify(doc));
+    }
+  } catch {
+    /* storage unavailable: the legacy map survives and migration retries next boot */
+  }
+}
+
+void (async function bootstrapImages(): Promise<void> {
+  try {
+    // in-flight marker: the router shows the splash while this pass runs
+    useScriptorium.setState({ imagesReady: false });
+    const persisted = useScriptorium.getState().images;
+    const idbUrls = new Map<string, string>();
+    for (const [key, blob] of await allImageBlobs()) {
+      idbUrls.set(key, await blobToDataUrl(blob));
+    }
+    for (const [key, dataUrl] of Object.entries(persisted)) {
+      if (!idbUrls.has(key)) await putImageBlob(key, await dataUrlToBlob(dataUrl));
+    }
+    if (Object.keys(persisted).length > 0) stripLegacyImages();
+    const merged: ImageMapRecord = { ...persisted, ...Object.fromEntries(idbUrls) };
+    useScriptorium.setState({ images: merged, imagesReady: true });
+  } catch {
+    useScriptorium.setState({ imagesReady: true });
+  }
+})();
 
 // selectors
 export const selectProject = (id: string) => (s: ScriptoriumState): Project | undefined =>
