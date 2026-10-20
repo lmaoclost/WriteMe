@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { useScriptorium } from "../../data/store";
@@ -12,6 +12,10 @@ const store = () => useScriptorium.getState();
 beforeEach(() => {
   localStorage.clear();
   useScriptorium.setState(useScriptorium.getInitialState());
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 const seedBook = () => {
@@ -306,6 +310,34 @@ describe("BinderyPage", () => {
     expect(document.querySelector("body > [data-testid='print-book']")).toBeNull();
   });
 
+  it("keeps the print portal mounted while the print dialog is open", async () => {
+    vi.useFakeTimers();
+    const id = seedBook();
+    Object.defineProperty(window, "print", { value: vi.fn(), configurable: true });
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    fireEvent.click(screen.getByRole("button", { name: "Print preview" }));
+
+    act(() => { vi.advanceTimersByTime(5_000); }); // Safari may keep the dialog open this long
+    expect(document.querySelector("body > [data-testid='print-book']")).toBeTruthy();
+
+    act(() => { window.dispatchEvent(new Event("afterprint")); });
+    expect(document.querySelector("body > [data-testid='print-book']")).toBeNull();
+  });
+
+  it("settles on window focus when afterprint never arrives", async () => {
+    vi.useFakeTimers();
+    const id = seedBook();
+    Object.defineProperty(window, "print", { value: vi.fn(), configurable: true });
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    fireEvent.click(screen.getByRole("button", { name: "Print preview" }));
+
+    act(() => { vi.advanceTimersByTime(5_000); });
+    expect(document.querySelector("body > [data-testid='print-book']")).toBeTruthy();
+
+    act(() => { window.dispatchEvent(new Event("focus")); });
+    expect(document.querySelector("body > [data-testid='print-book']")).toBeNull();
+  });
+
   it("the print stylesheet hides the whole app shell (#root), not a phantom .workspace class", async () => {
     const fsp = await import("node:fs/promises");
     const css = await fsp.readFile("src/app/print.css", "utf8");
@@ -436,8 +468,16 @@ describe("Bindery preset picker, advanced groups and print hints", () => {
     expect(hint).toHaveTextContent(/print dialog/i);
     expect(hint).toHaveTextContent(/never in the on-screen preview/i);
     expect(hint).toHaveTextContent(/Headers and footers/i);
-    expect(hint).toHaveTextContent(/Chrome/);
-    expect(hint).toHaveTextContent(/Edge/);
+    expect(hint).not.toHaveTextContent(/Chrome/);
+  });
+
+  it("recommends desktop Chrome or Edge on engines without page margin boxes", () => {
+    const id = seedBook();
+    render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
+    const engineHint = screen.getByTestId("print-engine-hint");
+    expect(engineHint).toHaveTextContent(/Chrome/);
+    expect(engineHint).toHaveTextContent(/Edge/);
+    expect(engineHint).toHaveTextContent(/WebKit/);
   });
 
   it("typography group exposes body size, leading, indent, justification and hyphens", () => {

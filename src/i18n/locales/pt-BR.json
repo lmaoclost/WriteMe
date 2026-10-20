@@ -1313,7 +1313,8 @@
     "pageEstimate_one": "≈ {{count}} página",
     "pageEstimate_other": "≈ {{count}} páginas",
     "pageEstimateHint": "— estimativa por contagem de palavras; a paginação final só sai na impressão.",
-    "printHint": "Cabeças de página e fólios aparecem apenas no diálogo de impressão — nunca na prévia na tela. Desmarque \"Cabeçalhos e rodapés\" no diálogo, senão o navegador imprime números por cima do fólio. Imprima pelo Chrome ou Edge.",
+    "printHint": "Cabeças de página e fólios aparecem apenas no diálogo de impressão — nunca na prévia na tela. Desmarque \"Cabeçalhos e rodapés\" no diálogo, senão o navegador imprime números por cima do fólio.",
+    "printHintEngine": "Este navegador não imprime cabeças nem fólios: eles dependem de margin boxes do CSS, que só o Chromium implementa. Imprima pelo Chrome ou Edge no desktop — no iOS, todo navegador usa WebKit.",
     "ornament": {
       "blank": "Nenhum",
       "asterisks": "Asteriscos",

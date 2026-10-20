@@ -10,6 +10,7 @@ import {
 } from "./buildBook";
 import { estimatePageCount } from "./bindery";
 import { buildEpubCss } from "./epubCss";
+import { downloadBlob } from "../../data/download";
 import { i18n, normalizeLanguage } from "../../i18n";
 
 /** Lowercase, accent-folded, runs of non-alnum become one dash, trimmed; empty → the localized fallback. */
@@ -56,12 +57,7 @@ export function ExportButtons({ manuscript }: ExportButtonsProps) {
           children: buildDocxChildren(manuscript),
         }],
       }));
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = `${slugify(manuscript.title)}.docx`;
-      anchor.click();
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, `${slugify(manuscript.title)}.docx`);
       useScriptorium.getState().pushToast("success", t("export.docxSuccess"));
     } catch {
       useScriptorium.getState().pushToast("error", t("export.docxError"));
@@ -139,12 +135,7 @@ export function ExportButtons({ manuscript }: ExportButtonsProps) {
       const epub = new EPub(options, entries);
       const data = await epub.genEpub();
       const blob = new Blob([data as BlobPart], { type: "application/epub+zip" });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = `${slugify(manuscript.title)}.epub`;
-      anchor.click();
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, `${slugify(manuscript.title)}.epub`);
       pushToast("success", t("export.epubSuccess"));
     } catch (error) {
       console.error("EPUB export failed:", error);
