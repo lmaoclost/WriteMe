@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Field } from "../../ui/Field";
 import { BOARD_HEADER, BOARD_ACTIONS, BOARD_ACTION_BTN, BOARD_PANEL } from "../../ui/board";
 import { buildBookHtml, bookSections } from "./buildBook";
+import { isChromiumEngine } from "../../lib/engine";
 import type { BinderPreset, BinderyConfig, SceneOrnament } from "../../domain/types";
 
 /** Nested bindery blocks — a control inside one must write the whole block. */
@@ -84,7 +85,11 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
     if (!manuscript) pushToast("error", t("bindery.loadFirst"));
   }, [manuscript, pushToast, t]);
 
-  // print pass: fires once the body-level print-book portal is in the DOM
+  // print pass: fires once the body-level print-book portal is in the DOM.
+  // afterprint is the reliable signal; focus covers a closed dialog where the
+  // event never arrives. The timeout is only a last resort: Safari may return
+  // from print() before the dialog closes, so a short timer would unmount the
+  // book mid-dialog.
   useEffect(() => {
     if (!printing) return;
     let settled = false;
@@ -95,10 +100,12 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
     };
     const frame = window.requestAnimationFrame(() => window.print());
     window.addEventListener("afterprint", stop);
+    window.addEventListener("focus", stop);
     const timeout = window.setTimeout(stop, PRINT_SETTLE_MS);
     return () => {
       window.cancelAnimationFrame(frame);
       window.removeEventListener("afterprint", stop);
+      window.removeEventListener("focus", stop);
       window.clearTimeout(timeout);
     };
   }, [printing]);
@@ -306,6 +313,11 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
           <p className="text-slate text-xs leading-relaxed" role="note" data-testid="print-hint">
             {t("bindery.printHint")}
           </p>
+          {!isChromiumEngine() && (
+            <p className="text-slate text-xs leading-relaxed" role="note" data-testid="print-engine-hint">
+              {t("bindery.printHintEngine")}
+            </p>
+          )}
         </aside>
         <div className="overflow-auto p-6 bg-ink" data-testid="bindery-preview">
           <style>{css}</style>
@@ -341,7 +353,7 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
   );
 }
 
-const PRINT_SETTLE_MS = 800;
+const PRINT_SETTLE_MS = 60_000;
 
 /** Bindery index: every manuscript of the project + where it stands. */
 export function BinderyIndex({ projectId }: { projectId: string }) {

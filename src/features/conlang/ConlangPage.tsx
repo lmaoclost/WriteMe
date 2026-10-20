@@ -9,6 +9,7 @@ import { Field } from "../../ui/Field";
 import { Button } from "../../ui/Button";
 import { BOARD_HEADER, BOARD_NAME_INPUT, BOARD_ACTIONS, BOARD_ACTION_BTN, BOARD_NOTEPAD, BOARD_NOTEPAD_HEAD, BOARD_NOTEPAD_TXT } from "../../ui/board";
 import { useBoardNotesHotkey } from "../../ui/boardNotes";
+import { downloadBlob, downloadUrl } from "../../data/download";
 
 
 export function ConlangPage({ conlangId }: { conlangId: string }) {
@@ -64,10 +65,7 @@ export function ConlangPage({ conlangId }: { conlangId: string }) {
 const NEXT_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 function downloadSheet(svg: string, name: string) {
-  const a = document.createElement("a");
-  a.href = `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-  a.download = `${name}.svg`;
-  a.click();
+  downloadUrl(`data:image/svg+xml;utf8,${encodeURIComponent(svg)}`, `${name}.svg`);
 }
 
 function AlphabetTab({ conlang, selectedGlyph, onSelect }: {
@@ -93,12 +91,7 @@ function AlphabetTab({ conlang, selectedGlyph, onSelect }: {
       ctx.drawImage(img, 0, 0);
       canvas.toBlob((blob) => {
         if (!blob) { downloadSheet(svg, name); return; }
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${name}.png`;
-        a.click();
-        URL.revokeObjectURL(url);
+        downloadBlob(blob, `${name}.png`);
       }, "image/png");
     };
     img.src = `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;

@@ -232,6 +232,8 @@ The Manuscript preset opts out of the opener rules: flush openings, no sink, ope
 
 ### Paged-Media Limits
 
+The print path targets Chromium. Firefox and Safari honor `@page size` and margins (Firefox 95+; Safari 18.2+), but implement no page-margin boxes, so running heads and folios are dropped there. The Bindery shows an engine-specific note instead of pretending parity.
+
 Chromium implements none of the five paged-media features the print path would want, and each absence costs something:
 
 - **No `string-set`.** It would give the running head the current chapter's heading automatically — one rule, the page-margin string following the document. Instead, a running head per chapter comes from **named pages**: each chapter gets an `@page chN` whose top margin carries that chapter's title, selected by the chapter's index; book mode puts the book title on the base page instead.
