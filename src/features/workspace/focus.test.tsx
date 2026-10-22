@@ -19,6 +19,13 @@ describe("isWritingPath", () => {
     expect(isWritingPath("/p/p1/bindery")).toBe(false);
     expect(isWritingPath("/p/p1/wellspring")).toBe(false);
   });
+
+  it("normalizes trailing slashes", () => {
+    expect(isWritingPath("/p/p1/manuscript/")).toBe(true);
+    expect(isWritingPath("/p/p1/bindery/m1/")).toBe(true);
+    expect(isWritingPath("/p/p1/wellspring/w1/")).toBe(true);
+    expect(isWritingPath("/p/p1/bindery/")).toBe(false);
+  });
 });
 
 describe("FocusToggle", () => {
@@ -36,6 +43,7 @@ describe("FocusToggle", () => {
     );
     const off = screen.getByRole("button", { name: "Focus" });
     expect(off).toHaveAttribute("aria-pressed", "false");
+    expect(off).toHaveAttribute("aria-keyshortcuts", "Control+Shift+F");
     fireEvent.click(off);
     expect(toggle).toHaveBeenCalledTimes(1);
 
@@ -87,6 +95,15 @@ describe("focus mode", () => {
     const p = useScriptorium.getState().addProject("Calm");
     await at(`/p/${p.id}/entries`);
     fireEvent.keyDown(document.body, { key: "F", ctrlKey: true, shiftKey: true });
+    expect(rail()).toBeInTheDocument();
+  });
+
+  it("ignores auto-repeated keydowns", async () => {
+    const p = useScriptorium.getState().addProject("Steady");
+    await at(`/p/${p.id}/manuscript`);
+    expect(rail()).toBeInTheDocument();
+
+    fireEvent.keyDown(document.body, { key: "F", ctrlKey: true, shiftKey: true, repeat: true });
     expect(rail()).toBeInTheDocument();
   });
 

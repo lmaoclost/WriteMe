@@ -14,7 +14,8 @@ export const FocusContext = createContext<FocusValue | null>(null);
 /** Writing routes only: manuscript, bindery/:id, wellspring/:id.
  *  The index lists (bindery, wellspring) are not writing surfaces. */
 export function isWritingPath(pathname: string): boolean {
-  const rest = pathname.match(/^\/p\/[^/]+\/(.+)$/)?.[1] ?? "";
+  const base = pathname.replace(/\/+$/, "");
+  const rest = base.match(/^\/p\/[^/]+\/(.+)$/)?.[1] ?? "";
   if (rest === "manuscript") return true;
   return /^bindery\/[^/]+$/.test(rest) || /^wellspring\/[^/]+$/.test(rest);
 }
@@ -28,6 +29,7 @@ export function FocusToggle() {
     <button
       type="button"
       aria-pressed={ctx.focus}
+      aria-keyshortcuts="Control+Shift+F"
       title={t("workspace.focus.tip")}
       className="flex items-center gap-1.5 cursor-pointer bg-none border-0 px-2 py-1.5 text-xs uppercase tracking-[0.1em] text-slate hover:text-parchment aria-pressed:text-gold"
       onClick={ctx.toggle}

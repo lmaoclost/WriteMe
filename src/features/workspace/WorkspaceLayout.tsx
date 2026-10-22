@@ -29,6 +29,7 @@ export function WorkspaceLayout() {
   useEffect(() => {
     if (!writing) return;
     const onKey = (e: KeyboardEvent) => {
+      if (e.repeat) return;
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "f") {
         e.preventDefault();
         setFocus((v) => !v);
