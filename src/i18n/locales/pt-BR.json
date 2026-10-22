@@ -131,7 +131,12 @@
     "worldSections": "Seções do mundo",
     "myWorlds": "← Meus mundos",
     "search": "Buscar",
-    "worldMissing": "Este mundo não existe ou foi removido."
+    "worldMissing": "Este mundo não existe ou foi removido.",
+    "focus": {
+      "toggle": "Foco",
+      "exit": "Sair do foco",
+      "tip": "Modo foco — Ctrl+Shift+F (Esc sai)"
+    }
   },
   "overview": {
     "forgeLedger": "Livro do mundo",

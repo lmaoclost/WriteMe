@@ -131,7 +131,12 @@
     "worldSections": "World sections",
     "myWorlds": "← My worlds",
     "search": "Search",
-    "worldMissing": "This world doesn't exist or was removed."
+    "worldMissing": "This world doesn't exist or was removed.",
+    "focus": {
+      "toggle": "Focus",
+      "exit": "Exit focus",
+      "tip": "Focus mode — Ctrl+Shift+F (Esc exits)"
+    }
   },
   "overview": {
     "forgeLedger": "Forge ledger",
