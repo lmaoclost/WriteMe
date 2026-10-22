@@ -173,7 +173,8 @@ export function FocusToggle() {
       {ctx.focus ? t("workspace.focus.exit") : t("workspace.focus.toggle")}
     </button>
   );
-}```
+}
+```
 
 - [ ] **Step 5: Run the tests to verify they pass**
 
