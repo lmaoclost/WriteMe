@@ -10,6 +10,7 @@ import { WellNotepad } from "./WellNotepad";
 import type { WellSpring, WellKind } from "../../domain/types";
 import { useBoardNotesHotkey } from "../../ui/boardNotes";
 import { useRafState, useRafCallback } from "../../ui/useRaf";
+import { FocusToggle } from "../workspace/focus";
 
 
 export const WELL_KIND_META = {
@@ -102,6 +103,7 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
           <button type="button" aria-label={t("wellspring.page.undo")} className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoWS(wellId)}>↶</button>
           <button type="button" aria-label={t("wellspring.page.redo")} className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoWS(wellId)}>↷</button>
           <button type="button" aria-pressed={notesOpen} className={BOARD_ACTION_BTN} onClick={() => setNotesOpen((v) => !v)}>{t("wellspring.page.notes")}</button>
+          <FocusToggle />
         </div>
       </header>
       <div className="grid grid-cols-[1fr_320px] min-h-0 overflow-hidden">

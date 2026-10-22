@@ -100,4 +100,18 @@ describe("focus mode", () => {
     fireEvent.click(screen.getByRole("link", { name: "elsewhere" }));
     await waitFor(() => expect(rail()).toBeInTheDocument());
   });
+
+  it("turns focus on from the page button and back off again", async () => {
+    const p = useScriptorium.getState().addProject("Ink");
+    const m = useScriptorium.getState().addManuscript(p.id);
+    await at(`/p/${p.id}/bindery/${m.id}`);
+
+    fireEvent.click(screen.getByRole("button", { name: "Focus" }));
+    expect(rail()).toBeNull();
+    expect(screen.getByRole("button", { name: "Exit focus" })).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.click(screen.getByRole("button", { name: "Exit focus" }));
+    expect(rail()).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Focus" })).toHaveAttribute("aria-pressed", "false");
+  });
 });

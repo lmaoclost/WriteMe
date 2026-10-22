@@ -14,6 +14,7 @@ import { Field } from "../../ui/Field";
 import { BOARD_HEADER, BOARD_ACTIONS, BOARD_ACTION_BTN, BOARD_PANEL } from "../../ui/board";
 import { buildBookHtml, bookSections } from "./buildBook";
 import { isChromiumEngine } from "../../lib/engine";
+import { FocusToggle } from "../workspace/focus";
 import type { BinderPreset, BinderyConfig, SceneOrnament } from "../../domain/types";
 
 /** Nested bindery blocks — a control inside one must write the whole block. */
@@ -154,6 +155,7 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
       <header className={BOARD_HEADER}>
         <div className="font-display text-xl font-semibold text-gold">{manuscript.title}</div>
         <div className={BOARD_ACTIONS}>
+          <FocusToggle />
           <ExportButtons manuscript={manuscript} />
           <button type="button" className={BOARD_ACTION_BTN} disabled={manuscript.chapters.length === 0} title={manuscript.chapters.length === 0 ? t("bindery.addChaptersFirst") : undefined}
             onClick={() => setPrinting(true)}>{t("bindery.printPreview")}</button>

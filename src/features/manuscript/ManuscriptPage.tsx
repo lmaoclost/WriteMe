@@ -9,6 +9,7 @@ import { ChapterList } from "./ChapterList";
 import { ChapterEditor } from "./ChapterEditor";
 import { bookSections } from "./buildBook";
 import { Button } from "../../ui/Button";
+import { FocusToggle } from "../workspace/focus";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const CONFIRM_RESET_MS = 3000;
@@ -172,6 +173,7 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
           <h2 className="book-title flex-1 m-0 font-display text-[22px] font-semibold text-parchment overflow-hidden text-ellipsis whitespace-nowrap">{book.title}</h2>
         )}
         <div className="flex gap-2 ml-auto">
+          <FocusToggle />
           <Button onClick={createBook}>
             {t("manuscript.newBook")}
           </Button>
