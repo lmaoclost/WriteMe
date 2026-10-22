@@ -1,5 +1,9 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { type ReactNode } from "react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { Link, MemoryRouter } from "react-router-dom";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { AppRouter } from "../../app/router";
+import { useScriptorium } from "../../data/store";
 import { FocusContext, FocusToggle, isWritingPath } from "./focus";
 
 describe("isWritingPath", () => {
@@ -42,5 +46,58 @@ describe("FocusToggle", () => {
     );
     const on = screen.getByRole("button", { name: "Exit focus" });
     expect(on).toHaveAttribute("aria-pressed", "true");
+  });
+});
+
+async function at(path: string, extra?: ReactNode): Promise<void> {
+  render(
+    <MemoryRouter initialEntries={[path]}>
+      <AppRouter />
+      {extra}
+    </MemoryRouter>,
+  );
+  await waitFor(() => {
+    expect(screen.queryByTestId("hydration-splash")).toBeNull();
+    expect(screen.queryByTestId("chunk-splash")).toBeNull();
+  }, { timeout: 10000 });
+}
+
+const rail = () =>
+  screen.queryByRole("navigation", { name: /world sections/i });
+
+beforeEach(() => {
+  localStorage.clear();
+  useScriptorium.setState(useScriptorium.getInitialState());
+});
+
+describe("focus mode", () => {
+  it("hides the rail on Ctrl+Shift+F and restores it with Esc", async () => {
+    const p = useScriptorium.getState().addProject("Focus World");
+    await at(`/p/${p.id}/manuscript`);
+    expect(rail()).toBeInTheDocument();
+
+    fireEvent.keyDown(document.body, { key: "F", ctrlKey: true, shiftKey: true });
+    expect(rail()).toBeNull();
+
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    expect(rail()).toBeInTheDocument();
+  });
+
+  it("ignores the shortcut outside writing routes", async () => {
+    const p = useScriptorium.getState().addProject("Calm");
+    await at(`/p/${p.id}/entries`);
+    fireEvent.keyDown(document.body, { key: "F", ctrlKey: true, shiftKey: true });
+    expect(rail()).toBeInTheDocument();
+  });
+
+  it("drops focus when navigating to another page", async () => {
+    const p = useScriptorium.getState().addProject("Wanderer");
+    await at(`/p/${p.id}/manuscript`, <Link to={`/p/${p.id}/entries`}>elsewhere</Link>);
+
+    fireEvent.keyDown(document.body, { key: "F", ctrlKey: true, shiftKey: true });
+    expect(rail()).toBeNull();
+
+    fireEvent.click(screen.getByRole("link", { name: "elsewhere" }));
+    await waitFor(() => expect(rail()).toBeInTheDocument());
   });
 });
