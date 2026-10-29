@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { i18n } from "../../i18n";
-import type { Chapter, CustomCalendar, Part } from "../../domain/types";
+import type { Chapter, CustomCalendar, Part, Scene } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
@@ -25,6 +25,11 @@ export interface ChapterEditorProps {
   chapterId: string;
   headingRef?: MutableRefObject<HTMLInputElement | null>;
   onDeleted(id: string): void;
+  /** Focus mode: only the writing surface renders (no part select, notes
+   *  panel or delete control) — the page provides the centering. */
+  focus?: boolean;
+  /** Sidebar scene click: the editor scrolls to that scene. */
+  focusSceneId?: string | null;
 }
 
 export function useChapter(chapterId: string): Chapter {
@@ -40,7 +45,7 @@ export function markdownToHtml(md: string): string {
   return sanitizeFragment(md ?? "");
 }
 
-export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEditorProps) {
+export function ChapterEditor({ chapterId, headingRef, onDeleted, focus = false, focusSceneId }: ChapterEditorProps) {
   const { t } = useTranslation();
   const chapter = useChapter(chapterId);
   const parts = useChapterParts(chapter.id);
@@ -51,23 +56,15 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
   const commitHeading = useCallback((v: string) => {
     useScriptorium.getState().updateChapter(chapter.id, { heading: v });
   }, [chapter.id]);
-  const commitBody = useCallback((v: string) => {
-    useScriptorium.getState().updateChapter(chapter.id, { content: v });
-  }, [chapter.id]);
   const headingDraft = useDebouncedDraft(chapter.heading, commitHeading);
-  const bodyDraft = useDebouncedDraft(chapter.content, commitBody);
 
   useEffect(() => () => window.clearTimeout(confirmTimerRef.current), []);
 
-  const flush = () => {
-    headingDraft.flush();
-    bodyDraft.flush();
-  };
+  const flush = () => headingDraft.flush();
 
   const setMode = (next: boolean) => {
-    // leaving W mode: commit whatever the live contenteditable holds right now
-    // (never rely on the blur handler or the unmount capture)
-    if (writing && !next) commitRichNow();
+    // leaving write mode: the scene bodies commit synchronously in their
+    // unmount cleanup (never rely on the blur handler)
     flush();
     setWriting(next);
   };
@@ -82,87 +79,40 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
     }
     setArmed(true);
     confirmTimerRef.current = window.setTimeout(() => setArmed(false), CONFIRM_RESET_MS);
-}, [armed, chapter.id, flush, onDeleted]);
+  }, [armed, chapter.id, flush, onDeleted]);
 
-
-  // Rich editor state: the body is a contenteditable; we hold its HTML locally
-  // and commit on blur/unmount. Markdown content converts one-way on first edit.
-  const bodyRef = useRef<HTMLDivElement>(null);
-  const [richHtml, setRichHtml] = useState<string | null>(null);
-  const [richTick, setRichTick] = useState(0);
-  const richDirtyRef = useRef(false);
-
-  useEffect(() => {
-    // chapter switched (unkeyed) -> reset local html
-    richDirtyRef.current = false;
-    // rich-editor HTML is user/import data (backup JSON, .docx) — sanitize
-    // before it reaches the live contenteditable DOM, same as the preview path
-    if (isHtmlFragment(chapter.content)) setRichHtml(sanitizeFragment(chapter.content));
-    else setRichHtml(renderMarkdown(chapter.content) || "");
-  }, [chapter.id, chapter.content]);
-
-  useEffect(() => {
-    if (richHtml !== null && bodyRef.current && bodyRef.current.innerHTML !== richHtml) {
-      bodyRef.current.innerHTML = richHtml;
-    }
-    // `writing` dep: re-entering Write remounts the contenteditable empty —
-    // repopulate even when richHtml already holds the committed string.
-  }, [richHtml, writing]);
-
-  // Switching chapters (remount) must not lose a dirty rich body — the códex
-  // hook flushes drafts the same way. Capture the element in the effect (the
-  // ref is already nulled by the time passive cleanups run).
-  useEffect(() => {
-    const el = bodyRef.current;
-    const chId = chapter.id;
-    return () => {
-      window.clearTimeout(richTimer.current);
-      if (richDirtyRef.current && el) {
-        useScriptorium.getState().updateChapter(chId, { content: sanitizeFragment(el.innerHTML) });
-      }
-    };
-  }, [chapter.id]);
-
-  // autosave debounce (300ms como no códex): o rich não perde texto se o
-  // usuário nunca sai do campo
-  const richTimer = useRef<number | undefined>(undefined);
-  const commitRichNow = () => {
-    window.clearTimeout(richTimer.current);
-    if (!richDirtyRef.current || !bodyRef.current) return;
-    richDirtyRef.current = false;
-    const html = sanitizeFragment(bodyRef.current.innerHTML);
-    useScriptorium.getState().updateChapter(chapter.id, { content: html });
-    setRichHtml(html);
-  };
-  const scheduleRichCommit = () => {
-    window.clearTimeout(richTimer.current);
-    richTimer.current = window.setTimeout(commitRichNow, 300);
-  };
+  // Scene DOM as truth while editing: the map powers the live footer and the
+  // sidebar's scene select; ticks drive the recompute.
+  const sceneRefs = useRef(new Map<string, HTMLDivElement>());
+  const lastSceneRef = useRef<HTMLDivElement | null>(null);
+  const [sceneTick, setSceneTick] = useState(0);
 
   const richExec = useCallback((cmd: string, value?: string) => {
-    bodyRef.current?.focus();
+    // execCommand acts on the current selection: refocus the last-written
+    // scene so toolbar clicks keep working
+    lastSceneRef.current?.focus();
     document.execCommand(cmd, false, value);
-    richDirtyRef.current = true;
-    setRichHtml(null); // keep DOM as truth until blur
-    setRichTick((t) => t + 1);
-    scheduleRichCommit();
-  }, [chapter.id]);
+    setSceneTick((n) => n + 1);
+  }, []);
 
-  const onRichInput = () => {
-    richDirtyRef.current = true;
-    setRichHtml(null);
-    setRichTick((t) => t + 1);
-    scheduleRichCommit();
-  };
+  // Sidebar scene select: scroll the editor to the scene.
+  useEffect(() => {
+    if (!focusSceneId) return;
+    const el = sceneRefs.current.get(focusSceneId);
+    if (el) {
+      el.scrollIntoView({ block: "center" });
+      el.focus();
+    }
+  }, [focusSceneId, sceneTick, writing]);
 
-  const onRichBlur = () => {
-    commitRichNow();
-  };
-
-  const previewHtml = useMemo(() => renderMarkdown(chapter.content), [chapter.content]);
+  const previewScenes = useMemo(() =>
+    chapter.scenes.map((s) =>
+      s.content.trim() ? renderMarkdown(s.content) : `<p class="empty">${i18n.t("manuscript.noContent")}</p>`),
+  [chapter.scenes]);
+  const allScenesEmpty = chapter.scenes.every((s) => !s.content.trim());
 
   return (
-    <div className="book-editor flex flex-col gap-2.5 max-w-[860px]">
+    <div className={"book-editor " + (focus ? "mx-auto w-full max-w-[720px] flex flex-col gap-2.5" : "flex flex-col gap-2.5 max-w-[860px]")} data-testid={focus ? "focus-surface" : undefined}>
       <div className="flex items-center gap-2 flex-wrap">
         <input
           ref={headingRef}
@@ -173,15 +123,17 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
           onChange={(e) => headingDraft.setDraft(e.target.value)}
           onBlur={flush}
         />
-        <Select value={chapter.partId ?? NO_PART} onValueChange={(v) => useScriptorium.getState().setChapterPart(chapter.id, v === NO_PART ? undefined : v)}>
-          <SelectTrigger aria-label={t("manuscript.part")} className="min-w-[150px] justify-between rounded-lg border-line bg-night-2 px-2 py-1.5 text-[13px] text-parchment hover:border-gold data-[size=default]:h-auto">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="border-line bg-night text-parchment">
-            <SelectItem value={NO_PART} className="text-[13px] focus:bg-accent focus:text-parchment">{t("manuscript.noPart")}</SelectItem>
-            {parts.map((p) => <SelectItem key={p.id} value={p.id} className="text-[13px] focus:bg-accent focus:text-parchment">{p.title}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        {!focus ? (
+          <Select value={chapter.partId ?? NO_PART} onValueChange={(v) => useScriptorium.getState().setChapterPart(chapter.id, v === NO_PART ? undefined : v)}>
+            <SelectTrigger aria-label={t("manuscript.part")} className="min-w-[150px] justify-between rounded-lg border-line bg-night-2 px-2 py-1.5 text-[13px] text-parchment hover:border-gold data-[size=default]:h-auto">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="border-line bg-night text-parchment">
+              <SelectItem value={NO_PART} className="text-[13px] focus:bg-accent focus:text-parchment">{t("manuscript.noPart")}</SelectItem>
+              {parts.map((p) => <SelectItem key={p.id} value={p.id} className="text-[13px] focus:bg-accent focus:text-parchment">{p.title}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        ) : null}
         <button
           type="button"
           className="book-mode bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] cursor-pointer hover:border-gold-dim aria-pressed:border-gold aria-pressed:text-gold"
@@ -202,37 +154,155 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
       {writing ? (
         <>
           <RichToolbar onExec={richExec} />
-          <div
-            className="book-body-rich"
-            ref={bodyRef}
-            contentEditable
-            suppressContentEditableWarning
-            role="textbox"
-            aria-multiline="true"
-            aria-label={t("manuscript.content")}
-            data-testid="rich-body"
-            onInput={onRichInput}
-            onBlur={onRichBlur}
-          />
+          <div className="flex flex-col gap-2" data-testid="scene-stack">
+            {chapter.scenes.map((scene, i) => (
+              <SceneBody
+                key={scene.id}
+                scene={scene}
+                index={i}
+                registerRef={(el) => {
+                  if (el) sceneRefs.current.set(scene.id, el);
+                  else sceneRefs.current.delete(scene.id);
+                }}
+                onDirty={() => setSceneTick((n) => n + 1)}
+                onFocusScene={(el) => { lastSceneRef.current = el; }}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            className="book-mode self-start bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] cursor-pointer hover:border-gold-dim"
+            aria-label={t("manuscript.addScene")}
+            onClick={() => useScriptorium.getState().addScene(chapter.id)}
+          >
+            {t("manuscript.addScene")}
+          </button>
+          <div className="flex flex-col gap-1.5" data-testid="scene-controls">
+            {chapter.scenes.length > 1 ? chapter.scenes.map((scene, i) => (
+              <SceneRowControls key={scene.id} sceneId={scene.id} label={t("manuscript.sceneAria", { n: i + 1 })} words={countWords(scene.content)} disabled={false} />
+            )) : (
+              <SceneRowControls sceneId={chapter.scenes[0].id} label={t("manuscript.sceneAria", { n: 1 })} words={countWords(chapter.scenes[0].content)} disabled={true} />
+            )}
+          </div>
         </>
-      ) : chapter.content.trim() === "" ? (
+      ) : allScenesEmpty ? (
         <p className="mx-1 my-1 text-slate text-sm italic">{t("manuscript.noContent")}</p>
       ) : (
-        <div className="md-view" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+        <div className="md-view" dangerouslySetInnerHTML={{ __html: previewScenes.join('<div class="scene-marker ornament" aria-hidden="true"></div>') }} />
       )}
-      <NotesAndLinks chapter={chapter} />
+      {!focus ? <NotesAndLinks chapter={chapter} /> : null}
       <WordCountFooter
         writing={writing}
-        content={chapter.content}
-        richTick={richTick}
-        bodyRef={bodyRef}
-        richDirtyRef={richDirtyRef}
+        scenes={chapter.scenes}
+        sceneRefs={sceneRefs}
+        sceneTick={sceneTick}
         armed={armed}
+        focus={focus}
         onConfirmDelete={confirmOrDelete}
       />
     </div>
   );
 }
+
+/** Per-scene row under the stack: label + words + delete (guarded: the
+ *  chapter always keeps one scene). */
+function SceneRowControls({ sceneId, label, words, disabled }: {
+  sceneId: string;
+  label: string;
+  words: number;
+  disabled: boolean;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[11px] text-slate">{label}</span>
+      <span className="text-[11px] text-slate [font-variant-numeric:tabular-nums]">{formatWords(words)}</span>
+      <button
+        type="button"
+        className="book-mode bg-none border border-line text-parchment-dim rounded-full px-3 py-0.5 text-xs tracking-[0.06em] cursor-pointer hover:border-[var(--ember)] hover:text-[var(--ember)] disabled:opacity-35 disabled:cursor-default"
+        aria-label={t("manuscript.deleteScene")}
+        title={disabled ? t("manuscript.keepScene") : undefined}
+        disabled={disabled}
+        onClick={() => useScriptorium.getState().deleteScene(sceneId)}
+      >{t("manuscript.deleteSceneShort")}</button>
+    </div>
+  );
+}
+
+/** One scene of the chapter body: a contenteditable that owns its commit
+ *  cycle (debounced 300ms, blur, unmount) exactly like the chapter body
+ *  used to. Markdown converts one-way on the first edit. */
+const SceneBody = memo(function SceneBody({ scene, index, registerRef, onDirty, onFocusScene }: {
+  scene: Scene;
+  index: number;
+  registerRef(el: HTMLDivElement | null): void;
+  onDirty(): void;
+  onFocusScene(el: HTMLDivElement): void;
+}) {
+  const { t } = useTranslation();
+  const ref = useRef<HTMLDivElement | null>(null);
+  const dirtyRef = useRef(false);
+  const timer = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (el && !dirtyRef.current) {
+      el.innerHTML = isHtmlFragment(scene.content) ? sanitizeFragment(scene.content) : (renderMarkdown(scene.content) || "");
+    }
+  }, [scene.content]);
+
+  const commit = () => {
+    window.clearTimeout(timer.current);
+    const el = ref.current;
+    if (!dirtyRef.current || !el) return;
+    dirtyRef.current = false;
+    useScriptorium.getState().updateScene(scene.id, { content: sanitizeFragment(el.innerHTML) });
+  };
+  const schedule = useRef(() => {});
+  schedule.current = () => {
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(commit, 300);
+  };
+
+  useEffect(() => {
+    const el = ref.current;
+    return () => {
+      // commit whatever the live DOM holds (chapter switch, preview toggle);
+      // a deleted scene makes the store call a no-op
+      window.clearTimeout(timer.current);
+      if (dirtyRef.current && el) {
+        useScriptorium.getState().updateScene(scene.id, { content: sanitizeFragment(el.innerHTML) });
+      }
+    };
+  }, [scene.id]);
+
+  return (
+    <div className="book-scene relative">
+      <span className="book-scene-tag absolute top-1.5 right-3 text-[10px] uppercase tracking-[0.1em] text-slate/60 pointer-events-none" aria-hidden="true">
+        {t("manuscript.sceneAria", { n: index + 1 })}
+      </span>
+      <div
+        ref={(el) => { ref.current = el; registerRef(el); }}
+        className="book-body-rich book-scene-body"
+        contentEditable
+        suppressContentEditableWarning
+        role="textbox"
+        aria-multiline="true"
+        aria-label={t("manuscript.sceneAria", { n: index + 1 })}
+        data-testid={`rich-scene-${index + 1}`}
+        data-placeholder={t("manuscript.scenePlaceholder")}
+        onInput={() => {
+          dirtyRef.current = true;
+          if (ref.current) onFocusScene(ref.current);
+          onDirty();
+          schedule.current();
+        }}
+        onFocus={() => { if (ref.current) onFocusScene(ref.current); }}
+        onBlur={commit}
+      />
+    </div>
+  );
+});
 
 function RichToolbar({ onExec }: { onExec(cmd: string, value?: string): void }) {
   const { t } = useTranslation();
@@ -280,35 +350,41 @@ function RichToolbar({ onExec }: { onExec(cmd: string, value?: string): void }) 
 
 const NO_CALENDARS: CustomCalendar[] = [];
 
-const WordCountFooter = memo(function WordCountFooter({ writing, content, richTick, bodyRef, richDirtyRef, armed, onConfirmDelete }: {
+const WordCountFooter = memo(function WordCountFooter({ writing, scenes, sceneRefs, sceneTick, armed, focus, onConfirmDelete }: {
   writing: boolean;
-  content: string;
-  richTick: number;
-  bodyRef: MutableRefObject<HTMLDivElement | null>;
-  richDirtyRef: MutableRefObject<boolean>;
+  scenes: Scene[];
+  sceneRefs: MutableRefObject<Map<string, HTMLDivElement>>;
+  sceneTick: number;
   armed: boolean;
+  focus: boolean;
   onConfirmDelete(): void;
 }) {
   const { t } = useTranslation();
-  // Footer follows the live DOM exactly while the user types (dirty), and the
-  // tag-stripped store content otherwise — never the raw HTML string.
+  // Footer follows the live DOM while the scene bodies are mounted — they are
+  // always at least as fresh as the store (the 300ms debounce holds behind);
+  // after a mode switch the store content decides.
   const words = useMemo(() => {
-    void richTick; // typing re-runs this memo
-    if (writing && richDirtyRef.current && bodyRef.current) {
-      return countWords(bodyRef.current.innerHTML);
+    void sceneTick; // typing re-runs this memo
+    if (!writing || sceneRefs.current.size === 0) {
+      return scenes.reduce((n, s) => n + countWords(s.content), 0);
     }
-    return countWords(content);
-  }, [writing, content, richTick]);
+    return scenes.reduce((n, s) => {
+      const el = sceneRefs.current.get(s.id);
+      return n + (el ? countWords(el.innerHTML) : countWords(s.content));
+    }, 0);
+  }, [writing, scenes, sceneTick, sceneRefs]);
   return (
     <footer className="flex items-center justify-between gap-2 border-t border-line pt-2.5 mt-1">
       <span className="book-words text-xs text-slate [font-variant-numeric:tabular-nums]">{formatWords(words)}</span>
-      <button
-        type="button"
-        className={"book-delete bg-none border border-[var(--ember)] text-[var(--ember)] rounded-lg py-1.5 px-2.5 text-[13px] hover:bg-[color-mix(in_srgb,var(--ember)_18%,transparent)]" + (armed ? " armed bg-[color-mix(in_srgb,var(--ember)_20%,transparent)]" : "")}
-        onClick={onConfirmDelete}
-      >
-        {armed ? t("manuscript.confirm") : t("manuscript.deleteChapter")}
-      </button>
+      {focus ? null : (
+        <button
+          type="button"
+          className={"book-delete bg-none border border-[var(--ember)] text-[var(--ember)] rounded-lg py-1.5 px-2.5 text-[13px] hover:bg-[color-mix(in_srgb,var(--ember)_18%,transparent)]" + (armed ? " armed bg-[color-mix(in_srgb,var(--ember)_20%,transparent)]" : "")}
+          onClick={onConfirmDelete}
+        >
+          {armed ? t("manuscript.confirm") : t("manuscript.deleteChapter")}
+        </button>
+      )}
     </footer>
   );
 });
@@ -330,7 +406,7 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
   const [dd, setDd] = useState("1");
   const cal = calendars.find((c) => c.id === (calId || chapter.linkedCalendarId));
 
-  const [notesOpen, setNotesOpen] = useState(true);
+  const [notesOpen, setNotesOpen] = useState(false);
   return (
     <section className="book-notes-panel border-t border-line pt-3 mt-1" data-slot="notes-panel">
       <button
@@ -369,6 +445,7 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
             aria-label={t("manuscript.endMarker")}
             placeholder={chapter.endMarker || t("manuscript.endMarkerPlaceholder", { heading: chapter.heading })}
             value={endMarker.draft}
+            className="book-end-marker-input"
             onChange={(e) => endMarker.setDraft(e.target.value)}
             onBlur={() => endMarker.flush()}
           />

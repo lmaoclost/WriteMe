@@ -43,7 +43,10 @@ describe("seedDemoProject", () => {
     const m = data.manuscripts[0];
     expect(m.chapters).toHaveLength(3);
     expect(m.chapters.map((c) => c.order)).toEqual([0, 1, 2]);
-    m.chapters.forEach((c) => expect(c.content.length).toBeGreaterThan(50));
+    m.chapters.forEach((c) => {
+      expect(c.scenes).toHaveLength(1);
+      expect(c.scenes[0].content.length).toBeGreaterThan(50);
+    });
   });
   it("one bloodline with linked persons and houses", () => {
     expect(data.bloodlines).toHaveLength(1);

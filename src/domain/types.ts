@@ -111,11 +111,19 @@ export interface Part {
   epigraph?: string;
 }
 
+/** A scene break divides scenes of a chapter; the chapter holds 1+ scenes. */
+export interface Scene {
+  id: Id;
+  /** Markdown by default; HTML when edited in the rich editor (starts with "<"). */
+  content: string;
+  order: number;
+}
+
 export interface Chapter {
   id: Id;
   heading: string;
-  /** Markdown by default; HTML when edited in the rich editor (starts with "<"). */
-  content: string;
+  /** 1+ scenes: the chapter body. Markdown-or-HTML per scene (see Scene). */
+  scenes: Scene[];
   order: number;
   noteTop?: string;
   noteEnd?: string;

@@ -2,7 +2,7 @@ import { act } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { useScriptorium } from "./store";
 import { validateProjectData } from "./schema";
-import type { Chapter, Manuscript, Part, Project } from "../domain/types";
+import type { Chapter, Manuscript, Part, Project, Scene } from "../domain/types";
 
 const store = () => useScriptorium.getState();
 
@@ -31,8 +31,19 @@ function makeChapter(manuscriptId: string, heading?: string): Chapter {
   return c;
 }
 
+function makeScene(chapterId: string): Scene {
+  let s!: Scene;
+  act(() => { s = store().addScene(chapterId) as Scene; });
+  expect(s, "scene should be created").toBeTruthy();
+  return s;
+}
+
 function chaptersOf(id: string): Chapter[] {
   return useScriptorium.getState().manuscripts.find((m) => m.id === id)!.chapters;
+}
+
+function chapterById(chId: string): Chapter | undefined {
+  return useScriptorium.getState().manuscripts.flatMap((m) => m.chapters).find((c) => c.id === chId);
 }
 
 function makePart(manuscriptId: string, title?: string): Part {
@@ -116,7 +127,8 @@ describe("deleteManuscript", () => {
     const m = makeManuscript();
     const t1 = store().projects[0].updatedAt;
     act(() => { store().deleteManuscript(m.id); });
-    expect(store().projects[0].updatedAt).toBeGreaterThanOrEqual(t1);
+    const s = store();
+    expect(s.projects[0].updatedAt).toBeGreaterThanOrEqual(t1);
   });
   it("ignores an unknown id", () => {
     const before = store().manuscripts.slice();
@@ -126,12 +138,14 @@ describe("deleteManuscript", () => {
 });
 
 describe("addChapter", () => {
-  it("creates with default heading, empty content and order 0 on an empty book", () => {
+  it("creates with default heading, order 0 and one empty scene", () => {
     const m = makeManuscript();
     const c = makeChapter(m.id);
     expect(c.id).toMatch(/^ch_/);
     expect(c.heading).toBe("Untitled Chapter");
-    expect(c.content).toBe("");
+    expect(c.scenes).toHaveLength(1);
+    expect(c.scenes[0].id).toMatch(/^sc_/);
+    expect(c.scenes[0].content).toBe("");
     expect(c.order).toBe(0);
     expect(chaptersOf(m.id)).toHaveLength(1);
   });
@@ -167,31 +181,31 @@ describe("updateChapter", () => {
   it("applies the patch and preserves the id", () => {
     const m = makeManuscript();
     const c = makeChapter(m.id, "Um");
-    act(() => { store().updateChapter(c.id, { heading: "Um novo", content: "Texto" }); });
+    act(() => { store().updateChapter(c.id, { heading: "Um novo" }); });
     const stored = chaptersOf(m.id).find((x) => x.id === c.id)!;
     expect(stored.heading).toBe("Um novo");
-    expect(stored.content).toBe("Texto");
     expect(stored.id).toBe(c.id);
     expect(stored.order).toBe(0);
   });
   it("clones the patch so later mutation cannot alias into the store", () => {
     const m = makeManuscript();
     const c = makeChapter(m.id, "Um");
-    const patch: Partial<Omit<Chapter, "id">> = { content: "rascunho" };
+    const newScenes: Scene[] = [{ id: "sc_x", content: "rascunho", order: 0 }];
+    const patch: Partial<Omit<Chapter, "id">> = { scenes: newScenes };
     act(() => { store().updateChapter(c.id, patch); });
-    patch.content = "mutado";
-    expect(chaptersOf(m.id).find((x) => x.id === c.id)?.content).toBe("rascunho");
+    newScenes[0].content = "mutado";
+    expect(chapterById(c.id)?.scenes[0].content).toBe("rascunho");
   });
   it("ignores an unknown id", () => {
     const before = useScriptorium.getState().manuscripts.slice();
-    act(() => { store().updateChapter("ch_missing", { content: "X" }); });
+    act(() => { store().updateChapter("ch_missing", { heading: "X" }); });
     expect(store().manuscripts).toEqual(before);
   });
   it("bumps project updatedAt", () => {
     const m = makeManuscript();
     const c = makeChapter(m.id, "Um");
     const t1 = store().projects[0].updatedAt;
-    act(() => { store().updateChapter(c.id, { content: "novo" }); });
+    act(() => { store().updateChapter(c.id, { heading: "novo" }); });
     expect(store().projects[0].updatedAt).toBeGreaterThanOrEqual(t1);
   });
 });
@@ -221,57 +235,200 @@ describe("deleteChapter", () => {
   });
 });
 
-describe("moveChapter", () => {
-  it("dir +1 swaps order with the next chapter in the middle", () => {
+describe("addScene", () => {
+  it("appends an empty scene with max(orders)+1 and a sc_ id", () => {
     const m = makeManuscript();
-    const a = makeChapter(m.id, "Um");
-    const b = makeChapter(m.id, "Dois");
-    const c = makeChapter(m.id, "Três");
-    act(() => { store().moveChapter(a.id, 1); });
-    const orders = new Map(chaptersOf(m.id).map((x) => [x.id, x.order]));
-    expect(orders.get(a.id)).toBe(b.order);
-    expect(orders.get(b.id)).toBe(a.order);
-    expect(orders.get(c.id)).toBe(c.order);
+    const c = makeChapter(m.id);
+    const s = makeScene(c.id);
+    expect(s.id).toMatch(/^sc_/);
+    expect(s.content).toBe("");
+    expect(s.order).toBe(chapterById(c.id)!.scenes.length - 1);
+    expect(chapterById(c.id)!.scenes).toHaveLength(2);
   });
-  it("dir -1 swaps order with the previous chapter in the middle", () => {
+  it("returns null for an unknown chapter", () => {
+    let s: Scene | null = null;
+    act(() => { s = store().addScene("ch_missing"); });
+    expect(s).toBeNull();
+  });
+  it("bumps project updatedAt", () => {
     const m = makeManuscript();
-    const a = makeChapter(m.id, "Um");
-    const b = makeChapter(m.id, "Dois");
-    makeChapter(m.id, "Três");
-    act(() => { store().moveChapter(b.id, -1); });
-    const orders = new Map(chaptersOf(m.id).map((x) => [x.id, x.order]));
-    expect(orders.get(b.id)).toBe(a.order);
-    expect(orders.get(a.id)).toBe(1);
+    const c = makeChapter(m.id);
+    const t1 = store().projects[0].updatedAt;
+    act(() => { store().addScene(c.id); });
+    expect(store().projects[0].updatedAt).toBeGreaterThanOrEqual(t1);
   });
-  it("is a no-op at the first edge (dir -1)", () => {
+});
+
+describe("updateScene", () => {
+  it("patches the scene's content and preserves id and order", () => {
     const m = makeManuscript();
-    const a = makeChapter(m.id, "Um");
-    const b = makeChapter(m.id, "Dois");
-    act(() => { store().moveChapter(a.id, -1); });
-    const orders = new Map(chaptersOf(m.id).map((x) => [x.id, x.order]));
-    expect(orders.get(a.id)).toBe(0);
-    expect(orders.get(b.id)).toBe(1);
+    const c = makeChapter(m.id);
+    act(() => { store().updateScene(c.scenes[0].id, { content: "<p>texto</p>" }); });
+    const s = chapterById(c.id)!.scenes[0];
+    expect(s.content).toBe("<p>texto</p>");
+    expect(s.id).toBe(c.scenes[0].id);
+    expect(s.order).toBe(0);
   });
-  it("is a no-op at the last edge (dir +1)", () => {
-    const m = makeManuscript();
-    const a = makeChapter(m.id, "Um");
-    const b = makeChapter(m.id, "Dois");
-    act(() => { store().moveChapter(b.id, 1); });
-    const orders = new Map(chaptersOf(m.id).map((x) => [x.id, x.order]));
-    expect(orders.get(a.id)).toBe(0);
-    expect(orders.get(b.id)).toBe(1);
-  });
-  it("ignores an unknown chapter id", () => {
+  it("ignores an unknown scene id", () => {
     const before = useScriptorium.getState().manuscripts.slice();
-    act(() => { store().moveChapter("ch_missing", 1); });
+    act(() => { store().updateScene("sc_missing", { content: "X" }); });
     expect(store().manuscripts).toEqual(before);
   });
   it("bumps project updatedAt", () => {
     const m = makeManuscript();
+    const c = makeChapter(m.id);
+    const t1 = store().projects[0].updatedAt;
+    act(() => { store().updateScene(c.scenes[0].id, { content: "novo" }); });
+    expect(store().projects[0].updatedAt).toBeGreaterThanOrEqual(t1);
+  });
+});
+
+describe("deleteScene", () => {
+  it("deletes a scene and renumbers the chapter", () => {
+    const m = makeManuscript();
+    const c = makeChapter(m.id);
+    const s2 = makeScene(c.id as never as string);
+    const s3 = makeScene(c.id as never as string);
+    act(() => { store().deleteScene(s2.id); });
+    const scenes = chapterById(c.id)!.scenes;
+    expect(scenes.map((x) => x.id)).toEqual([c.scenes[0].id, s3.id]);
+    expect(scenes.map((x) => x.order)).toEqual([0, 1]);
+  });
+  it("refuses when the chapter would drop below one scene", () => {
+    const m = makeManuscript();
+    const c = makeChapter(m.id);
+    const s1 = chapterById(c.id)!.scenes[0];
+    act(() => { store().deleteScene(s1.id); });
+    expect(chapterById(c.id)!.scenes.map((x) => x.id)).toEqual([s1.id]);
+  });
+  it("ignores an unknown scene id", () => {
+    const m = makeManuscript();
+    const c = makeChapter(m.id);
+    const before = chapterById(c.id)!.scenes;
+    act(() => { store().deleteScene("sc_missing"); });
+    expect(chapterById(c.id)!.scenes).toEqual(before);
+  });
+  it("bumps project updatedAt when it deletes", () => {
+    const m = makeManuscript();
+    const c = makeChapter(m.id);
+    makeScene(c.id);
+    const t1 = store().projects[0].updatedAt;
+    act(() => { store().deleteScene(c.scenes[0].id); });
+    expect(store().projects[0].updatedAt).toBeGreaterThanOrEqual(t1);
+  });
+  it("does not bump project updatedAt on refusal", () => {
+    const m = makeManuscript();
+    const c = makeChapter(m.id);
+    act(() => { store().updateScene(c.scenes[0].id, { content: "x" }); });
+    const t1 = store().projects[0].updatedAt;
+    act(() => { store().deleteScene(c.scenes[0].id); });
+    expect(store().projects[0].updatedAt).toBe(t1);
+  });
+});
+
+describe("moveScene", () => {
+  it("reorders within the chapter", () => {
+    const m = makeManuscript();
+    const c = makeChapter(m.id);
+    makeScene(c.id);
+    makeScene(c.id);
+    const [s0, s1, s2] = chapterById(c.id)!.scenes;
+    act(() => { store().moveScene(s0.id, c.id, 2); });
+    expect(chapterById(c.id)!.scenes.map((x) => x.id)).toEqual([s1.id, s2.id, s0.id]);
+    expect(chapterById(c.id)!.scenes.map((x) => x.order)).toEqual([0, 1, 2]);
+  });
+  it("moves across chapters and renumbers both", () => {
+    const m = makeManuscript();
+    const c1 = makeChapter(m.id);
+    makeScene(c1.id);
+    const [c1s0, c1s1] = chapterById(c1.id)!.scenes;
+    const c2 = makeChapter(m.id);
+    const autoScene = chapterById(c2.id)!.scenes[0];
+    act(() => { store().moveScene(c1s0.id, c2.id, 0); });
+    expect(chapterById(c1.id)!.scenes.map((x) => x.id)).toEqual([c1s1.id]);
+    expect(chapterById(c1.id)!.scenes.map((x) => x.order)).toEqual([0]);
+    expect(chapterById(c2.id)!.scenes.map((x) => x.id)).toEqual([c1s0.id, autoScene.id]);
+    expect(chapterById(c2.id)!.scenes.map((x) => x.order)).toEqual([0, 1]);
+  });
+  it("refuses to drain the source chapter below one scene", () => {
+    const m = makeManuscript();
+    const c1 = makeChapter(m.id);
+    const c2 = makeChapter(m.id);
+    const only = chapterById(c1.id)!.scenes[0];
+    act(() => { store().moveScene(only.id, c2.id, 0); });
+    expect(chapterById(c1.id)!.scenes.map((x) => x.id)).toEqual([only.id]);
+    expect(chapterById(c2.id)!.scenes).toHaveLength(1);
+  });
+  it("ignores an unknown scene id", () => {
+    const m = makeManuscript();
+    const c = makeChapter(m.id);
+    const before = chapterById(c.id)!.scenes;
+    act(() => { store().moveScene("sc_missing", c.id, 0); });
+    expect(chapterById(c.id)!.scenes).toEqual(before);
+  });
+  it("bumps project updatedAt", () => {
+    const m = makeManuscript();
+    const a = makeChapter(m.id);
+    const b = makeChapter(m.id);
+    makeScene(a.id);
+    const t1 = store().projects[0].updatedAt;
+    act(() => { store().moveScene(a.scenes[0].id, b.id, 0); });
+    expect(store().projects[0].updatedAt).toBeGreaterThanOrEqual(t1);
+  });
+});
+
+describe("moveChapterTo", () => {
+  it("moves the chapter into a part and renumbers the plan", () => {
+    const m = makeManuscript();
+    const a = makeChapter(m.id, "Um");
+    const b = makeChapter(m.id, "Dois");
+    const c = makeChapter(m.id, "Três");
+    const part = makePart(m.id, "P1");
+    act(() => { store().moveChapterTo(c.id, part.id, 0); });
+    const byId = new Map(chaptersOf(m.id).map((x) => [x.id, x]));
+    expect(byId.get(c.id)?.partId).toBe(part.id);
+    expect(byId.get(c.id)?.order).toBe(2);
+    expect(byId.get(a.id)?.order).toBe(0);
+    expect(byId.get(b.id)?.order).toBe(1);
+  });
+
+  it("moves the chapter back to the ungrouped run", () => {
+    const m = makeManuscript();
+    makeChapter(m.id, "Um");
+    const part = makePart(m.id, "P1");
+    const b = makeChapter(m.id, "Dois");
+    act(() => { store().moveChapterTo(b.id, part.id, 0); });
+    act(() => { store().moveChapterTo(b.id, undefined, 1); });
+    const byId = new Map(chaptersOf(m.id).map((x) => [x.id, x]));
+    expect(byId.get(b.id)?.partId).toBeUndefined();
+    expect(byId.get(b.id)?.order).toBe(1);
+  });
+
+  it("clamps an out-of-range index to the end of the target run", () => {
+    const m = makeManuscript();
     const a = makeChapter(m.id, "Um");
     makeChapter(m.id, "Dois");
+    makePart(m.id, "P1");
+    makeChapter(m.id, "Três");
+    act(() => { store().moveChapterTo(a.id, undefined, 9); });
+    const byId = new Map(chaptersOf(m.id).map((x) => [x.id, x]));
+    expect(byId.get(a.id)?.order).toBe(2);
+  });
+
+  it("ignores an unknown chapter id", () => {
+    const m = makeManuscript();
+    makeChapter(m.id);
+    const before = chaptersOf(m.id).slice();
+    act(() => { store().moveChapterTo("ch_missing", undefined, 0); });
+    expect(chaptersOf(m.id)).toEqual(before);
+  });
+
+  it("bumps project updatedAt", () => {
+    const m = makeManuscript();
+    const a = makeChapter(m.id);
+    makeChapter(m.id);
     const t1 = store().projects[0].updatedAt;
-    act(() => { store().moveChapter(a.id, 1); });
+    act(() => { store().moveChapterTo(a.id, undefined, 1); });
     expect(store().projects[0].updatedAt).toBeGreaterThanOrEqual(t1);
   });
 });
@@ -327,41 +484,56 @@ describe("renamePart", () => {
   });
 });
 
-describe("reorderPart", () => {
-  it("swaps order with the neighbour", () => {
+describe("reorderPartTo", () => {
+  it("splices the part at the new index and renumbers 1-based", () => {
     const m = makeManuscript();
     const a = makePart(m.id, "A");
-    const b = makePart(m.id, "B");
-    act(() => { store().reorderPart(b.id, -1); });
-    const sorted = [...partsOf(m.id)].sort((x, y) => x.order - y.order).map((p) => p.title);
-    expect(sorted).toEqual(["B", "A"]);
+    makePart(m.id, "B");
+    const c = makePart(m.id, "C");
+    act(() => { store().reorderPartTo(c.id, 0); });
+    expect([...partsOf(m.id)].sort((x, y) => x.order - y.order).map((p) => p.title)).toEqual(["C", "A", "B"]);
     expect(partsOf(m.id).find((p) => p.id === a.id)?.order).toBe(2);
   });
-  it("dir +1 swaps order with the next part", () => {
+  it("clamps out-of-range indexes to the end", () => {
     const m = makeManuscript();
     const a = makePart(m.id, "A");
-    const b = makePart(m.id, "B");
-    makePart(m.id, "C");
-    act(() => { store().reorderPart(a.id, 1); });
-    const orders = new Map(partsOf(m.id).map((p) => [p.id, p.order]));
-    expect(orders.get(a.id)).toBe(2);
-    expect(orders.get(b.id)).toBe(1);
-  });
-  it("is a no-op at the edges", () => {
-    const m = makeManuscript();
-    const a = makePart(m.id, "A");
-    const b = makePart(m.id, "B");
-    act(() => { store().reorderPart(a.id, -1); store().reorderPart(b.id, 1); });
-    const orders = new Map(partsOf(m.id).map((p) => [p.id, p.order]));
-    expect(orders.get(a.id)).toBe(1);
-    expect(orders.get(b.id)).toBe(2);
+    makePart(m.id, "B");
+    act(() => { store().reorderPartTo(a.id, 7); });
+    expect([...partsOf(m.id)].sort((x, y) => x.order - y.order).map((p) => p.title)).toEqual(["B", "A"]);
   });
   it("ignores an unknown part id", () => {
     const m = makeManuscript();
     makePart(m.id, "A");
     const before = partsOf(m.id).slice();
-    act(() => { store().reorderPart("pt_missing", 1); });
+    act(() => { store().reorderPartTo("pt_missing", 1); });
     expect(partsOf(m.id)).toEqual(before);
+  });
+  it("bumps project updatedAt", () => {
+    const m = makeManuscript();
+    makePart(m.id, "A");
+    const b = makePart(m.id, "B");
+    const t1 = store().projects[0].updatedAt;
+    act(() => { store().reorderPartTo(b.id, 0); });
+    expect(store().projects[0].updatedAt).toBeGreaterThanOrEqual(t1);
+  });
+});
+
+describe("replaceChapterBody (docx import)", () => {
+  it("replaces all scenes with one scene holding the imported html", () => {
+    const m = makeManuscript();
+    const c = makeChapter(m.id);
+    makeScene(c.id);
+    makeScene(c.id);
+    act(() => { store().replaceChapterBody(c.id, "<p>Importado do Word.</p>"); });
+    const scenes = chapterById(c.id)!.scenes;
+    expect(scenes).toHaveLength(1);
+    expect(scenes[0].content).toBe("<p>Importado do Word.</p>");
+    expect(scenes[0].id).toMatch(/^sc_/);
+  });
+  it("ignores an unknown chapter id", () => {
+    const before = useScriptorium.getState().manuscripts.slice();
+    act(() => { store().replaceChapterBody("ch_missing", "<p>x</p>"); });
+    expect(store().manuscripts).toEqual(before);
   });
 });
 
@@ -446,14 +618,18 @@ describe("schema integrity", () => {
       const c1 = s.addChapter(m.id, "Um");
       expect(c1).toBeTruthy();
       s.addChapter(m.id, "Dois");
-      s.updateChapter(c1!.id, { content: "Texto" });
-      s.moveChapter(c1!.id, 1);
+      s.updateScene(c1!.scenes[0].id, { content: "Texto" });
+      s.addScene(c1!.id);
+      s.moveScene(c1!.scenes[0].id, c1!.id, 1);
+      s.moveChapterTo(c1!.id, undefined, 1);
       s.deleteManuscript(m.id);
     });
     expect(validateProjectData(useScriptorium.getState())).toBe(true);
   });
   it("exported data validates after operations", () => {
-    makeManuscript("Livro");
+    const m = makeManuscript("Livro");
+    const c = makeChapter(m.id);
+    act(() => { store().updateScene(c.scenes[0].id, { content: "Texto" }); });
     expect(validateProjectData(JSON.parse(store().exportData()))).toBe(true);
   });
 });

@@ -2,7 +2,7 @@ import { i18n } from "../i18n";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
-  ProjectData, Project, Atlas, Region, Pin, PinType, WorldEntry, EntryCategory, Manuscript, Chapter, Part,
+  ProjectData, Project, Atlas, Region, Pin, PinType, WorldEntry, EntryCategory, Manuscript, Chapter, Part, Scene,
   Bloodline, BloodlinePerson, BloodlineHouse,
   FactionWeb, Faction, FactionConnection, ConnectionType,
   CustomCalendar, CalendarEvent,
@@ -17,6 +17,10 @@ import { dateIsEmpty, sanitizeDate } from "../domain/dates";
 import type { Pt } from "../domain/geometry";
 import { isMeaningful } from "../domain/geometry";
 import { MIN_ERA_WIDTH, clampBeadX, clampBoundary, eraStart, originOf } from "../domain/timeline";
+import {
+  createScene, deleteSceneInChapters, moveChapterInPlan, moveSceneInPlan,
+  normalizeManuscripts as normalizeManuscriptsDomain, reorderPartsTo,
+} from "../domain/manuscript";
 import { emptyProjectData, ParseExportError, serialize, parseExport } from "./schema";
 import { templateSections } from "../features/entries/categories";
 import { defaultBindery } from "./schema";
@@ -106,6 +110,11 @@ const nextPartOrder = (parts: readonly Part[]): number =>
   parts.length === 0
     ? 1
     : parts.reduce((max, p) => (p.order > max ? p.order : max), 0) + 1;
+/** max(orders)+1 (scene renumbering keeps orders dense; this covers gap tolerance). */
+const nextSceneOrder = (scenes: readonly Scene[]): number =>
+  scenes.length === 0
+    ? 0
+    : scenes.reduce((max, s) => (s.order > max ? s.order : max), 0) + 1;
 /** Spec §7: polygon-clipping failure surfaces once, state untouched. */
 const CLIP_FAILURE_TOAST = "Couldn't compute the cuts.";
 const cloneSnapshot = (a: Atlas): AtlasSnapshot => ({
@@ -231,11 +240,20 @@ interface ScriptoriumState extends ProjectData {
   addChapter(manuscriptId: string, heading?: string): Chapter | null;
   updateChapter(chapterId: string, patch: Partial<Omit<Chapter, "id">>): void;
   deleteChapter(chapterId: string): void;
-  moveChapter(chapterId: string, dir: -1 | 1): void;
+  /** Index-based moves backing drag & drop (whole plan renumbers). */
+  moveChapterTo(chapterId: string, toPartId: string | undefined, toIndex: number): void;
   setChapterCalendar(chapterId: string, calendarId: string | undefined, dayKey?: string): void;
+  /** The body of a chapter as one scene (docx import replaces it whole). */
+  replaceChapterBody(chapterId: string, content: string): void;
+  addScene(chapterId: string): Scene | null;
+  updateScene(sceneId: string, patch: Partial<Omit<Scene, "id">>): void;
+  deleteScene(sceneId: string): void;
+  /** Moves a scene within its chapter or across chapters; a chapter never
+   *  drops below one scene (draining is a no-op). */
+  moveScene(sceneId: string, toChapterId: string, toIndex: number): void;
   addPart(manuscriptId: string, title?: string): Part | null;
   renamePart(partId: string, title: string): void;
-  reorderPart(partId: string, dir: -1 | 1): void;
+  reorderPartTo(partId: string, toIndex: number): void;
   removePart(partId: string): void;
   setChapterPart(chapterId: string, partId?: string): void;
 
@@ -581,7 +599,7 @@ export const useScriptorium = create<ScriptoriumState>()(
       importData(text) {
         try {
           const data = parseExport(text);
-          set({ ...data, histories: {} });
+          set({ ...data, manuscripts: normalizeManuscriptsDomain(data.manuscripts), histories: {} });
           return { ok: true as const };
         } catch (e) {
           if (e instanceof ParseExportError) {
@@ -820,7 +838,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         const chapter: Chapter = {
           id: newId("ch"),
           heading,
-          content: "",
+          scenes: [createScene("")],
           order: nextChapterOrder(m.chapters),
         };
         set((s) => ({
@@ -831,10 +849,87 @@ export const useScriptorium = create<ScriptoriumState>()(
         return chapter;
       },
 
+      /** The docx import replaces the whole body: one scene with the html. */
+      replaceChapterBody(chapterId, content) {
+        const m = get().manuscripts.find((x) => x.chapters.some((c) => c.id === chapterId));
+        if (!m) return;
+        set((s) => ({
+          manuscripts: s.manuscripts.map((x) => (x.id !== m.id ? x : {
+            ...x,
+            chapters: x.chapters.map((c) =>
+              c.id === chapterId ? { ...c, scenes: [createScene(content)] } : c),
+          })),
+          projects: touchProject(s.projects, m.projectId),
+        }));
+      },
+
+      addScene(chapterId) {
+        const m = get().manuscripts.find((x) => x.chapters.some((c) => c.id === chapterId));
+        if (!m) return null;
+        const chapter = m.chapters.find((c) => c.id === chapterId)!;
+        const scene: Scene = { ...createScene(""), order: nextSceneOrder(chapter.scenes) };
+        set((s) => ({
+          manuscripts: s.manuscripts.map((x) => (x.id !== m.id ? x : {
+            ...x,
+            chapters: x.chapters.map((c) =>
+              c.id !== chapterId ? c : { ...c, scenes: [...c.scenes, scene] }),
+          })),
+          projects: touchProject(s.projects, m.projectId),
+        }));
+        return scene;
+      },
+
+      updateScene(sceneId, patch) {
+        const m = get().manuscripts.find((x) => x.chapters.some((c) => c.scenes.some((sc) => sc.id === sceneId)));
+        if (!m) return;
+        const safe: Partial<Omit<Scene, "id">> = { ...patch };
+        set((s) => ({
+          manuscripts: s.manuscripts.map((x) => (x.id !== m.id ? x : {
+            ...x,
+            chapters: x.chapters.map((c) =>
+              c.scenes.some((sc) => sc.id === sceneId)
+                ? { ...c, scenes: c.scenes.map((sc) => (sc.id === sceneId ? { ...sc, ...safe, id: sc.id } : sc)) }
+                : c),
+          })),
+          projects: touchProject(s.projects, m.projectId),
+        }));
+      },
+
+      deleteScene(sceneId) {
+        const m = get().manuscripts.find((x) => x.chapters.some((c) => c.scenes.some((sc) => sc.id === sceneId)));
+        if (!m) return;
+        const next = deleteSceneInChapters(m.chapters, sceneId);
+        if (next === m.chapters) return; // the last scene cannot go
+        set((s) => ({
+          manuscripts: s.manuscripts.map((x) => (x.id !== m.id ? x : {
+            ...x,
+            chapters: next,
+          })),
+          projects: touchProject(s.projects, m.projectId),
+        }));
+      },
+
+      moveScene(sceneId, toChapterId, toIndex) {
+        const m = get().manuscripts.find((x) => x.chapters.some((c) => c.scenes.some((sc) => sc.id === sceneId)));
+        if (!m) return;
+        const next = moveSceneInPlan(m.chapters, sceneId, toChapterId, toIndex);
+        if (next === m.chapters) return;
+        set((s) => ({
+          manuscripts: s.manuscripts.map((x) => (x.id !== m.id ? x : {
+            ...x,
+            chapters: next,
+          })),
+          projects: touchProject(s.projects, m.projectId),
+        }));
+      },
+
       updateChapter(chapterId, patch) {
         const m = get().manuscripts.find((x) => x.chapters.some((c) => c.id === chapterId));
         if (!m) return;
         const safe: Partial<Omit<Chapter, "id">> = { ...patch };
+        // scenes are nested arrays: clone them so the caller's later mutations
+        // cannot alias into the store
+        if (safe.scenes) safe.scenes = safe.scenes.map((sc) => ({ ...sc }));
         set((s) => ({
           manuscripts: s.manuscripts.map((x) => (x.id !== m.id ? x : {
             ...x,
@@ -857,8 +952,7 @@ export const useScriptorium = create<ScriptoriumState>()(
         }));
       },
 
-      /** Swaps the chapter's order with its nearest neighbor by sorted order;
-       *  gaps are tolerated (no renumbering) — spec §7 ruling. */
+      /** Assigns (or unlinks) the chapter's calendar event day. */
       setChapterCalendar(chapterId, calendarId, dayKey) {
         const m = get().manuscripts.find((x) => x.chapters.some((c) => c.id === chapterId));
         if (!m) return;
@@ -874,23 +968,16 @@ export const useScriptorium = create<ScriptoriumState>()(
         }));
       },
 
-      moveChapter(chapterId, dir) {
+      /** Insertion-index chapter move for drag & drop: drop into a part (or
+       *  the ungrouped run when partId is omitted) at toIndex; the whole book
+       *  plan renumbers so storage order == print order. */
+      moveChapterTo(chapterId, toPartId, toIndex) {
         const m = get().manuscripts.find((x) => x.chapters.some((c) => c.id === chapterId));
         if (!m) return;
-        const sorted = [...m.chapters].sort((a, b) => a.order - b.order);
-        const idx = sorted.findIndex((c) => c.id === chapterId);
-        const neighbor = sorted[idx + dir];
-        if (!neighbor) return;
-        const orderA = sorted[idx].order;
+        const next = moveChapterInPlan(m.chapters, m.parts ?? [], chapterId, toPartId, toIndex);
+        if (next === m.chapters) return;
         set((s) => ({
-          manuscripts: s.manuscripts.map((x) => (x.id !== m.id ? x : {
-            ...x,
-            chapters: x.chapters.map((c) => {
-              if (c.id === chapterId) return { ...c, order: neighbor.order };
-              if (c.id === neighbor.id) return { ...c, order: orderA };
-              return c;
-            }),
-          })),
+          manuscripts: s.manuscripts.map((x) => (x.id !== m.id ? x : { ...x, chapters: next })),
           projects: touchProject(s.projects, m.projectId),
         }));
       },
@@ -923,24 +1010,16 @@ export const useScriptorium = create<ScriptoriumState>()(
         }));
       },
 
-      /** Swaps the part's order with its nearest neighbor by sorted order;
-       *  gaps are tolerated (no renumbering) — same rule as moveChapter. */
-      reorderPart(partId, dir) {
+      /** Insertion-index part move for drag & drop (1-based orders kept). */
+      reorderPartTo(partId, toIndex) {
         const m = get().manuscripts.find((x) => (x.parts ?? []).some((p) => p.id === partId));
         if (!m) return;
-        const sorted = [...(m.parts ?? [])].sort((a, b) => a.order - b.order);
-        const idx = sorted.findIndex((p) => p.id === partId);
-        const neighbor = sorted[idx + dir];
-        if (!neighbor) return;
-        const orderA = sorted[idx].order;
+        const next = reorderPartsTo(m.parts ?? [], partId, toIndex);
+        if (next === m.parts) return;
         set((s) => ({
           manuscripts: s.manuscripts.map((x) => (x.id !== m.id ? x : {
             ...x,
-            parts: (x.parts ?? []).map((p) => {
-              if (p.id === partId) return { ...p, order: neighbor.order };
-              if (p.id === neighbor.id) return { ...p, order: orderA };
-              return p;
-            }),
+            parts: next,
           })),
           projects: touchProject(s.projects, m.projectId),
         }));
@@ -3091,6 +3170,13 @@ export const useScriptorium = create<ScriptoriumState>()(
           return s;
         };
         return norm(persisted as PersistedState);
+      },
+      /** Rehydrate normalization: legacy chapters (a plain content body, no
+       *  scenes) surface as scenes without any version bump — v1 backups and
+       *  storage both carry the scenes shape, and old dev data self-heals. */
+      merge: (persisted, current) => {
+        const merged = { ...current, ...(persisted as PersistedState) };
+        return { ...merged, manuscripts: normalizeManuscriptsDomain(merged.manuscripts ?? []) };
       },
       partialize: ({ histories: _h, paletteOpen: _p, toasts: _t, quotaToastId: _q, images: _i, imagesReady: _r, ...s }): PersistedState => {
         void _h; // ephemeral histories are never persisted

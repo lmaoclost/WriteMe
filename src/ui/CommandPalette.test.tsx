@@ -21,7 +21,7 @@ function workspaceAt() {
   }));
   const manuscript: Manuscript = {
     id: "man-test", projectId: p.id, title: "Cantar de Vellmora", author: "R",
-    chapters: [{ id: "ch-1", heading: "The Long Winter", content: "", order: 0 }],
+    chapters: [{ id: "ch-1", heading: "The Long Winter", scenes: [{ id: "sc-1", content: "", order: 0 }], order: 0 }],
   };
   useScriptorium.setState((s) => ({ manuscripts: [...(s.manuscripts ?? []), manuscript] as never[] }));
   render(

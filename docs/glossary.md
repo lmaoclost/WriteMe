@@ -17,7 +17,7 @@ One name per concept — use it consistently in code, copy, and docs.
 | Plot board | `/p/:id/plotboard` | acts/cards/wires |
 | Ideas | `/p/:id/wellspring` (WellSpringPage) | idea boards: node/border sketch |
 | Language | `/p/:id/conlang` (ConlangPage) | glyphs/alphabet/lexicon |
-| Manuscript | `/p/:id/manuscript` | chapters |
+| Manuscript | `/p/:id/manuscript` | parts → chapters → scenes |
 | Publishing | `/p/:id/bindery` (BinderyPage) | book layout + export |
 | Chronicles | `/chronicles` | public story hall |
 | Updates | `/updates` | changelog page |
@@ -48,6 +48,18 @@ The hallmark that signs a bound book: a 7px gem on a 120px rule in paper brass, 
 colophon switch (`colophonSection` in `buildBook.ts`; ADR-0012). The app's only mark inside the
 book — the paper never takes app styling. In EPUB it degrades to `❖`; DOCX carries no mark
 (ADR-0012).
+
+## Manuscript (`/p/:id/manuscript`)
+
+The book plan is a fixed hierarchy the panel prints in the same order the book exports:
+
+- **Part** — optional divider that groups the chapters assigned to it (`chapter.partId`); a book may have zero parts. Ungrouped chapters (or chapters of a deleted part) print before every part.
+- **Chapter** — heading + 1+ **Scenes**. The chapter body = its scenes in order; between scenes the print book sets the bindery's scene ornament.
+- **Scene** — one markdown-or-HTML body block (`Scene` in `domain/types.ts`); a chapter always keeps at least one (the last cannot be deleted or dragged out).
+
+Reordering is drag-only (dnd-kit handles + keyboard steps, no up/down arrows): parts among parts, chapters within/across parts, scenes within/across chapters. Focus mode (`Ctrl+Shift+F`, `Esc`) renders only the writing surface — chapter heading, toolbar, scene bodies, word count — centered.
+
+PT: **parte**, **capítulo**, **cena**.
 
 ## Timeline (`/p/:id/linewheel`)
 

@@ -22,21 +22,69 @@ function seedMS(): { m: Manuscript; chId: string } {
   return { m: (store().manuscripts[0]), chId: ch.id };
 }
 
+/** The notes panel starts collapsed; every note/marker test opens it. */
+function openNotes() {
+  const trigger = screen.getByRole("button", { name: /Notes and scene/i });
+  if (trigger.getAttribute("aria-expanded") !== "true") fireEvent.click(trigger);
+  return trigger;
+}
+
+function sceneBody(n: number): HTMLElement {
+  return document.querySelector(`[data-testid="rich-scene-${n}"]`) as HTMLElement;
+}
+
 describe("ChapterEditor rich", () => {
-  it("renders toolbar and contenteditable body", () => {
+  it("renders toolbar and one contenteditable per scene", () => {
     const { m } = seedMS();
     void m;
     render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
     expect(document.querySelector('[contenteditable="true"]')?.getAttribute("role")).toBe("textbox");
     expect(screen.getByRole("button", { name: "Bold" })).toBeInTheDocument();
+    expect(sceneBody(1)).toBeTruthy();
   });
 
   it("footer shows the store word count on load (tag-stripped)", () => {
     const m = store().addManuscript("prj_1", "Livro A");
     store().addChapter(m.id, "Primeiro");
-    store().updateChapter(store().manuscripts[0].chapters[0].id, { content: "<p>Havia um ditado em Vellmora: a cidade se fecha.</p>" });
+    store().replaceChapterBody(store().manuscripts[0].chapters[0].id, "<p>Havia um ditado em Vellmora: a cidade se fecha.</p>");
     render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
     expect(document.querySelector(".book-words")?.textContent).toBe("9 words");
+  });
+
+  it("each scene keeps its own body and the footer sums them", () => {
+    const m = store().addManuscript("prj_1", "Livro A");
+    store().addChapter(m.id, "Um");
+    const chId = store().manuscripts[0].chapters[0].id;
+    store().replaceChapterBody(chId, "<p>um dois três</p>");
+    store().addScene(chId);
+    store().updateScene(store().manuscripts[0].chapters[0].scenes[1].id, { content: "quatro cinco" });
+    render(<ChapterEditor chapterId={chId} onDeleted={() => {}} />);
+    expect(sceneBody(1).textContent.trim()).toBe("um dois três");
+    expect(sceneBody(2).textContent.trim()).toBe("quatro cinco");
+    expect(document.querySelector(".book-words")?.textContent).toBe("5 words");
+  });
+
+  it("adding a scene from the editor appends an empty one", () => {
+    const { m } = seedMS();
+    void m;
+    render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { name: "New scene" }));
+    const scenes = store().manuscripts[0].chapters[0].scenes;
+    expect(scenes).toHaveLength(2);
+    expect(scenes[1].content).toBe("");
+    expect(scenes.map((s) => s.order)).toEqual([0, 1]);
+  });
+
+  it("delete scene is armed against draining the chapter to zero", () => {
+    seedMS();
+    render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
+    const del = screen.getAllByRole("button", { name: "Delete scene" })[0];
+    expect(del).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "New scene" }));
+    const dels = screen.getAllByRole("button", { name: "Delete scene" });
+    expect(dels[0]).toBeEnabled();
+    fireEvent.click(dels[0]);
+    expect(store().manuscripts[0].chapters[0].scenes).toHaveLength(1);
   });
 
   it("notes are rich and optional: Prologue / Epilogue commit HTML", () => {
@@ -44,6 +92,7 @@ describe("ChapterEditor rich", () => {
     store().addChapter(m.id, "Primeiro");
     const chId = store().manuscripts[0].chapters[0].id;
     render(<ChapterEditor chapterId={chId} onDeleted={() => {}} />);
+    openNotes();
     const top = screen.getByTestId("rich-note-top") as HTMLElement;
     const end = screen.getByTestId("rich-note-end") as HTMLElement;
     expect(top.getAttribute("contenteditable")).toBe("true");
@@ -89,27 +138,27 @@ describe("ChapterEditor rich", () => {
     expect(exec).toHaveBeenCalledWith("justifyCenter", false, undefined);
   });
 
-  it("body blur saves HTML content", () => {
+  it("scene blur saves HTML content", () => {
     const { chId } = seedMS();
     void chId;
     render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
-    const body = document.querySelector('[contenteditable="true"]') as HTMLElement;
+    const body = sceneBody(1);
     (body as HTMLElement).innerHTML = "<p>Um rio, três pontes, um selo.</p>";
     fireEvent.input(body); // marks dirty the way a real edit would
     fireEvent.blur(body);
     const ch = store().manuscripts[0].chapters[0];
-    expect(ch.content).toBe("<p>Um rio, três pontes, um selo.</p>");
+    expect(ch.scenes[0].content).toBe("<p>Um rio, três pontes, um selo.</p>");
   });
 
   it("keeps the committed body when returning to write mode after preview", () => {
     seedMS();
     render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
-    const body = document.querySelector('[data-testid="rich-body"]') as HTMLElement;
+    const body = sceneBody(1);
     body.innerHTML = "<p>Um rio, três pontes, um selo.</p>";
     fireEvent.input(body);
     fireEvent.click(screen.getByRole("button", { name: "Preview" }));
     fireEvent.click(screen.getByRole("button", { name: "Write" }));
-    const bodyAgain = document.querySelector('[data-testid="rich-body"]') as HTMLElement;
+    const bodyAgain = sceneBody(1);
     expect(bodyAgain.innerHTML).toContain("Um rio, três pontes, um selo.");
   });
 
@@ -117,19 +166,20 @@ describe("ChapterEditor rich", () => {
     seedMS();
     act(() => { store().addChapter(store().manuscripts[0].id, "MD cap"); });
     const ch = store().manuscripts[0].chapters[1];
-    act(() => { store().updateChapter(ch.id, { content: "# Título MD\n\ntexto com **força**" }); });
+    act(() => { store().updateScene(ch.scenes[0].id, { content: "# Título MD\n\ntexto com **força**" }); });
     render(<ChapterEditor chapterId={ch.id} onDeleted={() => {}} />);
-    expect(store().manuscripts[0].chapters[1].content).toContain("**força**"); // untouched until first edit
-    const body = document.querySelector('[contenteditable="true"]') as HTMLElement;
+    expect(store().manuscripts[0].chapters[1].scenes[0].content).toContain("**força**"); // untouched until first edit
+    const body = sceneBody(1);
     body.innerHTML = "<p>editado</p>";
     fireEvent.input(body);
     fireEvent.blur(body);
-    expect(store().manuscripts[0].chapters[1].content).toBe("<p>editado</p>"); // md converted/lost on edit
+    expect(store().manuscripts[0].chapters[1].scenes[0].content).toBe("<p>editado</p>"); // md converted/lost on edit
   });
 
   it("notes top/end + endMarker persist", () => {
     seedMS();
     render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
+    openNotes();
     const typeNote = (testid: string, text: string) => {
       const el = screen.getByTestId(testid) as HTMLElement;
       el.textContent = text;
@@ -148,6 +198,7 @@ describe("ChapterEditor rich", () => {
     seedMS();
     act(() => { store().updateChapter(store().manuscripts[0].chapters[0].id, { noteEnd: "Epílogo." }); });
     render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
+    openNotes();
     const marker = screen.getByLabelText("End-of-chapter marker");
     fireEvent.change(marker, { target: { value: "Fim do Livro I" } });
     expect(store().manuscripts[0].chapters[0].endMarker).toBeUndefined(); // debounce holds mid-typing
@@ -159,6 +210,7 @@ describe("ChapterEditor rich", () => {
     seedMS();
     act(() => { store().updateChapter(store().manuscripts[0].chapters[0].id, { noteEnd: "Epílogo." }); });
     const { unmount } = render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
+    openNotes();
     const marker = screen.getByLabelText("End-of-chapter marker");
     fireEvent.change(marker, { target: { value: "Fim." } });
     unmount();
@@ -169,6 +221,7 @@ describe("ChapterEditor rich", () => {
     seedMS();
     act(() => { store().updateChapter(store().manuscripts[0].chapters[0].id, { endMarker: "Fim do cap." }); });
     render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
+    openNotes();
     const marker = screen.getByLabelText("End-of-chapter marker");
     fireEvent.change(marker, { target: { value: "Fim do Livro I" } });
     fireEvent.blur(marker);
@@ -179,6 +232,7 @@ describe("ChapterEditor rich", () => {
     seedMS();
     const cal = store().addCalendar("prj_1", "Selo Anual");
     render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
+    openNotes();
     fireEvent.click(screen.getByRole("button", { name: "Link calendar" }));
     await pickSelectOptionSync(() => screen.getByLabelText("Calendar"), "Selo Anual");
     await pickSelectOptionSync(() => screen.getByLabelText("Month"), "Month 3");
@@ -195,12 +249,12 @@ describe("ChapterEditor rich", () => {
     expect(ch.calendarDayKey).toBe("0:2:4"); // dia 5 humano = índice 4
   });
 
-  it("sanitizes stored chapter HTML before it reaches the editor DOM", () => {
+  it("sanitizes stored scene HTML before it reaches the editor DOM", () => {
     seedMS();
     const chId = store().manuscripts[0].chapters[0].id;
-    act(() => { store().updateChapter(chId, { content: '<p>ok</p><img src="x" onerror="window.__pwned=1">' }); });
+    act(() => { store().replaceChapterBody(chId, '<p>ok</p><img src="x" onerror="window.__pwned=1">'); });
     render(<ChapterEditor chapterId={chId} onDeleted={() => {}} />);
-    const body = document.querySelector('[data-testid="rich-body"]') as HTMLElement;
+    const body = sceneBody(1);
     expect(body.innerHTML).not.toContain("onerror");
     expect(body.querySelector("img")).toBeNull();
   });
@@ -210,6 +264,7 @@ describe("ChapterEditor rich", () => {
     const chId = store().manuscripts[0].chapters[0].id;
     act(() => { store().updateChapter(chId, { noteTop: '<img src="y" onerror="window.__pwned=1">' }); });
     render(<ChapterEditor chapterId={chId} onDeleted={() => {}} />);
+    openNotes();
     const note = screen.getByTestId("rich-note-top") as HTMLElement;
     expect(note.innerHTML).not.toContain("onerror");
     expect(note.querySelector("img")).toBeNull();

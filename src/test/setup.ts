@@ -14,6 +14,15 @@ if (!Element.prototype.scrollIntoView) {
 if (!(HTMLElement.prototype as HTMLElement & { hasPointerCapture?: boolean }).hasPointerCapture) {
   (HTMLElement.prototype as HTMLElement & { hasPointerCapture: () => boolean }).hasPointerCapture = () => false;
 }
+// dnd-kit's droppable measurement expects a ResizeObserver; jsdom has none
+if (typeof globalThis.ResizeObserver === "undefined") {
+  class StubResizeObserver {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+  }
+  globalThis.ResizeObserver = StubResizeObserver as unknown as typeof ResizeObserver;
+}
 
 beforeEach(async () => {
   // English is the baseline for the existing suite; language tests opt in to PT.

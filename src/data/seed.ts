@@ -174,7 +174,7 @@ export function seedDemoProject() {
   }];
 
   const ch = (heading: string, content: string, order: number): Chapter => ({
-    id: newId("ch"), heading, content, order,
+    id: newId("ch"), heading, scenes: [{ id: newId("sc"), content, order: 0 }], order,
   });
 
   const manuscripts: Manuscript[] = [{

@@ -68,7 +68,7 @@ function seedBook(projectId: string, spec: {
   for (const ch of spec.chapters ?? []) {
     const chapter = useScriptorium.getState().addChapter(created.id, ch.heading);
     if (chapter && ch.content !== undefined) {
-      useScriptorium.getState().updateChapter(chapter.id, { content: ch.content });
+      useScriptorium.getState().replaceChapterBody(chapter.id, ch.content);
     }
   }
   const book = useScriptorium.getState().manuscripts.find((m) => m.id === created.id);
@@ -143,8 +143,8 @@ describe("buildBookHtml", () => {
       title: "Cantar de Vellmora",
       author: "Renan",
       chapters: [
-        { id: "c2", heading: "Fim", content: "A última linha.", order: 1 },
-        { id: "c1", heading: "Prólogo", content: "**Negrito** aqui.", order: 0 },
+        { id: "c2", heading: "Fim", scenes: [{ id: "s1", content: "A última linha.", order: 0 }], order: 1 },
+        { id: "c1", heading: "Prólogo", scenes: [{ id: "s1", content: "**Negrito** aqui.", order: 0 }], order: 0 },
       ],
     };
     const html = buildBookHtml(book);
@@ -159,7 +159,7 @@ describe("buildBookHtml", () => {
   it("title page is the first page; toc follows it", async () => {
     const book: Manuscript = {
       id: "b1", projectId: "p1", title: "T", author: "A",
-      chapters: [{ id: "c1", heading: "Um", content: "x.", order: 0 }],
+      chapters: [{ id: "c1", heading: "Um", scenes: [{ id: "s1", content: "x.", order: 0 }], order: 0 }],
     };
     const html = buildBookHtml(book);
     expect(html.indexOf("title-page")).toBeLessThan(html.indexOf("front-matter toc"));
@@ -169,7 +169,7 @@ describe("buildBookHtml", () => {
     const book: Manuscript = {
       id: "b1", projectId: "p1", title: "T", author: "A",
       bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: false, titlePage: false, toc: true, glossary: false },
-      chapters: [{ id: "c1", heading: "Um", content: "x.", order: 0 }],
+      chapters: [{ id: "c1", heading: "Um", scenes: [{ id: "s1", content: "x.", order: 0 }], order: 0 }],
     };
     const html = buildBookHtml(book);
     expect(html).toContain('<section class="front-matter book-title-page display"><h1 class="book-title">T</h1>');
@@ -181,7 +181,7 @@ describe("buildBookHtml", () => {
   it("with the title page on, no second book-title is glued before the chapters", async () => {
     const book: Manuscript = {
       id: "b1", projectId: "p1", title: "Título Página", author: "Renan",
-      chapters: [{ id: "c1", heading: "Um", content: "x.", order: 0 }],
+      chapters: [{ id: "c1", heading: "Um", scenes: [{ id: "s1", content: "x.", order: 0 }], order: 0 }],
     };
     const html = buildBookHtml(book);
     expect(html).not.toContain('class="book-title"');
@@ -205,7 +205,7 @@ describe("buildBookHtml", () => {
       projectId: "p1",
       title: "T",
       author: "A",
-      chapters: [{ id: "c1", heading: "Vazio", content: "", order: 0 }],
+      chapters: [{ id: "c1", heading: "Vazio", scenes: [{ id: "s1", content: "", order: 0 }], order: 0 }],
     };
     expect(buildBookHtml(book)).toContain('<p class="empty">No content yet.</p>');
   });
@@ -216,7 +216,7 @@ describe("buildBookHtml", () => {
       projectId: "p1",
       title: "Livro <b>X</b>",
       author: "An & Co",
-      chapters: [{ id: "c1", heading: "Cap > 1", content: "corpo", order: 0 }],
+      chapters: [{ id: "c1", heading: "Cap > 1", scenes: [{ id: "s1", content: "corpo", order: 0 }], order: 0 }],
     };
     const html = buildBookHtml(book);
     expect(html).toContain("Livro &lt;b&gt;X&lt;/b&gt;");
@@ -228,7 +228,10 @@ describe("buildBookHtml", () => {
 describe("buildBookHtml v2", () => {
   const mkBook = (patch: Partial<Manuscript> & { chapters?: Manuscript["chapters"] }): Manuscript => ({
     id: "b2", projectId: "p2", title: "A Coroa e o Rio", author: "Renan",
-    chapters: [{ id: "c1", heading: "Prólogo", content: "corpo um.", order: 0 }, { id: "c2", heading: "Fim", content: "corpo dois.", order: 1 }],
+    chapters: [
+      { id: "c1", heading: "Prólogo", scenes: [{ id: "s1", content: "corpo um.", order: 0 }], order: 0 },
+      { id: "c2", heading: "Fim", scenes: [{ id: "s1", content: "corpo dois.", order: 0 }], order: 1 },
+    ],
     ...patch,
   });
 
@@ -240,7 +243,7 @@ describe("buildBookHtml v2", () => {
 
   it("word numbering covers 1-99 with compounds, falls back to arabic at 100", async () => {
     const mkAt = (n: number) => {
-      const chapters = Array.from({ length: n }, (_, i) => ({ id: `c${i}`, heading: `C${i + 1}`, content: "x.", order: i }));
+      const chapters = Array.from({ length: n }, (_, i) => ({ id: `c${i}`, heading: `C${i + 1}`, scenes: [{ id: `s1`, content: "x.", order: 0 }], order: i }));
       const html = buildBookHtml(mkBook({ chapters, bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: false, titlePage: false, toc: false, glossary: false, numberingStyle: "word" } }));
       return html;
     };
@@ -324,11 +327,55 @@ describe("buildBookHtml v2", () => {
     expect(theme).not.toContain("7in");
   });
 
-  it("renders scene markers: endMarker between paragraphs, noteTop/noteEnd around the body", async () => {
-    const html = buildBookHtml(mkBook({ chapters: [{ id: "c1", heading: "Um", content: "para um.\n\npara dois.", order: 0, endMarker: "⁂", noteTop: "Drafted 1204", noteEnd: "End of draft" }] }));
-    expect(html).toContain('<div class="scene-marker ornament" aria-hidden="true"></div>');
-    expect(html).toContain('<div class="chapter-note top"><p>Drafted 1204</p>');
-    expect(html).toContain('<div class="chapter-note bottom"><p>End of draft</p>');
+  it("renders the chapter's scenes in order with the ornament between them", async () => {
+    const html = buildBookHtml(mkBook({ chapters: [{
+      id: "c1", heading: "Um", order: 0, scenes: [
+        { id: "s1", content: "cena um.", order: 0 },
+        { id: "s2", content: "cena dois.", order: 1 },
+        { id: "s3", content: "cena três.", order: 2 },
+      ],
+    }] }));
+    const ornament = '<div class="scene-marker ornament" aria-hidden="true"></div>';
+    // ordered walk: scene → ornament → scene → ornament → scene, exactly
+    // (renderMarkdown puts newlines between blocks, so exact equality lies)
+    const pieces = ["<p>cena um.</p>", ornament, "<p>cena dois.</p>", ornament, "<p>cena três.</p>"];
+    let pos = 0;
+    for (const piece of pieces) {
+      const at = html.indexOf(piece, pos);
+      expect(at, piece).toBeGreaterThan(-1);
+      pos = at + piece.length;
+    }
+    expect(html.match(/scene-marker ornament/g)?.length).toBe(2);
+  });
+
+  it("empty scenes render the placeholder paragraph like an empty chapter used to", async () => {
+    const html = buildBookHtml(mkBook({ chapters: [{
+      id: "c9", heading: "Vazio", order: 0, scenes: [
+        { id: "s1", content: "", order: 0 },
+        { id: "s2", content: "", order: 1 },
+      ],
+    }] }));
+    expect(html.match(/<p class="empty">/g)?.length).toBe(2);
+  });
+
+  it("renders scene markers: endMarker after the last scene, noteTop/noteEnd around the body", async () => {
+    const html = buildBookHtml(mkBook({ chapters: [{
+      id: "c1", heading: "Um", order: 0, noteTop: "Drafted 1204", noteEnd: "End of draft", endMarker: "⁂", scenes: [
+        { id: "s1", content: "cena um.", order: 0 },
+        { id: "s2", content: "cena dois.", order: 1 },
+      ],
+    }] }));
+    const ornament = '<div class="scene-marker ornament" aria-hidden="true"></div>';
+    const walk = ["<p>cena um.</p>", ornament, "<p>cena dois.</p>", ornament, '<div class="chapter-note bottom"><p>End of draft</p>'];
+    let pos = 0;
+    for (const piece of walk) {
+      const at = html.indexOf(piece, pos);
+      expect(at, piece).toBeGreaterThan(-1);
+      pos = at + piece.length;
+    }
+    // noteTop opens the body; endMarker's ornament closes the last scene
+    expect(html.indexOf('<div class="chapter-note top"><p>Drafted 1204</p>')).toBeGreaterThan(-1);
+    expect(html.indexOf("cena um.")).toBeGreaterThan(html.indexOf('<div class="chapter-note top">'));
   });
 
   it("running-head mode chapter uses the chapter title per section", async () => {
@@ -350,8 +397,11 @@ describe("buildBookHtml v2", () => {
   it("book strings are EN: Contents, Glossary, No content yet", async () => {
     const html = buildBookHtml(mkBook({ bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: true, dedication: "To the river." } }));
     expect(html).toContain("<h2>Contents</h2>");
-    const emptyBody = buildBookHtml(mkBook({ chapters: [{ id: "c9", heading: "Vazio", content: "", order: 0 }] }));
-    expect(emptyBody).toContain("No content yet.");
+    const emptyBody = buildBookHtml(mkBook({ chapters: [{ id: "c9", heading: "Vazio", scenes: [{ id: "s1", content: "x.", order: 0 }], order: 0 }] }));
+    // an empty SCENE (not an empty chapter) is the empty-body placeholder now
+    const bothEmpty = buildBookHtml(mkBook({ chapters: [{ id: "c9", heading: "Vazio", scenes: [{ id: "s1", content: "", order: 0 }], order: 0 }] }));
+    expect(emptyBody).not.toContain("No content yet.");
+    expect(bothEmpty).toContain("No content yet.");
   });
 
   it("book strings and word counts follow the active locale", async () => {
@@ -360,7 +410,7 @@ describe("buildBookHtml v2", () => {
     try {
       const html = buildBookHtml(mkBook({ bindery: { font: "Georgia, serif", trim: "6x9", dropCaps: false, runningHead: true, titlePage: true, toc: true, glossary: true } }));
       expect(html).toContain("<h2>Sumário</h2>");
-      const emptyBody = buildBookHtml(mkBook({ chapters: [{ id: "c9", heading: "Vazio", content: "", order: 0 }] }));
+      const emptyBody = buildBookHtml(mkBook({ chapters: [{ id: "c9", heading: "Vazio", scenes: [{ id: "s1", content: "", order: 0 }], order: 0 }] }));
       expect(emptyBody).toContain("Sem conteúdo ainda.");
       expect(formatWords(3)).toBe("3 palavras");
       expect(formatWords(1)).toBe("1 palavra");
@@ -383,7 +433,7 @@ describe("buildBookHtml front matter + parts", () => {
   const plainBook = (): Manuscript => ({
     id: "b3", projectId: "p3", title: "A Coroa e o Rio", author: "Renan",
     bindery: { ...defaultBindery()!, frontMatter: { halfTitle: false, copyright: false, romanNumerals: false } },
-    chapters: [{ id: "c1", heading: "Um", content: "corpo um.", order: 0 }],
+    chapters: [{ id: "c1", heading: "Um", scenes: [{ id: "s1", content: "corpo um.", order: 0 }], order: 0 }],
   });
 
   const frontMatterBook = (
@@ -393,8 +443,8 @@ describe("buildBookHtml front matter + parts", () => {
     id: "b3", projectId: "p3", title: "A Coroa e o Rio", author: "Renan",
     bindery: { ...defaultBindery()!, ...extra, frontMatter },
     chapters: [
-      { id: "c1", heading: "Um", content: "corpo um.", order: 0 },
-      { id: "c2", heading: "Dois", content: "corpo dois.", order: 1 },
+      { id: "c1", heading: "Um", scenes: [{ id: "s1", content: "corpo um.", order: 0 }], order: 0 },
+      { id: "c2", heading: "Dois", scenes: [{ id: "s1", content: "corpo dois.", order: 0 }], order: 1 },
     ],
   });
 
@@ -408,10 +458,10 @@ describe("buildBookHtml front matter + parts", () => {
       { id: "p2", title: "Segunda parte", order: 1 },
     ],
     chapters: [
-      { id: "c1", heading: "Um", content: "corpo.", order: 0 },
-      { id: "c2", heading: "Dois", content: "corpo.", order: 1, partId: "p2" },
-      { id: "c3", heading: "Três", content: "corpo.", order: 2, partId: "p1" },
-      { id: "c4", heading: "Quatro", content: "corpo.", order: 3 },
+      { id: "c1", heading: "Um", scenes: [{ id: "s1", content: "corpo.", order: 0 }], order: 0 },
+      { id: "c2", heading: "Dois", scenes: [{ id: "s1", content: "corpo.", order: 0 }], order: 1, partId: "p2" },
+      { id: "c3", heading: "Três", scenes: [{ id: "s1", content: "corpo.", order: 0 }], order: 2, partId: "p1" },
+      { id: "c4", heading: "Quatro", scenes: [{ id: "s1", content: "corpo.", order: 0 }], order: 3 },
     ],
   });
 
@@ -441,7 +491,7 @@ describe("buildBookHtml front matter + parts", () => {
 
   it("a chapter whose part no longer exists renders with the ungrouped ones", async () => {
     const book = plainBook();
-    book.chapters.push({ id: "c9", heading: "Órfã", content: "corpo.", order: 1, partId: "deleted-part" });
+    book.chapters.push({ id: "c9", heading: "Órfã", scenes: [{ id: "s1", content: "corpo.", order: 0 }], order: 1, partId: "deleted-part" });
     const html = buildBookHtml(book);
     expect(html).toContain('<section class="chapter-opener" data-ch="2"><h2><span class="ch-num">2</span>Órfã</h2></section><section class="chapter" data-ch="2">');
   });
@@ -599,7 +649,7 @@ describe("back matter + scene ornament", () => {
   const mkBook = (patch: Partial<Manuscript> = {}): Manuscript => ({
     id: "b5", projectId: "p5", title: "A Coroa e o Rio", author: "Renan",
     bindery: { ...defaultBindery()!, frontMatter: { halfTitle: false, copyright: false, romanNumerals: false } },
-    chapters: [{ id: "c1", heading: "Um", content: "corpo um.", order: 0 }],
+    chapters: [{ id: "c1", heading: "Um", scenes: [{ id: "s1", content: "corpo um.", order: 0 }], order: 0 }],
     ...patch,
   });
 
@@ -676,16 +726,17 @@ describe("back matter + scene ornament", () => {
     expect(css).toContain('content: "⁂"');
     const punct = buildBookHtml(mkBook({
       bindery: { ...defaultBindery()!, sceneOrnament: "asterism" },
-      chapters: [{ id: "c1", heading: "Um", content: "corpo.", order: 0, endMarker: "***" }],
+      chapters: [{ id: "c1", heading: "Um", scenes: [{ id: "s1", content: "corpo.", order: 0 }], order: 0, endMarker: "***" }],
     }));
     expect(punct).toContain('<div class="scene-marker ornament" aria-hidden="true"></div>');
     expect(punct).not.toContain("***");
     // the writer's line is never replaced by the glyph
     const word = buildBookHtml(mkBook({
       bindery: { ...defaultBindery()!, sceneOrnament: "asterism" },
-      chapters: [{ id: "c1", heading: "Um", content: "corpo.", order: 0, endMarker: "Fim do Um" }],
+      chapters: [{ id: "c1", heading: "Um", scenes: [{ id: "s1", content: "corpo.", order: 0 }], order: 0, endMarker: "Fim do Um" }],
     }));
     expect(word).toContain('<div class="scene-marker text">Fim do Um</div>');
+    // a single scene splits nothing: only the authored end marker prints
     expect(word).not.toContain("scene-marker ornament");
   });
 

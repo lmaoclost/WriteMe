@@ -88,7 +88,7 @@ const manuscript = (): Manuscript => ({
     typography: { bodyPt: 12, leading: 16, indent: 1.5, justify: true, hyphens: false },
   },
   chapters: [
-    { id: "c1", heading: "Prólogo", content: "Primeiro parágrafo.\n\nSegundo parágrafo.", order: 0 },
+    { id: "c1", heading: "Prólogo", scenes: [{ id: "s1", content: "Primeiro parágrafo.\n\nSegundo parágrafo.", order: 0 }], order: 0 },
   ],
 });
 
@@ -105,10 +105,10 @@ const partsBook = (): Manuscript => ({
     { id: "p2", title: "Segunda parte", order: 1 },
   ],
   chapters: [
-    { id: "c1", heading: "Um", content: "corpo.", order: 0 },
-    { id: "c2", heading: "Dois", content: "corpo.", order: 1, partId: "p2" },
-    { id: "c3", heading: "Três", content: "corpo.", order: 2, partId: "p1" },
-    { id: "c4", heading: "Quatro", content: "corpo.", order: 3 },
+    { id: "c1", heading: "Um", scenes: [{ id: "s1", content: "corpo.", order: 0 }], order: 0 },
+    { id: "c2", heading: "Dois", scenes: [{ id: "s1", content: "corpo.", order: 0 }], order: 1, partId: "p2" },
+    { id: "c3", heading: "Três", scenes: [{ id: "s1", content: "corpo.", order: 0 }], order: 2, partId: "p1" },
+    { id: "c4", heading: "Quatro", scenes: [{ id: "s1", content: "corpo.", order: 0 }], order: 3 },
   ],
 });
 
@@ -200,7 +200,7 @@ describe("buildDocxChildren", () => {
   it("renders markdown content into paragraphs, lists and quotes", () => {
     const children = buildDocxChildren({
       ...manuscript(),
-      chapters: [{ id: "c1", heading: "Prólogo", content: "**Negrito** aqui.\n\n- um\n- dois\n\n> fala", order: 0 }],
+      chapters: [{ id: "c1", heading: "Prólogo", scenes: [{ id: "s1", content: "**Negrito** aqui.\n\n- um\n- dois\n\n> fala", order: 0 }], order: 0 }],
     });
     const texts = children.map((c) => JSON.stringify(c));
     expect(texts.some((s) => s.includes("Negrito aqui."))).toBe(true);
@@ -211,7 +211,7 @@ describe("buildDocxChildren", () => {
   it("re-indents the paragraph after a list or a quote, like print", () => {
     const book = manuscript();
     const bodyAfter = (content: string, noteTop?: string) =>
-      buildDocxChildren({ ...book, chapters: [{ id: "c1", heading: "Prólogo", content, order: 0, noteTop }] })
+      buildDocxChildren({ ...book, chapters: [{ id: "c1", heading: "Prólogo", scenes: [{ id: "s1", content, order: 0 }], order: 0, noteTop }] })
         .filter((c) => opts(c).style === "BookBody");
     // print resets only h1/h3 + p and .chapter-note + p; ul + p and
     // blockquote + p keep the first-line indent (bookCss.ts:75-76)
@@ -233,7 +233,7 @@ describe("buildDocxChildren", () => {
     expect(renderMarkdown(html)).toBe(html);
     const children = buildDocxChildren({
       ...manuscript(),
-      chapters: [{ id: "c1", heading: "Prólogo", content: html, order: 0 }],
+      chapters: [{ id: "c1", heading: "Prólogo", scenes: [{ id: "s1", content: html, order: 0 }], order: 0 }],
     });
     const bodies = children.filter((c) => opts(c).style === "BookBody");
     expect(bodies).toHaveLength(1);
@@ -262,6 +262,31 @@ describe("docxStyles", () => {
   });
 });
 
+describe("scenes", () => {
+  it("renders each scene's blocks in order with the ornament between scenes, nothing after a single scene", () => {
+    const book: Manuscript = {
+      ...manuscript(),
+      chapters: [{ id: "c1", heading: "Um", order: 0, scenes: [
+        { id: "s1", content: "cena um.", order: 0 },
+        { id: "s2", content: "cena dois.", order: 1 },
+        { id: "s3", content: "", order: 2 },
+      ] }],
+    };
+    const texts = buildDocxChildren(book).map(runText);
+    const iUm = texts.indexOf("cena um.");
+    const ornament = texts.indexOf("⁂"); // default bindery sceneOrnament
+    const iDois = texts.indexOf("cena dois.");
+    const empty = texts.indexOf("No content yet.");
+    expect(iUm).toBeGreaterThan(-1);
+    expect(ornament).toBeGreaterThan(iUm);
+    expect(ornament).toBeLessThan(iDois);
+    expect(empty).toBeGreaterThan(iDois);
+
+    const single = buildDocxChildren(manuscript()).map(runText);
+    expect(single).not.toContain("⁂");
+  });
+});
+
 describe("scene markers", () => {
   const withMarker = (endMarker: string, sceneOrnament?: SceneOrnament): Manuscript => ({
     id: "b1",
@@ -269,7 +294,7 @@ describe("scene markers", () => {
     title: "T",
     author: "",
     bindery: { ...defaultBindery()!, ...(sceneOrnament ? { sceneOrnament } : {}) },
-    chapters: [{ id: "c1", heading: "Um", content: "corpo.", order: 0, endMarker }],
+    chapters: [{ id: "c1", heading: "Um", scenes: [{ id: "s1", content: "corpo.", order: 0 }], order: 0, endMarker }],
   });
 
   it("a punctuation marker becomes the configured ornament, centered", () => {
@@ -297,7 +322,7 @@ describe("scene markers", () => {
 });
 
 describe("DocxReplaceButton", () => {
-  it("imports html via mammoth and replaces content", async () => {
+  it("imports html via mammoth and replaces the body as one scene", async () => {
     useScriptorium.setState(useScriptorium.getInitialState());
     localStorage.clear();
     act(() => { store().addProject("V"); });
@@ -307,6 +332,10 @@ describe("DocxReplaceButton", () => {
     const input = screen.getByLabelText("Replace with .docx") as HTMLInputElement;
     const file = new File(["docx-bytes"], "ch.docx", { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
     fireEvent.change(input, { target: { files: [file] } });
-    await vi.waitFor(() => expect(store().manuscripts[0].chapters[0].content).toBe("<p>Importado do Word.</p>"), { timeout: 3000 });
+    await vi.waitFor(() => {
+      const scenes = store().manuscripts[0].chapters[0].scenes;
+      expect(scenes).toHaveLength(1);
+      expect(scenes[0].content).toBe("<p>Importado do Word.</p>");
+    }, { timeout: 3000 });
   });
 });

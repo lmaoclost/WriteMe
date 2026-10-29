@@ -105,12 +105,13 @@ function chapterHeading(config: NonNullable<Manuscript["bindery"]>, chapter: Cha
   return `<h2>${numHtml}${escapeText(chapter.heading)}</h2>`;
 }
 
-/** One chapter's body: markdown (or the empty placeholder), top note, scene
- *  marker, end note. */
+/** One chapter's body: the scenes in order with the scene ornament between
+ *  them (its glyph comes from the generated CSS), top note, the chapter's
+ *  own end marker, end note. */
 function chapterBody(chapter: Chapter): string {
-  let body = chapter.content
-    ? renderMarkdown(chapter.content)
-    : EMPTY_PARAGRAPH();
+  const ornament = '<div class="scene-marker ornament" aria-hidden="true"></div>';
+  let body = chapter.scenes.map((scene) =>
+    scene.content ? renderMarkdown(scene.content) : EMPTY_PARAGRAPH()).join(ornament);
   if (chapter.noteTop?.trim()) {
     body = `<div class="chapter-note top">${renderMarkdown(chapter.noteTop.trim())}</div>` + body;
   }

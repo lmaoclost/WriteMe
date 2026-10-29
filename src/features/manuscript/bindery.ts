@@ -56,7 +56,7 @@ export const WORDS_PER_PAGE = 280;
  *  the print dialog — this is the word-count heuristic, and the UI labels
  *  it as an estimate. */
 export function estimatePageCount(manuscript: Manuscript): number {
-  const words = manuscript.chapters.reduce((sum, c) => sum + countWords(c.content), 0);
+  const words = manuscript.chapters.reduce((sum, c) => sum + c.scenes.reduce((n, s) => n + countWords(s.content), 0), 0);
   const front = manuscript.bindery?.frontMatter?.halfTitle ? 2 : 0;
   const chapterOpeners = Math.floor(manuscript.chapters.length / 8);
   return Math.max(1, Math.ceil(words / WORDS_PER_PAGE) + front + chapterOpeners);

@@ -106,16 +106,16 @@ describe("page geometry", () => {
   it("estimatePageCount grows with words", async () => {
     const { estimatePageCount } = await import("../features/manuscript/bindery");
     const base = { id: "m", projectId: "p", title: "T", author: "A", parts: [], bindery: undefined } satisfies Omit<Manuscript, "chapters">;
-    const short = estimatePageCount({ ...base, chapters: [{ id: "c", heading: "h", content: "palavra ".repeat(300), order: 1 }] });
-    const long = estimatePageCount({ ...base, chapters: [{ id: "c", heading: "h", content: "palavra ".repeat(30000), order: 1 }] });
+    const short = estimatePageCount({ ...base, chapters: [{ id: "c", heading: "h", scenes: [{ id: "s1", content: "palavra ".repeat(300), order: 0 }], order: 1 }] });
+    const long = estimatePageCount({ ...base, chapters: [{ id: "c", heading: "h", scenes: [{ id: "s1", content: "palavra ".repeat(30000), order: 0 }], order: 1 }] });
     expect(long).toBeGreaterThan(short + 80);
   });
 
   it("estimatePageCount strips HTML tags before counting", async () => {
     const { estimatePageCount } = await import("../features/manuscript/bindery");
     const base = { id: "m", projectId: "p", title: "T", author: "A", parts: [], bindery: undefined } satisfies Omit<Manuscript, "chapters">;
-    const plain = estimatePageCount({ ...base, chapters: [{ id: "c", heading: "h", content: "palavra palavra ".repeat(150), order: 1 }] });
-    const rich = estimatePageCount({ ...base, chapters: [{ id: "c", heading: "h", content: "<p>palavra palavra</p>".repeat(150), order: 1 }] });
+    const plain = estimatePageCount({ ...base, chapters: [{ id: "c", heading: "h", scenes: [{ id: "s1", content: "palavra palavra ".repeat(150), order: 0 }], order: 1 }] });
+    const rich = estimatePageCount({ ...base, chapters: [{ id: "c", heading: "h", scenes: [{ id: "s1", content: "<p>palavra palavra</p>".repeat(150), order: 0 }], order: 1 }] });
     expect(rich).toBe(plain);
   });
 });

@@ -121,7 +121,7 @@ describe("manuscript parts and bindery layout blocks", () => {
   it("accepts a manuscript with parts and a v2 bindery", () => {
     const data = doc({
       id: "m1", projectId: "p1", title: "Livro", author: "Ana",
-      chapters: [{ id: "c1", heading: "Um", content: "", order: 1, partId: "pt1" }],
+      chapters: [{ id: "c1", heading: "Um", scenes: [{ id: "sc1", content: "", order: 0 }], order: 1, partId: "pt1" }],
       parts: [{ id: "pt1", title: "A Queda", order: 1 }],
       bindery: defaultBindery(),
     });
@@ -140,9 +140,9 @@ describe("manuscript parts and bindery layout blocks", () => {
     expect(b.sceneOrnament).toBe("asterism");
   });
 
-  it("rejects malformed parts and partIds while accepting absent parts", () => {
+  it("rejects malformed parts, partIds and scenes while accepting absent parts", () => {
     const ms = (patch: Record<string, unknown>) =>
-      ({ id: "m1", projectId: "p1", title: "L", author: "A", chapters: [{ id: "c1", heading: "Um", content: "", order: 1 }], ...patch });
+      ({ id: "m1", projectId: "p1", title: "L", author: "A", chapters: [{ id: "c1", heading: "Um", scenes: [{ id: "sc1", content: "", order: 0 }], order: 1 }], ...patch });
     expect(validateProjectData(doc(ms({})))).toBe(true);
     expect(validateProjectData(doc(ms({ parts: [] })))).toBe(true);
     expect(validateProjectData(doc(ms({ parts: [{ id: "pt1", title: "P", order: 1, epigraph: "Epi" }] })))).toBe(true);
@@ -150,7 +150,12 @@ describe("manuscript parts and bindery layout blocks", () => {
     expect(validateProjectData(doc(ms({ parts: [{ id: "pt1", title: "P", order: "1" }] })))).toBe(false);
     expect(validateProjectData(doc(ms({ parts: [{ id: "pt1", title: "P", order: 1, epigraph: 7 }] })))).toBe(false);
     expect(validateProjectData(doc(ms({ parts: "nope" })))).toBe(false);
-    expect(validateProjectData(doc(ms({ chapters: [{ id: "c1", heading: "Um", content: "", order: 1, partId: 7 }] })))).toBe(false);
+    expect(validateProjectData(doc(ms({ chapters: [{ id: "c1", heading: "Um", scenes: [{ id: "sc1", content: "", order: 0 }], order: 1, partId: 7 }] })))).toBe(false);
+    // chapters carry 1+ scenes: absent or malformed scenes are rejected
+    expect(validateProjectData(doc(ms({ chapters: [{ id: "c1", heading: "Um", order: 1 }] })))).toBe(false);
+    expect(validateProjectData(doc(ms({ chapters: [{ id: "c1", heading: "Um", scenes: [], order: 1 }] })))).toBe(false);
+    expect(validateProjectData(doc(ms({ chapters: [{ id: "c1", heading: "Um", scenes: [{ id: "sc1", content: 7, order: 0 }], order: 1 }] })))).toBe(false);
+    expect(validateProjectData(doc(ms({ chapters: [{ id: "c1", heading: "Um", scenes: [{ id: "sc1", content: "", order: "0" }], order: 1 }] })))).toBe(false);
   });
 
   it("validates v2 bindery blocks tolerantly: absent or partial ok, wrong-typed rejected", () => {

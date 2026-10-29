@@ -70,10 +70,17 @@ const AtlasSchema = z.object({
   pins: z.array(PinSchema),
 });
 
+const SceneSchema = z.object({
+  id: s,
+  content: s,
+  order: n,
+});
+
 const ChapterSchema = z.object({
   id: s,
   heading: s,
-  content: s,
+  /** 1+ cenas: o corpo do capítulo. Capítulos sem cenas (dados antigos) são rejeitados. */
+  scenes: z.array(SceneSchema).check(z.minLength(1)),
   order: n,
   noteTop: z.optional(s),
   noteEnd: z.optional(s),

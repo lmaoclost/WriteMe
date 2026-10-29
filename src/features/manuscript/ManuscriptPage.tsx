@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import type { Manuscript } from "../../domain/types";
@@ -9,7 +9,7 @@ import { ChapterList } from "./ChapterList";
 import { ChapterEditor } from "./ChapterEditor";
 import { bookSections } from "./buildBook";
 import { Button } from "../../ui/Button";
-import { FocusToggle } from "../workspace/focus";
+import { FocusContext, FocusToggle } from "../workspace/focus";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const CONFIRM_RESET_MS = 3000;
@@ -53,8 +53,10 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
   const books = useScriptorium(
     useShallow((s) => s.manuscripts.filter((m) => m.projectId === projectId)),
   );
+  const focusCtx = useContext(FocusContext);
   const [bookId, setBookId] = useState<string | null>(null);
   const [chapterId, setChapterId] = useState<string | null>(null);
+  const [sceneId, setSceneId] = useState<string | null>(null);
   const [pendingFocus, setPendingFocus] = useState<string | null>(null);
   const [armed, setArmed] = useState(false);
   const confirmTimerRef = useRef<number | undefined>(undefined);
@@ -126,6 +128,7 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
   const onBookSelected = (id: string) => {
     setBookId(id);
     setChapterId(null);
+    setSceneId(null);
   };
 
   const createChapter = () => {
@@ -133,6 +136,7 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
     const created = useScriptorium.getState().addChapter(book.id);
     if (!created) return;
     setChapterId(created.id);
+    setSceneId(null);
     setPendingFocus(created.id);
   };
 
@@ -140,7 +144,10 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
     const remaining = chapters.filter((c) => c.id !== id);
     useScriptorium.getState().deleteChapter(id);
     setChapterId(remaining[0]?.id ?? null);
+    setSceneId(null);
   };
+
+  const onSceneSelectCallback = useCallback((sceneId: string) => setSceneId(sceneId), []);
 
   if (!book) {
     return (
@@ -158,6 +165,30 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
   }
 
   const chapter = chapters.find((c) => c.id === chapterId);
+
+  // Focus mode: nothing but the writing surface, centered. The editor keeps
+  // the heading bar, the toolbar and the scene stack; book chrome, the
+  // chapter tree and the notes panel all stand down.
+  if (focusCtx?.focus) {
+    return (
+      <div className="grid grid-rows-[1fr] h-full min-h-0" data-testid="focus-page">
+        <section className="min-h-0 overflow-y-auto px-6 pb-[18px]">
+          <div className="h-full min-h-0 mx-auto w-full max-w-[720px] flex flex-col justify-center">
+            {chapter ? (
+              <ChapterEditor
+                key={chapter.id}
+                chapterId={chapter.id}
+                headingRef={headingRef}
+                onDeleted={onChapterDeleted}
+                focus
+                focusSceneId={sceneId}
+              />
+            ) : null}
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-rows-[auto_auto_1fr] h-full min-h-0">
@@ -192,12 +223,9 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
           sections={sections}
           selectedId={chapterId}
           onSelect={setChapterId}
-          onMove={(id, dir) => useScriptorium.getState().moveChapter(id, dir)}
+          onSceneSelect={onSceneSelectCallback}
           onCreate={createChapter}
           onCreatePart={() => { useScriptorium.getState().addPart(book.id); }}
-          onReorderPart={(id, dir) => useScriptorium.getState().reorderPart(id, dir)}
-          onRenamePart={(id, title) => useScriptorium.getState().renamePart(id, title)}
-          onDeletePart={(id) => useScriptorium.getState().removePart(id)}
         />
         <section className="min-h-0 overflow-y-auto py-1 px-6 pb-[18px] flex flex-col gap-3.5">
           {chapter ? (
@@ -206,6 +234,7 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
               chapterId={chapter.id}
               headingRef={headingRef}
               onDeleted={onChapterDeleted}
+              focusSceneId={sceneId}
             />
           ) : null}
         </section>

@@ -234,35 +234,39 @@ export function buildDocxChildren(manuscript: Manuscript): Paragraph[] {
         flush = true;
       }
       // chapter copy is markdown (or rich-editor HTML): the same
-      // renderMarkdown → blocks pipeline print and EPUB run, so plain-text
-      // markdown would otherwise drop out of the export entirely
-      const blocks = htmlToBlocks(renderMarkdown(chapter.content || ""));
-      if (!blocks.length) {
-        children.push(new Paragraph({ children: [new TextRun({ text: i18n.t("manuscript.noContent"), italics: true })] }));
-      }
-      for (const block of blocks) {
-        if (block.kind === "li") {
-          children.push(new Paragraph({ children: [new TextRun({ text: block.text })], bullet: { level: 0 } }));
-          // only a heading or a note resets the flush paragraph: print's
-          // `ul + p` and `blockquote + p` re-indent, so the flag dies here
-          flush = false;
-        } else if (block.kind === "quote") {
-          children.push(new Paragraph({ children: [new TextRun({ text: block.text, italics: true })], indent: { left: 360 } }));
-          flush = false;
-        } else if (block.kind === "h1" || block.kind === "h2" || block.kind === "h3") {
-          children.push(new Paragraph({
-            children: [new TextRun({ text: block.text, bold: true })],
-            heading: block.kind === "h1" ? HeadingLevel.HEADING_2 : block.kind === "h2" ? HeadingLevel.HEADING_3 : HeadingLevel.HEADING_4,
-          }));
-          flush = true;
-        } else {
-          children.push(new Paragraph({
-            style: "BookBody",
-            alignment: t.alignment,
-            indent: { firstLine: flush ? 0 : t.indent },
-            children: [new TextRun({ text: block.text })],
-          }));
-          flush = false;
+      // renderMarkdown → blocks pipeline print and EPUB run, scene by scene;
+      // the scene ornament separates the scenes (print's glyph lives in CSS)
+      for (const [i, scene] of chapter.scenes.entries()) {
+        if (i > 0) children.push(ornamentParagraph(config));
+        const blocks = htmlToBlocks(renderMarkdown(scene.content || ""));
+        if (!blocks.length) {
+          children.push(new Paragraph({ children: [new TextRun({ text: i18n.t("manuscript.noContent"), italics: true })] }));
+          continue;
+        }
+        for (const block of blocks) {
+          if (block.kind === "li") {
+            children.push(new Paragraph({ children: [new TextRun({ text: block.text })], bullet: { level: 0 } }));
+            // only a heading or a note resets the flush paragraph: print's
+            // `ul + p` and `blockquote + p` re-indent, so the flag dies here
+            flush = false;
+          } else if (block.kind === "quote") {
+            children.push(new Paragraph({ children: [new TextRun({ text: block.text, italics: true })], indent: { left: 360 } }));
+            flush = false;
+          } else if (block.kind === "h1" || block.kind === "h2" || block.kind === "h3") {
+            children.push(new Paragraph({
+              children: [new TextRun({ text: block.text, bold: true })],
+              heading: block.kind === "h1" ? HeadingLevel.HEADING_2 : block.kind === "h2" ? HeadingLevel.HEADING_3 : HeadingLevel.HEADING_4,
+            }));
+            flush = true;
+          } else {
+            children.push(new Paragraph({
+              style: "BookBody",
+              alignment: t.alignment,
+              indent: { firstLine: flush ? 0 : t.indent },
+              children: [new TextRun({ text: block.text })],
+            }));
+            flush = false;
+          }
         }
       }
       if (chapter.endMarker?.trim()) {
