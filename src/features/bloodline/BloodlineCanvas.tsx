@@ -185,7 +185,7 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
           onTouchMove={plane.onTouchMove}
           onTouchEnd={plane.onTouchEnd}
         >
-          <div className="absolute bg-[radial-gradient(circle_at_25%_25%,#17162a,var(--ink)_65%)] shadow-[inset_0_0_0_1px_var(--line)]" data-testid="bl-plane"
+          <div className="absolute bg-[radial-gradient(circle_at_25%_25%,#1d1611,var(--ink)_65%)] shadow-[inset_0_0_0_1px_var(--line)]" data-testid="bl-plane"
             style={{
               width: plane.planeW, height: plane.planeH,
               transform: `translate(${plane.panX}px, ${plane.panY}px) scale(${plane.scale})`,

@@ -348,7 +348,7 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
           onPointerUp={onPointerUp}
         >
           <div
-            className="absolute top-0 left-0 bg-[radial-gradient(circle_at_25%_25%,#17162a,var(--ink)_65%)] shadow-[inset_0_0_0_1px_var(--line)]"
+            className="absolute top-0 left-0 bg-[radial-gradient(circle_at_25%_25%,#1d1611,var(--ink)_65%)] shadow-[inset_0_0_0_1px_var(--line)]"
             data-testid="oaths-plane"
             style={{
               width: planeSize,

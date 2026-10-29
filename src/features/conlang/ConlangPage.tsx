@@ -120,7 +120,7 @@ function AlphabetTab({ conlang, selectedGlyph, onSelect }: {
             aria-label={t("conlang.alphabet.glyphAria", { char: g.char })}
           >
             <span className="font-mono text-base text-gold">{g.char}</span>
-            <svg viewBox="0 0 100 100" className="w-full aspect-square rounded-sm bg-[#12121e] [&_path]:fill-none [&_path]:stroke-parchment [&_path]:[stroke-width:3] [&_path]:[stroke-linecap:round]"><path d={g.svgPath} /></svg>
+            <svg viewBox="0 0 100 100" className="w-full aspect-square rounded-sm bg-[var(--panel)] [&_path]:fill-none [&_path]:stroke-parchment [&_path]:[stroke-width:3] [&_path]:[stroke-linecap:round]"><path d={g.svgPath} /></svg>
           </button>
         ))}
         {conlang.glyphs.length === 0 ? <p className="text-slate">{t("conlang.alphabet.empty")}</p> : null}
@@ -200,9 +200,9 @@ function GlyphEditor({ conlang, glyphId, onDone }: {
         onPointerMove={onMove}
         onPointerUp={onUp}
       >
-        <rect width="100" height="100" fill="#12121e" />
-        <line x1="50" y1="0" x2="50" y2="100" stroke="#2a2a44" strokeWidth="0.3" />
-        <line x1="0" y1="50" x2="100" y2="50" stroke="#2a2a44" strokeWidth="0.3" />
+        <rect width="100" height="100" fill="var(--panel)" />
+        <line x1="50" y1="0" x2="50" y2="100" stroke="var(--line)" strokeWidth="0.3" />
+        <line x1="0" y1="50" x2="100" y2="50" stroke="var(--line)" strokeWidth="0.3" />
         {glyph.svgPath ? <path d={glyph.svgPath} className="[fill:none] [stroke:var(--parchment)] [stroke-width:3] [stroke-linecap:round] [stroke-linejoin:round]" /> : null}
         {livePath ? <path d={livePath} className="[fill:none] [stroke:var(--gold)] [stroke-width:3] [stroke-linecap:round] [stroke-linejoin:round]" /> : null}
       </svg>

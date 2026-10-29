@@ -151,7 +151,7 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
           onPointerUp={() => { moveNodeRaf.flush(); scheduleView.flush(); nodeDrag.current = null; pan.current = null; }}
         >
           <div
-            className="absolute bg-[radial-gradient(circle_at_25%_25%,#17162a,var(--ink)_65%)] shadow-[inset_0_0_0_1px_var(--line)]"
+            className="absolute bg-[radial-gradient(circle_at_25%_25%,#1d1611,var(--ink)_65%)] shadow-[inset_0_0_0_1px_var(--line)]"
             data-testid="well-plane"
             style={{
               width: 20000, height: 20000,

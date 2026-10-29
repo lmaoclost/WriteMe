@@ -45,7 +45,7 @@ export function alphabetSheetSvg(
   const parts = glyphs.map((g, i) => {
     const x = (i % cols) * cell;
     const y = Math.floor(i / cols) * cell;
-    return `<g><rect x="${x + 4}" y="${y + 4}" width="${cell - 8}" height="${cell - 8}" rx="8" fill="#12121e" stroke="#2a2a44"/><text x="${x + 14}" y="${y + 28}" fill="#7a7a99" font-size="16" font-family="monospace">${g.char}</text><path d="${g.svgPath}" fill="none" stroke="#e8dcc3" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+    return `<g><rect x="${x + 4}" y="${y + 4}" width="${cell - 8}" height="${cell - 8}" rx="8" fill="#262019" stroke="#3b2f25"/><text x="${x + 14}" y="${y + 28}" fill="#a4917d" font-size="16" font-family="monospace">${g.char}</text><path d="${g.svgPath}" fill="none" stroke="#e8dcc3" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></g>`;
   });
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><rect width="${w}" height="${h}" fill="#12121e"/>${parts.join("")}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><rect width="${w}" height="${h}" fill="#1e1815"/>${parts.join("")}</svg>`;
 }
