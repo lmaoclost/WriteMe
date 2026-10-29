@@ -130,7 +130,9 @@ export function CommandPalette() {
                   }}
                   className={
                     "flex w-full cursor-default list-none items-center justify-between gap-3 border-0 bg-none px-4 py-1.5 text-left no-underline text-sm text-parchment " +
-                    (row.index === safeActive ? "bg-[color-mix(in_srgb,var(--gold)_10%,transparent)]" : "")
+                    (row.index === safeActive
+                      ? "bg-[color-mix(in_srgb,var(--gold)_10%,transparent)] shadow-[inset_2px_0_0_var(--gold)]"
+                      : "")
                   }
                   onMouseEnter={() => setActive(row.index)}
                   onClick={() => choose(row.item)}

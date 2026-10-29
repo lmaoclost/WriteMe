@@ -32,7 +32,8 @@ export function EntryList({ entries, selectedId, onSelect, onCreate, onCreateKin
   const chips = codexCategoryChips();
 
   return (
-    <aside className="codex-list flex flex-col gap-2.5 min-h-0 p-3 bg-night border-r border-line max-[720px]:border-r-0 max-[720px]:border-b max-[720px]:border-line">
+    <aside className="codex-list relative overflow-hidden flex flex-col gap-2.5 min-h-0 p-3 bg-night border-r border-line max-[720px]:border-r-0 max-[720px]:border-b max-[720px]:border-line">
+      <div className="lamp-pool" aria-hidden="true" />
       <div className="grid gap-1 px-1">
         <h1 className="m-0 font-display text-[15px] font-semibold text-parchment-strong">{t("entries.list.title")}</h1>
         <p className="m-0 text-[11px] leading-snug text-slate">{t("entries.list.purpose")}</p>

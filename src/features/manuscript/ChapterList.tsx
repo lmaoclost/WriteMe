@@ -80,7 +80,7 @@ const ChapterRow = memo(function ChapterRow({ chapter, index, total, selected, w
         onClick={() => onSelect(chapter.id)}
       >
         <span className="book-ch-heading overflow-hidden text-ellipsis whitespace-nowrap">{chapter.heading}</span>
-        <span className="text-[11px] text-slate">{formatWords(words)}</span>
+        <span className="text-[11px] text-slate [font-variant-numeric:tabular-nums]">{formatWords(words)}</span>
       </button>
     </li>
   );
@@ -148,7 +148,7 @@ const PartRow = memo(function PartRow({ part, index, total, words, onReorder, on
         ) : (
           <span className="book-part-title overflow-hidden text-ellipsis whitespace-nowrap text-xs font-semibold text-parchment-dim">{part.title}</span>
         )}
-        <span data-testid={`part-words-${part.title}`} className="text-[11px] text-slate">{formatWords(words)}</span>
+        <span data-testid={`part-words-${part.title}`} className="text-[11px] text-slate [font-variant-numeric:tabular-nums]">{formatWords(words)}</span>
       </span>
       <button
         type="button"
@@ -177,7 +177,8 @@ export function ChapterList({ sections, selectedId, onSelect, onMove, onCreate, 
   const parts = sections.map((s) => s.part).filter((p): p is Part => p !== null);
 
   return (
-    <aside className="book-chapters flex flex-col gap-2.5 min-h-0 p-3 bg-night border-r border-line max-[720px]:border-r-0 max-[720px]:border-b max-[720px]:border-line">
+    <aside className="book-chapters relative overflow-hidden flex flex-col gap-2.5 min-h-0 p-3 bg-night border-r border-line max-[720px]:border-r-0 max-[720px]:border-b max-[720px]:border-line">
+      <div className="lamp-pool" aria-hidden="true" />
       {chapters.length === 0 ? (
         <p className="mx-2 my-2 text-parchment-dim text-[13px]">{t("manuscript.addFirstChapter")}</p>
       ) : null}

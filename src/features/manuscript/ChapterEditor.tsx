@@ -300,8 +300,8 @@ const WordCountFooter = memo(function WordCountFooter({ writing, content, richTi
     return countWords(content);
   }, [writing, content, richTick]);
   return (
-    <footer className="flex items-center justify-between gap-2">
-      <span className="book-words text-xs text-slate">{formatWords(words)}</span>
+    <footer className="flex items-center justify-between gap-2 border-t border-line pt-2.5 mt-1">
+      <span className="book-words text-xs text-slate [font-variant-numeric:tabular-nums]">{formatWords(words)}</span>
       <button
         type="button"
         className={"book-delete bg-none border border-[var(--ember)] text-[var(--ember)] rounded-lg py-1.5 px-2.5 text-[13px] hover:bg-[color-mix(in_srgb,var(--ember)_18%,transparent)]" + (armed ? " armed bg-[color-mix(in_srgb,var(--ember)_20%,transparent)]" : "")}
