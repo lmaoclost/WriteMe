@@ -35,4 +35,4 @@ UI sections use semantic names (Lore, Chronology, Ideas, Language, Publishing, �
 
 ## Reference
 
-`README.md` (rodar/export/navegadores) · `PRODUCT.md` (verdade de produto) · `DESIGN.md` (design system + limites de paged-media) · `docs/decisions/` (ADR-0001…0010) · `docs/glossary.md`.
+`README.md` (rodar/export/navegadores) · `PRODUCT.md` (verdade de produto) · `DESIGN.md` (design system + limites de paged-media) · `docs/decisions/` (ADR-0001…0012) · `docs/glossary.md`.
