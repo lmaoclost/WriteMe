@@ -21,6 +21,10 @@
       "english": "English",
       "portuguese": "Portuguese"
     },
+    "switchToDay": "Switch to day mode",
+    "switchToNight": "Switch to night mode",
+    "nightMode": "Night",
+    "dayMode": "Day",
     "confirm": "Confirm?",
     "nothingToUndo": "Nothing left to undo."
   },

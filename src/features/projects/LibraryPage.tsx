@@ -11,6 +11,7 @@ import { Field } from "../../ui/Field";
 import { Modal } from "../../ui/Modal";
 import { Seal } from "../../ui/Seal";
 import { LanguageToggle } from "../../ui/LanguageToggle";
+import { ThemeToggle } from "../../ui/ThemeToggle";
 import { CARD_GRID, WORLD_CARD, CARD_LINK, CARD_NAME, CARD_DESC, CARD_UPDATED, DELETE_CHIP, EMPTY_STATE } from "../../ui/pageBits";
 import { localeFor } from "../../i18n";
 
@@ -149,7 +150,10 @@ export function LibraryPage() {
             <Seal letter="S" className="size-7 text-sm" />
             <span className="font-display text-[15px] uppercase tracking-[0.14em] text-parchment">Scriptorium</span>
           </div>
-          <LanguageToggle />
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
         </div>
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate">{t("library.eyebrow")}</p>
         <h1 className="text-[clamp(2rem,4.5vw,2.75rem)] leading-[1.1] text-parchment-strong">{t("library.welcome")}</h1>

@@ -62,11 +62,13 @@ describe("workspace rail", () => {
     expect(scroller.className).not.toContain("overflow-y-hidden");
   });
 
-  it("keeps the language toggle out of the scrolling area", async () => {
+  it("keeps the language and theme toggles out of the scrolling area", async () => {
     const p = useScriptorium.getState().addProject("Docked");
     await at(`/p/${p.id}`);
     const scroller = screen.getByTestId("rail-scroll");
-    expect(scroller).not.toContainElement(screen.getByRole("button", { name: /switch to/i }));
+    for (const button of screen.getAllByRole("button", { name: /switch to/i })) {
+      expect(scroller).not.toContainElement(button);
+    }
     expect(scroller).not.toContainElement(screen.getByRole("button", { name: /search/i }));
   });
 

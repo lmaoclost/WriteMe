@@ -50,6 +50,9 @@ input[type="file"].sr-only {
   --ember: var(--warn);
   --wax: #241c08;
 
+  /* Hover wash on toolbar buttons: light-on-dark at rest, dark-on-light in
+     the day theme. Kept as a token because #ffffff14 is invisible on ivory. */
+  --hover-wash: rgb(255 255 255 / 0.08);
   --scrim: rgb(14 9 5 / 0.72);
   --scrim-canvas: rgb(0 0 0 / 0.5);
   --seal-wax: #e8c063;
@@ -88,6 +91,62 @@ input[type="file"].sr-only {
   --input: #3b2f25;
   --ring: #9a7a3a;
   --radius: 0.5rem;
+}
+
+/* ===== day tokens — direction B, "Proof & Press": the same study by day.
+   The desk is aged ivory, cards are the proofing sheets, text is warm ink,
+   brass darkens to keep hold on light ground. Same roles, same rules:
+   Wax Rule, Flat Archive, the lamp still hangs over the work. Aliases
+   (--ink, --night, --parchment, ...) resolve against these on the same
+   element, so only the base tokens are restated here. ===== */
+:root.light {
+  --bg: #f1e9d9;
+  --bg-header: #eae0cc;
+  --panel: #f5efe1;
+  --card: #faf5ea; /* legacy card token; shadcn card maps to --card-well below */
+  --line: #d3c4a6;
+  --line-strong: #b7a684;
+  --text: #33291a;
+  --text-strong: #1f180c;
+  --text-muted: #6f6248;
+  --text-faint: #9b8d70;
+  --lilac: #8a6519; /* deep brass focus light for light ground */
+  --gold: #8f6f2c;
+  --gold-dim: #6f5820;
+  --teal: #5d7250; /* sage deepened */
+  --rose: #9c5f3e; /* clay deepened */
+  --success: #3f7c46;
+  --success-hover: #336839;
+  --info: #4a5f80;
+  --danger: #a8472c;
+  --warn: #a8472c;
+
+  /* text set on brass flips to the proofing-sheet light */
+  --wax: #fdf8ec;
+
+  --hover-wash: rgb(40 28 8 / 0.06);
+  --scrim: rgb(35 24 10 / 0.35);
+  --scrim-canvas: rgb(48 33 12 / 0.28);
+
+  /* ===== shadcn semantic tokens (proof-and-press day) ===== */
+  --background: #f1e9d9;
+  --foreground: #33291a;
+  --card-well: #faf5ea;
+  --card-well-foreground: #33291a;
+  --popover: #fbf7ec;
+  --popover-foreground: #33291a;
+  --primary: #8f6f2c;
+  --primary-foreground: #fdf8ec;
+  --secondary: #e8ddc7;
+  --secondary-foreground: #33291a;
+  --muted: #e6dcc6;
+  --muted-foreground: #6f6248;
+  --accent-soft: #efe4cc;
+  --accent-foreground: #33291a;
+  --destructive: #a8472c;
+  --border: #d3c4a6;
+  --input: #d3c4a6;
+  --ring: #8a6519;
 }
 
 @theme inline {

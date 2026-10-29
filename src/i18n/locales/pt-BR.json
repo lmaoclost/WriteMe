@@ -21,6 +21,10 @@
       "english": "inglês",
       "portuguese": "português"
     },
+    "switchToDay": "Mudar para o modo claro",
+    "switchToNight": "Mudar para o modo noturno",
+    "nightMode": "Noite",
+    "dayMode": "Dia",
     "confirm": "Confirmar?",
     "nothingToUndo": "Nada mais para desfazer."
   },

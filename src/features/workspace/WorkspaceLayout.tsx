@@ -6,6 +6,7 @@ import { preloadSection } from "../../app/lazyRoutes";
 import { selectProject, useScriptorium } from "../../data/store";
 import { Seal } from "../../ui/Seal";
 import { LanguageToggle } from "../../ui/LanguageToggle";
+import { ThemeToggle } from "../../ui/ThemeToggle";
 import { FocusContext, isWritingPath, type FocusValue } from "./focus";
 
 const RAIL_LINK = "flex items-center gap-2 px-3 py-[10px] rounded-sm text-xs tracking-[0.1em] uppercase whitespace-nowrap text-ellipsis overflow-hidden no-underline transition-colors max-[720px]:py-2 max-[720px]:flex-none max-[720px]:overflow-visible max-[720px]:whitespace-nowrap max-[720px]:text-ellipsis max-[720px]:text-clip max-[720px]:min-w-0";
@@ -132,6 +133,7 @@ export function WorkspaceLayout() {
           </div>
           <div className="flex shrink-0 flex-col items-start gap-1 border-t border-line pt-2.5 max-[720px]:ml-auto max-[720px]:flex-row max-[720px]:items-center max-[720px]:border-t-0 max-[720px]:pt-0">
             <LanguageToggle />
+            <ThemeToggle />
             <button
               type="button"
               className="flex cursor-pointer items-center gap-2 border-0 bg-none px-3 py-[10px] text-left text-xs uppercase tracking-[0.1em] text-slate hover:text-parchment max-[720px]:hidden"
