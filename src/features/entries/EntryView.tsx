@@ -215,10 +215,10 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           <SelectTrigger aria-label={t("entries.view.category")} className="rounded-lg border-line bg-night-2 text-parchment px-2 py-1.5 text-xs hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
           <SelectContent className="border-line bg-night text-parchment">
             {CODEX_CATEGORIES.map((c) => (
-              <SelectItem key={c.key} value={c.key} className="text-xs focus:bg-[#24233f] focus:text-parchment">{c.icon} {categoryLabel(c.key)}</SelectItem>
+              <SelectItem key={c.key} value={c.key} className="text-xs focus:bg-accent focus:text-parchment">{c.icon} {categoryLabel(c.key)}</SelectItem>
             ))}
             {(project?.customCategories ?? []).map((k) => (
-              <SelectItem key={k.key} value={k.key} className="text-xs focus:bg-[#24233f] focus:text-parchment">{k.icon} {k.label}</SelectItem>
+              <SelectItem key={k.key} value={k.key} className="text-xs focus:bg-accent focus:text-parchment">{k.icon} {k.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>

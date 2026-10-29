@@ -279,7 +279,7 @@ function WellPanel({ well, selectedId, onSelect, otherNodes }: {
           <SelectTrigger aria-label={t("wellspring.panel.typeAria")} className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
           <SelectContent className="border-line bg-night text-parchment">
             {(Object.keys(WELL_KIND_META) as WellKind[]).map((k) => (
-              <SelectItem key={k} value={k} className="text-xs focus:bg-[#24233f] focus:text-parchment">{t(WELL_KIND_META[k].labelKey)}</SelectItem>
+              <SelectItem key={k} value={k} className="text-xs focus:bg-accent focus:text-parchment">{t(WELL_KIND_META[k].labelKey)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -308,7 +308,7 @@ function WellPanel({ well, selectedId, onSelect, otherNodes }: {
           <Select value={fromId} onValueChange={(v) => setFromId(v)}>
             <SelectTrigger aria-label={t("wellspring.panel.target")} className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue placeholder={t("wellspring.panel.connectTo")} /></SelectTrigger>
             <SelectContent className="border-line bg-night text-parchment">
-              {others.map((n) => <SelectItem key={n.id} value={n.id} className="text-xs focus:bg-[#24233f] focus:text-parchment">{n.text || t(WELL_KIND_META[n.kind].labelKey)}</SelectItem>)}
+              {others.map((n) => <SelectItem key={n.id} value={n.id} className="text-xs focus:bg-accent focus:text-parchment">{n.text || t(WELL_KIND_META[n.kind].labelKey)}</SelectItem>)}
             </SelectContent>
           </Select>
           <input aria-label={t("wellspring.panel.nameBorder")} placeholder={t("wellspring.panel.nameBorderPlaceholder")} value={borderLabel} onChange={(e) => setBorderLabel(e.target.value)} className="bg-ink border border-line rounded-sm text-parchment px-2 py-1.5 text-xs" />

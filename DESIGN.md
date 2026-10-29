@@ -1,33 +1,33 @@
 ---
 name: Scriptorium
-description: Local-first worldbuilding and writing studio with an archivist's visual language
+description: Local-first worldbuilding and writing studio with a lamplit study's visual language
 colors:
-  ink: "#1a1a2e"
-  night: "#16162a"
-  night-2: "#2a2a44"
-  card: "#333360"
-  line: "#3a3a55"
-  line-strong: "#3d3d5c"
-  parchment: "#e0e0e0"
-  parchment-strong: "#ffffff"
-  slate: "#a0a0b8"
-  lilac: "#b89eef"
-  gold: "#e0c264"
-  gold-deep: "#b39642"
-  wax-ink: "#17131f"
-  teal: "#6cc5be"
-  rose: "#e08a96"
-  ember: "#f44336"
-  success: "#42b983"
+  ink: "#171210"
+  night: "#1e1815"
+  night-2: "#262019"
+  card: "#2c2419"
+  line: "#3b2f25"
+  line-strong: "#4a3a2c"
+  parchment: "#e8dccb"
+  parchment-strong: "#f6efe0"
+  slate: "#a4917d"
+  lilac: "#d9b06a"
+  gold: "#d3a44e"
+  gold-deep: "#9a7a3a"
+  wax-ink: "#241c08"
+  teal: "#90a583"
+  rose: "#d29a80"
+  ember: "#c26a4e"
+  success: "#6fae72"
 typography:
   display:
-    fontFamily: "'Fraunces Variable', Georgia, serif"
+    fontFamily: "'Newsreader Variable', Georgia, serif"
     fontSize: "clamp(2rem, 4.5vw, 2.75rem)"
-    fontWeight: 600
-    lineHeight: 1.15
-    letterSpacing: "-0.02em"
+    fontWeight: 500
+    lineHeight: 1.1
+    letterSpacing: "-0.015em"
   headline:
-    fontFamily: "'Fraunces Variable', Georgia, serif"
+    fontFamily: "'Newsreader Variable', Georgia, serif"
     fontSize: "1.375rem"
     fontWeight: 600
     lineHeight: 1.3
@@ -37,12 +37,12 @@ typography:
     fontWeight: 600
     lineHeight: 1.4
   worldTitle:
-    fontFamily: "'Fraunces Variable', Georgia, serif"
+    fontFamily: "'Newsreader Variable', Georgia, serif"
     fontSize: "1.25rem"
     fontWeight: 600
     lineHeight: 1.35
   ledgerTitle:
-    fontFamily: "'Fraunces Variable', Georgia, serif"
+    fontFamily: "'Newsreader Variable', Georgia, serif"
     fontSize: "1.125rem"
     fontWeight: 600
     lineHeight: 1.3
@@ -85,7 +85,7 @@ spacing:
 components:
   button-primary:
     backgroundColor: "{colors.gold}"
-    textColor: "#17131f"
+    textColor: "#241c08"
     rounded: "{rounded.sm}"
     padding: "8px 14px"
   button-ghost:
@@ -104,7 +104,7 @@ components:
     rounded: "{rounded.md}"
     padding: "24px 20px"
   seal:
-    backgroundColor: "#d8b23a"
+    backgroundColor: "#e8c063"
     textColor: "#241c08"
     size: "40px"
 ---
@@ -115,60 +115,62 @@ components:
 
 > **Stack note (2026-10):** styling now runs on **Tailwind CSS v4 + shadcn/ui**. Tokens live in `src/app/theme.css` (`@theme inline`); semantic shadcn variables (`--primary`, `--card-well`, `--border`, …) are mapped 1:1 from this palette. Legacy variable names remain as aliases. Feature pages use utility classes directly (phase 2 complete): only two stylesheets remain — `theme.css` (tokens/base/components layer for runtime-generated HTML) and `print.css`.
 
-**Creative North Star: "The Scriptor's Archive"**
+> **Rollout note (2026-10):** visual direction A, "Lamplight Study", applies app-wide at the token level; the **Library pilot** carries the full craft treatment (signature lamp pool, hallmark rules, card lamp-dots). Earlier archive wording below describes the *roles* (seal, hairline, two voices), now played by the lamplight palette. Remaining pages inherit tokens today and receive the craft pass in later waves.
 
-The system reads like a well-kept private archive at night: deep ink-navy surfaces with parchment text, gold seals marking what matters. The incumbent palette stays; the archive identity comes from composition — serif display type, hairline rules, and stamped seals instead of glow and gradients. Density is calm; sections breathe and are separated by thin ink rules rather than boxes-in-boxes.
+**Creative North Star: "The Lamplit Study"**
+
+The system reads like a writer's study at night, working under a single lamp: warm espresso-ink surfaces, parchment text, brass where a lamp would touch. The archive identity comes from composition — serif display type, hairline rules, and stamped seals instead of glow and gradients — with one warm radial "lamp pool" behind the work in progress. Density is calm; sections breathe and are separated by thin umber rules rather than boxes-in-boxes.
 
 **Key Characteristics:**
-- Ink navy surfaces (`#1a1a2e` base, `#16162a` wells, `#2a2a44` panels)
-- Gold used as a wax seal, never as a flood
-- Fraunces variable serif carries identity; Inter carries the utility work
-- Hairline rules (`#3a3a55`) are the preferred separator
-- No glow, no gradient text, no glass
+- Warm espresso surfaces (`#171210` base, `#1e1815` wells, `#262019` panels)
+- Brass used as a wax seal, primary CTA, hover border, or light — never as a flood
+- Newsreader variable serif carries identity; Inter carries the utility work
+- Hairline rules (`#3b2f25`) are the preferred separator; the hallmark gem marks section rules on lamplit pages
+- No glow beyond the lamp pool, no gradient text, no glass
 
 ## Colors
 
-A nocturne archive: cool dark blues for space, parchment for reading, gold only where a seal belongs.
+A lamplit study: espresso ink for space, parchment for reading, brass only where the lamp touches.
 
 ### Primary
-- **Wax Gold** (#e0c264): seals, primary buttons, hover borders. Never a background wash.
-- **Wax Gold, dim** (#b39642): hover/active borders; quieter gold for lines.
-- **Wax Ink** (#17131f): text set on gold — primary buttons and seals.
+- **Brass Gold** (#d3a44e): seals, primary buttons, hover borders, the lamp pool. Never a background wash.
+- **Brass, dim** (#9a7a3a): hover/active borders and hallmark gems; quieter brass for lines.
+- **Wax Ink** (#241c08): text set on brass — primary buttons and seals.
 
 ### Secondary
-- **Reading Lilac** (#b89eef): links and inline emphasis in dim text.
+- **Lamp Light** (#d9b06a): links and inline emphasis in dim text; 2px focus outline.
 
 ### Tertiary
-- **Chronicle Teal** (#6cc5be) and **Vellum Rose** (#e08a96): reserved for success/error adjacent accents on their feature pages
+- **Sage** (#90a583) and **Clay Rose** (#d29a80): reserved for success/error adjacent accents on their feature pages
 
 ### Neutral
-- **Ink** (#1a1a2e): page background
-- **Night** (#16162a): card wells, header, modals
-- **Night 2 / Panel** (#2a2a44): raised panels — forge cards, toasts
-- **Line / Line-strong** (#3a3a55 / #3d3d5c): hairline rules and panel borders
-- **Parchment** (#e0e0e0): body text on dark surfaces
-- **Slate** (#a0a0b8): muted text, labels
+- **Ink** (#171210): page background
+- **Night** (#1e1815): card wells, header, modals
+- **Night 2 / Panel** (#262019): raised panels — forge cards, toasts
+- **Line / Line-strong** (#3b2f25 / #4a3a2c): hairline rules and panel borders
+- **Parchment** (#e8dccb): body text on dark surfaces
+- **Slate** (#a4917d): muted text, labels
 
 ### Named Rules
-**The Wax Rule.** Gold appears as a seal, a primary CTA, or a border on hover. It is never a page area larger than a button.
+**The Wax Rule.** Brass appears as a seal, a primary CTA, a hover border, or the lamp pool behind the work in progress. It is never a page area larger than a control.
 
 ## Typography
 
-**Display Font:** Fraunces Variable (fallback Georgia, serif)
+**Display Font:** Newsreader Variable (fallback Georgia, serif)
 **Body Font:** Inter Variable (fallback system-ui, sans-serif)
 **Label/Mono Font:** JetBrains Mono 400 (code and measurement only)
 
-**Character:** Fraunces carries the archive's voice — set as display/headline only. Everything functional is Inter.
+**Character:** Newsreader carries the study's voice — page welcomes at weight 500, headlines at 600, `text-wrap: balance` on headings. Everything functional is Inter.
 
 ### Hierarchy
-- **Display** (600, clamp(2rem→2.75rem), -0.02em, 1.15): page welcomes, section marque
+- **Display** (500, clamp(2rem→2.75rem), -0.015em, 1.1): page welcomes, section marque
 - **Headline** (600, 1.375rem, 1.3): card and panel titles
 - **Title** (600, 1rem, 1.4): list rows and inline titles
 - **Body** (400, 0.9375rem, 1.6, ≤70ch): prose, card descriptions
 - **Label** (600, 0.75rem, 0.08em, uppercase): field labels and eyebrows of tables
 
 ### Named Rules
-**The Two Voices Rule.** Fraunces speaks identity; Inter speaks utility. A button never wears Fraunces.
+**The Two Voices Rule.** Newsreader speaks identity; Inter speaks utility. A button never wears Newsreader.
 
 ## Layout
 
@@ -179,7 +181,7 @@ Single shared container: max 1080px, 48px vertical / 24px horizontal padding. Hu
 Flat by default; depth comes from tonal layering (night on ink on night-2). Shadows exist only where an element floats over content (toasts, modals). Panel borders are 1px `--line`; a 2px `--line-strong` border marks the interactive surface on hover.
 
 ### Named Rules
-**The Flat Archive Rule.** No resting shadows. Border for edges, tone for depth, shadow only while floating.
+**The Flat Archive Rule.** No resting shadows. Border for edges, tone for depth, shadow only while floating — plus the lamp pool, which is light, not elevation.
 
 ## Shapes
 
@@ -189,8 +191,8 @@ Small radii, squared-off utility: 4px on controls, 8px on panels and cards, full
 
 ### Buttons
 - **Shape:** 4px radius, 8px/14px padding
-- **Primary:** Wax Gold background, ink text (#17131f), hover brightens 8%
-- **Ghost:** transparent, 1px line border, parchment text on hover with gold-dim border
+- **Primary:** Brass Gold background, ink text (#241c08), hover brightens 8%
+- **Ghost:** transparent, 1px line border, parchment text on hover with brass-dim border
 - **Danger:** transparent with ember border; 18% ember wash on hover
 - **Focus:** 2px lilac outline, 2px offset
 
@@ -202,8 +204,13 @@ Small radii, squared-off utility: 4px on controls, 8px on panels and cards, full
 - **Internal padding:** 16–24px
 
 ### Seal (signature component)
-- **Style:** 40px circle, radial gold wax (#d8b23a→#a3831e→#7d6416), engraved initial in #241c08, Fraunces 700 20px, 1px inset light edge + soft contact shadow
+- **Style:** 40px circle, radial brass wax (#e8c063→#b98a35→#8f6e2c), engraved initial in #241c08, Newsreader 600 20px, 1px inset light edge + soft contact shadow
 - **Use:** marks forge identity in the hub; marks the app brand
+
+### Lamplight signature (pilot components)
+- **`.lamp-pool`** — warm radial pool of light behind a page's header; the page the lamp is "over". Decorative, `pointer-events: none`.
+- **`.lamp-dot`** — per-card glow that lights a work in progress on hover; the card carries `group`.
+- **`.rule-hallmark` + `.hallmark-gem`** — section rule ended by a rotated brass square (rotated 45°).
 
 ### Inputs / Fields
 - **Style:** ink background, 1px line border, 4px radius, 8px/10px padding

@@ -93,9 +93,9 @@ export function FactionForm({ web, faction, onSelect }: {
             <SelectValue placeholder={faction.territory || t("factions.panel.noTerritory")} />
           </SelectTrigger>
           <SelectContent className="border-line bg-night text-parchment">
-            <SelectItem value="__none" className="text-xs focus:bg-[#24233f] focus:text-parchment">{t("factions.panel.noTerritory")}</SelectItem>
+            <SelectItem value="__none" className="text-xs focus:bg-accent focus:text-parchment">{t("factions.panel.noTerritory")}</SelectItem>
             {regionOptions.map((r) => (
-              <SelectItem key={r.id} value={r.id} className="text-xs focus:bg-[#24233f] focus:text-parchment">{r.label}</SelectItem>
+              <SelectItem key={r.id} value={r.id} className="text-xs focus:bg-accent focus:text-parchment">{r.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>

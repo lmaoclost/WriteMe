@@ -456,9 +456,9 @@ function MemberForm({ chart, member, onSelect }: {
         <Select value={member.seatStatus} onValueChange={(v) => update({ seatStatus: v as unknown as OathsChart["members"][number]["seatStatus"] })}>
           <SelectTrigger aria-label={t("oaths.panel.seatStatus")} className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
           <SelectContent className="border-line bg-night text-parchment">
-            <SelectItem value="held" className="text-xs focus:bg-[#24233f] focus:text-parchment">{t("oaths.seat.held")}</SelectItem>
-            <SelectItem value="vacant" className="text-xs focus:bg-[#24233f] focus:text-parchment">{t("oaths.seat.vacant")}</SelectItem>
-            <SelectItem value="disputed" className="text-xs focus:bg-[#24233f] focus:text-parchment">{t("oaths.seat.disputed")}</SelectItem>
+            <SelectItem value="held" className="text-xs focus:bg-accent focus:text-parchment">{t("oaths.seat.held")}</SelectItem>
+            <SelectItem value="vacant" className="text-xs focus:bg-accent focus:text-parchment">{t("oaths.seat.vacant")}</SelectItem>
+            <SelectItem value="disputed" className="text-xs focus:bg-accent focus:text-parchment">{t("oaths.seat.disputed")}</SelectItem>
           </SelectContent>
         </Select>
       </Field>
@@ -493,16 +493,16 @@ function MemberForm({ chart, member, onSelect }: {
             <Select value={l.status} onValueChange={(v) => store().setOathStatus(l.id, v as unknown as OathLink["status"])}>
               <SelectTrigger aria-label={t("oaths.panel.statusOf", { name: nameOf(l.superiorId) })} className="h-auto justify-between rounded-sm border-line bg-ink px-1 py-0.5 text-[11px] text-parchment-dim hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
               <SelectContent className="border-line bg-night text-parchment">
-                <SelectItem value="sworn" className="text-[11px] focus:bg-[#24233f] focus:text-parchment">{t("oaths.link.sworn")}</SelectItem>
-                <SelectItem value="strained" className="text-[11px] focus:bg-[#24233f] focus:text-parchment">{t("oaths.link.strained")}</SelectItem>
-                <SelectItem value="broken" className="text-[11px] focus:bg-[#24233f] focus:text-parchment">{t("oaths.link.broken")}</SelectItem>
+                <SelectItem value="sworn" className="text-[11px] focus:bg-accent focus:text-parchment">{t("oaths.link.sworn")}</SelectItem>
+                <SelectItem value="strained" className="text-[11px] focus:bg-accent focus:text-parchment">{t("oaths.link.strained")}</SelectItem>
+                <SelectItem value="broken" className="text-[11px] focus:bg-accent focus:text-parchment">{t("oaths.link.broken")}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={l.kind} onValueChange={(v) => store().setOathLinkKind(l.id, v as unknown as OathLink["kind"])}>
               <SelectTrigger aria-label={t("oaths.panel.kindOf", { name: nameOf(l.superiorId) })} className="h-auto justify-between rounded-sm border-line bg-ink px-1 py-0.5 text-[11px] text-parchment-dim hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
               <SelectContent className="border-line bg-night text-parchment">
-                <SelectItem value="primary" className="text-[11px] focus:bg-[#24233f] focus:text-parchment">{t("oaths.panel.primaryChain")}</SelectItem>
-                <SelectItem value="joint" className="text-[11px] focus:bg-[#24233f] focus:text-parchment">{t("oaths.panel.jointReport")}</SelectItem>
+                <SelectItem value="primary" className="text-[11px] focus:bg-accent focus:text-parchment">{t("oaths.panel.primaryChain")}</SelectItem>
+                <SelectItem value="joint" className="text-[11px] focus:bg-accent focus:text-parchment">{t("oaths.panel.jointReport")}</SelectItem>
               </SelectContent>
             </Select>
             <button type="button" aria-label={t("oaths.panel.removeOathLink")} onClick={() => store().removeOathLink(l.id)} className="bg-none border-0 text-slate text-xs">✕</button>
@@ -526,7 +526,7 @@ function SubordinatePicker({ candidates, onPick }: {
       </SelectTrigger>
       <SelectContent className="border-line bg-night text-parchment">
         {candidates.map((c) => (
-          <SelectItem key={c.id} value={c.id} className="text-xs focus:bg-[#24233f] focus:text-parchment" data-testid="subordinate-option">{c.name}</SelectItem>
+          <SelectItem key={c.id} value={c.id} className="text-xs focus:bg-accent focus:text-parchment" data-testid="subordinate-option">{c.name}</SelectItem>
         ))}
       </SelectContent>
     </Select>

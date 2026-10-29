@@ -66,7 +66,7 @@ function CardForm({ board, card, onSelect }: {
         <Select value={card.actId} onValueChange={(v) => update({ actId: v })}>
           <SelectTrigger aria-label={t("plotboard.panel.actAria")} className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
           <SelectContent className="border-line bg-night text-parchment">
-            {board.acts.map((a) => <SelectItem key={a.id} value={a.id} className="text-xs focus:bg-[#24233f] focus:text-parchment">{a.name}</SelectItem>)}
+            {board.acts.map((a) => <SelectItem key={a.id} value={a.id} className="text-xs focus:bg-accent focus:text-parchment">{a.name}</SelectItem>)}
           </SelectContent>
         </Select>
       </Field>

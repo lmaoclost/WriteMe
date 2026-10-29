@@ -33,7 +33,7 @@ const GROUP_SUMMARY = "cursor-pointer select-none text-[13px] font-semibold text
 const GROUP_BODY = "mt-2 flex flex-col gap-2.5";
 const SELECT_TRIGGER_CLS = "w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto";
 const SELECT_POP_CLS = "border-line bg-night text-parchment";
-const SELECT_ITEM_CLS = "text-xs focus:bg-[#24233f] focus:text-parchment";
+const SELECT_ITEM_CLS = "text-xs focus:bg-accent focus:text-parchment";
 
 /** Number field that ignores half-typed values (clearing snaps back to the
  *  stored number instead of committing NaN). */
@@ -176,7 +176,7 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
             <Select value={b.font} onValueChange={(v) => set({ font: v })}>
               <SelectTrigger aria-label={t("bindery.typography")} className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
               <SelectContent className="border-line bg-night text-parchment">
-                {BINDERY_FONTS.map((f) => <SelectItem key={f.id} value={f.stack} className="text-xs focus:bg-[#24233f] focus:text-parchment">{f.id === "sans" ? t("bindery.fontSans") : f.label}</SelectItem>)}
+                {BINDERY_FONTS.map((f) => <SelectItem key={f.id} value={f.stack} className="text-xs focus:bg-accent focus:text-parchment">{f.id === "sans" ? t("bindery.fontSans") : f.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </Field>
@@ -184,7 +184,7 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
             <Select value={b.trim} onValueChange={(v) => set({ trim: v })}>
               <SelectTrigger aria-label={t("bindery.bookSize")} className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
               <SelectContent className="border-line bg-night text-parchment">
-                {BINDERY_TRIMS.map((trim) => <SelectItem key={trim.id} value={trim.id} className="text-xs focus:bg-[#24233f] focus:text-parchment">{trim.label}</SelectItem>)}
+                {BINDERY_TRIMS.map((trim) => <SelectItem key={trim.id} value={trim.id} className="text-xs focus:bg-accent focus:text-parchment">{trim.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </Field>
@@ -200,10 +200,10 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
             <Select value={b.numberingStyle ?? "arabic"} onValueChange={(v) => set({ numberingStyle: v as NonNullable<typeof b>["numberingStyle"] })}>
               <SelectTrigger aria-label={t("bindery.chapterNumbering")} className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
               <SelectContent className="border-line bg-night text-parchment">
-                <SelectItem value="arabic" className="text-xs focus:bg-[#24233f] focus:text-parchment">1</SelectItem>
-                <SelectItem value="chapter" className="text-xs focus:bg-[#24233f] focus:text-parchment">{t("bindery.numberingChapter")}</SelectItem>
-                <SelectItem value="word" className="text-xs focus:bg-[#24233f] focus:text-parchment">{t("bindery.numberingWord")}</SelectItem>
-                <SelectItem value="none" className="text-xs focus:bg-[#24233f] focus:text-parchment">{t("bindery.numberingNone")}</SelectItem>
+                <SelectItem value="arabic" className="text-xs focus:bg-accent focus:text-parchment">1</SelectItem>
+                <SelectItem value="chapter" className="text-xs focus:bg-accent focus:text-parchment">{t("bindery.numberingChapter")}</SelectItem>
+                <SelectItem value="word" className="text-xs focus:bg-accent focus:text-parchment">{t("bindery.numberingWord")}</SelectItem>
+                <SelectItem value="none" className="text-xs focus:bg-accent focus:text-parchment">{t("bindery.numberingNone")}</SelectItem>
               </SelectContent>
             </Select>
           </Field>
@@ -211,7 +211,7 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
             <Select value={b.runningHeadMode ?? "book"} onValueChange={(v) => set({ runningHeadMode: v as NonNullable<typeof b>["runningHeadMode"] })}>
               <SelectTrigger aria-label={t("bindery.runningHeadMode")} className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
               <SelectContent className="border-line bg-night text-parchment">
-                {BIND_HEAD_MODES.map((m) => <SelectItem key={m} value={m} className="text-xs focus:bg-[#24233f] focus:text-parchment">{m === "book" ? t("bindery.headBook") : t("bindery.headChapter")}</SelectItem>)}
+                {BIND_HEAD_MODES.map((m) => <SelectItem key={m} value={m} className="text-xs focus:bg-accent focus:text-parchment">{m === "book" ? t("bindery.headBook") : t("bindery.headChapter")}</SelectItem>)}
               </SelectContent>
             </Select>
           </Field>

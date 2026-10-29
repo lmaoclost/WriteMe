@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import "@fontsource-variable/fraunces";
+import "@fontsource-variable/newsreader";
 import "@fontsource-variable/inter";
 import "@fontsource/jetbrains-mono/400.css";
 import "./app/theme.css";

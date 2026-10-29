@@ -16,29 +16,29 @@ input[type="file"].sr-only {
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* ===== legacy tokens — kept exact (feature CSS depends on exact values) ===== */
-  --bg: #1a1a2e;
-  --bg-header: #16162a;
-  --bg-raised: #2a2a4a;
-  --panel: #2a2a44;
-  --card: #333360; /* legacy card token; shadcn card maps to --card-well below */
-  --line: #3a3a55;
-  --line-strong: #3d3d5c;
-  --text: #e0e0e0;
-  --text-strong: #ffffff;
-  --text-muted: #a0a0b8;
-  --text-faint: #888888;
-  --accent: #7c5cbf; /* legacy accent; shadcn accent maps to --accent-soft below */
-  --lilac: #b89eef;
-  --gold: #e0c264;
-  --gold-dim: #b39642;
-  --teal: #6cc5be;
-  --rose: #e08a96;
-  --success: #42b983;
-  --success-hover: #35a372;
-  --info: #3498db;
-  --danger: #f44336;
-  --warn: #e74c3c;
+  /* ===== lamplight tokens — warm ink/espresso surfaces, brass accents ===== */
+  --bg: #171210;
+  --bg-header: #1e1815;
+  --bg-raised: #2c2419;
+  --panel: #262019;
+  --card: #2c2419; /* legacy card token; shadcn card maps to --card-well below */
+  --line: #3b2f25;
+  --line-strong: #4a3a2c;
+  --text: #e8dccb;
+  --text-strong: #f6efe0;
+  --text-muted: #a4917d;
+  --text-faint: #7d6f5f;
+  --accent: var(--gold-dim); /* legacy accent; shadcn accent maps to --accent-soft below */
+  --lilac: #d9b06a; /* warm link/focus light-brass (was cool lilac) */
+  --gold: #d3a44e;
+  --gold-dim: #9a7a3a;
+  --teal: #90a583; /* sage — feature-page success-adjacent accent */
+  --rose: #d29a80; /* clay — feature-page accent */
+  --success: #6fae72;
+  --success-hover: #5c9a5f;
+  --info: #8fa3c0;
+  --danger: #c26a4e;
+  --warn: #c26a4e;
 
   --ink: var(--bg);
   --night: var(--bg-header);
@@ -48,13 +48,13 @@ input[type="file"].sr-only {
   --parchment-dim: var(--text-muted);
   --slate: var(--text-muted);
   --ember: var(--warn);
-  --wax: #17131f;
+  --wax: #241c08;
 
-  --scrim: rgb(10 10 18 / 0.7);
+  --scrim: rgb(14 9 5 / 0.72);
   --scrim-canvas: rgb(0 0 0 / 0.5);
-  --seal-wax: #d8b23a;
-  --seal-mid: #a3831e;
-  --seal-deep: #7d6416;
+  --seal-wax: #e8c063;
+  --seal-mid: #b98a35;
+  --seal-deep: #8f6e2c;
   --seal-engrave: #241c08;
   --shadow-seal: 0 1px 0 rgb(255 255 255 / 0.15) inset, 0 2px 6px rgb(0 0 0 / 0.5);
   --fs-paper-h1: 30px;
@@ -68,25 +68,25 @@ input[type="file"].sr-only {
   --print-ink: #000;
   --print-paper: #fff;
 
-  /* ===== shadcn semantic tokens (mapped from DESIGN.md; dark-only) ===== */
-  --background: #1a1a2e;
-  --foreground: #e0e0e0;
-  --card-well: #16162a;
-  --card-well-foreground: #e0e0e0;
-  --popover: #2a2a44;
-  --popover-foreground: #e0e0e0;
-  --primary: #e0c264;
-  --primary-foreground: #17131f;
-  --secondary: #2a2a44;
-  --secondary-foreground: #e0e0e0;
-  --muted: #2a2a44;
-  --muted-foreground: #a0a0b8;
-  --accent-soft: #31314e;
-  --accent-foreground: #e0e0e0;
-  --destructive: #f44336;
-  --border: #3a3a55;
-  --input: #3a3a55;
-  --ring: #b39642;
+  /* ===== shadcn semantic tokens (mapped from DESIGN.md; lamplight dark) ===== */
+  --background: #171210;
+  --foreground: #e8dccb;
+  --card-well: #1e1815;
+  --card-well-foreground: #e8dccb;
+  --popover: #2b2318;
+  --popover-foreground: #e8dccb;
+  --primary: #d3a44e;
+  --primary-foreground: #241c08;
+  --secondary: #2c2419;
+  --secondary-foreground: #e8dccb;
+  --muted: #2a2118;
+  --muted-foreground: #a4917d;
+  --accent-soft: #33281e;
+  --accent-foreground: #e8dccb;
+  --destructive: #c26a4e;
+  --border: #3b2f25;
+  --input: #3b2f25;
+  --ring: #9a7a3a;
   --radius: 0.5rem;
 }
 
@@ -136,7 +136,7 @@ input[type="file"].sr-only {
   --radius-xl: calc(var(--radius) + 4px);
 
   --font-sans: "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Fraunces Variable", Georgia, serif;
+  --font-display: "Newsreader Variable", Georgia, serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
@@ -149,7 +149,12 @@ input[type="file"].sr-only {
     @apply bg-background text-foreground font-sans;
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3 { @apply font-display font-semibold; letter-spacing: 0.01em; margin: 0; }
+  ::selection { background: rgb(211 164 78 / 0.32); color: var(--text-strong); }
+  /* Two Voices Rule: the display face is Newsreader — 500 carries page welcomes,
+     600 headline work. Everything functional stays Inter. */
+  h1, h2, h3 { @apply font-display; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+  h1 { @apply font-medium; }
+  h2, h3 { @apply font-semibold; }
   button { @apply cursor-pointer font-sans; }
   button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--lilac); outline-offset: 2px; }
 }
@@ -303,6 +308,54 @@ input[type="file"].sr-only {
   .print-book .glossary table { width: 100%; border-collapse: collapse; }
   .print-book .glossary td { border-bottom: 1px dotted var(--paper-muted-soft); padding: 5px 6px; vertical-align: top; }
 }
+/* ===== Lamplight signature classes (Design direction A, pilot: Library) ===== */
+
+/* .lamp-pool — the lamp hangs over the work in progress: a warm radial pool
+   behind the page header. Decorative only; parent must be `relative`. */
+.lamp-pool {
+  position: absolute;
+  top: -140px;
+  left: 50%;
+  width: min(820px, 110vw);
+  height: 520px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgb(211 164 78 / 0.14), rgb(211 164 78 / 0.05) 55%, transparent 75%);
+}
+
+/* .lamp-dot — warm glow that lights a card on hover. Element is positioned by
+   the card (`absolute` via utility); parent card carries `group`. */
+.lamp-dot {
+  width: 80px;
+  height: 34px;
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgb(211 164 78 / 0.16), transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+/* .rule-hallmark — section rule ended by a brass hallmark gem (rotated square).
+   Child <span class="hallmark-gem"> is the gem; aria-hidden in JSX. */
+.rule-hallmark {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.rule-hallmark::before,
+.rule-hallmark::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+.hallmark-gem {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  transform: rotate(45deg);
+  background: var(--gold-dim);
+}
+
 /* Long scroll lists: skip layout/paint for rows outside the viewport. */
 .book-ch-rows > li,
 .codex-rows > li,

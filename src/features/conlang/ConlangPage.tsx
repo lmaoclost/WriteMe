@@ -258,7 +258,7 @@ function LexiconTab({ conlang }: { conlang: NonNullable<ReturnType<typeof useScr
         <Select aria-label={t("conlang.lexicon.partOfSpeech")} value={pos} onValueChange={(v) => setPos(v)}>
           <SelectTrigger aria-label={t("conlang.lexicon.partOfSpeech")} className="h-auto rounded-sm border-line bg-ink px-2.5 py-2 text-[15px] text-parchment hover:border-gold-dim data-[size=default]:h-auto min-w-0"><SelectValue /></SelectTrigger>
           <SelectContent className="border-line bg-night text-parchment">
-            {POS_OPTIONS.map((p) => <SelectItem key={p} value={p} className="text-[15px] focus:bg-[#24233f] focus:text-parchment"><PosLabel value={p} /></SelectItem>)}
+            {POS_OPTIONS.map((p) => <SelectItem key={p} value={p} className="text-[15px] focus:bg-accent focus:text-parchment"><PosLabel value={p} /></SelectItem>)}
           </SelectContent>
         </Select>
         <input aria-label={t("conlang.lexicon.theme")} placeholder={t("conlang.lexicon.themePlaceholder")} value={theme} onChange={(e) => setTheme(e.target.value)} className="bg-ink border border-line text-parchment rounded-sm px-2.5 py-2" />
@@ -287,7 +287,7 @@ function LexiconTab({ conlang }: { conlang: NonNullable<ReturnType<typeof useScr
                 <Select defaultValue={w.pos} onValueChange={(v) => store().updateWord(w.id, { pos: v })}>
                   <SelectTrigger aria-label={t("conlang.lexicon.posAria", { word: w.word })} className="w-full h-auto justify-between rounded-sm border border-transparent bg-transparent px-1.5 py-1 text-[13px] text-parchment hover:border-line hover:bg-ink data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
                   <SelectContent className="border-line bg-night text-parchment">
-                    {POS_OPTIONS.map((p) => <SelectItem key={p} value={p} className="text-[13px] focus:bg-[#24233f] focus:text-parchment"><PosLabel value={p} /></SelectItem>)}
+                    {POS_OPTIONS.map((p) => <SelectItem key={p} value={p} className="text-[13px] focus:bg-accent focus:text-parchment"><PosLabel value={p} /></SelectItem>)}
                   </SelectContent>
                 </Select>
               </td>

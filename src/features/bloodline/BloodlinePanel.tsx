@@ -184,7 +184,7 @@ function PersonPanel({ bloodline, person, onSelect }: {
         <Select value={person.houseId ?? ""} onValueChange={(v) => update({ houseId: v || undefined })}>
           <SelectTrigger aria-label={t("bloodline.panel.house")} className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue placeholder={t("bloodline.panel.withoutHouse")} /></SelectTrigger>
           <SelectContent className="border-line bg-night text-parchment">
-            {bloodline.houses.map((h) => <SelectItem key={h.id} value={h.id} className="text-xs focus:bg-[#24233f] focus:text-parchment" data-testid="house-option">{h.name}</SelectItem>)}
+            {bloodline.houses.map((h) => <SelectItem key={h.id} value={h.id} className="text-xs focus:bg-accent focus:text-parchment" data-testid="house-option">{h.name}</SelectItem>)}
           </SelectContent>
         </Select>
       </Field>
@@ -224,7 +224,7 @@ function PersonPanel({ bloodline, person, onSelect }: {
               <Select value={tenure.label} onValueChange={(v) => update({ tenures: person.tenures.map((tt, j) => (j === i ? { ...tt, label: v } : tt)) })}>
                 <SelectTrigger aria-label={t("bloodline.panel.tenureLabel")} className="w-full justify-between rounded-sm border-line bg-ink px-1.5 py-1 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
                 <SelectContent className="border-line bg-night text-parchment">
-                  {TENURE_LABELS.map((l) => <SelectItem key={l} value={l} className="text-xs focus:bg-[#24233f] focus:text-parchment">{l}</SelectItem>)}
+                  {TENURE_LABELS.map((l) => <SelectItem key={l} value={l} className="text-xs focus:bg-accent focus:text-parchment">{l}</SelectItem>)}
                 </SelectContent>
               </Select>
               <LoosePersonField label={t("bloodline.panel.start")} value={tenure.from} placeholder={t("bloodline.panel.from")} onCommit={(v) => update({ tenures: person.tenures.map((tt, j) => (j === i ? { ...tt, from: v } : tt)) })} />

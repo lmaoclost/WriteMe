@@ -249,7 +249,7 @@ function DayPanel({ cal, dayKey, onClose }: {
             <Select value={e.category} onValueChange={(v) => store().updateCalendarEvent(cal.id, dayKey, e.id, { category: v })}>
               <SelectTrigger aria-label={t("calendar.day.categoryOf", { text: e.text })} className="justify-self-start h-auto rounded-sm border-line bg-ink px-1 py-0.5 text-[11px] text-parchment-dim hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
               <SelectContent className="border-line bg-night text-parchment">
-                {EVENT_CATEGORIES.map((c) => <SelectItem key={c} value={c} className="text-[11px] focus:bg-[#24233f] focus:text-parchment"><EventCategoryLabel value={c} /></SelectItem>)}
+                {EVENT_CATEGORIES.map((c) => <SelectItem key={c} value={c} className="text-[11px] focus:bg-accent focus:text-parchment"><EventCategoryLabel value={c} /></SelectItem>)}
               </SelectContent>
             </Select>
             <div className="flex gap-1">
@@ -274,7 +274,7 @@ function DayPanel({ cal, dayKey, onClose }: {
         <Select value={category} onValueChange={(v) => setCategory(v)}>
           <SelectTrigger aria-label={t("calendar.day.category")} className="justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
           <SelectContent className="border-line bg-night text-parchment">
-            {EVENT_CATEGORIES.map((c) => <SelectItem key={c} value={c} className="text-xs focus:bg-[#24233f] focus:text-parchment"><EventCategoryLabel value={c} /></SelectItem>)}
+            {EVENT_CATEGORIES.map((c) => <SelectItem key={c} value={c} className="text-xs focus:bg-accent focus:text-parchment"><EventCategoryLabel value={c} /></SelectItem>)}
           </SelectContent>
         </Select>
         <Button type="submit">{t("calendar.day.add")}</Button>
@@ -290,7 +290,7 @@ function FirstDayPicker({ cal }: { cal: CustomCalendar }) {
     <Select value={first} onValueChange={(v) => { setFirst(v); useScriptorium.getState().setStartingWeekday(cal.id, Number(v)); }}>
       <SelectTrigger aria-label={t("calendar.config.firstDayAria")} className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
       <SelectContent className="border-line bg-night text-parchment">
-        {cal.weekdays.map((w, i) => <SelectItem key={i} value={String(i)} className="text-xs focus:bg-[#24233f] focus:text-parchment">{w}</SelectItem>)}
+        {cal.weekdays.map((w, i) => <SelectItem key={i} value={String(i)} className="text-xs focus:bg-accent focus:text-parchment">{w}</SelectItem>)}
       </SelectContent>
     </Select>
   );

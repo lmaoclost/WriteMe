@@ -141,6 +141,7 @@ export function LibraryPage() {
 
   return (
     <div className="relative mx-auto max-w-[1080px] px-6 pt-9 pb-16">
+      <div className="lamp-pool" aria-hidden="true" />
       <header className="grid gap-2.5">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
@@ -149,14 +150,15 @@ export function LibraryPage() {
           </div>
           <LanguageToggle />
         </div>
-        <h1 className="font-display font-semibold text-[clamp(2rem,4.5vw,2.75rem)] tracking-[-0.02em] leading-[1.15] text-parchment-strong">{t("library.welcome")}</h1>
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate">{t("library.eyebrow")}</p>
+        <h1 className="text-[clamp(2rem,4.5vw,2.75rem)] leading-[1.1] text-parchment-strong">{t("library.welcome")}</h1>
       </header>
 
-      <hr className="w-full border-0 border-t border-line my-9" />
+      <div className="rule-hallmark my-9" aria-hidden="true"><span className="hallmark-gem" /></div>
 
       <section aria-label={t("library.myWorlds")}>
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-          <h2 className="font-display text-[1.375rem] font-semibold text-parchment-strong">{t("library.myWorlds")}</h2>
+          <h2 className="text-[1.375rem] text-parchment-strong">{t("library.myWorlds")}</h2>
           {projects.length >= 3 && (
             <div className="flex gap-2.5">
               <input
@@ -175,8 +177,8 @@ export function LibraryPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="border-line bg-night text-parchment">
-                  <SelectItem value="recent" className="text-sm focus:bg-[#24233f] focus:text-parchment">{t("library.recentlyUpdated")}</SelectItem>
-                  <SelectItem value="name" className="text-sm focus:bg-[#24233f] focus:text-parchment">{t("library.nameAZ")}</SelectItem>
+                  <SelectItem value="recent" className="text-sm focus:bg-accent focus:text-parchment">{t("library.recentlyUpdated")}</SelectItem>
+                  <SelectItem value="name" className="text-sm focus:bg-accent focus:text-parchment">{t("library.nameAZ")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -185,7 +187,7 @@ export function LibraryPage() {
         </div>
 
         {projects.length === 0 ? (
-          <div className="grid justify-items-center gap-3.5 rounded-lg border border-dashed border-line p-[42px] text-center text-parchment-dim">
+          <div className="grid justify-items-center gap-3.5 rounded-lg border border-dashed border-line p-10 text-center text-parchment-dim">
             <p>{t("library.emptyInvite")}</p>
             <Button kind="ghost" onClick={doSeed}>{t("library.loadSample")}</Button>
           </div>
@@ -194,18 +196,19 @@ export function LibraryPage() {
         ) : (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
             {worldList.map((p) => (
-              <article key={p.id} className="relative flex flex-col min-h-[120px] overflow-hidden rounded-lg border border-line bg-night transition-[border-color] duration-[180ms] hover:border-gold-dim">
+              <article key={p.id} className="group relative flex flex-col min-h-[120px] overflow-hidden rounded-lg border border-line bg-night transition-[border-color] duration-[180ms] hover:border-gold-dim">
+                <span className="lamp-dot absolute top-0 left-1/2 -translate-x-1/2 group-hover:opacity-100" aria-hidden="true" />
                 <Link to={`/p/${p.id}`} className="grid gap-1.5 p-4 text-inherit no-underline">
                   {p.coverImageKey && covers[p.coverImageKey] && (
                     <img className="h-[120px] w-full object-cover" src={covers[p.coverImageKey]} alt="" />
                   )}
-                  <h3 className="font-display text-[1.25rem] font-semibold">{p.name}</h3>
-                  {p.description && <p className="text-slate text-[0.8125rem] m-0">{p.description}</p>}
-                  <p className="text-[var(--text-faint)] text-xs m-0">{updatedStamp(p.updatedAt, t, locale)}</p>
+                  <h3 className="pr-12 text-[1.25rem]">{p.name}</h3>
+                  {p.description && <p className="text-slate text-[0.8125rem] m-0 pr-10">{p.description}</p>}
+                  <p className="text-[var(--text-faint)] text-xs m-0 [font-variant-numeric:tabular-nums]">{updatedStamp(p.updatedAt, t, locale)}</p>
                 </Link>
                 <button
                   aria-label={t("library.deleteWorld")}
-                  className="absolute top-2 right-2 flex size-[26px] items-center justify-center rounded-sm border border-line bg-ink text-xs text-slate transition-colors hover:border-danger hover:text-danger"
+                  className="absolute top-2 right-2 flex size-[26px] items-center justify-center rounded-sm border border-line bg-ink text-xs text-slate transition-colors hover:border-danger hover:text-danger after:absolute after:inset-[-7px] after:content-['']"
                   onClick={() => setToDelete(p.id)}
                 >
                   ✕
@@ -217,13 +220,13 @@ export function LibraryPage() {
       </section>
 
       <section aria-label={t("library.backup")} className="mt-9">
-        <h2 className="font-display text-[1.375rem] font-semibold text-parchment-strong">{t("library.backup")}</h2>
+        <h2 className="text-[1.375rem] text-parchment-strong">{t("library.backup")}</h2>
         <p className="text-slate text-sm mt-1 mb-3 max-w-[60ch]">{t("library.backupNote")}</p>
         <div className="flex gap-2.5">
           <Button onClick={downloadBackup}>{t("library.downloadBackup")}</Button>
           <Button kind="ghost" onClick={() => { setPendingRestore(null); setRestoring(true); }}>{t("library.restoreBackup")}</Button>
         </div>
-        <p className="text-[var(--text-faint)] text-xs mt-2.5" data-testid="storage-usage">
+        <p className="text-[var(--text-faint)] text-xs mt-2.5 [font-variant-numeric:tabular-nums]" data-testid="storage-usage">
           {t("library.storageUsage", { used: `${storageUsageMb(storageHealth().bytes, locale)} MB` })}
         </p>
         {storageHealth().bytes / APPROX_QUOTA_CHARS >= QUOTA_WARN_RATIO && (

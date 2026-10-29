@@ -178,8 +178,8 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted }: ChapterEdito
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="border-line bg-night text-parchment">
-            <SelectItem value={NO_PART} className="text-[13px] focus:bg-[#24233f] focus:text-parchment">{t("manuscript.noPart")}</SelectItem>
-            {parts.map((p) => <SelectItem key={p.id} value={p.id} className="text-[13px] focus:bg-[#24233f] focus:text-parchment">{p.title}</SelectItem>)}
+            <SelectItem value={NO_PART} className="text-[13px] focus:bg-accent focus:text-parchment">{t("manuscript.noPart")}</SelectItem>
+            {parts.map((p) => <SelectItem key={p.id} value={p.id} className="text-[13px] focus:bg-accent focus:text-parchment">{p.title}</SelectItem>)}
           </SelectContent>
         </Select>
         <button
@@ -405,13 +405,13 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
             <Select value={calId} onValueChange={(v) => setCalId(v)}>
               <SelectTrigger aria-label={t("manuscript.calendarAria")} className="justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto min-w-0"><SelectValue placeholder={t("manuscript.choose")} /></SelectTrigger>
               <SelectContent className="border-line bg-night text-parchment">
-                {calendars.map((c) => <SelectItem key={c.id} value={c.id} className="text-xs focus:bg-[#24233f] focus:text-parchment">{c.name}</SelectItem>)}
+                {calendars.map((c) => <SelectItem key={c.id} value={c.id} className="text-xs focus:bg-accent focus:text-parchment">{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={mm} disabled={!cal} onValueChange={(v) => setMm(v)}>
               <SelectTrigger aria-label={t("manuscript.monthAria")} className="justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto min-w-0"><SelectValue /></SelectTrigger>
               <SelectContent className="border-line bg-night text-parchment">
-                {(cal?.months ?? []).map((m, i) => <SelectItem key={i} value={String(i)} className="text-xs focus:bg-[#24233f] focus:text-parchment">{m.name}</SelectItem>)}
+                {(cal?.months ?? []).map((m, i) => <SelectItem key={i} value={String(i)} className="text-xs focus:bg-accent focus:text-parchment">{m.name}</SelectItem>)}
               </SelectContent>
             </Select>
             <div className="flex flex-col gap-1"><span className="field-label text-xs font-semibold uppercase tracking-[0.08em] text-slate">{t("manuscript.eventYear")}</span>

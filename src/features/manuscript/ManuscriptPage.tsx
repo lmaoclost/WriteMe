@@ -166,7 +166,7 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
           <Select value={book.id} onValueChange={(v) => onBookSelected(v)}>
             <SelectTrigger aria-label={t("manuscript.bookAria")} className="min-w-[180px] justify-between rounded-lg border-line bg-night-2 px-2 py-1.5 text-[13px] text-parchment hover:border-gold data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
             <SelectContent className="border-line bg-night text-parchment">
-              {books.map((m) => <SelectItem key={m.id} value={m.id} className="text-[13px] focus:bg-[#24233f] focus:text-parchment">{m.title}</SelectItem>)}
+              {books.map((m) => <SelectItem key={m.id} value={m.id} className="text-[13px] focus:bg-accent focus:text-parchment">{m.title}</SelectItem>)}
             </SelectContent>
           </Select>
         ) : (

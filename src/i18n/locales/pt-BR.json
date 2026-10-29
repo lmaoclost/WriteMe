@@ -90,6 +90,7 @@
     }
   },
   "library": {
+    "eyebrow": "A Biblioteca",
     "welcome": "Bem-vindo de volta",
     "myWorlds": "Meus mundos",
     "searchWorlds": "Buscar mundos",
