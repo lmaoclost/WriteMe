@@ -69,7 +69,7 @@ export function OverviewPage() {
           {project?.coverImageKey && coverUrl && (
             <img src={coverUrl} alt="" className="block h-full w-full object-cover" />
           )}
-          <span className="absolute right-3 bottom-3 bg-[color-mix(in_srgb,var(--ink)_88%,var(--gold)_4%)] text-parchment border border-gold-dim rounded-sm px-2.5 py-1.5 text-xs tracking-[0.04em] shadow-[0_18px_40px_rgb(16_16_30/0.55)] group-hover:border-gold group-hover:text-parchment-strong">{t("overview.changeCover")}</span>
+          <span className="absolute right-3 bottom-3 bg-[color-mix(in_srgb,var(--ink)_88%,var(--gold)_4%)] text-parchment border border-gold-dim rounded-sm px-2.5 py-1.5 text-xs tracking-[0.04em] shadow-[0_18px_40px_var(--scrim-canvas)] group-hover:border-gold group-hover:text-parchment-strong">{t("overview.changeCover")}</span>
           <input
             type="file"
             accept="image/*"
@@ -83,12 +83,14 @@ export function OverviewPage() {
           />
         </label>
         <div className="grid gap-1.5">
-          <h1 className="font-display font-semibold text-[clamp(2rem,4.5vw,2.75rem)] tracking-[-0.02em] leading-[1.15] text-parchment-strong max-w-[24ch] [text-wrap:balance]">{project?.name}</h1>
+          <h1 className="text-[clamp(2rem,4.5vw,2.75rem)] text-parchment-strong max-w-[24ch]">{project?.name}</h1>
           {project?.description && <p className="text-slate m-0 max-w-[70ch]">{project.description}</p>}
         </div>
       </header>
 
-      <section className="mt-[30px]" aria-label={t("overview.forgeLedger")}>
+      <div className="rule-hallmark mt-[30px] mb-4" aria-hidden="true"><span className="hallmark-gem" /></div>
+
+      <section className="mt-0" aria-label={t("overview.forgeLedger")}>
         <ul className="list-none m-0 p-0 grid grid-cols-2 gap-x-14 max-[760px]:grid-cols-1">
           {LEDGER.map((f) => (
             <li

@@ -8,7 +8,7 @@ import { Seal } from "../../ui/Seal";
 import { LanguageToggle } from "../../ui/LanguageToggle";
 import { FocusContext, isWritingPath, type FocusValue } from "./focus";
 
-const RAIL_LINK = "flex items-center gap-2 px-3 py-[9px] rounded-sm text-xs tracking-[0.1em] uppercase whitespace-nowrap text-ellipsis overflow-hidden no-underline transition-colors max-[720px]:flex-none max-[720px]:overflow-visible max-[720px]:whitespace-nowrap max-[720px]:text-ellipsis max-[720px]:text-clip max-[720px]:min-w-0";
+const RAIL_LINK = "flex items-center gap-2 px-3 py-[10px] rounded-sm text-xs tracking-[0.1em] uppercase whitespace-nowrap text-ellipsis overflow-hidden no-underline transition-colors max-[720px]:py-2 max-[720px]:flex-none max-[720px]:overflow-visible max-[720px]:whitespace-nowrap max-[720px]:text-ellipsis max-[720px]:text-clip max-[720px]:min-w-0";
 
 export function WorkspaceLayout() {
   const { t } = useTranslation();
@@ -134,7 +134,7 @@ export function WorkspaceLayout() {
             <LanguageToggle />
             <button
               type="button"
-              className="flex cursor-pointer items-center gap-2 border-0 bg-none px-3 py-[9px] text-left text-xs uppercase tracking-[0.1em] text-slate hover:text-parchment max-[720px]:hidden"
+              className="flex cursor-pointer items-center gap-2 border-0 bg-none px-3 py-[10px] text-left text-xs uppercase tracking-[0.1em] text-slate hover:text-parchment max-[720px]:hidden"
               onClick={() => window.dispatchEvent(new Event("scriptorium:open-palette"))}
             >
               {t("workspace.search")} <span className="text-[9px] tracking-[0.06em] opacity-70">Ctrl+K</span>

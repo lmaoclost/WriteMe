@@ -11,6 +11,7 @@ import { Field } from "../../ui/Field";
 import { Modal } from "../../ui/Modal";
 import { Seal } from "../../ui/Seal";
 import { LanguageToggle } from "../../ui/LanguageToggle";
+import { CARD_GRID, WORLD_CARD, CARD_LINK, CARD_NAME, CARD_DESC, CARD_UPDATED, DELETE_CHIP, EMPTY_STATE } from "../../ui/pageBits";
 import { localeFor } from "../../i18n";
 
 const QUOTA_WARN_RATIO = 0.8;
@@ -187,28 +188,27 @@ export function LibraryPage() {
         </div>
 
         {projects.length === 0 ? (
-          <div className="grid justify-items-center gap-3.5 rounded-lg border border-dashed border-line p-10 text-center text-parchment-dim">
+          <div className={EMPTY_STATE}>
             <p>{t("library.emptyInvite")}</p>
             <Button kind="ghost" onClick={doSeed}>{t("library.loadSample")}</Button>
           </div>
         ) : worldList.length === 0 ? (
           <p className="text-slate text-sm">{t("library.noMatch", { query: query.trim() })}</p>
         ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
+          <div className={CARD_GRID}>
             {worldList.map((p) => (
-              <article key={p.id} className="group relative flex flex-col min-h-[120px] overflow-hidden rounded-lg border border-line bg-night transition-[border-color] duration-[180ms] hover:border-gold-dim">
-                <span className="lamp-dot absolute top-0 left-1/2 -translate-x-1/2 group-hover:opacity-100" aria-hidden="true" />
-                <Link to={`/p/${p.id}`} className="grid gap-1.5 p-4 text-inherit no-underline">
+              <article key={p.id} className={WORLD_CARD}>
+                <Link to={`/p/${p.id}`} className={CARD_LINK}>
                   {p.coverImageKey && covers[p.coverImageKey] && (
                     <img className="h-[120px] w-full object-cover" src={covers[p.coverImageKey]} alt="" />
                   )}
-                  <h3 className="pr-12 text-[1.25rem]">{p.name}</h3>
-                  {p.description && <p className="text-slate text-[0.8125rem] m-0 pr-10">{p.description}</p>}
-                  <p className="text-[var(--text-faint)] text-xs m-0 [font-variant-numeric:tabular-nums]">{updatedStamp(p.updatedAt, t, locale)}</p>
+                  <h3 className={CARD_NAME + " pr-12"}>{p.name}</h3>
+                  {p.description && <p className={CARD_DESC + " pr-10"}>{p.description}</p>}
+                  <p className={CARD_UPDATED}>{updatedStamp(p.updatedAt, t, locale)}</p>
                 </Link>
                 <button
                   aria-label={t("library.deleteWorld")}
-                  className="absolute top-2 right-2 flex size-[26px] items-center justify-center rounded-sm border border-line bg-ink text-xs text-slate transition-colors hover:border-danger hover:text-danger after:absolute after:inset-[-7px] after:content-['']"
+                  className={DELETE_CHIP}
                   onClick={() => setToDelete(p.id)}
                 >
                   ✕

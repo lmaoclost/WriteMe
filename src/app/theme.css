@@ -153,7 +153,7 @@ input[type="file"].sr-only {
   /* Two Voices Rule: the display face is Newsreader — 500 carries page welcomes,
      600 headline work. Everything functional stays Inter. */
   h1, h2, h3 { @apply font-display; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
-  h1 { @apply font-medium; }
+  h1 { @apply font-medium; line-height: 1.1; }
   h2, h3 { @apply font-semibold; }
   button { @apply cursor-pointer font-sans; }
   button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--lilac); outline-offset: 2px; }
@@ -323,16 +323,27 @@ input[type="file"].sr-only {
   background: radial-gradient(closest-side, rgb(211 164 78 / 0.14), rgb(211 164 78 / 0.05) 55%, transparent 75%);
 }
 
-/* .lamp-dot — warm glow that lights a card on hover. Element is positioned by
-   the card (`absolute` via utility); parent card carries `group`. */
-.lamp-dot {
+/* .lamp-card — the lamp-dot as a card pseudo-element: index pages get the
+   hover glow through the shared WORLD_CARD class, no extra JSX span. */
+.lamp-card {
+  position: relative;
+}
+.lamp-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
   width: 80px;
   height: 34px;
+  transform: translateX(-50%);
   pointer-events: none;
-  background: radial-gradient(closest-side, rgb(211 164 78 / 0.16), transparent);
   opacity: 0;
   transition: opacity 0.2s;
+  background: radial-gradient(closest-side, rgb(211 164 78 / 0.16), transparent);
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
 }
+.lamp-card:hover::after { opacity: 1; }
 
 /* .rule-hallmark — section rule ended by a brass hallmark gem (rotated square).
    Child <span class="hallmark-gem"> is the gem; aria-hidden in JSX. */

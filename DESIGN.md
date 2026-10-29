@@ -115,7 +115,7 @@ components:
 
 > **Stack note (2026-10):** styling now runs on **Tailwind CSS v4 + shadcn/ui**. Tokens live in `src/app/theme.css` (`@theme inline`); semantic shadcn variables (`--primary`, `--card-well`, `--border`, …) are mapped 1:1 from this palette. Legacy variable names remain as aliases. Feature pages use utility classes directly (phase 2 complete): only two stylesheets remain — `theme.css` (tokens/base/components layer for runtime-generated HTML) and `print.css`.
 
-> **Rollout note (2026-10):** visual direction A, "Lamplight Study", applies app-wide at the token level; the **Library pilot** carries the full craft treatment (signature lamp pool, hallmark rules, card lamp-dots). Earlier archive wording below describes the *roles* (seal, hairline, two voices), now played by the lamplight palette. Remaining pages inherit tokens today and receive the craft pass in later waves.
+> **Rollout note (2026-10):** visual direction A, "Lamplight Study", applies app-wide at the token level. Waves: **1 — Library pilot** (craft treatment) · **2 — workspace rail + Overview + all forge index pages** (`.lamp-card` hover glow, 40px rail/delete hit areas, hallmark rule on Overview, card craft via `ui/pageBits.ts`). Earlier archive wording below describes the *roles* (seal, hairline, two voices), now played by the lamplight palette. Remaining canvas/writing pages inherit tokens today and receive the craft pass in later waves.
 
 **Creative North Star: "The Lamplit Study"**
 
