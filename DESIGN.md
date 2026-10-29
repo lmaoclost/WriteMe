@@ -255,6 +255,10 @@ Print styling has three owners: `buildBookCss` (`src/features/manuscript/bookCss
 
 The Manuscript preset opts out of the opener rules: flush openings, no sink, opener suppression off.
 
+### The Pressmark Rule
+
+**The colophon signs the book.** The only Scriptorium mark inside the book is the colophon's pressmark — a hallmark (a 7px gem sitting on a 120px rule, paper brass `#c9a227` on muted `#9a8d6a`). The paper never takes app styling. The title page only announces, in the same language: a small gem above the "Scriptorium" series line, and the author set in small caps. Colophon copy sits centred; the pressmark rides the existing back-matter colophon switch, so no data field exists for it. In EPUB the mark degrades to a `❖` glyph where the reading system supports `:before` and to plain colophon text where it does not; DOCX carries no back matter, hence no mark.
+
 ### Paged-Media Limits
 
 The print path targets Chromium. Firefox and Safari honor `@page size` and margins (Firefox 95+; Safari 18.2+), but implement no page-margin boxes, so running heads and folios are dropped there. The Bindery shows an engine-specific note instead of pretending parity.
@@ -272,7 +276,7 @@ Chromium implements none of the five paged-media features the print path would w
 What each export carries, before putting a feature in the wrong pass:
 
 - **Print/PDF:** page geometry (trim, mirrored margins, gutter, folio, running heads), typography, chapter openers with drop caps, parts, front matter, back matter and scene ornaments.
-- **EPUB:** typography, chapter openers with drop caps, parts, front matter, back matter and scene ornaments. No page geometry: the format is reflowable and the reading system owns the page box — no `@page`, no trim, no folio.
+- **EPUB:** typography, chapter openers with drop caps, parts, front matter, back matter and scene ornaments. No page geometry: the format is reflowable and the reading system owns the page box — no `@page`, no trim, no folio. The pressmark degrades to a glyph or nothing (see The Pressmark Rule).
 - **DOCX:** page geometry, typography, parts, chapter numbering and scene ornaments — but no front matter, no back matter and no drop caps.
 - **Navigation differs:** the EPUB's navigation lists the back matter (glossary, about the author, colophon); the printed contents page lists only parts and chapters.
 

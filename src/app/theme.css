@@ -351,7 +351,19 @@ input[type="file"].sr-only {
   .print-book .chapter-opener h2 .ch-num { margin-right: 0.35em; }
   .print-book .tp-title { text-align: center; font-size: var(--fs-paper-title); margin: 0.6em 0; }
   .print-book .tp-series { text-align: center; letter-spacing: 0.3em; text-transform: uppercase; font-size: var(--fs-paper-body); color: var(--paper-muted); }
+  /* the hallmark gem opens the series line: the title page announces with the
+     same language the colophon signs with */
+  .print-book .tp-series::before {
+    content: "";
+    display: block;
+    width: 7px;
+    height: 7px;
+    margin: 0 auto 18px;
+    transform: rotate(45deg);
+    background: #c9a227;
+  }
   .print-book .tp-author { text-align: center; font-style: italic; }
+  .print-book .tp-author, .print-book .book-author { font-variant: small-caps; letter-spacing: 0.05em; }
   .print-book .book-title-page { text-align: center; }
   .print-book .book-title-page .book-title { font-size: var(--fs-paper-title); margin: 0.6em 0; }
   .print-book .book-title-page .book-author { text-align: center; font-style: italic; }
@@ -359,6 +371,36 @@ input[type="file"].sr-only {
   .print-book .front-matter { padding: 3in 0 2in; }
   .print-book .back-matter { break-before: page; }
   .print-book .back-matter { padding: 3in 0 2in; }
+  /* The Pressmark Rule: the colophon's hallmark — gem on a short rule — is
+     the app's single mark inside the book. Paper-fixed hexes: the mark must
+     survive the print portal and the EPUB stylesheet, not just these vars. */
+  .print-book .pressmark {
+    display: block;
+    position: relative;
+    width: 120px;
+    height: 16px;
+    margin: 0 auto 1.6em;
+  }
+  .print-book .pressmark::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 2px;
+    width: 7px;
+    height: 7px;
+    margin-left: -3.5px;
+    transform: rotate(45deg);
+    background: #c9a227;
+  }
+  .print-book .pressmark::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 5px;
+    width: 120px;
+    height: 1px;
+    background: #9a8d6a;
+  }
   .print-book .dedication { text-align: center; font-style: italic; padding-top: 2.5in; }
   .print-book .toc ul { list-style: none; padding: 0; }
   .print-book .toc-row { display: flex; gap: 6px; align-items: baseline; }

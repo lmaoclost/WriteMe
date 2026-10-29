@@ -220,10 +220,12 @@ export function aboutAuthorSection(config: NonNullable<Manuscript["bindery"]>): 
     : "";
 }
 
-/** Colophon: configured font label and trim, only when the switch is on. */
+/** Colophon: configured font label and trim, only when the switch is on. The
+    pressmark — a hallmark (gem on a short rule) — signs it: the app's single
+    mark inside the book (see DESIGN.md, The Pressmark Rule). */
 export function colophonSection(config: NonNullable<Manuscript["bindery"]>): string {
   return config.backMatter?.colophon
-    ? `<section class="back-matter colophon"><p>${escapeText(i18n.t("book.setIn", { font: fontLabel(config.font) }))}</p><p>${escapeText(i18n.t("book.trim", { size: trimToPage(config.trim) }))}</p></section>`
+    ? `<section class="back-matter colophon"><span class="pressmark" aria-hidden="true"></span><p>${escapeText(i18n.t("book.setIn", { font: fontLabel(config.font) }))}</p><p>${escapeText(i18n.t("book.trim", { size: trimToPage(config.trim) }))}</p></section>`
     : "";
 }
 

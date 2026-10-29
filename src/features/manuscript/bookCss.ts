@@ -72,6 +72,10 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
     // the blanket p rule matches the epigraph's paragraphs directly, so the
     // centring must land on them — on the wrapping block alone it never reaches
     `.print-book .epigraph p, .print-book .part-epigraph p { text-align: center; }`,
+    // the colophon is a device page: pressmark and set-in lines sit centred;
+    // the blanket p rule outranks layered centring, so it is restated here
+    `.print-book .back-matter.colophon { text-align: center; padding-top: 0.3in; }`,
+    `.print-book .back-matter.colophon p { text-align: center; }`,
   );
   if (config.frontMatter?.romanNumerals && config.pageNumbers) {
     rules.push(

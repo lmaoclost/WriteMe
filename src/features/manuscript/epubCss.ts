@@ -52,6 +52,11 @@ export function buildEpubCss(config: BinderyConfig): string {
     // the bare p rule matches the epigraph's paragraphs directly, so the
     // centring must land on them — on the wrapping block alone it never reaches
     `.epigraph p, .part-epigraph p { text-align: center; }`,
+    // the colophon's pressmark: reflowable format carries no page device —
+    // a glyph mark stands in where the reading system supports :before;
+    // readers that strip pseudo elements render the colophon text alone
+    `.pressmark { display: block; margin: 1.5em 0; text-align: center; }`,
+    `.pressmark::before { content: "❖"; }`,
     `figure, img { max-width: 100%; height: auto; }`,
   );
   if (config.dropCaps) {

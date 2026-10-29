@@ -625,6 +625,8 @@ describe("back matter + scene ornament", () => {
     expect(html).toContain('class="back-matter about-author"');
     expect(html).toContain("Ana escreve em Porto Alegre.");
     expect(html).toContain('class="back-matter colophon"');
+    // the pressmark rides the colophon switch: the app's only mark in the book
+    expect(html).toContain('<span class="pressmark" aria-hidden="true"></span>');
     // typeset from the config: the label of the configured stack + the trim
     expect(html).toContain("Set in Georgia.");
     expect(html).toContain("6in 9in");
