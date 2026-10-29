@@ -42,6 +42,13 @@ World content is user data (language-free).
 - **Module:** `src/ui/theme.ts` — `localStorage["scriptorium.theme"]` (`night` | `day`, junk → default), `light` class on `<html>`, applied at import (no flash). Same pattern as the UI language; not part of the project backup, no persist migration.
 - **Toggle:** `src/ui/ThemeToggle.tsx`, beside the language toggle (Library header + workspace rail).
 
+## Pressmark (Bindery)
+
+The hallmark that signs a bound book: a 7px gem on a 120px rule in paper brass, shipped by the
+colophon switch (`colophonSection` in `buildBook.ts`; ADR-0012). The app's only mark inside the
+book — the paper never takes app styling. In EPUB it degrades to `❖`; DOCX carries no mark
+(ADR-0012).
+
 ## Timeline (`/p/:id/linewheel`)
 
 An **era** is a *boundary*, not an interval: it marks where a new span starts, and it ends exactly
