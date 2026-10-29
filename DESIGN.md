@@ -115,7 +115,7 @@ components:
 
 > **Stack note (2026-10):** styling now runs on **Tailwind CSS v4 + shadcn/ui**. Tokens live in `src/app/theme.css` (`@theme inline`); semantic shadcn variables (`--primary`, `--card-well`, `--border`, …) are mapped 1:1 from this palette. Legacy variable names remain as aliases. Feature pages use utility classes directly (phase 2 complete): only two stylesheets remain — `theme.css` (tokens/base/components layer for runtime-generated HTML) and `print.css`.
 
-> **Rollout note (2026-10):** visual direction A, "Lamplight Study", applies app-wide at the token level. Waves: **1 — Library pilot** (craft treatment) · **2 — workspace rail + Overview + all forge index pages** (`.lamp-card` hover glow, 40px rail/delete hit areas, hallmark rule on Overview, card craft via `ui/pageBits.ts`) · **3 — warm sweep of canvas planes, manuscript editor toolbar, conlang glyph SVGs** (data palettes left intact). Earlier archive wording below describes the *roles* (seal, hairline, two voices), now played by the lamplight palette.
+> **Rollout note (2026-10):** visual direction A, "Lamplight Study", applies app-wide at the token level (recorded in ADR-0011). Waves: **1 — Library pilot** (craft treatment) · **2 — workspace rail + Overview + all forge index pages** (`.lamp-card` hover glow, 40px rail/delete hit areas, hallmark rule on Overview, card craft via `ui/pageBits.ts`) · **3 — warm sweep of canvas planes, manuscript editor toolbar, conlang glyph SVGs** (data palettes left intact) · **4 — writing surfaces craft (lore/chapter lists carry the lamp pool, tabular word counts) + day mode ("Proof & Press": direction B in the same language) + CommandPalette active rows in the rail's language**. Earlier archive wording below describes the *roles* (seal, hairline, two voices), now played by the lamplight palette.
 
 **Creative North Star: "The Lamplit Study"**
 
@@ -153,6 +153,24 @@ A lamplit study: espresso ink for space, parchment for reading, brass only where
 
 ### Named Rules
 **The Wax Rule.** Brass appears as a seal, a primary CTA, a hover border, or the lamp pool behind the work in progress. It is never a page area larger than a control.
+
+### Day mode — "Proof & Press" (the same study by day, direction B)
+The night palette is the default. A `light` class on `<html>` (persisted as `scriptorium.theme`, i18n pattern, no store slice) selects the day block in `theme.css`: the desk becomes aged ivory, text becomes warm ink, and brass darkens to keep hold on light ground. Roles never change — the Wax Rule, the Flat Archive Rule and the Two Voices Rule hold in both modes; the lamp pool stays, reading as plain sunlight.
+
+| Token | Night (#171210 base) | Day (#f1e9d9 desk) |
+|---|---|---|
+| `--bg` / desk | `#171210` espresso ink | `#f1e9d9` ivory |
+| `--bg-header` / rail band | `#1e1815` | `#eae0cc` |
+| `--panel` / raised panels | `#262019` | `#f5efe1` |
+| `--card-well` / wells | `#2c2419` | `#faf5ea` |
+| `--line` / `--line-strong` | `#3b2f25` / `#4a3a2c` | `#d3c4a6` / `#b7a684` |
+| `--text` / strong / muted | `#e8dccb` / `#f6efe0` / `#a4917d` | `#33291a` / `#1f180c` / `#6f6248` |
+| `--gold` / `--gold-dim` | `#d3a44e` / `#9a7a3a` | `#8f6f2c` / `#6f5820` |
+| focus light (`--lilac`) | `#d9b06a` | `#8a6519` |
+| `--danger` / `--warn` (`--ember`) | `#c26a4e` | `#a8472c` |
+| brass text (`--wax`) | `#241c08` | `#fdf8ec` |
+
+Toolbar hovers ride `--hover-wash` (white-alpha at night, ink-alpha in day) — never a raw white hex.
 
 ## Typography
 

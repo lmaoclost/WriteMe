@@ -16,6 +16,7 @@ Verify before finishing: `npm run typecheck && npm run lint && npm test`. Lint f
 ## Gotchas (would burn you otherwise)
 
 - **i18n parity**: every UI string goes in both `src/i18n/locales/en.json` and `pt-BR.json`. `src/i18n/i18n.test.ts` asserts pt-BR mirrors every EN key — one-sided strings fail tests. Tests run in EN by default (`setLanguage("en")` in `src/test/setup.ts`).
+- **Theme is UI chrome, not world data**: `scriptorium.theme` (`src/ui/theme.ts`) mirrors the language pattern — own localStorage key, `light` class on `<html>`, no store slice, no persist migration (`docs/glossary.md`, ADR-0011).
 - **Persistence versions**: everything is v1 — storage key `scriptorium.v1` (`src/data/storage.ts`, never rename), zustand persist `version: 1` with `migrate` in `src/data/store.ts`, backup JSON `version: 1` via `serialize` (`app: "scriptorium"`; any other version throws `unsupportedVersion` from `parseExport` in `src/data/schema.ts`). Changing persisted state ⇒ bump persist `version` + write `migrate`; changing export shape ⇒ bump export version + reject older in `parseExport`.
 - **Boot must survive storage failure**: persist errors are tolerated on load (`src/data/persistence.ts`, `persistence.test.ts`). Never `throw` when localStorage/IndexedDB is unavailable or corrupt.
 - **Store is one file**: `src/data/store.ts` (~130 KB) holds all slices and actions; tests split as `store-<feature>.test.ts` beside it. Domain logic belongs in `src/domain/*.ts` (pure, fully tested), not in the store.

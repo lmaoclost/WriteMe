@@ -35,6 +35,13 @@ One name per concept — use it consistently in code, copy, and docs.
 
 World content is user data (language-free).
 
+## Theme (day/night)
+
+- **Default:** night (Lamplight dark). Day is "Proof & Press", the same language in light — see `DESIGN.md` and ADR-0011.
+- **Tokens:** `theme.css` holds both blocks on `:root` and `:root.light`; the aliases resolve on the same element, so only base tokens are restated for day.
+- **Module:** `src/ui/theme.ts` — `localStorage["scriptorium.theme"]` (`night` | `day`, junk → default), `light` class on `<html>`, applied at import (no flash). Same pattern as the UI language; not part of the project backup, no persist migration.
+- **Toggle:** `src/ui/ThemeToggle.tsx`, beside the language toggle (Library header + workspace rail).
+
 ## Timeline (`/p/:id/linewheel`)
 
 An **era** is a *boundary*, not an interval: it marks where a new span starts, and it ends exactly
