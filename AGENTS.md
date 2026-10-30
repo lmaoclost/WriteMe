@@ -1,6 +1,6 @@
 # AGENTS.md — Scriptorium
 
-Local-first worldbuilding SPA. React 18 + Vite + TS, Tailwind v4 + shadcn/ui, zustand persist. No backend, no env vars; CI on GitHub Actions (`.github/workflows/ci.yml`), deploys on Vercel.
+Local-first worldbuilding SPA. React 19 + Vite + TS, Tailwind v4 + shadcn/ui, zustand persist. No backend, no env vars; CI on GitHub Actions (`.github/workflows/ci.yml`), deploys on Vercel.
 
 ## Commands
 
