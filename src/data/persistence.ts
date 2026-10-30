@@ -1,4 +1,4 @@
-export const PERSIST_FLAG = "scriptorium.persistRequested";
+export const PERSIST_FLAG = "writeme.persistRequested";
 
 /** Ask the browser to keep this origin's storage out of eviction.
  *  Chromium grants silently; Firefox may prompt; Safari accepts the call but

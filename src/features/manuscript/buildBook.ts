@@ -166,7 +166,7 @@ export function buildBookHtml(manuscript: Manuscript): string {
   // the branded page carries it (no second book-title before the chapters);
   // without it, a centered book-title page stands in.
   const titleBlock = b.titlePage
-    ? `<section class="front-matter title-page display"><p class="tp-series">Scriptorium</p><h1 class="tp-title">${escapeText(manuscript.title)}</h1>${manuscript.author ? `<p class="tp-author">${escapeText(manuscript.author)}</p>` : ""}</section>`
+    ? `<section class="front-matter title-page display"><p class="tp-series">WriteMe</p><h1 class="tp-title">${escapeText(manuscript.title)}</h1>${manuscript.author ? `<p class="tp-author">${escapeText(manuscript.author)}</p>` : ""}</section>`
     : `<section class="front-matter book-title-page display"><h1 class="book-title">${escapeText(manuscript.title)}</h1>${manuscript.author ? `<p class="book-author">${escapeText(manuscript.author)}</p>` : ""}</section>`;
   const copyright = fm.copyright ? copyrightPage(manuscript, b) : "";
   const dedication = dedicationSection(b);

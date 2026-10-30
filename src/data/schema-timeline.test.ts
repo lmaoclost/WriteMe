@@ -62,7 +62,7 @@ describe("validateProjectData — timeline eras", () => {
 describe("serialize / parseExport — version 1", () => {
   it("4. writes version 1 and round-trips a wire", () => {
     const doc = JSON.parse(serialize({ ...base, timelines: [wire()] as TimelineWire[] })) as { app: string; version: number };
-    expect(doc.app).toBe("scriptorium");
+    expect(doc.app).toBe("writeme");
     expect(doc.version).toBe(1);
     const parsed = parseExport(serialize({ ...base, timelines: [wire()] as TimelineWire[] }));
     expect(parsed.timelines![0].eras).toHaveLength(1);
@@ -70,7 +70,7 @@ describe("serialize / parseExport — version 1", () => {
 
   it("4. any version other than 1 is unsupported", () => {
     for (const version of [0, 2, 3]) {
-      expect(() => parseExport(JSON.stringify({ app: "scriptorium", version, ...base }))).toThrow("unsupportedVersion");
+      expect(() => parseExport(JSON.stringify({ app: "writeme", version, ...base }))).toThrow("unsupportedVersion");
     }
   });
 });

@@ -495,10 +495,10 @@ export function emptyProjectData(): ProjectData & { bloodlines: Bloodline[] } {
 }
 
 export function serialize(data: ProjectData): string {
-  return JSON.stringify({ app: "scriptorium", version: 1, ...data });
+  return JSON.stringify({ app: "writeme", version: 1, ...data });
 }
 
-export type ParseExportErrorCode = "invalidJson" | "notScriptorium" | "unsupportedVersion" | "invalidStructure";
+export type ParseExportErrorCode = "invalidJson" | "notWriteme" | "unsupportedVersion" | "invalidStructure";
 
 /** Stable code so callers can translate the message in the active locale. */
 export class ParseExportError extends Error {
@@ -516,7 +516,7 @@ export function parseExport(text: string): ProjectData {
     throw new ParseExportError("invalidJson");
   }
   const d = doc as { app?: unknown; version?: unknown } & ProjectData;
-  if (!d || d.app !== "scriptorium") throw new ParseExportError("notScriptorium");
+  if (!d || d.app !== "writeme") throw new ParseExportError("notWriteme");
   if (d.version !== 1) throw new ParseExportError("unsupportedVersion", d.version);
   const issues = validateProjectDataDetailed(d);
   if (issues.length > 0) {

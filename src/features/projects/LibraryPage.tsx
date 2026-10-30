@@ -147,8 +147,8 @@ export function LibraryPage() {
       <header className="grid gap-2.5">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <Seal letter="S" className="size-7 text-sm" />
-            <span className="font-display text-[15px] uppercase tracking-[0.14em] text-parchment">Scriptorium</span>
+            <Seal letter="W" className="size-7 text-sm" />
+            <span className="font-display text-[15px] uppercase tracking-[0.14em] text-parchment">WriteMe</span>
           </div>
           <div className="flex items-center gap-2">
             <LanguageToggle />

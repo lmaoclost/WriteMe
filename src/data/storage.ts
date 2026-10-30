@@ -2,7 +2,7 @@ import type { PersistStorage } from "zustand/middleware";
 import { validateProjectData } from "./schema";
 import type { ProjectData } from "../domain/types";
 
-const PREFIX = "scriptorium";
+const PREFIX = "writeme";
 export const STORE_KEY = `${PREFIX}.v1`;
 
 const WRITE_DEBOUNCE_MS = 800;

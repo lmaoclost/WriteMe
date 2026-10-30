@@ -197,7 +197,7 @@ const imageReferenced = (
   || d.bloodlines.some((b) => b.persons.some((p) => p.portraitKey === key));
 
 /** Bloodlines are OPTIONAL in the schema but the store state always carries the array. */
-interface ScriptoriumState extends ProjectData {
+interface WriteMeState extends ProjectData {
   bloodlines: Bloodline[];
   toasts: Toast[];
   seedFlag: boolean;
@@ -405,7 +405,7 @@ interface ScriptoriumState extends ProjectData {
   redoCN(id: string): void;
 }
 
-export const useScriptorium = create<ScriptoriumState>()(
+export const useScriptorium = create<WriteMeState>()(
   persist(
     (set, get) => {
     const armUndo = (collection: UndoCollection, item: unknown, satellites?: UndoSatellites) => {
@@ -605,7 +605,7 @@ export const useScriptorium = create<ScriptoriumState>()(
           if (e instanceof ParseExportError) {
             const error =
               e.code === "invalidJson" ? i18n.t("import.errors.invalidJson")
-              : e.code === "notScriptorium" ? i18n.t("import.errors.notScriptorium")
+              : e.code === "notWriteme" ? i18n.t("import.errors.notWriteme")
               : e.code === "unsupportedVersion" ? i18n.t("import.errors.unsupportedVersion", { version: String(e.version) })
               : i18n.t("import.errors.invalidStructure");
             return { ok: false as const, error };
@@ -3298,7 +3298,7 @@ void (async function bootstrapImages(): Promise<void> {
 })();
 
 // selectors
-export const selectProject = (id: string) => (s: ScriptoriumState): Project | undefined =>
+export const selectProject = (id: string) => (s: WriteMeState): Project | undefined =>
   s.projects.find((p) => p.id === id);
 
 export interface ProjectCounts {
@@ -3313,7 +3313,7 @@ export interface ProjectCounts {
 const byProjectFirst = <T extends { projectId: string }>(rows: readonly T[] | undefined, projectId: string): T | undefined =>
   (rows ?? []).find((r) => r.projectId === projectId);
 
-export const selectCounts = (projectId: string) => (s: ScriptoriumState): ProjectCounts => {
+export const selectCounts = (projectId: string) => (s: WriteMeState): ProjectCounts => {
   const atlas = s.atlases.find((a) => a.projectId === projectId);
   const bloodline = byProjectFirst(s.bloodlines, projectId);
   const oaths = byProjectFirst(s.oathsCharts, projectId);
@@ -3349,12 +3349,12 @@ export const selectCounts = (projectId: string) => (s: ScriptoriumState): Projec
   };
 };
 
-export const selectHistoryFlags = (atlasId: string) => (s: ScriptoriumState): { canUndo: boolean; canRedo: boolean } => ({
+export const selectHistoryFlags = (atlasId: string) => (s: WriteMeState): { canUndo: boolean; canRedo: boolean } => ({
   canUndo: (s.histories[atlasId]?.undo.length ?? 0) > 0,
   canRedo: (s.histories[atlasId]?.redo.length ?? 0) > 0,
 });
 
-export const selectBLHistoryFlags = (bloodlineId: string) => (s: ScriptoriumState): { canUndo: boolean; canRedo: boolean } => {
+export const selectBLHistoryFlags = (bloodlineId: string) => (s: WriteMeState): { canUndo: boolean; canRedo: boolean } => {
   const h = s.histories[blKey(bloodlineId)];
   return { canUndo: (h?.undo.length ?? 0) > 0, canRedo: (h?.redo.length ?? 0) > 0 };
 };

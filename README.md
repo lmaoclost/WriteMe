@@ -1,4 +1,4 @@
-# Scriptorium
+# WriteMe
 
 Worldbuilding e escrita local-first: um projeto (um mundo) reúne códex, atlas, cronologia, linhagem, facções, calendário, quadro de plot, língua construída e o manuscrito final. Tudo roda no navegador, sem servidor, sem conta, sem upsell.
 
@@ -48,12 +48,12 @@ Nomes de seção são semânticos na UI; rotas e código mantêm o vocabulário 
 
 ## Idioma
 
-Interface em English ou português (Brasil), um toggle na Library e na sidebar do workspace. Default EN, sem detecção de browser, persistido por fora do projeto (`scriptorium.lang`). Conteúdo do mundo é dado do usuário e pode ficar em PT — ver `docs/decisions/ADR-0009-i18n-en-ptbr.md`.
+Interface em English ou português (Brasil), um toggle na Library e na sidebar do workspace. Default EN, sem detecção de browser, persistido por fora do projeto (`writeme.lang`). Conteúdo do mundo é dado do usuário e pode ficar em PT — ver `docs/decisions/ADR-0009-i18n-en-ptbr.md`.
 
 ## Dados, storage e offline
 
-- **localStorage**, chave `scriptorium.v1`, formato persistido v1. Docs pré-release (stamped 2) normalizam no load; docs v1 carregam direto.
-- **Backup automático** se o storage corromper (`scriptorium.corrupt.<iso>`).
+- **localStorage**, chave `writeme.v1`, formato persistido v1. Docs pré-release (stamped 2) normalizam no load; docs v1 carregam direto.
+- **Backup automático** se o storage corromper (`writeme.corrupt.<iso>`).
 - **Imagens no IndexedDB**. O app pede storage persistente no boot (`navigator.storage.persist()`).
 - **PWA**: instalável, offline após o primeiro load (service worker cacheia js, css, fontes).
 - Safari apaga dados de site após 7 dias sem interação (exceto web app instalado) — instale o app ou mantenha o backup JSON.
@@ -72,7 +72,7 @@ Impressão/PDF: cabeças e fólios usam CSS page-margin boxes, implementados só
 
 ## Arquitetura
 
-- **Estado**: zustand + middleware persist (`src/data/store.ts`), chave `scriptorium.v1` no localStorage; imagens no IndexedDB.
+- **Estado**: zustand + middleware persist (`src/data/store.ts`), chave `writeme.v1` no localStorage; imagens no IndexedDB.
 - **Rotas**: React Router em `src/app/router.tsx` — `/` (biblioteca), `/p/:projectId` (workspace).
 - **Camadas**: `src/domain` (regras puras), `src/data` (persistência), `src/features/*` (uma pasta por página), `src/ui` e `src/components/ui` (design system), `src/i18n` (en, pt-BR).
 

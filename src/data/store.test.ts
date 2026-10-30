@@ -113,7 +113,7 @@ describe("corrupt recovery toast (spec §6)", () => {
       version: 1,
     };
     localStorage.setItem(STORE_KEY, JSON.stringify(doc));
-    localStorage.setItem("scriptorium.corrupt.2026-01-01T00:00:00.000Z", "{old");
+    localStorage.setItem("writeme.corrupt.2026-01-01T00:00:00.000Z", "{old");
     act(() => void useScriptorium.persist.rehydrate());
     expect(useScriptorium.getState().toasts).toHaveLength(0);
   });
@@ -149,14 +149,14 @@ describe("persist + corruption", () => {
     const corrupt = "{not json at all";
     localStorage.setItem(STORE_KEY, corrupt);
     expect(localStoragePersistence.getItem(STORE_KEY)).toBeFalsy();
-    const keys = storageKeys().filter((k) => k.startsWith("scriptorium.corrupt."));
+    const keys = storageKeys().filter((k) => k.startsWith("writeme.corrupt."));
     expect(keys).toHaveLength(1);
     expect(localStorage.getItem(keys[0])).toBe(corrupt);
   });
   it("shape-invalid payload is backed up too", () => {
     localStorage.setItem(STORE_KEY, JSON.stringify({ state: { projects: "nope" }, version: 0 }));
     expect(localStoragePersistence.getItem(STORE_KEY)).toBeFalsy();
-    const keys = storageKeys().filter((k) => k.startsWith("scriptorium.corrupt."));
+    const keys = storageKeys().filter((k) => k.startsWith("writeme.corrupt."));
     expect(keys).toHaveLength(1);
   });
   it("import rejects invalid payloads without touching state", () => {

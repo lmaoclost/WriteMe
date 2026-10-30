@@ -3,7 +3,7 @@
  *  The database promise caches per IDBFactory instance so tests can swap in a
  *  fresh fake-indexeddb factory and start an empty island. */
 
-const DB_NAME = "scriptorium.images";
+const DB_NAME = "writeme.images";
 const DB_VERSION = 1;
 const STORE_NAME = "images";
 

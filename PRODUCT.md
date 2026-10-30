@@ -1,4 +1,4 @@
-# Scriptorium — Product Context
+# WriteMe — Product Context
 
 **What it is:** local-first worldbuilding + writing studio (React SPA, zustand + localStorage). Single-user, offline-first, no backend, no upsell.
 

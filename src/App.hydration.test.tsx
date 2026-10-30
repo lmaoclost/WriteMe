@@ -28,7 +28,7 @@ describe("hydration gate", () => {
 
     // while hydrating: splash, never a rendered route
     expect(screen.getByTestId("hydration-splash")).toBeTruthy();
-    expect(screen.queryByText("Scriptorium")).toBeNull();
+    expect(screen.queryByText("WriteMe")).toBeNull();
 
     act(() => finishers.forEach((f) => f()));
 

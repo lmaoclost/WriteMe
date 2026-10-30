@@ -1,5 +1,5 @@
 ---
-name: Scriptorium
+name: WriteMe
 description: Local-first worldbuilding and writing studio with a lamplit study's visual language
 colors:
   ink: "#171210"
@@ -109,7 +109,7 @@ components:
     size: "40px"
 ---
 
-# Design System: Scriptorium
+# Design System: WriteMe
 
 ## Overview
 
@@ -155,7 +155,7 @@ A lamplit study: espresso ink for space, parchment for reading, brass only where
 **The Wax Rule.** Brass appears as a seal, a primary CTA, a hover border, or the lamp pool behind the work in progress. It is never a page area larger than a control.
 
 ### Day mode — "Proof & Press" (the same study by day, direction B)
-The night palette is the default. A `light` class on `<html>` (persisted as `scriptorium.theme`, i18n pattern, no store slice) selects the day block in `theme.css`: the desk becomes aged ivory, text becomes warm ink, and brass darkens to keep hold on light ground. Roles never change — the Wax Rule, the Flat Archive Rule and the Two Voices Rule hold in both modes; the lamp pool stays, reading as plain sunlight.
+The night palette is the default. A `light` class on `<html>` (persisted as `writeme.theme`, i18n pattern, no store slice) selects the day block in `theme.css`: the desk becomes aged ivory, text becomes warm ink, and brass darkens to keep hold on light ground. Roles never change — the Wax Rule, the Flat Archive Rule and the Two Voices Rule hold in both modes; the lamp pool stays, reading as plain sunlight.
 
 | Token | Night (#171210 base) | Day (#f1e9d9 desk) |
 |---|---|---|
@@ -257,7 +257,7 @@ The Manuscript preset opts out of the opener rules: flush openings, no sink, ope
 
 ### The Pressmark Rule
 
-**The colophon signs the book.** The only Scriptorium mark inside the book is the colophon's pressmark — a hallmark (a 7px gem sitting on a 120px rule, paper brass `#c9a227` on muted `#9a8d6a`). The paper never takes app styling. The title page only announces, in the same language: a small gem above the "Scriptorium" series line, and the author set in small caps. Colophon copy sits centred; the pressmark rides the existing back-matter colophon switch, so no data field exists for it. In EPUB the mark degrades to a `❖` glyph where the reading system supports `:before` and to plain colophon text where it does not; DOCX carries no back matter, hence no mark.
+**The colophon signs the book.** The only WriteMe mark inside the book is the colophon's pressmark — a hallmark (a 7px gem sitting on a 120px rule, paper brass `#c9a227` on muted `#9a8d6a`). The paper never takes app styling. The title page only announces, in the same language: a small gem above the "WriteMe" series line, and the author set in small caps. Colophon copy sits centred; the pressmark rides the existing back-matter colophon switch, so no data field exists for it. In EPUB the mark degrades to a `❖` glyph where the reading system supports `:before` and to plain colophon text where it does not; DOCX carries no back matter, hence no mark.
 
 ### Paged-Media Limits
 

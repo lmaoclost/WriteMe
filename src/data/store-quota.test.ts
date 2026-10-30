@@ -91,7 +91,7 @@ describe("persist quota toast wiring", () => {
 
     expect(clickSpy).toHaveBeenCalledTimes(1);
     const anchor = clickSpy.mock.instances[0] as unknown as HTMLAnchorElement;
-    expect(anchor.getAttribute("download")).toMatch(/^scriptorium-backup-\d{4}-\d{2}-\d{2}\.json$/);
+    expect(anchor.getAttribute("download")).toMatch(/^writeme-backup-\d{4}-\d{2}-\d{2}\.json$/);
     expect(anchor.getAttribute("href")).toBe("blob:mock");
 
     delete (URL as unknown as Record<string, unknown>).createObjectURL;

@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
  *  no store slice — the preference is UI chrome, not world data. */
 export type Theme = "night" | "day";
 
-export const THEME_STORAGE_KEY = "scriptorium.theme";
+export const THEME_STORAGE_KEY = "writeme.theme";
 const DEFAULT_THEME: Theme = "night";
 
 /** The class on <html> driving the light token block in theme.css. */

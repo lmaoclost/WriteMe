@@ -24,19 +24,19 @@ beforeEach(() => {
 
 describe("library storage usage", () => {
   it("shows the storage usage line next to the backup buttons", () => {
-    localStorage.setItem("scriptorium.v1", "x".repeat(2 * 1024 * 1024));
+    localStorage.setItem("writeme.v1", "x".repeat(2 * 1024 * 1024));
     render(wrap());
     expect(screen.getByText(/Storage used: 2\.0 MB of ~5 MB/)).toBeInTheDocument();
   });
 
   it("no warning below 80%", () => {
-    localStorage.setItem("scriptorium.v1", "x".repeat(3 * 1024 * 1024));
+    localStorage.setItem("writeme.v1", "x".repeat(3 * 1024 * 1024));
     render(wrap());
     expect(screen.queryByText(/almost full/i)).toBeNull();
   });
 
   it("warns at or above 80% of the approximated quota", () => {
-    localStorage.setItem("scriptorium.v1", "x".repeat(Math.ceil(4.2 * 1024 * 1024)));
+    localStorage.setItem("writeme.v1", "x".repeat(Math.ceil(4.2 * 1024 * 1024)));
     render(wrap());
     expect(screen.getByText(/almost full/i)).toBeInTheDocument();
   });
@@ -144,7 +144,7 @@ describe("LibraryPage hub", () => {
     expect(screen.getByRole("heading", { name: "Meus mundos" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Novo mundo" })).toBeInTheDocument();
     expect(document.documentElement.lang).toBe("pt-BR");
-    expect(localStorage.getItem("scriptorium.lang")).toBe("pt-BR");
+    expect(localStorage.getItem("writeme.lang")).toBe("pt-BR");
   });
 });
 
@@ -162,14 +162,14 @@ describe("library backup", () => {
     fireEvent.click(screen.getByRole("button", { name: "Download backup" }));
     expect(clickSpy).toHaveBeenCalledTimes(1);
     const anchor = clickSpy.mock.instances[0] as unknown as HTMLAnchorElement;
-    expect(anchor.getAttribute("download")).toMatch(/^scriptorium-backup-\d{4}-\d{2}-\d{2}\.json$/);
+    expect(anchor.getAttribute("download")).toMatch(/^writeme-backup-\d{4}-\d{2}-\d{2}\.json$/);
     const text = await new Promise<string>((resolve) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result));
       reader.readAsText(captured as Blob);
     });
     const payload = JSON.parse(text);
-    expect(payload.app).toBe("scriptorium");
+    expect(payload.app).toBe("writeme");
     expect(payload.projects.map((p: { name: string }) => p.name)).toContain("Shimradis");
     delete (URL as unknown as Record<string, unknown>).createObjectURL;
     delete (URL as unknown as Record<string, unknown>).revokeObjectURL;

@@ -77,6 +77,6 @@ export const useAccount = create<AccountState>()(
       setAvatar: (avatarUrl) => set({ avatarUrl }),
       clearAvatar: () => set({ avatarUrl: "" }),
     }),
-    { name: "scriptorium.account.v1" },
+    { name: "writeme.account.v1" },
   ),
 );

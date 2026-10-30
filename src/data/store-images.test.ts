@@ -141,7 +141,7 @@ describe("image persistence via IndexedDB", () => {
     const staleKey = store.getState().putImage(PNG_A, "entry");
     await images.imagesPending(staleKey);
     const backup = JSON.stringify({
-      app: "scriptorium", version: 1,
+      app: "writeme", version: 1,
       ...emptyData(),
       images: { imgN: PNG_B },
     });

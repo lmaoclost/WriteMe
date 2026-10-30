@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useScriptorium } from "../data/store";
 import { GROUPS, SECTIONS } from "../app/sections";
 
-export const OPEN_PALETTE_EVENT = "scriptorium:open-palette";
+export const OPEN_PALETTE_EVENT = "writeme:open-palette";
 
 interface Item { key: string; label: string; group: string; to: string }
 

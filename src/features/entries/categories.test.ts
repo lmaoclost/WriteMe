@@ -68,6 +68,6 @@ describe("schema v2 — entry sections + summary + 15 categories", () => {
     };
     expect(validateProjectData(d)).toBe(true);
     // legacy category names ride a current doc — versions are a separate concern
-    expect(parseExport(JSON.stringify({ app: "scriptorium", version: 1, ...d }))).toEqual({ ...d, bloodlines: [], factionWebs: [], calendars: [], plotBoards: [], timelines: [], oathsCharts: [], wellsprings: [], conlangs: [] });
+    expect(parseExport(JSON.stringify({ app: "writeme", version: 1, ...d }))).toEqual({ ...d, bloodlines: [], factionWebs: [], calendars: [], plotBoards: [], timelines: [], oathsCharts: [], wellsprings: [], conlangs: [] });
   });
 });

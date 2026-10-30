@@ -22,7 +22,7 @@ describe("App shell", () => {
 
   it("mounts router and shows the library at root", async () => {
     render(<App />);
-    await waitFor(() => expect(screen.getByText("Scriptorium")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("WriteMe")).toBeInTheDocument());
   });
 
   it("removed site pages (chronicles/updates/settings/profile) redirect home", async () => {

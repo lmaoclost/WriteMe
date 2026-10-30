@@ -1391,9 +1391,9 @@
     "copyright": "Copyright",
     "rights": "All rights reserved.",
     "edition": "{{edition}} edition",
-    "cover": "Cover and interior set in Scriptorium.",
+    "cover": "Cover and interior set in WriteMe.",
     "setIn": "Set in {{font}}.",
-    "trim": "Trim {{size}} · Scriptorium."
+    "trim": "Trim {{size}} · WriteMe."
   },
   "export": {
     "epub": "Export EPUB",
@@ -1407,7 +1407,7 @@
   "import": {
     "errors": {
       "invalidJson": "The file is not valid JSON.",
-      "notScriptorium": "The file is not a Scriptorium export.",
+      "notWriteme": "The file is not a WriteMe export.",
       "unsupportedVersion": "Version {{version}} is not supported.",
       "invalidStructure": "The file structure is invalid."
     }

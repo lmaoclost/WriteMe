@@ -29,7 +29,7 @@ One name per concept — use it consistently in code, copy, and docs.
 - **Supported:** English (`en`) and Brazilian Portuguese (`pt-BR`). EN is the source catalog and the default.
 - **Locale files:** `src/i18n/locales/en.json`, `src/i18n/locales/pt-BR.json`. Both must contain the same keys.
 - **Toggle:** one button in the Library header and in the workspace sidebar; it shows the target language.
-- **Persistence:** `localStorage["scriptorium.lang"]`. It is not part of the project backup.
+- **Persistence:** `localStorage["writeme.lang"]`. It is not part of the project backup.
 - **Scope:** interface strings, aria-labels, placeholders, toasts, and strings generated into print/EPUB/DOCX. World content is user data and is never translated.
 - **PT term for Entry:** **Verbete**.
 
@@ -39,7 +39,7 @@ World content is user data (language-free).
 
 - **Default:** night (Lamplight dark). Day is "Proof & Press", the same language in light — see `DESIGN.md` and ADR-0011.
 - **Tokens:** `theme.css` holds both blocks on `:root` and `:root.light`; the aliases resolve on the same element, so only base tokens are restated for day.
-- **Module:** `src/ui/theme.ts` — `localStorage["scriptorium.theme"]` (`night` | `day`, junk → default), `light` class on `<html>`, applied at import (no flash). Same pattern as the UI language; not part of the project backup, no persist migration.
+- **Module:** `src/ui/theme.ts` — `localStorage["writeme.theme"]` (`night` | `day`, junk → default), `light` class on `<html>`, applied at import (no flash). Same pattern as the UI language; not part of the project backup, no persist migration.
 - **Toggle:** `src/ui/ThemeToggle.tsx`, beside the language toggle (Library header + workspace rail).
 
 ## Pressmark (Bindery)

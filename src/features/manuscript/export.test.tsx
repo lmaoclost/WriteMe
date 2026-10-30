@@ -486,7 +486,7 @@ describe("buildBookHtml front matter + parts", () => {
     expect(html).not.toContain("ISBN");
     expect(html).not.toContain("edition");
     expect(html).not.toContain("©");
-    expect(html).toContain("Cover and interior set in Scriptorium.");
+    expect(html).toContain("Cover and interior set in WriteMe.");
   });
 
   it("a chapter whose part no longer exists renders with the ungrouped ones", async () => {
@@ -680,7 +680,7 @@ describe("back matter + scene ornament", () => {
     // typeset from the config: the label of the configured stack + the trim
     expect(html).toContain("Set in Georgia.");
     expect(html).toContain("6in 9in");
-    expect(html).toContain("Scriptorium.");
+    expect(html).toContain("WriteMe.");
     expect(html.indexOf("about-author")).toBeLessThan(html.indexOf("colophon"));
     expect(html.indexOf("colophon")).toBeLessThan(html.indexOf("</article>"));
   });

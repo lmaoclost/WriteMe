@@ -1391,9 +1391,9 @@
     "copyright": "Créditos",
     "rights": "Todos os direitos reservados.",
     "edition": "Edição {{edition}}",
-    "cover": "Capa e miolo compostos em Scriptorium.",
+    "cover": "Capa e miolo compostos em WriteMe.",
     "setIn": "Composto em {{font}}.",
-    "trim": "Formato {{size}} · Scriptorium."
+    "trim": "Formato {{size}} · WriteMe."
   },
   "export": {
     "epub": "Exportar EPUB",
@@ -1407,7 +1407,7 @@
   "import": {
     "errors": {
       "invalidJson": "Arquivo não é JSON válido.",
-      "notScriptorium": "Arquivo não é um export do scriptorium.",
+      "notWriteme": "Arquivo não é um export do WriteMe.",
       "unsupportedVersion": "Versão {{version}} não suportada.",
       "invalidStructure": "Arquivo com estrutura inválida."
     }

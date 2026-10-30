@@ -131,9 +131,9 @@ describe("validateProjectData — bloodlines", () => {
 });
 
 describe("serialize", () => {
-  it("case 6: writes version 1 with the scriptorium marker", () => {
+  it("case 6: writes version 1 with the writeme marker", () => {
     const doc = JSON.parse(serialize(base)) as { app: string; version: number };
-    expect(doc.app).toBe("scriptorium");
+    expect(doc.app).toBe("writeme");
     expect(doc.version).toBe(1);
   });
   it("keeps data fields alongside the header (bloodlines included)", () => {
@@ -145,7 +145,7 @@ describe("serialize", () => {
 
 describe("parseExport", () => {
   it("case 2: a doc without bloodlines normalizes to []", () => {
-    const doc = JSON.stringify({ app: "scriptorium", version: 1, ...base });
+    const doc = JSON.stringify({ app: "writeme", version: 1, ...base });
     expect(parseExport(doc).bloodlines).toEqual([]);
   });
   it("case 5: v1 round-trips with bloodlines", () => {
@@ -155,17 +155,17 @@ describe("parseExport", () => {
   });
   it("case 1: any version other than 1 is rejected", () => {
     for (const version of [0, 2, 3]) {
-      expect(() => parseExport(JSON.stringify({ app: "scriptorium", version, ...base })))
+      expect(() => parseExport(JSON.stringify({ app: "writeme", version, ...base })))
         .toThrow("unsupportedVersion");
     }
   });
   it("rejects malformed bloodlines in a valid doc", () => {
     expect(() => parseExport(JSON.stringify({
-      app: "scriptorium", version: 1, ...base,
+      app: "writeme", version: 1, ...base,
       bloodlines: [blEnvelope({ persons: [badPerson({ x: "no" })] })],
     })))
       .toThrow("invalidStructure");
-    expect(() => parseExport(JSON.stringify({ app: "scriptorium", version: 1, ...base, bloodlines: null })))
+    expect(() => parseExport(JSON.stringify({ app: "writeme", version: 1, ...base, bloodlines: null })))
       .toThrow("invalidStructure");
   });
 });

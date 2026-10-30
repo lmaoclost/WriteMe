@@ -71,7 +71,7 @@ export function WorkspaceLayout() {
             className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[720px]:contents"
           >
             <div className="mb-3 shrink-0">
-              <Seal letter="S" />
+              <Seal letter="W" />
             </div>
             <Link
               to={`/p/${projectId}`}
@@ -137,7 +137,7 @@ export function WorkspaceLayout() {
             <button
               type="button"
               className="flex cursor-pointer items-center gap-2 border-0 bg-none px-3 py-[10px] text-left text-xs uppercase tracking-[0.1em] text-slate hover:text-parchment max-[720px]:hidden"
-              onClick={() => window.dispatchEvent(new Event("scriptorium:open-palette"))}
+              onClick={() => window.dispatchEvent(new Event("writeme:open-palette"))}
             >
               {t("workspace.search")} <span className="text-[9px] tracking-[0.06em] opacity-70">Ctrl+K</span>
             </button>

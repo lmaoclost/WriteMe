@@ -6,7 +6,7 @@ import ptBR from "./locales/pt-BR.json";
 export const SUPPORTED_LANGUAGES = ["en", "pt-BR"] as const;
 export type Language = (typeof SUPPORTED_LANGUAGES)[number];
 
-export const LANG_STORAGE_KEY = "scriptorium.lang";
+export const LANG_STORAGE_KEY = "writeme.lang";
 const DEFAULT_LANGUAGE: Language = "en";
 
 /** Maps any tag (`pt`, `pt-BR`, `en-US`, junk) to one of the shipped locales. */

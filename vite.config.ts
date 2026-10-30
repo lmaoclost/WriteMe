@@ -13,8 +13,8 @@ export default defineConfig({
       registerType: "prompt",
       includeAssets: ["favicon.svg"],
       manifest: {
-        name: "Scriptorium",
-        short_name: "Scriptorium",
+        name: "WriteMe",
+        short_name: "WriteMe",
         description: "Local-first worldbuilding and writing studio.",
         start_url: "/",
         display: "standalone",
