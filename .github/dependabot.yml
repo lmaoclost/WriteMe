@@ -1,0 +1,12 @@
+# Dependabot: weekly npm updates against the default branch (main).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      dependencies:
+        dependency-type: production
+      dev-dependencies:
+        dependency-type: development
