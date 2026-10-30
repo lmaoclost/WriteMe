@@ -404,6 +404,24 @@ describe("ManuscriptPage chapters", () => {
     vi.useRealTimers();
   });
 
+  it("the none ornament previews scenes as one flow; the default keeps the marker", async () => {
+    const projectId = seedProject();
+    const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Início", content: "primeira." }] });
+    act(() => { useScriptorium.getState().addScene(book.chapters[0].id); });
+    const scenes = bookOf("A").chapters[0].scenes;
+    act(() => { useScriptorium.getState().updateScene(scenes[1].id, { content: "segunda." }); });
+    await manuscriptRoute(projectId);
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+    expect(document.querySelectorAll(".md-view .scene-marker")).toHaveLength(1);
+    expect(document.querySelector(".md-view")?.textContent).toContain("primeira.");
+    // the author's choice: scene break reads as one text, no marker
+    fireEvent.click(screen.getByRole("button", { name: "Write" }));
+    act(() => { useScriptorium.getState().setBindery(bookOf("A").id, { sceneOrnament: "none" }); });
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+    expect(document.querySelectorAll(".md-view .scene-marker")).toHaveLength(0);
+    expect(document.querySelector(".md-view")?.textContent).toContain("segunda.");
+  });
+
   it("shows the empty preview copy when the committed content is empty", async () => {
     const projectId = seedProject();
     seedBook(projectId, { title: "A", chapters: [{ heading: "Início" }] });

@@ -1372,7 +1372,8 @@
     "printHint": "Running heads and folios appear only in the print dialog — never in the on-screen preview. Uncheck \"Headers and footers\" in the dialog, or the browser prints numbers on top of the folio.",
     "printHintEngine": "This browser cannot print running heads or folios: they need CSS page-margin boxes, which only Chromium implements. Print from desktop Chrome or Edge — on iOS every browser uses WebKit.",
     "ornament": {
-      "blank": "None",
+      "none": "None",
+      "blank": "Blank",
       "asterisks": "Asterisks",
       "asterism": "Asterism",
       "fleuron": "Fleuron",

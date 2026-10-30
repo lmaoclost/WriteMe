@@ -21,6 +21,7 @@ import type { BinderPreset, BinderyConfig, SceneOrnament } from "../../domain/ty
 type NestedBlock = "typography" | "geometry" | "opener" | "frontMatter" | "backMatter";
 
 const ORNAMENT_LABEL_KEYS = {
+  none: "bindery.ornament.none",
   blank: "bindery.ornament.blank",
   asterisks: "bindery.ornament.asterisks",
   asterism: "bindery.ornament.asterism",

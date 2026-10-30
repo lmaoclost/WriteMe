@@ -752,6 +752,35 @@ describe("back matter + scene ornament", () => {
     expect(buildBookCss({ ...defaultBindery()!, sceneOrnament: "asterisks" }, ctx)).toContain('content: "* * *"');
     expect(buildBookCss({ ...defaultBindery()!, sceneOrnament: "fleuron" }, ctx)).toContain('content: "❦"');
   });
+
+  it("the none ornament prints scenes as one flow: no marker markup, no ornament CSS", async () => {
+    const { buildBookCss } = await import("./bookCss");
+    const { buildEpubCss } = await import("./epubCss");
+    const ctx = { title: "A Coroa e o Rio", chapters: [{ heading: "Um" }], parts: [], pageCount: 100 };
+    const css = buildBookCss({ ...defaultBindery()!, sceneOrnament: "none" }, ctx);
+    // the base rule survives so an authored end marker stays centered; the
+    // ornament rules drop with the marker
+    expect(css).toContain(".print-book .scene-marker {");
+    expect(css).not.toContain("scene-marker.ornament");
+    expect(buildEpubCss({ ...defaultBindery()!, sceneOrnament: "none" })).not.toContain("scene-marker.ornament");
+    // scenes read as one text: adjacent paragraphs, no marker between, and a
+    // punctuation end marker becomes no marker either
+    const html = buildBookHtml(mkBook({
+      bindery: { ...defaultBindery()!, sceneOrnament: "none" },
+      chapters: [{ id: "c1", heading: "Um", scenes: [
+        { id: "s1", content: "primeira.", order: 0 },
+        { id: "s2", content: "segunda.", order: 1 },
+      ], order: 0, endMarker: "•" }],
+    }));
+    expect(html).toMatch(/<p>primeira\.<\/p>\s*<p>segunda\./);
+    expect(html).not.toContain("scene-marker");
+    // the writer's own line still prints as written
+    const word = buildBookHtml(mkBook({
+      bindery: { ...defaultBindery()!, sceneOrnament: "none" },
+      chapters: [{ id: "c1", heading: "Um", scenes: [{ id: "s1", content: "corpo.", order: 0 }], order: 0, endMarker: "Fim do Um" }],
+    }));
+    expect(word).toContain('<div class="scene-marker text">Fim do Um</div>');
+  });
 });
 
 describe("EPUB export", () => {

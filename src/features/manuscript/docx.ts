@@ -70,7 +70,7 @@ async function fileToArrayBuffer(file: File): Promise<ArrayBuffer> {
 const TWIPS_PER_POINT = 20;
 
 const ORNAMENT_GLYPHS: Record<SceneOrnament, string> = {
-  blank: "", asterisks: "* * *", asterism: "⁂", fleuron: "❦", rule: "",
+  blank: "", asterisks: "* * *", asterism: "⁂", fleuron: "❦", rule: "", none: "",
 };
 
 /** Print typography in Word units: indent and line spacing in twips (20 per
@@ -167,8 +167,10 @@ export function docxStyles(config: BinderyConfig): IStylesOptions {
  *  centered; blank keeps an empty line (print keeps the air) and the rule
  *  draws a line of em dashes — a docx paragraph border spans the full
  *  measure, not print's short 4em rule. */
-function ornamentParagraph(config: BinderyConfig): Paragraph {
+function ornamentParagraph(config: BinderyConfig): Paragraph | null {
   const ornament = config.sceneOrnament ?? "asterism";
+  // "none" prints no marker: the caller skips the paragraph entirely
+  if (ornament === "none") return null;
   const text = ornament === "rule" ? "—".repeat(4) : ORNAMENT_GLYPHS[ornament];
   return new Paragraph({ children: text ? [new TextRun({ text })] : [], alignment: AlignmentType.CENTER });
 }
@@ -237,7 +239,10 @@ export function buildDocxChildren(manuscript: Manuscript): Paragraph[] {
       // renderMarkdown → blocks pipeline print and EPUB run, scene by scene;
       // the scene ornament separates the scenes (print's glyph lives in CSS)
       for (const [i, scene] of chapter.scenes.entries()) {
-        if (i > 0) children.push(ornamentParagraph(config));
+        if (i > 0) {
+          const ornament = ornamentParagraph(config);
+          if (ornament) children.push(ornament);
+        }
         const blocks = htmlToBlocks(renderMarkdown(scene.content || ""));
         if (!blocks.length) {
           children.push(new Paragraph({ children: [new TextRun({ text: i18n.t("manuscript.noContent"), italics: true })] }));
@@ -272,10 +277,12 @@ export function buildDocxChildren(manuscript: Manuscript): Paragraph[] {
       if (chapter.endMarker?.trim()) {
         const marker = chapter.endMarker.trim();
         // a line carrying letters or digits is the writer's own words and
-        // prints as written; punctuation becomes the scene ornament
-        children.push(/[\p{L}\p{N}]/u.test(marker)
+        // prints as written; punctuation becomes the scene ornament, which
+        // under "none" is no paragraph at all
+        const markerParagraph = /[\p{L}\p{N}]/u.test(marker)
           ? new Paragraph({ children: [new TextRun({ text: marker, smallCaps: true })], alignment: AlignmentType.CENTER })
-          : ornamentParagraph(config));
+          : ornamentParagraph(config);
+        if (markerParagraph) children.push(markerParagraph);
       }
       if (chapter.noteEnd?.trim()) {
         children.push(new Paragraph({ children: [new TextRun({ text: chapter.noteEnd.trim(), italics: true, color: "7A7A99" })] }));

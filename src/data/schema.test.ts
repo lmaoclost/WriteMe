@@ -177,6 +177,7 @@ describe("manuscript parts and bindery layout blocks", () => {
     expect(validateProjectData(withBindery({ backMatter: { aboutAuthor: "Ana" } }))).toBe(true); // panel writes omit both booleans
     expect(validateProjectData(withBindery({ preset: "gothic" }))).toBe(false);
     expect(validateProjectData(withBindery({ sceneOrnament: "diamond" }))).toBe(false);
+    expect(validateProjectData(withBindery({ sceneOrnament: "none" }))).toBe(true);
   });
 });
 

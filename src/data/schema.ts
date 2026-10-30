@@ -102,7 +102,7 @@ export const BIND_TRIMS = ["6x9", "5x8", "5.5x8.5", "5.25x8", "6.14x9.21", "7x10
 export const BIND_NUM_STYLES = ["none", "arabic", "chapter", "word"] as const;
 export const BIND_HEAD_MODES = ["book", "chapter"] as const;
 export const BIND_PRESETS = ["manuscript", "classic", "commercial", "fantasy"] as const;
-export const BIND_SCENE_ORNAMENTS = ["blank", "asterisks", "asterism", "fleuron", "rule"] as const;
+export const BIND_SCENE_ORNAMENTS = ["none", "blank", "asterisks", "asterism", "fleuron", "rule"] as const;
 
 export function defaultBindery(): Manuscript["bindery"] {
   return {

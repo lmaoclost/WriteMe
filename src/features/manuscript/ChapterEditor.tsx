@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { i18n } from "../../i18n";
-import type { Chapter, CustomCalendar, Part, Scene } from "../../domain/types";
+import type { Chapter, CustomCalendar, Part, Scene, SceneOrnament } from "../../domain/types";
 import { useScriptorium } from "../../data/store";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
@@ -20,6 +20,13 @@ function useChapterParts(chapterId: string): Part[] {
   const parts = useScriptorium((s) =>
     s.manuscripts.find((m) => m.chapters.some((c) => c.id === chapterId))?.parts ?? NO_PARTS);
   return useMemo(() => [...parts].sort((a, b) => a.order - b.order), [parts]);
+}
+
+/** The book's scene ornament (asterism when unset), for the print-style
+ *  preview: it decides whether the preview joins scenes with the marker. */
+function useSceneOrnament(chapterId: string): SceneOrnament {
+  return useScriptorium((s) =>
+    s.manuscripts.find((m) => m.chapters.some((c) => c.id === chapterId))?.bindery?.sceneOrnament ?? "asterism");
 }
 
 export interface ChapterEditorProps {
@@ -46,10 +53,13 @@ export function markdownToHtml(md: string): string {
   return sanitizeFragment(md ?? "");
 }
 
+const SCENE_MARKER_DIV = '<div class="scene-marker ornament" aria-hidden="true"></div>';
+
 export function ChapterEditor({ chapterId, headingRef, onDeleted, focus = false, focusSceneId }: ChapterEditorProps) {
   const { t } = useTranslation();
   const chapter = useChapter(chapterId);
   const parts = useChapterParts(chapter.id);
+  const sceneOrnament = useSceneOrnament(chapter.id);
   const [writing, setWriting] = useState(true);
   const [armed, setArmed] = useState(false);
   const confirmTimerRef = useRef<number | undefined>(undefined);
@@ -188,7 +198,7 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted, focus = false,
       ) : allScenesEmpty ? (
         <p className="mx-1 my-1 text-slate text-sm italic">{t("manuscript.noContent")}</p>
       ) : (
-        <div className="md-view" dangerouslySetInnerHTML={{ __html: previewScenes.join('<div class="scene-marker ornament" aria-hidden="true"></div>') }} />
+        <div className="md-view" dangerouslySetInnerHTML={{ __html: previewScenes.join(sceneOrnament === "none" ? "" : SCENE_MARKER_DIV) }} />
       )}
       {!focus ? <NotesAndLinks chapter={chapter} /> : null}
       <WordCountFooter

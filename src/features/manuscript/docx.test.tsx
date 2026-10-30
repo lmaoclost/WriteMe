@@ -319,6 +319,26 @@ describe("scene markers", () => {
     expect(runs(marker)[0].smallCaps).toBe(true);
     expect(JSON.stringify(marker)).not.toContain("⁂");
   });
+
+  it("the none ornament drops the ornament paragraph and punctuation markers, keeps authored lines", () => {
+    const twoScenes = { ...manuscript(), chapters: [{ id: "c1", heading: "Um", order: 0, scenes: [
+      { id: "s1", content: "cena um.", order: 0 },
+      { id: "s2", content: "cena dois.", order: 1 },
+    ] }] };
+    const none = { ...twoScenes, bindery: { ...defaultBindery()!, sceneOrnament: "none" } } as Manuscript;
+    const texts = buildDocxChildren(none).map(runText);
+    expect(texts).not.toContain("⁂");
+    expect(texts).toContain("cena um.");
+    expect(texts).toContain("cena dois.");
+    // a punctuation end marker becomes no marker either: the last paragraph
+    // is the scene body itself
+    const punct = buildDocxChildren({
+      ...none, chapters: [{ id: "c1", heading: "Um", order: 0, scenes: [{ id: "s1", content: "corpo.", order: 0 }], endMarker: "***" }],
+    }).map(runText);
+    expect(punct[punct.length - 1]).toBe("corpo.");
+    // the writer's own line still prints
+    expect(buildDocxChildren(withMarker("Fim", "none")).map(runText)).toContain("Fim");
+  });
 });
 
 describe("DocxReplaceButton", () => {

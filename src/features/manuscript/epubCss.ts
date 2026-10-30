@@ -10,7 +10,7 @@ import type { BinderyConfig, SceneOrnament } from "../../domain/types";
 const cssStr = (text: string) => text.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
 
 const ORNAMENT_GLYPHS: Record<SceneOrnament, string> = {
-  blank: "", asterisks: "* * *", asterism: "⁂", fleuron: "❦", rule: "",
+  blank: "", asterisks: "* * *", asterism: "⁂", fleuron: "❦", rule: "", none: "",
 };
 
 export function buildEpubCss(config: BinderyConfig): string {
@@ -32,14 +32,17 @@ export function buildEpubCss(config: BinderyConfig): string {
   );
   // scene break: punctuation marker prints as the configured ornament (glyph
   // on ::before, blank keeps the air, rule draws a short rule); an authored
-  // line (.scene-marker.text) keeps its own words, same centered shape
+  // line (.scene-marker.text) keeps its own words, same centered shape;
+  // "none" drops the ornament rule, the base rule stays for authored lines
   const ornament = config.sceneOrnament ?? "asterism";
-  if (ornament === "blank") {
-    rules.push(`.scene-marker.ornament { height: 1.5em; }`);
-  } else if (ornament === "rule") {
-    rules.push(`.scene-marker.ornament { border-top: 1px solid currentColor; width: 4em; }`);
-  } else {
-    rules.push(`.scene-marker.ornament::before { content: "${cssStr(ORNAMENT_GLYPHS[ornament])}"; }`);
+  if (ornament !== "none") {
+    if (ornament === "blank") {
+      rules.push(`.scene-marker.ornament { height: 1.5em; }`);
+    } else if (ornament === "rule") {
+      rules.push(`.scene-marker.ornament { border-top: 1px solid currentColor; width: 4em; }`);
+    } else {
+      rules.push(`.scene-marker.ornament::before { content: "${cssStr(ORNAMENT_GLYPHS[ornament])}"; }`);
+    }
   }
   rules.push(
     `.part-divider { text-align: center; }`,

@@ -20,7 +20,7 @@ export interface BookCtx {
 const cssStr = (text: string) => text.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
 
 const ORNAMENT_GLYPHS: Record<SceneOrnament, string> = {
-  blank: "", asterisks: "* * *", asterism: "⁂", fleuron: "❦", rule: "",
+  blank: "", asterisks: "* * *", asterism: "⁂", fleuron: "❦", rule: "", none: "",
 };
 
 const BASE = (config: BinderyConfig) => ({
@@ -145,15 +145,19 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
   );
   // scene break: a punctuation marker prints as the configured ornament (the
   // glyph rides on ::before; blank keeps the air, rule draws a short rule);
-  // an authored line (.scene-marker.text) keeps its own words, same shape
+  // an authored line (.scene-marker.text) keeps its own words, same shape;
+  // "none" is the writer's choice: the marker drops, the rule stays behind
+  // for an authored line only
   const ornament = config.sceneOrnament ?? "asterism";
   rules.push(`.print-book .scene-marker { text-align: center; letter-spacing: 0.3em; margin: 0.75em auto; }`);
-  if (ornament === "blank") {
-    rules.push(`.print-book .scene-marker.ornament { height: 1.5em; }`);
-  } else if (ornament === "rule") {
-    rules.push(`.print-book .scene-marker.ornament { border-top: 1px solid currentColor; width: 4em; }`);
-  } else {
-    rules.push(`.print-book .scene-marker.ornament::before { content: "${cssStr(ORNAMENT_GLYPHS[ornament])}"; }`);
+  if (ornament !== "none") {
+    if (ornament === "blank") {
+      rules.push(`.print-book .scene-marker.ornament { height: 1.5em; }`);
+    } else if (ornament === "rule") {
+      rules.push(`.print-book .scene-marker.ornament { border-top: 1px solid currentColor; width: 4em; }`);
+    } else {
+      rules.push(`.print-book .scene-marker.ornament::before { content: "${cssStr(ORNAMENT_GLYPHS[ornament])}"; }`);
+    }
   }
   // a part divider is its own page: same sink knob as chapter openers, and a
   // named page so the book-mode head and the folio stay off it

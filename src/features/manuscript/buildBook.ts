@@ -106,22 +106,27 @@ function chapterHeading(config: NonNullable<Manuscript["bindery"]>, chapter: Cha
 }
 
 /** One chapter's body: the scenes in order with the scene ornament between
- *  them (its glyph comes from the generated CSS), top note, the chapter's
- *  own end marker, end note. */
-function chapterBody(chapter: Chapter): string {
+ *  them (its glyph comes from the generated CSS; "none" joins them bare),
+ *  top note, the chapter's own end marker, end note. */
+function chapterBody(config: NonNullable<Manuscript["bindery"]>, chapter: Chapter): string {
+  const noMarker = (config.sceneOrnament ?? "asterism") === "none";
   const ornament = '<div class="scene-marker ornament" aria-hidden="true"></div>';
   let body = chapter.scenes.map((scene) =>
-    scene.content ? renderMarkdown(scene.content) : EMPTY_PARAGRAPH()).join(ornament);
+    scene.content ? renderMarkdown(scene.content) : EMPTY_PARAGRAPH()).join(noMarker ? "" : ornament);
   if (chapter.noteTop?.trim()) {
     body = `<div class="chapter-note top">${renderMarkdown(chapter.noteTop.trim())}</div>` + body;
   }
   if (chapter.endMarker?.trim()) {
     // a punctuation marker (* * *, •) becomes the scene ornament; a line
     // carrying letters or digits is the writer's own words and prints as
-    // written, styled like the ornament
-    body = body + (/[\p{L}\p{N}]/u.test(chapter.endMarker.trim())
-      ? `<div class="scene-marker text">${escapeText(chapter.endMarker.trim())}</div>`
-      : `<div class="scene-marker ornament" aria-hidden="true"></div>`);
+    // written, styled like the ornament; under "none" only the writer's
+    // own words still print
+    const authored = /[\p{L}\p{N}]/u.test(chapter.endMarker.trim());
+    if (authored || !noMarker) {
+      body = body + (authored
+        ? `<div class="scene-marker text">${escapeText(chapter.endMarker.trim())}</div>`
+        : `<div class="scene-marker ornament" aria-hidden="true"></div>`);
+    }
   }
   if (chapter.noteEnd?.trim()) {
     body = body + `<div class="chapter-note bottom">${renderMarkdown(chapter.noteEnd.trim())}</div>`;
@@ -134,7 +139,7 @@ function chapterBody(chapter: Chapter): string {
  *  (the heading, on its own page when a head or folio is suppressed) and
  *  the body section, so both formats read the same pieces. */
 export function chapterInner(config: NonNullable<Manuscript["bindery"]>, chapter: Chapter, n: number): string {
-  return chapterHeading(config, chapter, n) + chapterBody(chapter);
+  return chapterHeading(config, chapter, n) + chapterBody(config, chapter);
 }
 
 /** Part divider's inner markup: the part's own number, title and epigraph.
@@ -194,7 +199,7 @@ export function buildBookHtml(manuscript: Manuscript): string {
       // section; the generated CSS decides whether they share a page
       body.push(
         `<section class="chapter-opener" data-ch="${chapterNo}">${chapterHeading(b, c, chapterNo)}</section>` +
-        `<section class="chapter" data-ch="${chapterNo}">${chapterBody(c)}</section>`,
+        `<section class="chapter" data-ch="${chapterNo}">${chapterBody(b, c)}</section>`,
       );
     });
   });

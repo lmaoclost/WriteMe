@@ -74,7 +74,7 @@ export interface Atlas {
 }
 
 export type BinderPreset = "manuscript" | "classic" | "commercial" | "fantasy";
-export type SceneOrnament = "blank" | "asterisks" | "asterism" | "fleuron" | "rule";
+export type SceneOrnament = "none" | "blank" | "asterisks" | "asterism" | "fleuron" | "rule";
 
 export type BinderyConfig = {
   font: string;           // stack do livro
