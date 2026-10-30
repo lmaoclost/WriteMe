@@ -1,13 +1,13 @@
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { useScriptorium, type ToastKind } from "../data/store";
+import { useWriteme, type ToastKind } from "../data/store";
 
 export const toastKindAttr = (kind: ToastKind): string => `[data-kind="${kind}"]`;
 
 export function Toasts() {
   const { t: translate } = useTranslation();
-  const toasts = useScriptorium((s) => s.toasts);
-  const dismiss = useScriptorium((s) => s.dismissToast);
+  const toasts = useWriteme((s) => s.toasts);
+  const dismiss = useWriteme((s) => s.dismissToast);
   // one timer per NEW toast: keying the effect on the whole array restarted
   // every timer whenever any toast arrived, so toasts arriving within 4s of
   // each other never expired

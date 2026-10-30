@@ -1,14 +1,14 @@
 import { act } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
-import { useScriptorium } from "./store";
+import { useWriteme } from "./store";
 import { validateProjectData } from "./schema";
 import type { Chapter, Manuscript, Part, Project, Scene } from "../domain/types";
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 
 function makeProject(): Project {
@@ -39,11 +39,11 @@ function makeScene(chapterId: string): Scene {
 }
 
 function chaptersOf(id: string): Chapter[] {
-  return useScriptorium.getState().manuscripts.find((m) => m.id === id)!.chapters;
+  return useWriteme.getState().manuscripts.find((m) => m.id === id)!.chapters;
 }
 
 function chapterById(chId: string): Chapter | undefined {
-  return useScriptorium.getState().manuscripts.flatMap((m) => m.chapters).find((c) => c.id === chId);
+  return useWriteme.getState().manuscripts.flatMap((m) => m.chapters).find((c) => c.id === chId);
 }
 
 function makePart(manuscriptId: string, title?: string): Part {
@@ -54,7 +54,7 @@ function makePart(manuscriptId: string, title?: string): Part {
 }
 
 function partsOf(id: string): Part[] {
-  return useScriptorium.getState().manuscripts.find((m) => m.id === id)?.parts ?? [];
+  return useWriteme.getState().manuscripts.find((m) => m.id === id)?.parts ?? [];
 }
 
 describe("addManuscript", () => {
@@ -154,7 +154,7 @@ describe("addChapter", () => {
     const a = makeChapter(m.id, "Um");
     const b = makeChapter(m.id, "Dois");
     act(() => {
-      useScriptorium.setState((s) => ({
+      useWriteme.setState((s) => ({
         manuscripts: s.manuscripts.map((x) => (x.id === m.id
           ? { ...x, chapters: [...x.chapters.filter((y) => y.id !== a.id), { ...a, order: 7 }] }
           : x)),
@@ -197,7 +197,7 @@ describe("updateChapter", () => {
     expect(chapterById(c.id)?.scenes[0].content).toBe("rascunho");
   });
   it("ignores an unknown id", () => {
-    const before = useScriptorium.getState().manuscripts.slice();
+    const before = useWriteme.getState().manuscripts.slice();
     act(() => { store().updateChapter("ch_missing", { heading: "X" }); });
     expect(store().manuscripts).toEqual(before);
   });
@@ -222,7 +222,7 @@ describe("deleteChapter", () => {
     expect(left.map((x) => x.order)).toEqual([0, 2]);
   });
   it("ignores an unknown id", () => {
-    const before = useScriptorium.getState().manuscripts.slice();
+    const before = useWriteme.getState().manuscripts.slice();
     act(() => { store().deleteChapter("ch_missing"); });
     expect(store().manuscripts).toEqual(before);
   });
@@ -270,7 +270,7 @@ describe("updateScene", () => {
     expect(s.order).toBe(0);
   });
   it("ignores an unknown scene id", () => {
-    const before = useScriptorium.getState().manuscripts.slice();
+    const before = useWriteme.getState().manuscripts.slice();
     act(() => { store().updateScene("sc_missing", { content: "X" }); });
     expect(store().manuscripts).toEqual(before);
   });
@@ -544,7 +544,7 @@ describe("replaceChapterBody (docx import)", () => {
     expect(scenes[0].id).toMatch(/^sc_/);
   });
   it("ignores an unknown chapter id", () => {
-    const before = useScriptorium.getState().manuscripts.slice();
+    const before = useWriteme.getState().manuscripts.slice();
     act(() => { store().replaceChapterBody("ch_missing", "<p>x</p>"); });
     expect(store().manuscripts).toEqual(before);
   });
@@ -561,7 +561,7 @@ describe("removePart", () => {
       s.setChapterPart(ch.id, part.id);
       s.removePart(part.id);
     });
-    const after = useScriptorium.getState().manuscripts.find((x) => x.id === m.id)!;
+    const after = useWriteme.getState().manuscripts.find((x) => x.id === m.id)!;
     expect(after.parts?.some((p) => p.id === part.id)).toBe(false);
     expect(after.chapters.find((c) => c.id === ch.id)?.partId).toBeUndefined();
   });
@@ -576,7 +576,7 @@ describe("removePart", () => {
     expect(left.map((p) => p.order)).toEqual([1, 3]);
   });
   it("ignores an unknown id", () => {
-    const before = useScriptorium.getState().manuscripts.slice();
+    const before = useWriteme.getState().manuscripts.slice();
     act(() => { store().removePart("pt_missing"); });
     expect(store().manuscripts).toEqual(before);
   });
@@ -608,7 +608,7 @@ describe("setChapterPart", () => {
     expect(chaptersOf(m.id).find((c) => c.id === ch.id)?.partId).toBeUndefined();
   });
   it("ignores an unknown chapter id", () => {
-    const before = useScriptorium.getState().manuscripts.slice();
+    const before = useWriteme.getState().manuscripts.slice();
     act(() => { store().setChapterPart("ch_missing", "pt_any"); });
     expect(store().manuscripts).toEqual(before);
   });
@@ -637,7 +637,7 @@ describe("schema integrity", () => {
       s.moveChapterTo(c1!.id, undefined, 1);
       s.deleteManuscript(m.id);
     });
-    expect(validateProjectData(useScriptorium.getState())).toBe(true);
+    expect(validateProjectData(useWriteme.getState())).toBe(true);
   });
   it("exported data validates after operations", () => {
     const m = makeManuscript("Livro");

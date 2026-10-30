@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { TLNotepad } from "./TLNotepad";
 import { LinkPicker } from "../atlas/panels/LinkPicker";
 import { EntryPreview, entryBlurb } from "../entries/EntryPreview";
@@ -101,10 +101,10 @@ export const BEAD_PRESET_COLORS = [
 
 export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
   const { t } = useTranslation();
-  const timeline = useScriptorium((s) => (s.timelines ?? []).find((t) => t.id === timelineId));
-  const pushToast = useScriptorium((s) => s.pushToast);
-  const pushTLHistory = useScriptorium((s) => s.pushTLHistory);
-  const flags = useScriptorium(useShallow((s) => {
+  const timeline = useWriteme((s) => (s.timelines ?? []).find((t) => t.id === timelineId));
+  const pushToast = useWriteme((s) => s.pushToast);
+  const pushTLHistory = useWriteme((s) => s.pushTLHistory);
+  const flags = useWriteme(useShallow((s) => {
     const h = s.histories[`tl_${timelineId}`];
     return { canUndo: !!h?.undo.length, canRedo: !!h?.redo.length };
   }));
@@ -124,7 +124,7 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
 
   // Coalesced drag: at most one store write per frame; pointerup flushes.
   const moveBeadRaf = useRafCallback((id: string, x: number, y: number) => {
-    useScriptorium.getState().moveBead(id, x, y);
+    useWriteme.getState().moveBead(id, x, y);
   });
 
   useEffect(() => {
@@ -257,11 +257,11 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
           className={BOARD_NAME_INPUT}
           aria-label={t("timeline.page.name")}
           value={timeline.name}
-          onChange={(e) => useScriptorium.getState().renameTimeline(timelineId, e.target.value)}
+          onChange={(e) => useWriteme.getState().renameTimeline(timelineId, e.target.value)}
         />
         <div className={BOARD_ACTIONS}>
-          <button type="button" aria-label={t("timeline.page.undo")} className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoTL(timelineId)}>↶</button>
-          <button type="button" aria-label={t("timeline.page.redo")} className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoTL(timelineId)}>↷</button>
+          <button type="button" aria-label={t("timeline.page.undo")} className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useWriteme.getState().undoTL(timelineId)}>↶</button>
+          <button type="button" aria-label={t("timeline.page.redo")} className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useWriteme.getState().redoTL(timelineId)}>↷</button>
           <button type="button" aria-label={t("timeline.page.zoomOut")} className={BOARD_ACTION_BTN} onClick={() => { view.current = zoomAt({ ...view.current }, 1 / 1.25, elWidth() / 2, elHeight() / 2); markDirty.flush(); }}>−</button>
           <span className="text-slate text-xs font-mono self-center" data-testid="tlc-zoom">{Math.round(view.current.s * 100)}%</span>
           <button type="button" aria-label={t("timeline.page.zoomIn")} className={BOARD_ACTION_BTN} onClick={() => { view.current = zoomAt({ ...view.current }, 1.25, elWidth() / 2, elHeight() / 2); markDirty.flush(); }}>+</button>
@@ -269,12 +269,12 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
           <button type="button" className={BOARD_ACTION_BTN} onClick={() => {
             pushTLHistory(timelineId);
             const x = (elWidth() / 2 - view.current.panX) / view.current.s;
-            const created = useScriptorium.getState().addBead(timelineId, { x, y: -60 });
+            const created = useWriteme.getState().addBead(timelineId, { x, y: -60 });
             if (created) { setSelectedId(created.id); markDirty.flush(); }
           }}>{t("timeline.page.addEvent")}</button>
           <button type="button" className={BOARD_ACTION_BTN} onClick={() => {
             const x = (elWidth() / 2 - view.current.panX) / view.current.s;
-            const created = useScriptorium.getState().addEra(timelineId, x);
+            const created = useWriteme.getState().addEra(timelineId, x);
             if (created) { setSelectedId(created.id); markDirty.flush(); }
             else pushToast("error", t("timeline.panel.eraTooClose"));
           }}>{t("timeline.page.addEra")}</button>
@@ -305,7 +305,7 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
             }
             const g = eraDrag.current;
             if (g) {
-              useScriptorium.getState().moveEraBoundary(g.id, g.startX + (e.clientX - g.sx) / view.current.s);
+              useWriteme.getState().moveEraBoundary(g.id, g.startX + (e.clientX - g.sx) / view.current.s);
               markDirty();
               return;
             }
@@ -342,7 +342,7 @@ export function TimelineCanvasPage({ timelineId }: { timelineId: string }) {
           {timeline.beads.filter((b) => !b.origin).length === 0 ? (
             <div className="board-empty-hint absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-slate">{t("timeline.page.emptyHint")}</div>
           ) : null}
-          {notesOpen ? <TLNotepad notes={timeline.notes} onNotes={(v) => useScriptorium.getState().setTimelineNotes(timelineId, v)} onClose={() => setNotesOpen(false)} /> : null}
+          {notesOpen ? <TLNotepad notes={timeline.notes} onNotes={(v) => useWriteme.getState().setTimelineNotes(timelineId, v)} onClose={() => setNotesOpen(false)} /> : null}
           {/* invisible selection guard for tests */}
           <div className="tl-selected-sentinel" data-selected-bead={selectedId ?? ""} style={{ display: "none" }} />
         </div>
@@ -359,7 +359,7 @@ function TomeEntryLink({ timeline, bead, onNavigate }: {
   onNavigate(entryId: string): void;
 }) {
   const { t } = useTranslation();
-  const entries = useScriptorium(useShallow((s) => s.entries.filter((e) => e.projectId === timeline.projectId)));
+  const entries = useWriteme(useShallow((s) => s.entries.filter((e) => e.projectId === timeline.projectId)));
   const entry = entries.find((e) => e.id === bead.entryId);
   if (entries.length === 0) return null;
   return (
@@ -380,8 +380,8 @@ function TomeEntryLink({ timeline, bead, onNavigate }: {
       <LinkPicker
         entries={entries}
         currentEntryId={bead.entryId ?? null}
-        onPick={(id) => useScriptorium.getState().updateBead(bead.id, { entryId: id })}
-        onClear={() => useScriptorium.getState().updateBead(bead.id, { entryId: undefined })}
+        onPick={(id) => useWriteme.getState().updateBead(bead.id, { entryId: id })}
+        onClear={() => useWriteme.getState().updateBead(bead.id, { entryId: undefined })}
       />
     </div>
   );
@@ -390,7 +390,7 @@ function TomeEntryLink({ timeline, bead, onNavigate }: {
 function CalendarEventLink({ projectId, bead }: { projectId: string; bead: TimelineBead }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const calendars = useScriptorium(useShallow((s) => (s.calendars ?? []).filter((c) => c.projectId === projectId)));
+  const calendars = useWriteme(useShallow((s) => (s.calendars ?? []).filter((c) => c.projectId === projectId)));
   const options = useMemo(() => {
     const out: { ref: CalendarEventRef; label: string }[] = [];
     for (const cal of calendars) {
@@ -416,8 +416,8 @@ function CalendarEventLink({ projectId, bead }: { projectId: string; bead: Timel
           value={ref ? `${ref.calendarId}|${ref.dayKey}|${ref.eventId}` : ""}
           onChange={(e) => {
             const [calendarId, dayKey, eventId] = e.target.value.split("|");
-            if (!calendarId) { useScriptorium.getState().updateBead(bead.id, { calendarEvent: undefined }); return; }
-            useScriptorium.getState().updateBead(bead.id, { calendarEvent: { calendarId, dayKey, eventId } });
+            if (!calendarId) { useWriteme.getState().updateBead(bead.id, { calendarEvent: undefined }); return; }
+            useWriteme.getState().updateBead(bead.id, { calendarEvent: { calendarId, dayKey, eventId } });
           }}
         >
           <option value="">{t("timeline.panel.pickCalendarEvent")}</option>
@@ -443,7 +443,7 @@ function EraPanel({ timeline, span }: {
   span: EraSpan;
 }) {
   const { t } = useTranslation();
-  const store = useScriptorium.getState;
+  const store = useWriteme.getState;
   const events = timeline.beads.filter((b) => !b.origin);
   const bound = span.era.boundaryBeadId ? timeline.beads.find((b) => b.id === span.era.boundaryBeadId) : null;
   return (
@@ -485,8 +485,8 @@ function BeadPanel({ timeline, spans, selectedId, onSelect }: {
   onSelect(id: string | null): void;
 }) {
   const { t } = useTranslation();
-  const store = useScriptorium.getState;
-  const pushToast = useScriptorium((s) => s.pushToast);
+  const store = useWriteme.getState;
+  const pushToast = useWriteme((s) => s.pushToast);
   const navigate = useNavigate();
   const bead = timeline.beads.find((b) => b.id === selectedId);
   const span = spans.find((s) => s.era.id === selectedId);

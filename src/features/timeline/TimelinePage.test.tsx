@@ -2,12 +2,12 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it } from "vitest";
 import { AppRouter } from "../../app/router";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import type { EntryCategory } from "../../domain/types";
 
 type EntrySpec = { title: string; category: EntryCategory; body?: string; date?: string };
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 
 function seedProject(specs: EntrySpec[]): string {
   const project = store().addProject("Vellmora");
@@ -45,7 +45,7 @@ function cardTitles(): string[] {
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 
 describe("TimelinePage", () => {

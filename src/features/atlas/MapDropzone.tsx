@@ -2,7 +2,7 @@ import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { i18n } from "../../i18n";
 import { fileToDataUrl } from "../../data/image";
-import { useScriptorium, type ToastKind } from "../../data/store";
+import { useWriteme, type ToastKind } from "../../data/store";
 
 export type PushToast = (kind: ToastKind, message: string) => void;
 
@@ -10,7 +10,7 @@ export type PushToast = (kind: ToastKind, message: string) => void;
 export async function loadMapIntoAtlas(atlasId: string, file: File, pushToast: PushToast): Promise<void> {
   try {
     const { dataUrl } = await fileToDataUrl(file);
-    const ok = useScriptorium.getState().putMapImage(atlasId, dataUrl);
+    const ok = useWriteme.getState().putMapImage(atlasId, dataUrl);
     if (ok) pushToast("success", i18n.t("atlas.dropzone.loaded"));
     else pushToast("error", i18n.t("atlas.dropzone.failed"));
   } catch {
@@ -22,7 +22,7 @@ export async function loadMapIntoAtlas(atlasId: string, file: File, pushToast: P
  *  input → fileToDataUrl → putMapImage. */
 export function MapDropzone({ atlasId }: { atlasId: string }) {
   const { t } = useTranslation();
-  const pushToast = useScriptorium((s) => s.pushToast);
+  const pushToast = useWriteme((s) => s.pushToast);
   const inputRef = useRef<HTMLInputElement>(null);
   const busyRef = useRef(false);
   const [over, setOver] = useState(false);

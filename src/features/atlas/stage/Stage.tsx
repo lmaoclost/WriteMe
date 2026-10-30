@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import type { Atlas, Pt } from "../../../domain/types";
-import { useScriptorium } from "../../../data/store";
+import { useWriteme } from "../../../data/store";
 import { MOVE_THRESHOLD_PX, useStageTransform, type StageTransform, type TransformApi } from "./useStageTransform";
 
 export interface StageProps {
@@ -27,7 +27,7 @@ export function Stage({
   overlayChildren,
   children,
 }: StageProps) {
-  const mapImage = useScriptorium((s) => (atlas.mapImageKey ? s.images[atlas.mapImageKey] : undefined));
+  const mapImage = useWriteme((s) => (atlas.mapImageKey ? s.images[atlas.mapImageKey] : undefined));
   const stageRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const transform = useStageTransform(stageRef, imgRef);

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { FACTION_CONNECTION_STYLES, FACTION_PRESET_COLORS } from "./connectionStyles";
 import { Field } from "../../ui/Field";
@@ -39,13 +39,13 @@ export function FactionForm({ web, faction, onSelect }: {
   faction: Faction;
   onSelect(id: string | null): void;
 }) {
-  const store = useScriptorium.getState;
+  const store = useWriteme.getState;
   const { t } = useTranslation();
-  const pushToast = useScriptorium((s) => s.pushToast);
+  const pushToast = useWriteme((s) => s.pushToast);
   const [armDelete, setArmDelete] = useState(false);
   const update = (patch: Partial<Faction>) => store().updateFaction(faction.id, patch);
   const nameDraft = useNameDraft(faction, update);
-  const atlases = useScriptorium(
+  const atlases = useWriteme(
     useShallow((s) => s.atlases.filter((a) => a.projectId === web.projectId)),
   );
   const regionOptions = useMemo(
@@ -169,7 +169,7 @@ function ConnectionForm({ connectionId, web, onSelect }: {
   web: FactionWeb;
   onSelect(id: string | null): void;
 }) {
-  const store = useScriptorium.getState;
+  const store = useWriteme.getState;
   const { t } = useTranslation();
   const conn = web.connections.find((c) => c.id === connectionId);
   useEffect(() => {

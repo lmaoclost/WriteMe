@@ -1,6 +1,6 @@
 import { useEffect, useState, Suspense } from "react";
 import { Navigate, Route, Routes, useParams, useOutletContext } from "react-router-dom";
-import { useScriptorium } from "../data/store";
+import { useWriteme } from "../data/store";
 import { Toasts } from "../ui/Toasts";
 import { LibraryPage } from "../features/projects/LibraryPage";
 import { CodexPage } from "../features/entries/CodexPage";
@@ -132,11 +132,11 @@ export function AppRouter() {
   // async after that — blocking the first render until both complete keeps
   // WorkspaceLayout from falsely redirecting to "/" on plen reloads (URL paste /
   // F5 on /p/:id/...) and keeps cover/map/avatar surfaces free of placeholders.
-  const [hydrated, setHydrated] = useState(() => useScriptorium.persist.hasHydrated());
-  const imagesReady = useScriptorium((s) => s.imagesReady);
+  const [hydrated, setHydrated] = useState(() => useWriteme.persist.hasHydrated());
+  const imagesReady = useWriteme((s) => s.imagesReady);
   useEffect(() => {
     if (hydrated) return;
-    return useScriptorium.persist.onFinishHydration(() => setHydrated(true));
+    return useWriteme.persist.onFinishHydration(() => setHydrated(true));
   }, [hydrated]);
 
   if (!hydrated || !imagesReady) return <div className="min-h-screen bg-background" data-testid="hydration-splash" />;

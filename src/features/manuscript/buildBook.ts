@@ -1,7 +1,7 @@
 import type { Chapter, Manuscript, Part } from "../../domain/types";
 import { renderMarkdown } from "../entries/markdown";
 import { defaultBindery } from "../../data/schema";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { BINDERY_FONTS, trimToPage } from "./bindery";
 import { i18n, normalizeLanguage } from "../../i18n";
 
@@ -246,7 +246,7 @@ function backMatterFor(manuscript: Manuscript, config: NonNullable<Manuscript["b
 /** Glossary = entries with a summary (term + short definition), assembled
  *  from the project's códex — the Bindery feature line. */
 export function glossaryFor(manuscript: Manuscript): string {
-  const state = useScriptorium.getState();
+  const state = useWriteme.getState();
   const projectId = manuscript.projectId;
   const entries = state.entries
     .filter((e) => e.projectId === projectId && (e.summary ?? "").trim())

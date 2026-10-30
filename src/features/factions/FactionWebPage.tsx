@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { FACTION_CONNECTION_STYLES } from "./connectionStyles";
 import { FactionPanel } from "./FactionPanel";
 import { WebNotepad } from "./WebNotepad";
@@ -85,13 +85,13 @@ const FNodesLayer = memo(function FNodesLayer({ factions, selectedId, handleNode
 
 export function FactionWebPage({ webId }: { webId: string }) {
   const { t } = useTranslation();
-  const web = useScriptorium((s) => (s.factionWebs ?? []).find((w) => w.id === webId));
-  const pushToast = useScriptorium((s) => s.pushToast);
-  const pushFWHistory = useScriptorium((s) => s.pushFWHistory);
-  const addFaction = useScriptorium((s) => s.addFaction);
-  const addConnection = useScriptorium((s) => s.addConnection);
-  const setConnectionType = useScriptorium((s) => s.setConnectionType);
-  const flags = useScriptorium(useShallow((s) => {
+  const web = useWriteme((s) => (s.factionWebs ?? []).find((w) => w.id === webId));
+  const pushToast = useWriteme((s) => s.pushToast);
+  const pushFWHistory = useWriteme((s) => s.pushFWHistory);
+  const addFaction = useWriteme((s) => s.addFaction);
+  const addConnection = useWriteme((s) => s.addConnection);
+  const setConnectionType = useWriteme((s) => s.setConnectionType);
+  const flags = useWriteme(useShallow((s) => {
     const h = s.histories[`fw_${webId}`];
     return { canUndo: !!h?.undo.length, canRedo: !!h?.redo.length };
   }));
@@ -110,7 +110,7 @@ export function FactionWebPage({ webId }: { webId: string }) {
 
   // Coalesced drag: at most one moveFaction per frame; pointerup flushes.
   const moveFactionRaf = useRafCallback((id: string, x: number, y: number) => {
-    useScriptorium.getState().moveFaction(id, x, y);
+    useWriteme.getState().moveFaction(id, x, y);
   });
 
   useEffect(() => {
@@ -271,11 +271,11 @@ export function FactionWebPage({ webId }: { webId: string }) {
           className={BOARD_NAME_INPUT}
           aria-label={t("factions.web.name")}
           value={web.name}
-          onChange={(e) => useScriptorium.getState().renameFactionWeb(webId, e.target.value)}
+          onChange={(e) => useWriteme.getState().renameFactionWeb(webId, e.target.value)}
         />
         <div className={BOARD_ACTIONS}>
-          <button type="button" aria-label={t("factions.web.undo")} className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoFW(webId)}>↶</button>
-          <button type="button" aria-label={t("factions.web.redo")} className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoFW(webId)}>↷</button>
+          <button type="button" aria-label={t("factions.web.undo")} className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useWriteme.getState().undoFW(webId)}>↶</button>
+          <button type="button" aria-label={t("factions.web.redo")} className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useWriteme.getState().redoFW(webId)}>↷</button>
           <button type="button" aria-label={t("factions.web.zoomOut")} className={BOARD_ACTION_BTN} onClick={() => { scheduleScale((v) => zoomAt({ ...v }, 1 / 1.25, elWidth(), elHeight())); scheduleScale.flush(); }}>−</button>
           <span className="text-slate text-xs font-mono self-center" data-testid="fw-zoom">{Math.round(scale.s * 100)}%</span>
           <button type="button" aria-label={t("factions.web.zoomIn")} className={BOARD_ACTION_BTN} onClick={() => { scheduleScale((v) => zoomAt({ ...v }, 1.25, elWidth(), elHeight())); scheduleScale.flush(); }}>+</button>
@@ -340,7 +340,7 @@ export function FactionWebPage({ webId }: { webId: string }) {
           selectedConnectionId={null}
           onSelect={setSelectedId}
         />
-        {notesOpen ? <WebNotepad notes={web.notes} onNotes={(v) => useScriptorium.getState().setWebNotes(webId, v)} onClose={() => setNotesOpen(false)} /> : null}
+        {notesOpen ? <WebNotepad notes={web.notes} onNotes={(v) => useWriteme.getState().setWebNotes(webId, v)} onClose={() => setNotesOpen(false)} /> : null}
         {typePicker ? (
           <div className="conn-type-picker absolute z-45 bg-night-2 border border-line rounded-lg p-1.5 grid gap-1" style={{ left: typePicker.left, top: typePicker.top }} data-testid="conn-type-picker">
             {Object.entries(FACTION_CONNECTION_STYLES).map(([type, style]) => (
@@ -354,7 +354,7 @@ export function FactionWebPage({ webId }: { webId: string }) {
                 {t(style.labelKey)}
               </button>
             ))}
-            <button type="button" className="conn-type-option bg-transparent border border-line rounded-sm px-2.5 py-1 text-[13px] text-left hover:brightness-110" onClick={() => { useScriptorium.getState().removeConnection(typePicker.connId); setTypePicker(null); }}>{t("factions.web.removeConnection")}</button>
+            <button type="button" className="conn-type-option bg-transparent border border-line rounded-sm px-2.5 py-1 text-[13px] text-left hover:brightness-110" onClick={() => { useWriteme.getState().removeConnection(typePicker.connId); setTypePicker(null); }}>{t("factions.web.removeConnection")}</button>
           </div>
         ) : null}
       </div>

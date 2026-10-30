@@ -3,15 +3,15 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { firePointer } from "../../test/pointer";
 import { selectOption } from "../../test/selectHelper";
 import { MemoryRouter } from "react-router-dom";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { FactionWebPage } from "./FactionWebPage";
 import { FactionWebServicePage } from "./FactionPageIndex";
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 afterEach(() => vi.restoreAllMocks());
 

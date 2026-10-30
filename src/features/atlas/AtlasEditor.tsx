@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import type { Id, Pt, Region } from "../../domain/types";
 import { pointInPolygon, polygonArea } from "../../domain/geometry";
-import { selectHistoryFlags, useScriptorium } from "../../data/store";
+import { selectHistoryFlags, useWriteme } from "../../data/store";
 import { Stage } from "./stage/Stage";
 import type { TransformApi } from "./stage/useStageTransform";
 import { RegionLayer } from "./stage/RegionLayer";
@@ -98,13 +98,13 @@ function RegionChooser({ options, position, onPick, onClear, onClose }: {
 
 export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
   const { t } = useTranslation();
-  const atlas = useScriptorium((s) => s.atlases.find((a) => a.id === atlasId));
+  const atlas = useWriteme((s) => s.atlases.find((a) => a.id === atlasId));
   const navigate = useNavigate();
   // narrowed: re-render only when this project's rows change — EntryImagePicker
   // subscribes to the images map itself, only while it is open
-  const projectEntries = useScriptorium(useShallow((s) => s.entries.filter((e) => e.projectId === atlas?.projectId)));
-  const flags = useScriptorium(useShallow(selectHistoryFlags(atlasId)));
-  const pushToast = useScriptorium((s) => s.pushToast);
+  const projectEntries = useWriteme(useShallow((s) => s.entries.filter((e) => e.projectId === atlas?.projectId)));
+  const flags = useWriteme(useShallow(selectHistoryFlags(atlasId)));
+  const pushToast = useWriteme((s) => s.pushToast);
   const [tool, setTool] = useState<AtlasTool>("select");
   const [mode, setMode] = useState<DrawMode>("none");
   const [selectedRegionId, setSelectedRegionId] = useState<Id | null>(null);
@@ -150,11 +150,11 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
   const commitName = useCallback(() => {
     const name = nameDraft.trim();
     if (!name || name === atlas?.name) return;
-    useScriptorium.getState().renameAtlas(atlasId, name);
+    useWriteme.getState().renameAtlas(atlasId, name);
   }, [atlasId, atlas?.name, nameDraft]);
 
-  const runUndo = useCallback(() => useScriptorium.getState().undo(atlasId), [atlasId]);
-  const runRedo = useCallback(() => useScriptorium.getState().redo(atlasId), [atlasId]);
+  const runUndo = useCallback(() => useWriteme.getState().undo(atlasId), [atlasId]);
+  const runRedo = useCallback(() => useWriteme.getState().redo(atlasId), [atlasId]);
 
   const confirmPreview = useCallback(() => {
     const region = confirmCarve();
@@ -185,7 +185,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
       }
       if (isEditableTarget(e.target)) return;
       if (e.key === "Delete" && selectedPinRef.current) {
-        const s = useScriptorium.getState();
+        const s = useWriteme.getState();
         if (s.atlases.some((a) => a.id === atlasId && a.pins.some((p) => p.id === selectedPinRef.current))) {
           s.deletePin(selectedPinRef.current);
           setSelectedPinId(null);
@@ -211,7 +211,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
   useEffect(() => {
     if (!atlas && !deletedRef.current) {
       deletedRef.current = true;
-      useScriptorium.getState().pushToast("error", t("atlas.editor.notFound"));
+      useWriteme.getState().pushToast("error", t("atlas.editor.notFound"));
     }
   }, [atlas, t]);
 
@@ -219,7 +219,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
   // the selected id vanishes.
   useEffect(() => {
     if (!selectedPinId && !selectedRegionId) return;
-    const s = useScriptorium.getState();
+    const s = useWriteme.getState();
     const current = s.atlases.find((a) => a.id === atlasId);
     if (!current) return;
     if (selectedPinId && !current.pins.some((p) => p.id === selectedPinId)) setSelectedPinId(null);
@@ -249,7 +249,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
 
   const handleStageClick = (pt: Pt, clientX: number, clientY: number) => {
     if (tool === "pin") {
-      const pin = useScriptorium.getState().addPin(atlasId, { x: clamp01(pt.x), y: clamp01(pt.y) });
+      const pin = useWriteme.getState().addPin(atlasId, { x: clamp01(pt.x), y: clamp01(pt.y) });
       if (pin) selectPin(pin.id);
       return;
     }
@@ -281,7 +281,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
       return;
     }
     deletedRef.current = true;
-    useScriptorium.getState().deleteAtlas(atlasId);
+    useWriteme.getState().deleteAtlas(atlasId);
     pushToast("success", t("atlas.editor.deleted"));
   };
 
@@ -505,7 +505,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
                 if (selectedPinRegion) selectRegion(selectedPinRegion.id);
               }}
               onDelete={(pinId) => {
-                useScriptorium.getState().deletePin(pinId);
+                useWriteme.getState().deletePin(pinId);
                 selectPin(null);
               }}
             />
@@ -515,7 +515,7 @@ export function AtlasEditor({ atlasId, projectId }: AtlasEditorProps) {
               region={selectedRegion}
               entries={projectEntries}
               onDelete={(regionId) => {
-                useScriptorium.getState().deleteRegion(regionId);
+                useWriteme.getState().deleteRegion(regionId);
                 selectRegion(null);
               }}
             />

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { useScriptorium } from "../data/store";
+import { useWriteme } from "../data/store";
 import { GROUPS, SECTIONS } from "../app/sections";
 
 export const OPEN_PALETTE_EVENT = "writeme:open-palette";
@@ -14,8 +14,8 @@ export function CommandPalette() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const projectId = useMemo(() => pathname.match(/^\/p\/([^/]+)/)?.[1], [pathname]);
-  const open = useScriptorium((s) => s.paletteOpen);
-  const setOpen = useScriptorium((s) => s.setPaletteOpen);
+  const open = useWriteme((s) => s.paletteOpen);
+  const setOpen = useWriteme((s) => s.setPaletteOpen);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -24,7 +24,7 @@ export function CommandPalette() {
     const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setOpen(!useScriptorium.getState().paletteOpen);
+        setOpen(!useWriteme.getState().paletteOpen);
       }
     };
     const onOpen = () => setOpen(true);
@@ -36,10 +36,10 @@ export function CommandPalette() {
     };
   }, [setOpen]);
 
-  const currentProject = useScriptorium((s) => (projectId ? s.projects.find((p) => p.id === projectId) : undefined));
-  const projects = useScriptorium((s) => s.projects);
-  const allEntries = useScriptorium((s) => (currentProject ? s.entries : undefined));
-  const manuscripts = useScriptorium((s) => (currentProject ? s.manuscripts : undefined));
+  const currentProject = useWriteme((s) => (projectId ? s.projects.find((p) => p.id === projectId) : undefined));
+  const projects = useWriteme((s) => s.projects);
+  const allEntries = useWriteme((s) => (currentProject ? s.entries : undefined));
+  const manuscripts = useWriteme((s) => (currentProject ? s.manuscripts : undefined));
 
   const { entries, chapters } = useMemo(() => {
     const e = allEntries?.filter((x) => x.projectId === projectId) ?? [];

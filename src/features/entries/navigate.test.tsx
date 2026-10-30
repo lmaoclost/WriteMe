@@ -5,10 +5,10 @@ import type { ReactNode } from "react";
 import { CodexPage } from "./CodexPage";
 import { PinPanel } from "../atlas/panels/PinPanel";
 import { RegionPanel } from "../atlas/panels/RegionPanel";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import type { Pin, Region, WorldEntry } from "../../domain/types";
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 
 interface Fixture {
   projectId: string;
@@ -56,7 +56,7 @@ function routesFor(f: Fixture, panel: ReactNode) {
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 
 describe("Atlas → codex navigation", () => {

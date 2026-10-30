@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { EntryList } from "./EntryList";
 import { EntryView } from "./EntryView";
 import { Modal } from "../../ui/Modal";
@@ -16,7 +16,7 @@ interface RouteState {
 
 export function CodexPage({ projectId }: { projectId: string }) {
   const { t } = useTranslation();
-  const entries = useScriptorium(
+  const entries = useWriteme(
     useShallow((s) => s.entries.filter((e) => e.projectId === projectId)),
   );
   const location = useLocation();
@@ -26,7 +26,7 @@ export function CodexPage({ projectId }: { projectId: string }) {
   const urlEntry = searchParams.get("e");
   const [selectedId, setSelectedId] = useState<string | null>(() => {
     const wanted = searchParams.get("e");
-    if (wanted && useScriptorium.getState().entries.some((e) => e.id === wanted)) return wanted;
+    if (wanted && useWriteme.getState().entries.some((e) => e.id === wanted)) return wanted;
     return null;
   });
   const [pendingFocus, setPendingFocus] = useState<string | null>(null);
@@ -76,7 +76,7 @@ export function CodexPage({ projectId }: { projectId: string }) {
   }, [pendingFocus, selectedId]);
 
   const create = () => {
-    const entry = useScriptorium.getState().addEntry(projectId);
+    const entry = useWriteme.getState().addEntry(projectId);
     setSelectedId(entry.id);
     setPendingFocus(entry.id);
   };
@@ -85,14 +85,14 @@ export function CodexPage({ projectId }: { projectId: string }) {
   const [kindName, setKindName] = useState("");
   const [kindEmoji, setKindEmoji] = useState("📜");
   const [armKindDelete, setArmKindDelete] = useState<string | null>(null);
-  const customKinds = useScriptorium(
+  const customKinds = useWriteme(
     useShallow((s) => s.projects.find((p) => p.id === projectId)?.customCategories ?? []),
   );
   const createKind = () => {
     const label = kindName.trim();
     if (!label) return;
     const key = label.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || `kind-${Date.now()}`;
-    const s = useScriptorium.getState();
+    const s = useWriteme.getState();
     const project = s.projects.find((p) => p.id === projectId);
     if (!project) return;
     const reserved = CODEX_CATEGORIES.some((c) => c.key === key) || key in CATEGORY_CANONICAL;
@@ -110,7 +110,7 @@ export function CodexPage({ projectId }: { projectId: string }) {
   };
 
   const deleteKind = (key: string, label: string) => {
-    const s = useScriptorium.getState();
+    const s = useWriteme.getState();
     const project = s.projects.find((p) => p.id === projectId);
     if (!project) return;
     const affected = s.entries.filter((e) => e.projectId === projectId && e.category === key);
@@ -123,10 +123,10 @@ export function CodexPage({ projectId }: { projectId: string }) {
   };
 
   const onEntryDeleted = (id: string) => {
-    const remaining = useScriptorium.getState().entries
+    const remaining = useWriteme.getState().entries
       .filter((e) => e.projectId === projectId && e.id !== id);
-    useScriptorium.getState().deleteEntry(id);
-    useScriptorium.getState().pushToast("success", t("entries.codex.entryDeleted"));
+    useWriteme.getState().deleteEntry(id);
+    useWriteme.getState().pushToast("success", t("entries.codex.entryDeleted"));
     setSelectedId(remaining[0]?.id ?? null);
   };
 

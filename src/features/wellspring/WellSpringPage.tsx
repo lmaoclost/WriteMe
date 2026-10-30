@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Field } from "../../ui/Field";
 import { Button } from "../../ui/Button";
 import { BOARD_HEADER, BOARD_NAME_INPUT, BOARD_ACTIONS, BOARD_ACTION_BTN, BOARD_PANEL, BOARD_PANEL_HINT, BOARD_PANEL_HEAD, BOARD_PANEL_HEAD_H2 } from "../../ui/board";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { WellNotepad } from "./WellNotepad";
 import type { WellSpring, WellKind } from "../../domain/types";
 import { useBoardNotesHotkey } from "../../ui/boardNotes";
@@ -22,11 +22,11 @@ export const WELL_KIND_META = {
 
 export function WellSpringPage({ wellId }: { wellId: string }) {
   const { t } = useTranslation();
-  const well = useScriptorium((s) => (s.wellsprings ?? []).find((w) => w.id === wellId));
-  const pushToast = useScriptorium((s) => s.pushToast);
-  const pushWSHistory = useScriptorium((s) => s.pushWSHistory);
-  const addWellNode = useScriptorium((s) => s.addWellNode);
-  const flags = useScriptorium(useShallow((s) => {
+  const well = useWriteme((s) => (s.wellsprings ?? []).find((w) => w.id === wellId));
+  const pushToast = useWriteme((s) => s.pushToast);
+  const pushWSHistory = useWriteme((s) => s.pushWSHistory);
+  const addWellNode = useWriteme((s) => s.addWellNode);
+  const flags = useWriteme(useShallow((s) => {
     const h = s.histories[`ws_${wellId}`];
     return { canUndo: !!h?.undo.length, canRedo: !!h?.redo.length };
   }));
@@ -44,7 +44,7 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
 
   // Coalesced drag: one moveWellNode per frame; pointerup flushes.
   const moveNodeRaf = useRafCallback((id: string, x: number, y: number) => {
-    useScriptorium.getState().moveWellNode(id, x, y);
+    useWriteme.getState().moveWellNode(id, x, y);
   });
 
   // Wheel zoom on a native non-passive listener; chained functional updates
@@ -83,7 +83,7 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
           className={BOARD_NAME_INPUT}
           aria-label={t("wellspring.page.name")}
           value={well.name}
-          onChange={(e) => useScriptorium.getState().renameWellSpring(wellId, e.target.value)}
+          onChange={(e) => useWriteme.getState().renameWellSpring(wellId, e.target.value)}
         />
         <div className="flex gap-1.5">
           {(Object.keys(WELL_KIND_META) as WellKind[]).map((k) => (
@@ -100,8 +100,8 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
           ))}
         </div>
         <div className={BOARD_ACTIONS}>
-          <button type="button" aria-label={t("wellspring.page.undo")} className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoWS(wellId)}>↶</button>
-          <button type="button" aria-label={t("wellspring.page.redo")} className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoWS(wellId)}>↷</button>
+          <button type="button" aria-label={t("wellspring.page.undo")} className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useWriteme.getState().undoWS(wellId)}>↶</button>
+          <button type="button" aria-label={t("wellspring.page.redo")} className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useWriteme.getState().redoWS(wellId)}>↷</button>
           <button type="button" aria-pressed={notesOpen} className={BOARD_ACTION_BTN} onClick={() => setNotesOpen((v) => !v)}>{t("wellspring.page.notes")}</button>
           <FocusToggle />
         </div>
@@ -172,7 +172,7 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
                       x1={a.x} y1={a.y} x2={c.x} y2={c.y}
                       className="plot-wire-hit [stroke:transparent] [stroke-width:12] cursor-pointer hover:[stroke:rgb(244_67_54/0.35)]"
                       onPointerDown={(e) => e.stopPropagation()}
-                      onClick={() => useScriptorium.getState().removeWellBorder(b.id)}
+                      onClick={() => useWriteme.getState().removeWellBorder(b.id)}
                     />
                   </g>
                 );
@@ -222,7 +222,7 @@ export function WellSpringPage({ wellId }: { wellId: string }) {
                 : t("wellspring.page.emptyHint")}
             </div>
           ) : null}
-          {notesOpen ? <WellNotepad notes={well.notes} onNotes={(v) => useScriptorium.getState().setWellNotes(wellId, v)} onClose={() => setNotesOpen(false)} /> : null}
+          {notesOpen ? <WellNotepad notes={well.notes} onNotes={(v) => useWriteme.getState().setWellNotes(wellId, v)} onClose={() => setNotesOpen(false)} /> : null}
         </div>
         <WellPanel well={well} selectedId={selectedId} onSelect={setSelectedId} otherNodes={well.nodes} />
       </div>
@@ -237,8 +237,8 @@ function WellPanel({ well, selectedId, onSelect, otherNodes }: {
   otherNodes: WellSpring["nodes"];
 }) {
   const { t } = useTranslation();
-  const store = useScriptorium.getState;
-  const pushToast = useScriptorium((s) => s.pushToast);
+  const store = useWriteme.getState;
+  const pushToast = useWriteme((s) => s.pushToast);
   const node = well.nodes.find((n) => n.id === selectedId);
   const [armDelete, setArmDelete] = useState(false);
   const [fromId, setFromId] = useState("");

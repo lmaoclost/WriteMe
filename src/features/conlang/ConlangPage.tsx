@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { pathFrom, alphabetSheetSvg, type Pt } from "../../domain/conlang";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,9 +14,9 @@ import { downloadBlob, downloadUrl } from "../../data/download";
 
 export function ConlangPage({ conlangId }: { conlangId: string }) {
   const { t } = useTranslation();
-  const conlang = useScriptorium((s) => (s.conlangs ?? []).find((c) => c.id === conlangId));
-  const pushToast = useScriptorium((s) => s.pushToast);
-  const flags = useScriptorium(useShallow((s) => {
+  const conlang = useWriteme((s) => (s.conlangs ?? []).find((c) => c.id === conlangId));
+  const pushToast = useWriteme((s) => s.pushToast);
+  const flags = useWriteme(useShallow((s) => {
     const h = s.histories[`cn_${conlangId}`];
     return { canUndo: !!h?.undo.length, canRedo: !!h?.redo.length };
   }));
@@ -38,11 +38,11 @@ export function ConlangPage({ conlangId }: { conlangId: string }) {
           className={BOARD_NAME_INPUT}
           aria-label={t("conlang.page.name")}
           value={conlang.name}
-          onChange={(e) => useScriptorium.getState().renameConlang(conlangId, e.target.value)}
+          onChange={(e) => useWriteme.getState().renameConlang(conlangId, e.target.value)}
         />
         <div className={BOARD_ACTIONS}>
-          <button type="button" aria-label={t("conlang.page.undo")} className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoCN(conlangId)}>↶</button>
-          <button type="button" aria-label={t("conlang.page.redo")} className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoCN(conlangId)}>↷</button>
+          <button type="button" aria-label={t("conlang.page.undo")} className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useWriteme.getState().undoCN(conlangId)}>↶</button>
+          <button type="button" aria-label={t("conlang.page.redo")} className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useWriteme.getState().redoCN(conlangId)}>↷</button>
           <button type="button" aria-pressed={notesOpen} className={BOARD_ACTION_BTN} onClick={() => setNotesOpen((v) => !v)}>{t("conlang.page.notes")}</button>
         </div>
       </header>
@@ -56,7 +56,7 @@ export function ConlangPage({ conlangId }: { conlangId: string }) {
         ) : (
           <LexiconTab conlang={conlang} />
         )}
-        {notesOpen ? <ConlangNotepad notes={conlang.notes} onNotes={(v) => useScriptorium.getState().setConlangNotes(conlangId, v)} onClose={() => setNotesOpen(false)} /> : null}
+        {notesOpen ? <ConlangNotepad notes={conlang.notes} onNotes={(v) => useWriteme.getState().setConlangNotes(conlangId, v)} onClose={() => setNotesOpen(false)} /> : null}
       </div>
     </div>
   );
@@ -69,12 +69,12 @@ function downloadSheet(svg: string, name: string) {
 }
 
 function AlphabetTab({ conlang, selectedGlyph, onSelect }: {
-  conlang: NonNullable<ReturnType<typeof useScriptorium.getState>["conlangs"]>[number];
+  conlang: NonNullable<ReturnType<typeof useWriteme.getState>["conlangs"]>[number];
   selectedGlyph: string | null;
   onSelect(id: string | null): void;
 }) {
   const { t, i18n } = useTranslation();
-  const store = useScriptorium.getState;
+  const store = useWriteme.getState;
   const gridRef = useRef<HTMLDivElement>(null);
   const nextLetter = () => NEXT_LETTERS.split("").find((l) => !conlang.glyphs.some((g) => g.char === l)) ?? "?" + (conlang.glyphs.length + 1);
 
@@ -131,7 +131,7 @@ function AlphabetTab({ conlang, selectedGlyph, onSelect }: {
 }
 
 function GlyphEditor({ conlang, glyphId, onDone }: {
-  conlang: NonNullable<ReturnType<typeof useScriptorium.getState>["conlangs"]>[number];
+  conlang: NonNullable<ReturnType<typeof useWriteme.getState>["conlangs"]>[number];
   glyphId: string;
   onDone(): void;
 }) {
@@ -158,7 +158,7 @@ function GlyphEditor({ conlang, glyphId, onDone }: {
     const d = pathFrom(drawing.current);
     drawing.current = null;
     setLivePath(null);
-    if (d) useScriptorium.getState().updateGlyph(glyph.id, { svgPath: d });
+    if (d) useWriteme.getState().updateGlyph(glyph.id, { svgPath: d });
   };
   const svgPoint = (e: React.PointerEvent): Pt => {
     const rect = svgRef.current!.getBoundingClientRect();
@@ -172,7 +172,7 @@ function GlyphEditor({ conlang, glyphId, onDone }: {
     <div className="grid gap-2.5 p-4 border border-line rounded-lg mb-5" data-testid="glyph-editor">
       <div className="flex flex-wrap items-center gap-2.5 py-2.5">
         <span className="text-slate">{t("conlang.alphabet.editorTitle", { char: glyph.char })}</span>
-        <Button kind="ghost" onClick={() => useScriptorium.getState().deleteGlyph(glyph.id)} aria-label={t("conlang.alphabet.deleteGlyph")}>{t("conlang.alphabet.deleteGlyph")}</Button>
+        <Button kind="ghost" onClick={() => useWriteme.getState().deleteGlyph(glyph.id)} aria-label={t("conlang.alphabet.deleteGlyph")}>{t("conlang.alphabet.deleteGlyph")}</Button>
         <button type="button" aria-label={t("conlang.alphabet.close")} onClick={onDone} className={BOARD_ACTION_BTN}>✕</button>
       </div>
       <div className="flex items-end gap-3">
@@ -184,7 +184,7 @@ function GlyphEditor({ conlang, glyphId, onDone }: {
             onBlur={(e) => {
               const v = e.target.value.trim().toUpperCase() || glyph.char;
               const dup = conlang.glyphs.some((g) => g.id !== glyph.id && g.char === v);
-              const s = useScriptorium.getState();
+              const s = useWriteme.getState();
               if (dup) { s.pushToast("error", t("conlang.alphabet.duplicate", { char: v })); e.target.value = glyph.char; return; }
               s.updateGlyph(glyph.id, { char: v });
             }}
@@ -206,7 +206,7 @@ function GlyphEditor({ conlang, glyphId, onDone }: {
         {glyph.svgPath ? <path d={glyph.svgPath} className="[fill:none] [stroke:var(--parchment)] [stroke-width:3] [stroke-linecap:round] [stroke-linejoin:round]" /> : null}
         {livePath ? <path d={livePath} className="[fill:none] [stroke:var(--gold)] [stroke-width:3] [stroke-linecap:round] [stroke-linejoin:round]" /> : null}
       </svg>
-      {glyph.svgPath ? <Button kind="ghost" onClick={() => useScriptorium.getState().updateGlyph(glyph.id, { svgPath: "" })}>{t("conlang.alphabet.clearStroke")}</Button> : null}
+      {glyph.svgPath ? <Button kind="ghost" onClick={() => useWriteme.getState().updateGlyph(glyph.id, { svgPath: "" })}>{t("conlang.alphabet.clearStroke")}</Button> : null}
     </div>
   );
 }
@@ -225,10 +225,10 @@ function PosLabel({ value }: { value: string }) {
   return <>{value}</>;
 }
 
-function LexiconTab({ conlang }: { conlang: NonNullable<ReturnType<typeof useScriptorium.getState>["conlangs"]>[number] }) {
+function LexiconTab({ conlang }: { conlang: NonNullable<ReturnType<typeof useWriteme.getState>["conlangs"]>[number] }) {
   const { t, i18n } = useTranslation();
-  const store = useScriptorium.getState;
-  const pushToast = useScriptorium((s) => s.pushToast);
+  const store = useWriteme.getState;
+  const pushToast = useWriteme((s) => s.pushToast);
   const [filter, setFilter] = useState("");
   const [word, setWord] = useState("");
   const [meaning, setMeaning] = useState("");

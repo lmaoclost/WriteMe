@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { undoToastAction } from "../../ui/undoAction";
 import { Button } from "../../ui/Button";
 import { Modal } from "../../ui/Modal";
@@ -10,8 +10,8 @@ import { CARD_GRID, WORLD_CARD, CARD_LINK, CARD_NAME, CARD_DESC, DELETE_CHIP, EM
 
 export function ConlangIndexPage({ projectId }: { projectId: string }) {
   const { t } = useTranslation();
-  const conlangs = useScriptorium((s) => s.conlangs ?? []);
-  const pushToast = useScriptorium((s) => s.pushToast);
+  const conlangs = useWriteme((s) => s.conlangs ?? []);
+  const pushToast = useWriteme((s) => s.pushToast);
   const mine = conlangs.filter((c) => c.projectId === projectId);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
@@ -58,7 +58,7 @@ export function ConlangIndexPage({ projectId }: { projectId: string }) {
               <Button onClick={() => {
                 const n = name.trim();
                 if (!n) { pushToast("error", t("conlang.index.nameRequired")); return; }
-                useScriptorium.getState().addConlang(projectId, n);
+                useWriteme.getState().addConlang(projectId, n);
                 setCreating(false);
                 setName("");
               }}>{t("conlang.index.create")}</Button>
@@ -73,7 +73,7 @@ export function ConlangIndexPage({ projectId }: { projectId: string }) {
           <p className="text-parchment-dim">{t("conlang.index.deleteBody")}</p>
           <div className="mt-2 flex justify-end gap-2.5">
             <Button kind="danger" onClick={() => {
-              useScriptorium.getState().deleteConlang(target.id);
+              useWriteme.getState().deleteConlang(target.id);
               pushToast("success", t("conlang.index.deleted"), undoToastAction());
               setToDelete(null);
             }}>{t("common.delete")}</Button>

@@ -18,11 +18,11 @@ const bytesOf = (dataUrl: string): Uint8Array => {
 /** Fresh store module per test: boot IIFE, subscriber snapshot and persist state
  *  are all one-shot, so resetModules + a fresh IDB factory rebuild the island.
  *  Helpers come from the POST-reset imageStore — the same instance the store uses. */
-async function bootStore(): Promise<{ store: typeof import("./store")["useScriptorium"]; images: typeof import("./imageStore") }> {
+async function bootStore(): Promise<{ store: typeof import("./store")["useWriteme"]; images: typeof import("./imageStore") }> {
   vi.resetModules();
   const [mod, images] = await Promise.all([import("./store"), import("./imageStore")]);
-  await vi.waitFor(() => expect(mod.useScriptorium.getState().imagesReady).toBe(true));
-  return { store: mod.useScriptorium, images };
+  await vi.waitFor(() => expect(mod.useWriteme.getState().imagesReady).toBe(true));
+  return { store: mod.useWriteme, images };
 }
 
 function brokenFactory(): void {

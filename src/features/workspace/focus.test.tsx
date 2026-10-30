@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { Link, MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AppRouter } from "../../app/router";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { FocusContext, FocusToggle, isWritingPath } from "./focus";
 
 describe("isWritingPath", () => {
@@ -75,12 +75,12 @@ const rail = () =>
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 
 describe("focus mode", () => {
   it("hides the rail on Ctrl+Shift+F and restores it with Esc", async () => {
-    const p = useScriptorium.getState().addProject("Focus World");
+    const p = useWriteme.getState().addProject("Focus World");
     await at(`/p/${p.id}/manuscript`);
     expect(rail()).toBeInTheDocument();
 
@@ -92,14 +92,14 @@ describe("focus mode", () => {
   });
 
   it("ignores the shortcut outside writing routes", async () => {
-    const p = useScriptorium.getState().addProject("Calm");
+    const p = useWriteme.getState().addProject("Calm");
     await at(`/p/${p.id}/entries`);
     fireEvent.keyDown(document.body, { key: "F", ctrlKey: true, shiftKey: true });
     expect(rail()).toBeInTheDocument();
   });
 
   it("ignores auto-repeated keydowns", async () => {
-    const p = useScriptorium.getState().addProject("Steady");
+    const p = useWriteme.getState().addProject("Steady");
     await at(`/p/${p.id}/manuscript`);
     expect(rail()).toBeInTheDocument();
 
@@ -108,7 +108,7 @@ describe("focus mode", () => {
   });
 
   it("drops focus when navigating to another page", async () => {
-    const p = useScriptorium.getState().addProject("Wanderer");
+    const p = useWriteme.getState().addProject("Wanderer");
     await at(`/p/${p.id}/manuscript`, <Link to={`/p/${p.id}/entries`}>elsewhere</Link>);
 
     fireEvent.keyDown(document.body, { key: "F", ctrlKey: true, shiftKey: true });
@@ -119,8 +119,8 @@ describe("focus mode", () => {
   });
 
   it("turns focus on from the page button and back off again", async () => {
-    const p = useScriptorium.getState().addProject("Ink");
-    const m = useScriptorium.getState().addManuscript(p.id);
+    const p = useWriteme.getState().addProject("Ink");
+    const m = useWriteme.getState().addManuscript(p.id);
     await at(`/p/${p.id}/bindery/${m.id}`);
 
     fireEvent.click(screen.getByRole("button", { name: "Focus" }));

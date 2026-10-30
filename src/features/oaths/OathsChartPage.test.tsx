@@ -1,17 +1,17 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { selectOption } from "../../test/selectHelper";
 import { firePointer } from "../../test/pointer";
 import { OathsChartPage } from "./OathsChartPage";
 import { OathsIndexPage } from "./OathsIndexPage";
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 
 Object.defineProperty(HTMLElement.prototype, "clientWidth", { configurable: true, value: 1200 });

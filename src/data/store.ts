@@ -405,7 +405,7 @@ interface WriteMeState extends ProjectData {
   redoCN(id: string): void;
 }
 
-export const useScriptorium = create<WriteMeState>()(
+export const useWriteme = create<WriteMeState>()(
   persist(
     (set, get) => {
     const armUndo = (collection: UndoCollection, item: unknown, satellites?: UndoSatellites) => {
@@ -3221,19 +3221,19 @@ export const useScriptorium = create<WriteMeState>()(
 // A failed persist write surfaces once as an error toast with a backup
 // shortcut; the first write that lands again removes exactly that toast.
 onPersistQuotaChange((failed) => {
-  const state = useScriptorium.getState();
+  const state = useWriteme.getState();
   if (failed) {
     if (state.quotaToastId != null) return;
     const id = state.pushToast("error", i18n.t("persist.quotaFailed"), {
       label: i18n.t("library.downloadBackup"),
-      run: () => downloadJson(useScriptorium.getState().exportData()),
+      run: () => downloadJson(useWriteme.getState().exportData()),
     });
-    useScriptorium.setState({ quotaToastId: id });
+    useWriteme.setState({ quotaToastId: id });
     return;
   }
   if (state.quotaToastId != null) {
     if (state.toasts.some((t) => t.id === state.quotaToastId)) state.dismissToast(state.quotaToastId);
-    useScriptorium.setState({ quotaToastId: null });
+    useWriteme.setState({ quotaToastId: null });
   }
 });
 
@@ -3242,7 +3242,7 @@ type ImageMapRecord = Record<string, string>;
 
 onImageWriteFailure((key) => {
   void key;
-  useScriptorium.getState().pushToast("error", i18n.t("persist.imageNotSaved"));
+  useWriteme.getState().pushToast("error", i18n.t("persist.imageNotSaved"));
 });
 
 function syncImageDeltas(next: ImageMapRecord, prev: ImageMapRecord): void {
@@ -3257,7 +3257,7 @@ function syncImageDeltas(next: ImageMapRecord, prev: ImageMapRecord): void {
   }
 }
 
-useScriptorium.subscribe((state, prev) => {
+useWriteme.subscribe((state, prev) => {
   if (state.images === prev.images) return;
   syncImageDeltas(state.images, prev.images);
 });
@@ -3280,8 +3280,8 @@ function stripLegacyImages(): void {
 void (async function bootstrapImages(): Promise<void> {
   try {
     // in-flight marker: the router shows the splash while this pass runs
-    useScriptorium.setState({ imagesReady: false });
-    const persisted = useScriptorium.getState().images;
+    useWriteme.setState({ imagesReady: false });
+    const persisted = useWriteme.getState().images;
     const idbUrls = new Map<string, string>();
     for (const [key, blob] of await allImageBlobs()) {
       idbUrls.set(key, await blobToDataUrl(blob));
@@ -3291,9 +3291,9 @@ void (async function bootstrapImages(): Promise<void> {
     }
     if (Object.keys(persisted).length > 0) stripLegacyImages();
     const merged: ImageMapRecord = { ...persisted, ...Object.fromEntries(idbUrls) };
-    useScriptorium.setState({ images: merged, imagesReady: true });
+    useWriteme.setState({ images: merged, imagesReady: true });
   } catch {
-    useScriptorium.setState({ imagesReady: true });
+    useWriteme.setState({ imagesReady: true });
   }
 })();
 

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { usePlane } from "./usePlane";
 import { EdgesLayer, HouseNode, PersonNode, type NodeHandlers } from "./NodesLayer";
 import type { NodeKind } from "./nodeTypes";
@@ -19,12 +19,12 @@ import type { WorldEntry } from "../../domain/types";
 
 export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
   const { t } = useTranslation();
-  const bloodline = useScriptorium((s) => s.bloodlines.find((b) => b.id === bloodlineId));
-  const images = useScriptorium((s) => s.images);
-  const projectEntries = useScriptorium(
+  const bloodline = useWriteme((s) => s.bloodlines.find((b) => b.id === bloodlineId));
+  const images = useWriteme((s) => s.images);
+  const projectEntries = useWriteme(
     useShallow((s) => s.entries.filter((e) => e.projectId === bloodline?.projectId)),
   );
-  const pushToast = useScriptorium((s) => s.pushToast);
+  const pushToast = useWriteme((s) => s.pushToast);
   const stageRef = useRef<HTMLDivElement>(null);
   const plane = usePlane(stageRef);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -33,7 +33,7 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
   const [addOpen, setAddOpen] = useState(false);
   const [addQuery, setAddQuery] = useState("");
   useBoardNotesHotkey(notesOpen, setNotesOpen);
-  const flags = useScriptorium(useShallow((s) => {
+  const flags = useWriteme(useShallow((s) => {
     const h = s.histories[`bl_${bloodlineId}`];
     return { canUndo: !!h?.undo.length, canRedo: !!h?.redo.length };
   }));
@@ -101,15 +101,15 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
   // Coalesced drags: movePerson/moveHouse at most once per frame, final
   // position flushed on drag end.
   const moveNodeRaf = useRafCallback((kind: NodeKind, id: string, x: number, y: number) => {
-    if (kind === "person") useScriptorium.getState().movePerson(id, x, y);
-    else useScriptorium.getState().moveHouse(id, x, y);
+    if (kind === "person") useWriteme.getState().movePerson(id, x, y);
+    else useWriteme.getState().moveHouse(id, x, y);
   });
 
   const nodeHandlersRef = useRef<NodeHandlers | null>(null);
   nodeHandlersRef.current = {
     onSelect: (kind, id) => { void kind; selectNode(id); },
-    onDelete: (kind, id) => { if (kind === "person") useScriptorium.getState().deletePerson(id); },
-    onDragStart: () => useScriptorium.getState().pushBLHistory(bloodlineId),
+    onDelete: (kind, id) => { if (kind === "person") useWriteme.getState().deletePerson(id); },
+    onDragStart: () => useWriteme.getState().pushBLHistory(bloodlineId),
     onDragMove: (kind, id, dx, dy) => {
       moveNodeRaf(kind, id, dragBaseRef.current.x + dx / plane.scale, dragBaseRef.current.y + dy / plane.scale);
     },
@@ -132,8 +132,8 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
 
   const createPerson = (entry?: WorldEntry) => {
     const rect = stageRef.current?.getBoundingClientRect();
-    useScriptorium.getState().pushBLHistory(bloodlineId);
-    const p = useScriptorium.getState().addPerson(bloodlineId, {
+    useWriteme.getState().pushBLHistory(bloodlineId);
+    const p = useWriteme.getState().addPerson(bloodlineId, {
       x: rect ? (window.innerWidth / 2 - rect.left - plane.panX) / plane.scale : 4000,
       y: rect ? (window.innerHeight / 2 - rect.top - plane.panY) / plane.scale : 4000,
       ...(entry ? { name: entry.title, entryId: entry.id } : {}),
@@ -157,16 +157,16 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
           className={BOARD_NAME_INPUT}
           aria-label={t("bloodline.canvas.name")}
           value={bloodline.name}
-          onChange={(e) => useScriptorium.getState().renameBloodline(bloodlineId, e.target.value)}
+          onChange={(e) => useWriteme.getState().renameBloodline(bloodlineId, e.target.value)}
         />
         <div className={BOARD_ACTIONS}>
-          <button type="button" aria-label={t("bloodline.canvas.undo")} className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoBL(bloodlineId)}>↶</button>
-          <button type="button" aria-label={t("bloodline.canvas.redo")} className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoBL(bloodlineId)}>↷</button>
+          <button type="button" aria-label={t("bloodline.canvas.undo")} className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useWriteme.getState().undoBL(bloodlineId)}>↶</button>
+          <button type="button" aria-label={t("bloodline.canvas.redo")} className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useWriteme.getState().redoBL(bloodlineId)}>↷</button>
           <button type="button" className={BOARD_ACTION_BTN} onClick={() => setAddOpen(true)}>{t("bloodline.canvas.addPerson")}</button>
           <button type="button" className={BOARD_ACTION_BTN} onClick={() => {
-            useScriptorium.getState().pushBLHistory(bloodlineId);
+            useWriteme.getState().pushBLHistory(bloodlineId);
             const rect = stageRef.current?.getBoundingClientRect();
-            const h = useScriptorium.getState().addHouse(bloodlineId, {
+            const h = useWriteme.getState().addHouse(bloodlineId, {
               x: rect ? (window.innerWidth / 2 - rect.left - plane.panX) / plane.scale + 200 : 4200,
               y: rect ? (window.innerHeight / 2 - rect.top - plane.panY) / plane.scale - 200 : 3800,
             });
@@ -218,7 +218,7 @@ export function BloodlineCanvasPage({ bloodlineId }: { bloodlineId: string }) {
           setSelectedId(id);
           setFindOpen(false);
         }} onClose={() => setFindOpen(false)} /> : null}
-        {notesOpen ? <Notepad notes={bloodline.notes} onNotes={(v) => useScriptorium.getState().setNotes(bloodlineId, v)} onClose={() => setNotesOpen(false)} /> : null}
+        {notesOpen ? <Notepad notes={bloodline.notes} onNotes={(v) => useWriteme.getState().setNotes(bloodlineId, v)} onClose={() => setNotesOpen(false)} /> : null}
       </div>
       {selected ? "" : ""}
       <div className="hidden" data-selected-id={selected?.id ?? ""} />

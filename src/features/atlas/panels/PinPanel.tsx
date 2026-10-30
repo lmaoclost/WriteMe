@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Id, Pin, PinType, Region, WorldEntry } from "../../../domain/types";
-import { useScriptorium } from "../../../data/store";
+import { useWriteme } from "../../../data/store";
 import { ColorSwatches } from "./ColorSwatches";
 import { LinkPicker } from "./LinkPicker";
 import { PIN_TYPE_META } from "./pinTypes";
@@ -29,7 +29,7 @@ export function PinPanel({ pin, entries, containingRegion, onSelectContainingReg
   }, [pin.id]);
 
   const patch = (p: Partial<Omit<Pin, "id">>) => {
-    useScriptorium.getState().updatePin(pin.id, p);
+    useWriteme.getState().updatePin(pin.id, p);
   };
 
   return (

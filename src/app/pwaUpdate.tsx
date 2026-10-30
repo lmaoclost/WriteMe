@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { registerSW } from "virtual:pwa-register";
 import { i18n } from "../i18n";
-import { useScriptorium } from "../data/store";
+import { useWriteme } from "../data/store";
 
 let updateToastShown = false;
 
@@ -14,7 +14,7 @@ export function PwaUpdate() {
       onNeedRefresh: () => {
         if (updateToastShown) return;
         updateToastShown = true;
-        useScriptorium.getState().pushToast("info", i18n.t("pwa.updateReady"), {
+        useWriteme.getState().pushToast("info", i18n.t("pwa.updateReady"), {
           label: i18n.t("pwa.reload"),
           run: () => { location.reload(); },
         });

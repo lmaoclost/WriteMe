@@ -1,17 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act } from "@testing-library/react";
-import { useScriptorium } from "./store";
+import { useWriteme } from "./store";
 import { STORE_KEY, flushPendingPersist } from "./storage";
 import { blobToDataUrl, imageBlob } from "./imageStore";
 import { validateProjectData } from "./schema";
 import type { Project, WorldEntry, EntryCategory } from "../domain/types";
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 const DATA_URL = "data:image/png;base64,AAA";
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 
 function makeProject(): Project {
@@ -76,7 +76,7 @@ describe("updateEntry", () => {
     expect(store().entries).toEqual(before);
   });
   it("bumps project updatedAt", () => {
-    const { entry, project } = { entry: makeEntry(), project: useScriptorium.getState().projects[0] };
+    const { entry, project } = { entry: makeEntry(), project: useWriteme.getState().projects[0] };
     const t1 = project.updatedAt;
     act(() => { store().updateEntry(entry.id, { body: "novo" }); });
     expect(store().projects[0].updatedAt).toBeGreaterThanOrEqual(t1);
@@ -87,7 +87,7 @@ describe("deleteEntry", () => {
   it("removes the entry and releases its imageKey", () => {
     const entry = makeEntry();
     act(() => {
-      useScriptorium.setState(() => ({
+      useWriteme.setState(() => ({
         entries: [{ ...entry, imageKey: "img_entry_old" }],
         images: { img_entry_old: DATA_URL, img_entry_keep: "data:image/png;base64,BBB" },
       }));
@@ -101,9 +101,9 @@ describe("deleteEntry", () => {
   it("strips the id from every other entry's links", () => {
     const entry = makeEntry("person");
     let b!: WorldEntry;
-    act(() => { b = store().addEntry(useScriptorium.getState().projects[0].id, "place"); });
+    act(() => { b = store().addEntry(useWriteme.getState().projects[0].id, "place"); });
     act(() => {
-      useScriptorium.setState((s) => ({
+      useWriteme.setState((s) => ({
         entries: s.entries.map((e) => (e.id === b.id ? { ...e, links: [entry.id, "ent_ghost"] } : e)),
       }));
     });
@@ -237,7 +237,7 @@ describe("putEntryImage", () => {
     act(() => { store().putEntryImage(a.id, DATA_URL); });
     const sharedKey = store().entries.find((e) => e.id === a.id)!.imageKey!;
     act(() => {
-      useScriptorium.setState((s) => ({
+      useWriteme.setState((s) => ({
         entries: s.entries.map((e) => (e.id === b.id ? { ...e, imageKey: sharedKey } : e)),
       }));
     });
@@ -264,6 +264,6 @@ describe("schema integrity", () => {
       s.unlinkEntries(entry.id, b.id);
       s.deleteEntry(b.id);
     });
-    expect(validateProjectData(useScriptorium.getState())).toBe(true);
+    expect(validateProjectData(useWriteme.getState())).toBe(true);
   });
 });

@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it } from "vitest";
 import { AppRouter } from "../../app/router";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 
 async function at(path: string): Promise<ReturnType<typeof render>> {
   const view = render(
@@ -19,12 +19,12 @@ async function at(path: string): Promise<ReturnType<typeof render>> {
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 
 describe("workspace rail", () => {
   it("shows the current world name linking to the overview", async () => {
-    const p = useScriptorium.getState().addProject("Shimradis");
+    const p = useWriteme.getState().addProject("Shimradis");
     await at(`/p/${p.id}/entries`);
     const rail = within(screen.getByRole("navigation", { name: /world sections/i }));
     const link = rail.getByRole("link", { name: /Shimradis/ });
@@ -32,7 +32,7 @@ describe("workspace rail", () => {
   });
 
   it("rail world block differs from the My worlds link", async () => {
-    const p = useScriptorium.getState().addProject("Second World");
+    const p = useWriteme.getState().addProject("Second World");
     await at(`/p/${p.id}`);
     const rail = within(screen.getByRole("navigation", { name: /world sections/i }));
     expect(rail.getByRole("link", { name: /My worlds/i })).toHaveAttribute("href", "/");
@@ -40,7 +40,7 @@ describe("workspace rail", () => {
   });
 
   it("groups sections under group headers with icons", async () => {
-    const p = useScriptorium.getState().addProject("G");
+    const p = useWriteme.getState().addProject("G");
     await at(`/p/${p.id}`);
     const rail = within(screen.getByRole("navigation", { name: /world sections/i }));
     for (const g of ["Reference", "Relations", "Worldbuilding", "Writing"]) {
@@ -53,7 +53,7 @@ describe("workspace rail", () => {
   });
 
   it("scrolls the rail links instead of clipping them on short viewports", async () => {
-    const p = useScriptorium.getState().addProject("Tall");
+    const p = useWriteme.getState().addProject("Tall");
     await at(`/p/${p.id}`);
     const nav = screen.getByRole("navigation", { name: /world sections/i });
     const scroller = screen.getByTestId("rail-scroll");
@@ -63,7 +63,7 @@ describe("workspace rail", () => {
   });
 
   it("keeps the language and theme toggles out of the scrolling area", async () => {
-    const p = useScriptorium.getState().addProject("Docked");
+    const p = useWriteme.getState().addProject("Docked");
     await at(`/p/${p.id}`);
     const scroller = screen.getByTestId("rail-scroll");
     for (const button of screen.getAllByRole("button", { name: /switch to/i })) {
@@ -73,7 +73,7 @@ describe("workspace rail", () => {
   });
 
   it("keeps every section label and route", async () => {
-    const p = useScriptorium.getState().addProject("R");
+    const p = useWriteme.getState().addProject("R");
     await at(`/p/${p.id}`);
     const rail = within(screen.getByRole("navigation", { name: /world sections/i }));
     const labels = [
@@ -87,7 +87,7 @@ describe("workspace rail", () => {
   });
 
   it("switches the rail and pages to Portuguese", async () => {
-    const p = useScriptorium.getState().addProject("R");
+    const p = useWriteme.getState().addProject("R");
     await at(`/p/${p.id}`);
     const rail = within(screen.getByRole("navigation", { name: /world sections/i }));
 

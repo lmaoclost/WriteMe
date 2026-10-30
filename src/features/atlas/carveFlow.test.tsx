@@ -3,14 +3,14 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import type { Atlas, Pt } from "../../domain/types";
 import { polygonArea, pointInPolygon, snapToCarveBorder } from "../../domain/geometry";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { AtlasEditor } from "./AtlasEditor";
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 
 type Rect = { left: number; top: number; w: number; h: number };

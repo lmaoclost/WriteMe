@@ -2,7 +2,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppRouter } from "../../app/router";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import type { Manuscript } from "../../domain/types";
 import { bookSections, buildBookHtml } from "./buildBook";
 import { defaultBindery } from "../../data/schema";
@@ -55,7 +55,7 @@ function lastOptions(index: number): Record<string, unknown> {
 }
 
 function seedProject(): string {
-  return useScriptorium.getState().addProject("Vellmora").id;
+  return useWriteme.getState().addProject("Vellmora").id;
 }
 
 function seedBook(projectId: string, spec: {
@@ -63,15 +63,15 @@ function seedBook(projectId: string, spec: {
   author?: string;
   chapters?: { heading: string; content?: string }[];
 } = { title: "Livro sem título" }): Manuscript {
-  const created = useScriptorium.getState().addManuscript(projectId, spec.title);
-  if (spec.author) useScriptorium.getState().setManuscriptAuthor(created.id, spec.author);
+  const created = useWriteme.getState().addManuscript(projectId, spec.title);
+  if (spec.author) useWriteme.getState().setManuscriptAuthor(created.id, spec.author);
   for (const ch of spec.chapters ?? []) {
-    const chapter = useScriptorium.getState().addChapter(created.id, ch.heading);
+    const chapter = useWriteme.getState().addChapter(created.id, ch.heading);
     if (chapter && ch.content !== undefined) {
-      useScriptorium.getState().replaceChapterBody(chapter.id, ch.content);
+      useWriteme.getState().replaceChapterBody(chapter.id, ch.content);
     }
   }
-  const book = useScriptorium.getState().manuscripts.find((m) => m.id === created.id);
+  const book = useWriteme.getState().manuscripts.find((m) => m.id === created.id);
   expect(book, "seeded book should exist").toBeTruthy();
   return book as Manuscript;
 }
@@ -117,7 +117,7 @@ function stubAnchorDownload() {
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
   epubMock.genEpub.mockClear();
   docxMock.toBlob.mockImplementation(async () => new Blob(["docx-bytes"]));
   docxMock.toBlob.mockClear();
@@ -654,11 +654,11 @@ describe("back matter + scene ornament", () => {
   });
 
   function seedGlossaryEntry(): string {
-    act(() => { useScriptorium.getState().addProject("Vellmora"); });
-    const projectId = useScriptorium.getState().projects[0].id;
-    act(() => { useScriptorium.getState().addEntry(projectId, "faction"); });
+    act(() => { useWriteme.getState().addProject("Vellmora"); });
+    const projectId = useWriteme.getState().projects[0].id;
+    act(() => { useWriteme.getState().addEntry(projectId, "faction"); });
     act(() => {
-      useScriptorium.getState().updateEntry(useScriptorium.getState().entries[0].id,
+      useWriteme.getState().updateEntry(useWriteme.getState().entries[0].id,
         { title: "Casa Vellmor", summary: "Dinastia do rio." });
     });
     return projectId;
@@ -787,8 +787,8 @@ describe("EPUB export", () => {
   it("passes the project cover as EPUB cover when one exists", async () => {
     const projectId = seedProject();
     let key!: string;
-    act(() => { key = useScriptorium.getState().putImage("data:image/png;base64,CAPACOVER", "cover"); });
-    act(() => { useScriptorium.getState().updateProject(projectId, { coverImageKey: key }); });
+    act(() => { key = useWriteme.getState().putImage("data:image/png;base64,CAPACOVER", "cover"); });
+    act(() => { useWriteme.getState().updateProject(projectId, { coverImageKey: key }); });
     const book = seedBook(projectId, { title: "Livro Com Capa", chapters: [{ heading: "Um", content: "x." }] });
     await binderyRoute(projectId, book.id);
     fireEvent.click(screen.getByRole("button", { name: "Export EPUB" }));
@@ -820,7 +820,7 @@ describe("EPUB export", () => {
     await binderyRoute(projectId, book.id);
     fireEvent.click(screen.getByRole("button", { name: "Export EPUB" }));
     await waitFor(() => {
-      expect(useScriptorium.getState().toasts.some((t) => t.message === "EPUB generated.")).toBe(true);
+      expect(useWriteme.getState().toasts.some((t) => t.message === "EPUB generated.")).toBe(true);
     });
     expect(epubMock.calls).toHaveLength(1);
     expect(epubMock.genEpub).toHaveBeenCalledTimes(1);
@@ -837,8 +837,8 @@ describe("EPUB export", () => {
 
   it("passes the project cover only when one exists", async () => {
     const projectId = seedProject();
-    const key = useScriptorium.getState().putImage("data:image/png;base64,COVER", "cover");
-    useScriptorium.getState().updateProject(projectId, { coverImageKey: key });
+    const key = useWriteme.getState().putImage("data:image/png;base64,COVER", "cover");
+    useWriteme.getState().updateProject(projectId, { coverImageKey: key });
     const coveredBook = seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "x" }] });
     await binderyRoute(projectId, coveredBook.id);
     fireEvent.click(screen.getByRole("button", { name: "Export EPUB" }));
@@ -846,7 +846,7 @@ describe("EPUB export", () => {
     expect(lastOptions(0)).toEqual(expect.objectContaining({ cover: "data:image/png;base64,COVER" }));
     cleanup();
 
-    useScriptorium.setState(useScriptorium.getInitialState());
+    useWriteme.setState(useWriteme.getInitialState());
     const bareId = seedProject();
     const bareBook = seedBook(bareId, { title: "B", chapters: [{ heading: "Um", content: "x" }] });
     await binderyRoute(bareId, bareBook.id);
@@ -899,7 +899,7 @@ describe("EPUB export", () => {
     const button = screen.getByRole("button", { name: "Export EPUB" });
     fireEvent.click(button);
     await waitFor(() => {
-      expect(useScriptorium.getState().toasts.some((t) => t.message === "Failed to generate the EPUB.")).toBe(true);
+      expect(useWriteme.getState().toasts.some((t) => t.message === "Failed to generate the EPUB.")).toBe(true);
     });
     expect(button).toBeEnabled();
     expect(button).not.toHaveAttribute("aria-busy");
@@ -925,7 +925,7 @@ describe("EPUB export", () => {
     expect(def).toContain(".epub-author");
 
     act(() => {
-      useScriptorium.getState().setBindery(book.id, {
+      useWriteme.getState().setBindery(book.id, {
         typography: { bodyPt: 12, leading: 16, indent: 1.5, justify: false, hyphens: true },
       });
     });
@@ -957,12 +957,12 @@ describe("EPUB export", () => {
     expect(base).toContain(".scene-marker { text-align: center;");
     expect(base).toContain('scene-marker.ornament::before { content: "⁂"; }');
 
-    act(() => { useScriptorium.getState().setBindery(book.id, { sceneOrnament: "fleuron" }); });
+    act(() => { useWriteme.getState().setBindery(book.id, { sceneOrnament: "fleuron" }); });
     fireEvent.click(screen.getByRole("button", { name: "Export EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(2));
     expect(lastOptions(1).css).toContain('scene-marker.ornament::before { content: "❦"; }');
 
-    act(() => { useScriptorium.getState().setBindery(book.id, { sceneOrnament: "rule" }); });
+    act(() => { useWriteme.getState().setBindery(book.id, { sceneOrnament: "rule" }); });
     fireEvent.click(screen.getByRole("button", { name: "Export EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(3));
     const rule = lastOptions(2).css as string;
@@ -970,7 +970,7 @@ describe("EPUB export", () => {
     expect(rule).toContain("width: 4em");
     expect(rule).not.toContain("scene-marker.ornament::before");
 
-    act(() => { useScriptorium.getState().setBindery(book.id, { sceneOrnament: "blank" }); });
+    act(() => { useWriteme.getState().setBindery(book.id, { sceneOrnament: "blank" }); });
     fireEvent.click(screen.getByRole("button", { name: "Export EPUB" }));
     await waitFor(() => expect(epubMock.calls).toHaveLength(4));
     const blank = lastOptions(3).css as string;
@@ -985,10 +985,10 @@ describe("EPUB export", () => {
       chapters: [{ heading: "Um" }, { heading: "Dois" }, { heading: "Três", content: "x." }],
     });
     act(() => {
-      const part = useScriptorium.getState().addPart(book.id, "Parte I");
+      const part = useWriteme.getState().addPart(book.id, "Parte I");
       expect(part).toBeTruthy();
-      useScriptorium.getState().setChapterPart(book.chapters[0].id, part!.id);
-      useScriptorium.getState().setChapterPart(book.chapters[1].id, part!.id);
+      useWriteme.getState().setChapterPart(book.chapters[0].id, part!.id);
+      useWriteme.getState().setChapterPart(book.chapters[1].id, part!.id);
     });
     await binderyRoute(projectId, book.id);
     fireEvent.click(screen.getByRole("button", { name: "Export EPUB" }));
@@ -1029,7 +1029,7 @@ describe("EPUB export", () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "Completo", author: "Ana Silva", chapters: [{ heading: "Um", content: "x." }] });
     act(() => {
-      const st = useScriptorium.getState();
+      const st = useWriteme.getState();
       st.setBindery(book.id, {
         dedication: "Para A. G.",
         frontMatter: { ...defaultBindery()!.frontMatter!, epigraph: "> Citado aqui." },
@@ -1070,7 +1070,7 @@ describe("EPUB export", () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "Enxuto", chapters: [{ heading: "Um", content: "x." }] });
     act(() => {
-      useScriptorium.getState().setBindery(book.id, {
+      useWriteme.getState().setBindery(book.id, {
         frontMatter: { halfTitle: false, copyright: false, romanNumerals: false },
         backMatter: { glossary: false, aboutAuthor: "", colophon: false },
         glossary: false,
@@ -1093,7 +1093,7 @@ describe("Word export", () => {
     fireEvent.click(screen.getByRole("button", { name: "Export Word" }));
     await waitFor(() => expect(docxMock.toBlob).toHaveBeenCalledTimes(1));
     await waitFor(() => {
-      expect(useScriptorium.getState().toasts.some((t) => t.message === "Word generated.")).toBe(true);
+      expect(useWriteme.getState().toasts.some((t) => t.message === "Word generated.")).toBe(true);
     });
     expect(anchorDownload).toBe("acucar-sal.docx");
     expect(anchorHref).toBe("blob:mock-url");
@@ -1116,7 +1116,7 @@ describe("Word export", () => {
 
     // typography.hyphens rides the document-level hyphenation switch
     act(() => {
-      useScriptorium.getState().setBindery(book.id, { typography: { bodyPt: 11, leading: 14.5, indent: 1, justify: true, hyphens: true } });
+      useWriteme.getState().setBindery(book.id, { typography: { bodyPt: 11, leading: 14.5, indent: 1, justify: true, hyphens: true } });
     });
     fireEvent.click(screen.getByRole("button", { name: "Export Word" }));
     await waitFor(() => expect(docxMock.toBlob).toHaveBeenCalledTimes(2));
@@ -1130,7 +1130,7 @@ describe("Word export", () => {
     await binderyRoute(projectId, book.id);
     fireEvent.click(screen.getByRole("button", { name: "Export Word" }));
     await waitFor(() => {
-      expect(useScriptorium.getState().toasts.some((t) => t.message === "Failed to generate the Word file.")).toBe(true);
+      expect(useWriteme.getState().toasts.some((t) => t.message === "Failed to generate the Word file.")).toBe(true);
     });
     expect(screen.getByRole("button", { name: "Export Word" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Export Word" })).not.toHaveAttribute("aria-busy");

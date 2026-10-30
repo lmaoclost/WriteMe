@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useScriptorium } from "./store";
+import { useWriteme } from "./store";
 import { flushPendingPersist, localStoragePersistence, STORE_KEY } from "./storage";
 import type { PersistedState } from "./storage";
 
@@ -25,11 +25,11 @@ function unpoison(): void {
   storagePoisoned = false;
 }
 
-const quotaToasts = () => useScriptorium.getState().toasts.filter((t) => t.message === QUOTA_MSG);
+const quotaToasts = () => useWriteme.getState().toasts.filter((t) => t.message === QUOTA_MSG);
 
 describe("persist quota toast wiring", () => {
   beforeEach(() => {
-    useScriptorium.setState(useScriptorium.getInitialState());
+    useWriteme.setState(useWriteme.getInitialState());
     flushPendingPersist(); // drain the scheduled reset write with healthy storage
     localStorage.clear();
   });
@@ -68,7 +68,7 @@ describe("persist quota toast wiring", () => {
     localStoragePersistence.setItem(STORE_KEY, docWith("fail"));
     flushPendingPersist();
     const [toast] = quotaToasts();
-    useScriptorium.getState().dismissToast(toast.id);
+    useWriteme.getState().dismissToast(toast.id);
     unpoison();
     localStoragePersistence.setItem(STORE_KEY, docWith("ok"));
     flushPendingPersist();

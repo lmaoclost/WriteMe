@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import type { Id, WorldEntry } from "../../domain/types";
 
 export interface EntryImagePickerProps {
@@ -14,9 +14,9 @@ export interface EntryImagePickerProps {
 export function EntryImagePicker({ atlasId, entries, onClose }: EntryImagePickerProps) {
   const { t } = useTranslation();
   // subscribes to the images map only while open — callers stay image-free
-  const images = useScriptorium((s) => s.images);
+  const images = useWriteme((s) => s.images);
   const candidates = entries.filter((e) => e.imageKey && images[e.imageKey]);
-  const pushToast = useScriptorium((s) => s.pushToast);
+  const pushToast = useWriteme((s) => s.pushToast);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -27,7 +27,7 @@ export function EntryImagePicker({ atlasId, entries, onClose }: EntryImagePicker
   }, [onClose]);
 
   const apply = (entryId: Id) => {
-    const ok = useScriptorium.getState().setAtlasMapFromEntry(atlasId, entryId);
+    const ok = useWriteme.getState().setAtlasMapFromEntry(atlasId, entryId);
     if (ok) pushToast("success", t("atlas.picker.linked"));
     else pushToast("error", t("atlas.picker.linkFailed"));
     onClose();

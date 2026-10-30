@@ -4,7 +4,7 @@ import { Button } from "./Button";
 import { Field } from "./Field";
 import { Modal } from "./Modal";
 import { Toasts, toastKindAttr } from "./Toasts";
-import { useScriptorium } from "../data/store";
+import { useWriteme } from "../data/store";
 
 describe("Button", () => {
   it("renders label and fires click", () => {
@@ -68,11 +68,11 @@ describe("Toasts", () => {
   it("shows pushed toasts with kind and dismisses", () => {
     render(<Toasts />);
     let id;
-    act(() => { id = useScriptorium.getState().pushToast("error", "Falhou"); });
+    act(() => { id = useWriteme.getState().pushToast("error", "Falhou"); });
     const el = screen.getByText("Falhou").closest(toastKindAttr("error"));
     expect(el).not.toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
-    const t = useScriptorium.getState().toasts;
+    const t = useWriteme.getState().toasts;
     expect(t.map((x) => x.id)).not.toContain(id);
   });
 
@@ -80,23 +80,23 @@ describe("Toasts", () => {
     render(<Toasts />);
     let ran = 0;
     act(() => {
-      useScriptorium.getState().pushToast("success", "Idea board deleted.", { label: "Undo", run: () => { ran += 1; } });
+      useWriteme.getState().pushToast("success", "Idea board deleted.", { label: "Undo", run: () => { ran += 1; } });
     });
     const undo = screen.getByRole("button", { name: "Undo" });
     fireEvent.click(undo);
     expect(ran).toBe(1);
-    expect(useScriptorium.getState().toasts).toHaveLength(0); // action dismisses the toast
+    expect(useWriteme.getState().toasts).toHaveLength(0); // action dismisses the toast
   });
 
   it("action that fails to undo surfaces why instead of failing silently", () => {
     render(<Toasts />);
     act(() => {
-      useScriptorium.getState().pushToast("success", "Idea board deleted.", { label: "Undo", run: () => {
-        const ok = useScriptorium.getState().undoDelete(999);
-        if (!ok) useScriptorium.getState().pushToast("info", "Nothing left to undo.");
+      useWriteme.getState().pushToast("success", "Idea board deleted.", { label: "Undo", run: () => {
+        const ok = useWriteme.getState().undoDelete(999);
+        if (!ok) useWriteme.getState().pushToast("info", "Nothing left to undo.");
       } });
     });
     fireEvent.click(screen.getByRole("button", { name: "Undo" }));
-    expect(useScriptorium.getState().toasts.some((t) => t.message === "Nothing left to undo.")).toBe(true);
+    expect(useWriteme.getState().toasts.some((t) => t.message === "Nothing left to undo.")).toBe(true);
   });
 });

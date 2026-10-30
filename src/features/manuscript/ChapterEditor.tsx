@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState, type MutableRe
 import { useTranslation } from "react-i18next";
 import { i18n } from "../../i18n";
 import type { Chapter, CustomCalendar, Part, Scene, SceneOrnament } from "../../domain/types";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { renderMarkdown, sanitizeFragment, isHtmlFragment } from "../entries/markdown";
@@ -17,7 +17,7 @@ const NO_PARTS: Part[] = [];
 
 /** The chapter's manuscript parts in print order, for the part selector. */
 function useChapterParts(chapterId: string): Part[] {
-  const parts = useScriptorium((s) =>
+  const parts = useWriteme((s) =>
     s.manuscripts.find((m) => m.chapters.some((c) => c.id === chapterId))?.parts ?? NO_PARTS);
   return useMemo(() => [...parts].sort((a, b) => a.order - b.order), [parts]);
 }
@@ -25,7 +25,7 @@ function useChapterParts(chapterId: string): Part[] {
 /** The book's scene ornament (asterism when unset), for the print-style
  *  preview: it decides whether the preview joins scenes with the marker. */
 function useSceneOrnament(chapterId: string): SceneOrnament {
-  return useScriptorium((s) =>
+  return useWriteme((s) =>
     s.manuscripts.find((m) => m.chapters.some((c) => c.id === chapterId))?.bindery?.sceneOrnament ?? "asterism");
 }
 
@@ -41,7 +41,7 @@ export interface ChapterEditorProps {
 }
 
 export function useChapter(chapterId: string): Chapter {
-  const chapter = useScriptorium((s) =>
+  const chapter = useWriteme((s) =>
     s.manuscripts.flatMap((m) => m.chapters).find((c) => c.id === chapterId));
   if (!chapter) throw new Error("chapter not found");
   return chapter;
@@ -65,7 +65,7 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted, focus = false,
   const confirmTimerRef = useRef<number | undefined>(undefined);
 
   const commitHeading = useCallback((v: string) => {
-    useScriptorium.getState().updateChapter(chapter.id, { heading: v });
+    useWriteme.getState().updateChapter(chapter.id, { heading: v });
   }, [chapter.id]);
   const headingDraft = useDebouncedDraft(chapter.heading, commitHeading);
 
@@ -140,7 +140,7 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted, focus = false,
           onBlur={flush}
         />
         {!focus ? (
-          <Select value={chapter.partId ?? NO_PART} onValueChange={(v) => useScriptorium.getState().setChapterPart(chapter.id, v === NO_PART ? undefined : v)}>
+          <Select value={chapter.partId ?? NO_PART} onValueChange={(v) => useWriteme.getState().setChapterPart(chapter.id, v === NO_PART ? undefined : v)}>
             <SelectTrigger aria-label={t("manuscript.part")} className="min-w-[150px] justify-between rounded-lg border-line bg-night-2 px-2 py-1.5 text-[13px] text-parchment hover:border-gold data-[size=default]:h-auto">
               <SelectValue />
             </SelectTrigger>
@@ -190,7 +190,7 @@ export function ChapterEditor({ chapterId, headingRef, onDeleted, focus = false,
             type="button"
             className="book-mode self-start bg-none border border-line text-parchment-dim rounded-full px-3 py-1 text-xs tracking-[0.06em] cursor-pointer hover:border-gold-dim"
             aria-label={t("manuscript.addScene")}
-            onClick={() => useScriptorium.getState().addScene(chapter.id)}
+            onClick={() => useWriteme.getState().addScene(chapter.id)}
           >
             {t("manuscript.addScene")}
           </button>
@@ -231,7 +231,7 @@ const SceneBody = memo(function SceneBody({ scene, index, registerRef, onDirty, 
   const dirtyRef = useRef(false);
   const timer = useRef<number | undefined>(undefined);
   const commitTitle = useCallback((v: string) => {
-    useScriptorium.getState().updateScene(scene.id, { title: v.trim() || undefined });
+    useWriteme.getState().updateScene(scene.id, { title: v.trim() || undefined });
   }, [scene.id]);
   const titleDraft = useDebouncedDraft(scene.title ?? "", commitTitle);
 
@@ -255,7 +255,7 @@ const SceneBody = memo(function SceneBody({ scene, index, registerRef, onDirty, 
     if (!dirtyRef.current || !el) return;
     dirtyRef.current = false;
     const stored = sanitizeFragment(el.innerHTML);
-    useScriptorium.getState().updateScene(scene.id, { content: stored });
+    useWriteme.getState().updateScene(scene.id, { content: stored });
     domSourceRef.current = stored;
   };
   const schedule = useRef(() => {});
@@ -271,7 +271,7 @@ const SceneBody = memo(function SceneBody({ scene, index, registerRef, onDirty, 
       // a deleted scene makes the store call a no-op
       window.clearTimeout(timer.current);
       if (dirtyRef.current && el) {
-        useScriptorium.getState().updateScene(scene.id, { content: sanitizeFragment(el.innerHTML) });
+        useWriteme.getState().updateScene(scene.id, { content: sanitizeFragment(el.innerHTML) });
       }
     };
   }, [scene.id]);
@@ -295,7 +295,7 @@ const SceneBody = memo(function SceneBody({ scene, index, registerRef, onDirty, 
           aria-label={t("manuscript.deleteScene")}
           title={deletable ? undefined : t("manuscript.keepScene")}
           disabled={!deletable}
-          onClick={() => useScriptorium.getState().deleteScene(scene.id)}
+          onClick={() => useWriteme.getState().deleteScene(scene.id)}
         >{t("manuscript.deleteSceneShort")}</button>
       </div>
       <div
@@ -412,14 +412,14 @@ const WordCountFooter = memo(function WordCountFooter({ writing, scenes, sceneRe
 
 function NotesAndLinks({ chapter }: { chapter: Chapter }) {
   const { t } = useTranslation();
-  const store = useScriptorium.getState;
+  const store = useWriteme.getState;
   const endMarker = useDebouncedDraft(chapter.endMarker ?? "", (v) =>
     store().updateChapter(chapter.id, { endMarker: v.trim() || undefined }), 300);
   const endMarkerFlushRef = useRef(endMarker.flush);
   endMarkerFlushRef.current = endMarker.flush;
   useEffect(() => () => { endMarkerFlushRef.current(); }, []);
 
-  const calendars = useScriptorium((s) => s.calendars ?? NO_CALENDARS);
+  const calendars = useWriteme((s) => s.calendars ?? NO_CALENDARS);
   const [calendarPickOpen, setCalendarPickOpen] = useState(false);
   const [calId, setCalId] = useState(chapter.linkedCalendarId ?? "");
   const [yy, setYy] = useState("0");
@@ -538,7 +538,7 @@ function NotesAndLinks({ chapter }: { chapter: Chapter }) {
   );
 }
 
-function labelDay(dayKey: string | undefined, cal: NonNullable<ReturnType<typeof useScriptorium.getState>['calendars']>[number]) {
+function labelDay(dayKey: string | undefined, cal: NonNullable<ReturnType<typeof useWriteme.getState>['calendars']>[number]) {
   if (!dayKey) return i18n.t("manuscript.noDay");
   const [y, m, d] = dayKey.split(":").map(Number);
   return i18n.t("manuscript.dayLabel", { day: d + 1, month: cal.months[m]?.name ?? "?", year: (y || 0) + 1 });

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { GROUPS, SECTIONS } from "../../app/sections";
 import { preloadSection } from "../../app/lazyRoutes";
-import { selectProject, useScriptorium } from "../../data/store";
+import { selectProject, useWriteme } from "../../data/store";
 import { Seal } from "../../ui/Seal";
 import { LanguageToggle } from "../../ui/LanguageToggle";
 import { ThemeToggle } from "../../ui/ThemeToggle";
@@ -14,9 +14,9 @@ const RAIL_LINK = "flex items-center gap-2 px-3 py-[10px] rounded-sm text-xs tra
 export function WorkspaceLayout() {
   const { t } = useTranslation();
   const { projectId } = useParams();
-  const project = useScriptorium(selectProject(projectId ?? ""));
-  const coverUrl = useScriptorium((s) => (project?.coverImageKey ? s.images[project.coverImageKey] : undefined));
-  const pushToast = useScriptorium((s) => s.pushToast);
+  const project = useWriteme(selectProject(projectId ?? ""));
+  const coverUrl = useWriteme((s) => (project?.coverImageKey ? s.images[project.coverImageKey] : undefined));
+  const pushToast = useWriteme((s) => s.pushToast);
   const warnedRef = useRef(false);
   const [focus, setFocus] = useState(false);
   const { pathname } = useLocation();

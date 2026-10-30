@@ -5,13 +5,13 @@ import { Stage } from "./Stage";
 import type { TransformApi } from "./useStageTransform";
 import { snapToCarveBorder } from "../../../domain/geometry";
 import type { Atlas, Pt } from "../../../domain/types";
-import { useScriptorium } from "../../../data/store";
+import { useWriteme } from "../../../data/store";
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 
 afterEach(() => {

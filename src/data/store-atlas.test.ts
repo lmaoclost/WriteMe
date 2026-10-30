@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act } from "@testing-library/react";
-import { useScriptorium, selectHistoryFlags } from "./store";
+import { useWriteme, selectHistoryFlags } from "./store";
 import type { AtlasHistory } from "./store";
 import { STORE_KEY, flushPendingPersist } from "./storage";
 import { parseExport, validateProjectData } from "./schema";
@@ -37,7 +37,7 @@ vi.mock("./clip", async (importOriginal) => {
  * 10. exportData parses with parseExport after all ops.
  */
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 
 const frame = [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 1 }];
 const leftHalf = [{ x: 0, y: 0 }, { x: 0.5, y: 0 }, { x: 0.5, y: 1 }, { x: 0, y: 1 }];
@@ -66,7 +66,7 @@ function addRegionDirect(atlasId: string, points: { x: number; y: number }[]): R
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
   resetRecentColors();
   clipState.fail = false;
 });
@@ -137,7 +137,7 @@ describe("map images (cases 2-3)", () => {
       body: "", links: [], imageKey: "img_entry_x",
     };
     act(() => {
-      useScriptorium.setState({
+      useWriteme.setState({
         entries: [entry],
         images: { img_entry_x: "data:image/png;base64,CITY" },
       });

@@ -2,7 +2,7 @@ import { useState, type KeyboardEvent } from "react";
 import { Link, useNavigate, useOutletContext } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { undoToastAction } from "../../ui/undoAction";
 import type { Atlas } from "../../domain/types";
 import { Button } from "../../ui/Button";
@@ -17,7 +17,7 @@ function AtlasCard({ atlas, confirm, onConfirmArm, onDelete }: {
   onDelete(): void;
 }) {
   const { t } = useTranslation();
-  const images = useScriptorium((s) => s.images);
+  const images = useWriteme((s) => s.images);
   const thumb = atlas.mapImageKey ? images[atlas.mapImageKey] : undefined;
   return (
     <article className="atlas-card relative bg-night-2 border border-line rounded-lg overflow-hidden hover:border-gold-dim transition-[border-color]">
@@ -45,7 +45,7 @@ function AtlasCard({ atlas, confirm, onConfirmArm, onDelete }: {
 export function AtlasIndexPage() {
   const { t } = useTranslation();
   const { projectId } = useOutletContext<WorkspaceContext>();
-  const projectAtlases = useScriptorium(
+  const projectAtlases = useWriteme(
     useShallow((s) => s.atlases.filter((a) => a.projectId === projectId)),
   );
   const navigate = useNavigate();
@@ -56,15 +56,15 @@ export function AtlasIndexPage() {
   const create = () => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    const atlas = useScriptorium.getState().addAtlas(projectId, trimmed);
+    const atlas = useWriteme.getState().addAtlas(projectId, trimmed);
     setCreating(false);
     setName("");
     navigate(`/p/${projectId}/atlas/${atlas.id}`);
   };
 
   const remove = (atlasId: string) => {
-    useScriptorium.getState().deleteAtlas(atlasId);
-    useScriptorium.getState().pushToast("success", t("atlas.index.deleted"), undoToastAction());
+    useWriteme.getState().deleteAtlas(atlasId);
+    useWriteme.getState().pushToast("success", t("atlas.index.deleted"), undoToastAction());
     setConfirmId(null);
   };
 

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Id, WorldEntry } from "../../../domain/types";
 import type { Region } from "../../../domain/types";
-import { useScriptorium } from "../../../data/store";
+import { useWriteme } from "../../../data/store";
 import { ColorSwatches } from "./ColorSwatches";
 import { LinkPicker } from "./LinkPicker";
 import { Field } from "../../../ui/Field";
@@ -30,11 +30,11 @@ export function RegionPanel({ atlasId, region, entries, onDelete }: RegionPanelP
   }, [region.id]);
 
   const patch = (p: Partial<Omit<Region, "id">>) => {
-    useScriptorium.getState().updateRegion(region.id, p);
+    useWriteme.getState().updateRegion(region.id, p);
   };
 
   const claimRemaining = () => {
-    const s = useScriptorium.getState();
+    const s = useWriteme.getState();
     const count = s.claimRemainingArea(atlasId, region.id);
     if (count > 0) {
       s.pushToast("success", t("atlas.region.claimed", { count }));
@@ -77,9 +77,9 @@ export function RegionPanel({ atlasId, region, entries, onDelete }: RegionPanelP
             onChange={(e) => {
               if (!sliderPushedRef.current) {
                 sliderPushedRef.current = true;
-                useScriptorium.getState().pushHistory(atlasId);
+                useWriteme.getState().pushHistory(atlasId);
               }
-              useScriptorium.getState().updateRegionSilent(region.id, { fillOpacity: Number(e.target.value) });
+              useWriteme.getState().updateRegionSilent(region.id, { fillOpacity: Number(e.target.value) });
             }}
             onPointerUp={() => { sliderPushedRef.current = false; }}
             onKeyUp={(e) => { if (e.key === "ArrowLeft" || e.key === "ArrowRight") sliderPushedRef.current = false; }}

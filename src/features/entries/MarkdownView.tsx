@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { PointerEvent as ReactPointerEvent, MouseEvent as ReactMouseEvent } from "react";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { renderWithLinks, resolveWikilink } from "./wikilinks";
 import { categoryIcon, categoryLabel } from "./categories";
 
@@ -10,7 +10,7 @@ import { categoryIcon, categoryLabel } from "./categories";
 let htmlCache: { body: string; sig: string; html: string } | null = null;
 
 export function MarkdownView({ body, onSelectEntry }: { body: string; onSelectEntry?(id: string): void }) {
-  const entries = useScriptorium((s) => s.entries);
+  const entries = useWriteme((s) => s.entries);
   // only entries fields that wikilink resolution reads affect the html
   const hasLinks = (body ?? "").includes("[[");
   const sig = useMemo(

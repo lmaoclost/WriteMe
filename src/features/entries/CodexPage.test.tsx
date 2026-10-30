@@ -3,16 +3,16 @@ import { MemoryRouter, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { selectOption } from "../../test/selectHelper";
 import { AppRouter } from "../../app/router";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import type { EntryCategory, WorldEntry } from "../../domain/types";
 
 type EntrySpec = { title: string; category: EntryCategory; body?: string };
 
 function seedProject(specs: EntrySpec[]): string {
-  const project = useScriptorium.getState().addProject("Vellmora");
+  const project = useWriteme.getState().addProject("Vellmora");
   for (const spec of specs) {
-    const entry = useScriptorium.getState().addEntry(project.id, spec.category);
-    useScriptorium.getState().updateEntry(entry.id, {
+    const entry = useWriteme.getState().addEntry(project.id, spec.category);
+    useWriteme.getState().updateEntry(entry.id, {
       title: spec.title,
       ...(spec.body !== undefined ? { body: spec.body } : {}),
     });
@@ -31,18 +31,18 @@ function codexRoute(projectId: string, state?: { select?: string }) {
 }
 
 function entryOf(title: string) {
-  const entry = useScriptorium.getState().entries.find((e) => e.title === title);
+  const entry = useWriteme.getState().entries.find((e) => e.title === title);
   expect(entry, `entry ${title} should exist`).toBeTruthy();
   return entry as NonNullable<typeof entry>;
 }
 
 function projectEntries(projectId: string) {
-  return useScriptorium.getState().entries.filter((e) => e.projectId === projectId);
+  return useWriteme.getState().entries.filter((e) => e.projectId === projectId);
 }
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 
 afterEach(() => {
@@ -147,7 +147,7 @@ describe("CodexPage", () => {
     expect(projectEntries(projectId).map((e) => e.title)).toEqual(
       ["Cidade de Vellmora", "Aldric Vellmor"],
     );
-    expect(useScriptorium.getState().toasts.some((t) => t.message === "Entry deleted.")).toBe(true);
+    expect(useWriteme.getState().toasts.some((t) => t.message === "Entry deleted.")).toBe(true);
     expect(screen.getByRole("button", { name: "Cidade de Vellmora" })).toHaveClass("active");
     expect(screen.getByLabelText("Title")).toHaveValue("Cidade de Vellmora");
   });
@@ -274,8 +274,8 @@ describe("CodexPage", () => {
 
   it("renders the cover image when the entry has one", () => {
     const projectId = seedProject([{ title: "Cidade de Vellmora", category: "place" }]);
-    const key = useScriptorium.getState().putImage("data:image/png;base64,COVER", "entry");
-    useScriptorium.getState().updateEntry(projectEntries(projectId)[0].id, { imageKey: key });
+    const key = useWriteme.getState().putImage("data:image/png;base64,COVER", "entry");
+    useWriteme.getState().updateEntry(projectEntries(projectId)[0].id, { imageKey: key });
     render(codexRoute(projectId));
     expect(screen.getByRole("img")).toHaveAttribute("src", "data:image/png;base64,COVER");
   });
@@ -320,10 +320,10 @@ describe("entries route wiring", () => {
   });
 
   it("a foreign deep link is ignored without locking the page", () => {
-    useScriptorium.getState().addProject("Outro mundo");
-    const otherProject = useScriptorium.getState().projects[0].id;
+    useWriteme.getState().addProject("Outro mundo");
+    const otherProject = useWriteme.getState().projects[0].id;
     const foreignEntryId = "ent_forem";
-    useScriptorium.setState((s) => ({
+    useWriteme.setState((s) => ({
       projects: s.projects,
       entries: [{ id: foreignEntryId, projectId: otherProject, title: "Outro", category: "lore", body: "", links: [] }, ...s.entries],
     }));
@@ -342,13 +342,13 @@ describe("entries route wiring", () => {
 describe("CodexPage — sections and summary (codex-15)", () => {
   beforeEach(() => {
     localStorage.clear();
-    useScriptorium.setState(useScriptorium.getInitialState());
+    useWriteme.setState(useWriteme.getInitialState());
   });
 
   it("new character entry comes with template sections pre-created", () => {
-    const pid = useScriptorium.getState().addProject("V").id;
+    const pid = useWriteme.getState().addProject("V").id;
     let entry: WorldEntry;
-    act(() => { entry = useScriptorium.getState().addEntry(pid, "character"); });
+    act(() => { entry = useWriteme.getState().addEntry(pid, "character"); });
     const e = entry!;
     expect(e.sections?.length).toBeGreaterThan(0);
     const labels = e.sections!.flatMap((s) => s.fields.map((f) => f.label));
@@ -358,27 +358,27 @@ describe("CodexPage — sections and summary (codex-15)", () => {
 
   it("summary toggle edits and persists", () => {
     vi.useFakeTimers();
-    const pid = useScriptorium.getState().addProject("V").id;
-    act(() => { useScriptorium.getState().addEntry(pid, "lore"); });
+    const pid = useWriteme.getState().addProject("V").id;
+    act(() => { useWriteme.getState().addEntry(pid, "lore"); });
     render(codexRoute(pid));
     fireEvent.click(screen.getByRole("button", { name: /Summary/ }));
     const inp = screen.getByLabelText("Summary");
     fireEvent.change(inp, { target: { value: "Uma lei rígida." } });
     act(() => vi.advanceTimersByTime(320));
-    expect(useScriptorium.getState().entries[0].summary).toBe("Uma lei rígida.");
+    expect(useWriteme.getState().entries[0].summary).toBe("Uma lei rígida.");
     vi.useRealTimers();
   });
 
   it("field content commits debounced into sections", async () => {
     vi.useFakeTimers();
-    const pid = useScriptorium.getState().addProject("V").id;
-    const e = useScriptorium.getState().addEntry(pid, "character");
+    const pid = useWriteme.getState().addProject("V").id;
+    const e = useWriteme.getState().addEntry(pid, "character");
     if (!e) throw new Error("addEntry falhou");
     render(codexRoute(pid));
     const inp = screen.getByLabelText("Identity");
     fireEvent.change(inp, { target: { value: "31 anos, humana" } });
     act(() => vi.advanceTimersByTime(320));
-    const sec = useScriptorium.getState().entries.find((x) => x.id === e.id)!.sections!;
+    const sec = useWriteme.getState().entries.find((x) => x.id === e.id)!.sections!;
     expect(sec.flatMap((s) => s.fields.map((f) => f.content))).toContain("31 anos, humana");
     vi.useRealTimers();
   });
@@ -387,14 +387,14 @@ describe("CodexPage — sections and summary (codex-15)", () => {
 describe("CodexPage — cover framing, summary presentation, custom kinds", () => {
   beforeEach(() => {
     localStorage.clear();
-    useScriptorium.setState(useScriptorium.getInitialState());
+    useWriteme.setState(useWriteme.getInitialState());
   });
 
   it("cover respects the saved focal point; dragging the cover sets it; cancel stops tracking", async () => {
-    const pid = useScriptorium.getState().addProject("V").id;
-    const e = useScriptorium.getState().addEntry(pid, "place")!;
-    useScriptorium.getState().putEntryImage(e.id, "data:image/svg+xml,%3Csvg/%3E");
-    useScriptorium.getState().updateEntry(e.id, { focal: [0.25, 0.7] });
+    const pid = useWriteme.getState().addProject("V").id;
+    const e = useWriteme.getState().addEntry(pid, "place")!;
+    useWriteme.getState().putEntryImage(e.id, "data:image/svg+xml,%3Csvg/%3E");
+    useWriteme.getState().updateEntry(e.id, { focal: [0.25, 0.7] });
     render(codexRoute(pid));
     const cover = screen.getByAltText(`Cover of ${e.title}`) as HTMLElement;
     expect(cover.style.objectPosition).toBe("25% 70%");
@@ -418,7 +418,7 @@ describe("CodexPage — cover framing, summary presentation, custom kinds", () =
     });
     // the focal write is rAF-throttled
     await act(async () => { await new Promise((r) => setTimeout(r, 30)); });
-    const saved = useScriptorium.getState().entries.find((x) => x.id === e.id)!;
+    const saved = useWriteme.getState().entries.find((x) => x.id === e.id)!;
     expect(saved.focal).toEqual([0.5, 1]);
     expect(cover.style.objectPosition).toBe("50% 100%");
     // pointercancel stops tracking: a later move must not move the focal
@@ -427,61 +427,61 @@ describe("CodexPage — cover framing, summary presentation, custom kinds", () =
       fire("pointermove", 0, 0);
     });
     await act(async () => { await new Promise((r) => setTimeout(r, 30)); });
-    expect(useScriptorium.getState().entries.find((x) => x.id === e.id)!.focal).toEqual([0.5, 1]);
+    expect(useWriteme.getState().entries.find((x) => x.id === e.id)!.focal).toEqual([0.5, 1]);
   });
 
   it("user-created entry kinds join the chips, the selector and persist", async () => {
-    const pid = useScriptorium.getState().addProject("V").id;
-    useScriptorium.getState().addEntry(pid, "lore");
+    const pid = useWriteme.getState().addProject("V").id;
+    useWriteme.getState().addEntry(pid, "lore");
     render(codexRoute(pid));
     fireEvent.click(screen.getByRole("button", { name: /new kind/i }));
     fireEvent.change(screen.getByLabelText("Kind name"), { target: { value: "Religion" } });
     fireEvent.change(screen.getByLabelText("Kind emoji"), { target: { value: "🕯️" } });
     fireEvent.click(screen.getByRole("button", { name: /^Create kind$/i }));
-    const proj = useScriptorium.getState().projects.find((p) => p.id === pid)!;
+    const proj = useWriteme.getState().projects.find((p) => p.id === pid)!;
     const kind = proj.customCategories?.[0];
     expect(kind).toMatchObject({ key: "religion", label: "Religion", icon: "🕯️" });
     // chip filter includes the new kind
     expect(screen.getByTitle("Religion")).toBeInTheDocument();
     // the category selector offers it and assigning persists (schema accepts it)
     await selectOption(() => screen.getByLabelText("Category"), /religion/i);
-    expect(useScriptorium.getState().entries[0].category).toBe("religion");
+    expect(useWriteme.getState().entries[0].category).toBe("religion");
   });
 
   it("refuses a custom kind whose slug collides with a built-in kind", () => {
-    const pid = useScriptorium.getState().addProject("V").id;
-    useScriptorium.getState().addEntry(pid, "lore");
+    const pid = useWriteme.getState().addProject("V").id;
+    useWriteme.getState().addEntry(pid, "lore");
     render(codexRoute(pid));
     fireEvent.click(screen.getByRole("button", { name: /new kind/i }));
     fireEvent.change(screen.getByLabelText("Kind name"), { target: { value: "Character" } });
     fireEvent.click(screen.getByRole("button", { name: /^Create kind$/i }));
-    const proj = useScriptorium.getState().projects.find((p) => p.id === pid)!;
+    const proj = useWriteme.getState().projects.find((p) => p.id === pid)!;
     expect(proj.customCategories ?? []).toEqual([]);
-    expect(useScriptorium.getState().toasts.some((t) => t.message === "A kind with this name already exists.")).toBe(true);
+    expect(useWriteme.getState().toasts.some((t) => t.message === "A kind with this name already exists.")).toBe(true);
   });
 
   it("deletes a custom kind and moves its entries back to lore", () => {
-    const pid = useScriptorium.getState().addProject("V").id;
-    const proj = useScriptorium.getState().projects.find((p) => p.id === pid)!;
-    useScriptorium.getState().updateProject(pid, {
+    const pid = useWriteme.getState().addProject("V").id;
+    const proj = useWriteme.getState().projects.find((p) => p.id === pid)!;
+    useWriteme.getState().updateProject(pid, {
       customCategories: [{ key: "religion", label: "Religion", icon: "🕯️" }],
     });
-    const entry = useScriptorium.getState().addEntry(pid, "religion" as EntryCategory);
-    useScriptorium.getState().updateEntry(entry.id, { title: "Culto do Rio" });
+    const entry = useWriteme.getState().addEntry(pid, "religion" as EntryCategory);
+    useWriteme.getState().updateEntry(entry.id, { title: "Culto do Rio" });
     render(codexRoute(proj.id));
     fireEvent.click(screen.getByRole("button", { name: /new kind/i }));
     fireEvent.click(screen.getByRole("button", { name: "Delete kind Religion" }));
     fireEvent.click(screen.getByRole("button", { name: "Confirm delete kind Religion" }));
-    expect(useScriptorium.getState().projects.find((p) => p.id === pid)!.customCategories).toEqual([]);
+    expect(useWriteme.getState().projects.find((p) => p.id === pid)!.customCategories).toEqual([]);
     expect(entryOf("Culto do Rio").category).toBe("lore");
     expect(screen.queryByTitle("Religion")).toBeNull();
-    expect(useScriptorium.getState().toasts.some((t) => t.message.includes('Kind "Religion" deleted'))).toBe(true);
+    expect(useWriteme.getState().toasts.some((t) => t.message.includes('Kind "Religion" deleted'))).toBe(true);
   });
 
   it("summary block presents the filled blurb as content, not as a prompt", () => {
-    const pid = useScriptorium.getState().addProject("V").id;
-    const e = useScriptorium.getState().addEntry(pid, "lore")!;
-    useScriptorium.getState().updateEntry(e.id, { summary: "O aviso do rio." });
+    const pid = useWriteme.getState().addProject("V").id;
+    const e = useWriteme.getState().addEntry(pid, "lore")!;
+    useWriteme.getState().updateEntry(e.id, { summary: "O aviso do rio." });
     render(codexRoute(pid));
     const toggle = screen.getByText("O aviso do rio.").closest("button")!;
     expect(toggle.className).toContain("filled"); // styled differently when non-empty

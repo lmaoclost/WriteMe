@@ -3,7 +3,7 @@ import { MemoryRouter } from "react-router-dom";
 import { pickSelectOptionSync, selectOption } from "../../test/selectHelper";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppRouter } from "../../app/router";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { ChapterEditor } from "./ChapterEditor";
 import type { Manuscript } from "../../domain/types";
 
@@ -14,29 +14,29 @@ type BookSpec = {
 };
 
 function seedProject(): string {
-  return useScriptorium.getState().addProject("Vellmora").id;
+  return useWriteme.getState().addProject("Vellmora").id;
 }
 
 function seedBook(projectId: string, spec: BookSpec = {}): Manuscript {
-  const created = useScriptorium.getState().addManuscript(projectId, spec.title);
-  if (spec.author) useScriptorium.getState().setManuscriptAuthor(created.id, spec.author);
+  const created = useWriteme.getState().addManuscript(projectId, spec.title);
+  if (spec.author) useWriteme.getState().setManuscriptAuthor(created.id, spec.author);
   for (const ch of spec.chapters ?? []) {
-    const chapter = useScriptorium.getState().addChapter(created.id, ch.heading);
+    const chapter = useWriteme.getState().addChapter(created.id, ch.heading);
     if (chapter && ch.content !== undefined) {
-      useScriptorium.getState().replaceChapterBody(chapter.id, ch.content);
+      useWriteme.getState().replaceChapterBody(chapter.id, ch.content);
     }
   }
-  const book = useScriptorium.getState().manuscripts.find((m) => m.id === created.id);
+  const book = useWriteme.getState().manuscripts.find((m) => m.id === created.id);
   expect(book, "seeded book should exist").toBeTruthy();
   return book as Manuscript;
 }
 
 function projectBooks(projectId: string): Manuscript[] {
-  return useScriptorium.getState().manuscripts.filter((m) => m.projectId === projectId);
+  return useWriteme.getState().manuscripts.filter((m) => m.projectId === projectId);
 }
 
 function bookOf(title: string): Manuscript {
-  const book = useScriptorium.getState().manuscripts.find((m) => m.title === title);
+  const book = useWriteme.getState().manuscripts.find((m) => m.title === title);
   expect(book, `book ${title} should exist`).toBeTruthy();
   return book as Manuscript;
 }
@@ -114,7 +114,7 @@ function rowHeadings() {
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 
 afterEach(() => {
@@ -407,16 +407,16 @@ describe("ManuscriptPage chapters", () => {
   it("the none ornament previews scenes as one flow; the default keeps the marker", async () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Início", content: "primeira." }] });
-    act(() => { useScriptorium.getState().addScene(book.chapters[0].id); });
+    act(() => { useWriteme.getState().addScene(book.chapters[0].id); });
     const scenes = bookOf("A").chapters[0].scenes;
-    act(() => { useScriptorium.getState().updateScene(scenes[1].id, { content: "segunda." }); });
+    act(() => { useWriteme.getState().updateScene(scenes[1].id, { content: "segunda." }); });
     await manuscriptRoute(projectId);
     fireEvent.click(screen.getByRole("button", { name: "Preview" }));
     expect(document.querySelectorAll(".md-view .scene-marker")).toHaveLength(1);
     expect(document.querySelector(".md-view")?.textContent).toContain("primeira.");
     // the author's choice: scene break reads as one text, no marker
     fireEvent.click(screen.getByRole("button", { name: "Write" }));
-    act(() => { useScriptorium.getState().setBindery(bookOf("A").id, { sceneOrnament: "none" }); });
+    act(() => { useWriteme.getState().setBindery(bookOf("A").id, { sceneOrnament: "none" }); });
     fireEvent.click(screen.getByRole("button", { name: "Preview" }));
     expect(document.querySelectorAll(".md-view .scene-marker")).toHaveLength(0);
     expect(document.querySelector(".md-view")?.textContent).toContain("segunda.");
@@ -497,10 +497,10 @@ describe("ManuscriptPage parts", () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Base", content: "um" }] });
     act(() => {
-      const part = useScriptorium.getState().addPart(book.id, "A Queda")!;
-      const ch = useScriptorium.getState().addChapter(book.id, "Cinzas")!;
-      useScriptorium.getState().replaceChapterBody(ch.id, "uma duas três");
-      useScriptorium.getState().setChapterPart(ch.id, part.id);
+      const part = useWriteme.getState().addPart(book.id, "A Queda")!;
+      const ch = useWriteme.getState().addChapter(book.id, "Cinzas")!;
+      useWriteme.getState().replaceChapterBody(ch.id, "uma duas três");
+      useWriteme.getState().setChapterPart(ch.id, part.id);
     });
     await manuscriptRoute(projectId);
     expect(await screen.findByText("A Queda")).toBeInTheDocument();
@@ -512,7 +512,7 @@ describe("ManuscriptPage parts", () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Um" }] });
     act(() => {
-      useScriptorium.getState().addPart(book.id, "A Queda");
+      useWriteme.getState().addPart(book.id, "A Queda");
     });
     await manuscriptRoute(projectId);
     await selectOption(() => screen.getByLabelText("Part"), "A Queda");
@@ -523,8 +523,8 @@ describe("ManuscriptPage parts", () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Um" }] });
     act(() => {
-      const part = useScriptorium.getState().addPart(book.id, "A Queda")!;
-      useScriptorium.getState().setChapterPart(book.chapters[0].id, part.id);
+      const part = useWriteme.getState().addPart(book.id, "A Queda")!;
+      useWriteme.getState().setChapterPart(book.chapters[0].id, part.id);
     });
     await manuscriptRoute(projectId);
     await selectOption(() => screen.getByLabelText("Part"), "No part");
@@ -571,11 +571,11 @@ describe("ManuscriptPage parts", () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "uma duas três" }] });
     act(() => {
-      const part = useScriptorium.getState().addPart(book.id, "A Queda")!;
-      const ch = useScriptorium.getState().addChapter(book.id, "Dois")!;
-      useScriptorium.getState().replaceChapterBody(ch.id, "quatro cinco");
-      useScriptorium.getState().setChapterPart(ch.id, part.id);
-      useScriptorium.getState().setChapterPart(book.chapters[0].id, part.id);
+      const part = useWriteme.getState().addPart(book.id, "A Queda")!;
+      const ch = useWriteme.getState().addChapter(book.id, "Dois")!;
+      useWriteme.getState().replaceChapterBody(ch.id, "quatro cinco");
+      useWriteme.getState().setChapterPart(ch.id, part.id);
+      useWriteme.getState().setChapterPart(book.chapters[0].id, part.id);
     });
     await manuscriptRoute(projectId);
     expect(screen.getByTestId("part-words-A Queda")).toHaveTextContent("5 words");
@@ -586,8 +586,8 @@ describe("ManuscriptPage parts", () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Um" }, { heading: "Dois" }] });
     act(() => {
-      const part = useScriptorium.getState().addPart(book.id, "A Queda")!;
-      useScriptorium.getState().setChapterPart(book.chapters[1].id, part.id);
+      const part = useWriteme.getState().addPart(book.id, "A Queda")!;
+      useWriteme.getState().setChapterPart(book.chapters[1].id, part.id);
     });
     await manuscriptRoute(projectId);
     fireEvent.click(screen.getByRole("button", { name: "Delete part" }));
@@ -603,7 +603,7 @@ describe("ManuscriptPage parts", () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "A" });
     act(() => {
-      useScriptorium.getState().addPart(book.id, "A Queda");
+      useWriteme.getState().addPart(book.id, "A Queda");
     });
     await manuscriptRoute(projectId);
     vi.useFakeTimers();
@@ -621,7 +621,7 @@ describe("ManuscriptPage scenes sidebar", () => {
   it("chapters start collapsed; the chevron reveals the scene rows", async () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "cena um." }] });
-    act(() => { useScriptorium.getState().addScene(book.chapters[0].id); });
+    act(() => { useWriteme.getState().addScene(book.chapters[0].id); });
     await manuscriptRoute(projectId);
     expect(within(chapterList()).queryAllByRole("button", { name: /Scene 2/ })).toHaveLength(0);
     const chevron = within(chapterList()).getAllByRole("button", { name: /Scenes of Um/ })[0];
@@ -635,7 +635,7 @@ describe("ManuscriptPage scenes sidebar", () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "cena um." }, { heading: "Dois" }] });
     act(() => {
-      const st = useScriptorium.getState();
+      const st = useWriteme.getState();
       st.updateScene(book.chapters[0].scenes[0].id, { title: "Na ponte" });
       st.addScene(book.chapters[0].id);
     });
@@ -660,7 +660,7 @@ describe("ManuscriptPage scenes sidebar", () => {
   it("nests the chapter's scenes under the chapter row and selects the scene in the editor", async () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "cena um." }] });
-    act(() => { useScriptorium.getState().addScene(book.chapters[0].id); });
+    act(() => { useWriteme.getState().addScene(book.chapters[0].id); });
     await manuscriptRoute(projectId);
     // chapters start collapsed: expand, then the rows appear
     fireEvent.click(within(chapterList()).getAllByRole("button", { name: /Scenes of Um/ })[0]);
@@ -705,8 +705,8 @@ describe("ManuscriptPage focus mode", () => {
 
 describe("Notes panel default state", () => {
   it("notes open collapsed by default and the end marker field shares the note field background", async () => {
-    const m = useScriptorium.getState().addManuscript("prj_1", "Livro A");
-    const ch = useScriptorium.getState().addChapter(m.id, "Um")!;
+    const m = useWriteme.getState().addManuscript("prj_1", "Livro A");
+    const ch = useWriteme.getState().addChapter(m.id, "Um")!;
     render(<ChapterEditor chapterId={ch.id} onDeleted={() => {}} />);
     const trigger = screen.getByRole("button", { name: /Notes and scene/i });
     expect(trigger).toHaveAttribute("aria-expanded", "false");
@@ -734,12 +734,12 @@ describe("export belongs to Publishing", () => {
   });
 });
 
-const store = useScriptorium.getState;
+const store = useWriteme.getState;
 
 describe("ChapterEditor — notes panel", () => {
   it("notes and calendar link live inside ONE collapsible panel, closed by default", async () => {
-    const m = useScriptorium.getState().addManuscript("prj_1", "Livro A");
-    const ch = useScriptorium.getState().addChapter(m.id, "Um")!;
+    const m = useWriteme.getState().addManuscript("prj_1", "Livro A");
+    const ch = useWriteme.getState().addChapter(m.id, "Um")!;
     store().updateChapter(ch.id, { noteTop: "Abre a história" });
     render(<ChapterEditor chapterId={ch.id} onDeleted={() => {}} />);
     const trigger = screen.getByRole("button", { name: /Notes and scene/i });

@@ -1,4 +1,4 @@
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { useTranslation } from "react-i18next";
 import type { WorldEntry } from "../../domain/types";
 
@@ -10,7 +10,7 @@ export interface ImagePickerProps {
 export function ImagePicker({ entries, onPick }: ImagePickerProps) {
   const { t } = useTranslation();
   // subscribes to the images map only while open — callers stay image-free
-  const images = useScriptorium((s) => s.images);
+  const images = useWriteme((s) => s.images);
   const covered = entries.filter((e) => e.imageKey !== undefined && images[e.imageKey] !== undefined);
   return (
     <div className="relative z-30 bg-ink border border-line rounded-lg p-2" role="group" aria-label={t("entries.images.title")}>

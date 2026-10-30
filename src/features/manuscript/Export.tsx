@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Chapter as EpubChapter } from "epub-gen-memory";
 import type { Manuscript } from "../../domain/types";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { defaultBindery } from "../../data/schema";
 import {
   aboutAuthorSection, bookSections, chapterInner, chapterNumber, colophonSection,
@@ -33,7 +33,7 @@ export interface ExportButtonsProps {
  *  Publishing header. PDF lives in "Print preview" (bindery-styled print pass). */
 export function ExportButtons({ manuscript }: ExportButtonsProps) {
   const { t } = useTranslation();
-  const pushToast = useScriptorium((s) => s.pushToast);
+  const pushToast = useWriteme((s) => s.pushToast);
   const [busy, setBusy] = useState(false);
 
   const disabled = manuscript.chapters.length === 0 || busy;
@@ -58,9 +58,9 @@ export function ExportButtons({ manuscript }: ExportButtonsProps) {
         }],
       }));
       downloadBlob(blob, `${slugify(manuscript.title)}.docx`);
-      useScriptorium.getState().pushToast("success", t("export.docxSuccess"));
+      useWriteme.getState().pushToast("success", t("export.docxSuccess"));
     } catch {
-      useScriptorium.getState().pushToast("error", t("export.docxError"));
+      useWriteme.getState().pushToast("error", t("export.docxError"));
     } finally {
       setBusy(false);
     }
@@ -71,7 +71,7 @@ export function ExportButtons({ manuscript }: ExportButtonsProps) {
     setBusy(true);
     try {
       const { EPub, optionsDefaults } = await import("epub-gen-memory");
-      const state = useScriptorium.getState();
+      const state = useWriteme.getState();
       const project = state.projects.find((p) => p.id === manuscript.projectId);
       const cover = project?.coverImageKey ? state.images[project.coverImageKey] : undefined;
       const bindery = { ...defaultBindery(), ...(manuscript.bindery ?? {}) } as NonNullable<Manuscript["bindery"]>;

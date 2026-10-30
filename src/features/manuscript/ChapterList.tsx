@@ -12,7 +12,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { Chapter, Part, Scene } from "../../domain/types";
 import type { bookSections } from "./buildBook";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { countWords, formatWords } from "./words";
 import { sceneDisplay } from "./sceneName";
@@ -127,7 +127,7 @@ const PartRow = memo(function PartRow({ part, chapters, words, selected, onSelec
   const [open, setOpen] = useState(true);
   const confirmTimerRef = useRef<number | undefined>(undefined);
   const draft = useDebouncedDraft(part.title, (v) => {
-    useScriptorium.getState().renamePart(part.id, v);
+    useWriteme.getState().renamePart(part.id, v);
   });
   const { setNodeRef, setActivatorNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({ id: part.id });
   // the sortable registration already exposes this row as a drop target for
@@ -138,7 +138,7 @@ const PartRow = memo(function PartRow({ part, chapters, words, selected, onSelec
     if (armed) {
       setArmed(false);
       window.clearTimeout(confirmTimerRef.current);
-      useScriptorium.getState().removePart(part.id);
+      useWriteme.getState().removePart(part.id);
       return;
     }
     setArmed(true);
@@ -281,7 +281,7 @@ const ChapterRow = memo(function ChapterRow({ chapter, selected, onSelect, onSce
   const [open, setOpen] = useState(false);
 
   const addScene = () => {
-    useScriptorium.getState().addScene(chapter.id);
+    useWriteme.getState().addScene(chapter.id);
   };
 
   return (
@@ -382,7 +382,7 @@ export function ChapterList({ sections, selectedId, onSelect, onSceneSelect, onC
   const onDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const state = useScriptorium.getState();
+    const state = useWriteme.getState();
     const kindActive = kindOf(active.id);
     const book = state.manuscripts.find((m) =>
       m.chapters.some((c) => c.id === active.id || c.scenes.some((s) => s.id === active.id))
@@ -563,7 +563,7 @@ export function ChapterList({ sections, selectedId, onSelect, onSceneSelect, onC
 
 export function DocxReplaceButton({ chapterId }: { chapterId: string }) {
   const { t } = useTranslation();
-  const pushToast = useScriptorium((s) => s.pushToast);
+  const pushToast = useWriteme((s) => s.pushToast);
   const onChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -571,7 +571,7 @@ export function DocxReplaceButton({ chapterId }: { chapterId: string }) {
     try {
       const { importDocxToHtml } = await import("./docx");
       const html = await importDocxToHtml(file);
-      useScriptorium.getState().replaceChapterBody(chapterId, html);
+      useWriteme.getState().replaceChapterBody(chapterId, html);
       pushToast("success", t("manuscript.chapterReplaced"));
     } catch {
       pushToast("error", t("manuscript.docxImportFailed"));

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { undoToastAction } from "../../ui/undoAction";
 import { Button } from "../../ui/Button";
 import { CARD_GRID, WORLD_CARD, CARD_LINK, CARD_NAME, CARD_DESC, DELETE_CHIP, EMPTY_STATE } from "../../ui/pageBits";
@@ -10,8 +10,8 @@ import { Field } from "../../ui/Field";
 
 export function OathsIndexPage({ projectId }: { projectId: string }) {
   const { t } = useTranslation();
-  const charts = useScriptorium((s) => s.oathsCharts ?? []);
-  const pushToast = useScriptorium((s) => s.pushToast);
+  const charts = useWriteme((s) => s.oathsCharts ?? []);
+  const pushToast = useWriteme((s) => s.pushToast);
   const mine = charts.filter((c) => c.projectId === projectId);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
@@ -58,7 +58,7 @@ export function OathsIndexPage({ projectId }: { projectId: string }) {
               <Button onClick={() => {
                 const n = name.trim();
                 if (!n) { pushToast("error", t("oaths.index.nameRequired")); return; }
-                useScriptorium.getState().addOathsChart(projectId, n);
+                useWriteme.getState().addOathsChart(projectId, n);
                 setCreating(false);
                 setName("");
               }}>{t("oaths.index.create")}</Button>
@@ -73,7 +73,7 @@ export function OathsIndexPage({ projectId }: { projectId: string }) {
           <p className="text-parchment-dim">{t("oaths.index.deleteBody")}</p>
           <div className="mt-2 flex justify-end gap-2.5">
             <Button kind="danger" onClick={() => {
-              useScriptorium.getState().deleteOathsChart(target.id);
+              useWriteme.getState().deleteOathsChart(target.id);
               pushToast("success", t("oaths.index.deleted"), undoToastAction());
               setToDelete(null);
             }}>{t("common.delete")}</Button>

@@ -1,17 +1,17 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { pickSelectOptionSync } from "../../test/selectHelper";
 import { BinderyPage } from "./BinderyPage";
 import { trimToPage, BINDERY_FONTS, BINDERY_TRIMS, estimatePageCount } from "./bindery";
 import { defaultBindery } from "../../data/schema";
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 
 afterEach(() => {
@@ -388,7 +388,7 @@ describe("Bindery v2 controls", () => {
 
   it("a manuscript without a bindery still prints the head the UI shows", () => {
     const id = seedBook();
-    act(() => { useScriptorium.setState((s) => ({ manuscripts: s.manuscripts.map((m) => ({ ...m, bindery: undefined })) })); });
+    act(() => { useWriteme.setState((s) => ({ manuscripts: s.manuscripts.map((m) => ({ ...m, bindery: undefined })) })); });
     render(<MemoryRouter><BinderyPage manuscriptId={id} /></MemoryRouter>);
     const styleTag = Array.from(document.querySelectorAll("style")).find((t) => t.textContent?.includes("@page"));
     expect(styleTag?.textContent).toContain('content: "A Coroa e o Rio"');
@@ -594,7 +594,7 @@ describe("Bindery preset picker, advanced groups and print hints", () => {
     const id = seedBook();
     // old saved data: a partial typography block must not shed the defaults
     act(() => {
-      useScriptorium.setState((s) => ({
+      useWriteme.setState((s) => ({
         manuscripts: s.manuscripts.map((m) => (m.id === id
           ? { ...m, bindery: { ...defaultBindery()!, typography: { bodyPt: 10 } as NonNullable<ReturnType<typeof defaultBindery>>["typography"] } }
           : m)),

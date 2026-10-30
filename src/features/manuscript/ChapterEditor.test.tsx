@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { pickSelectOptionSync } from "../../test/selectHelper";
 import { ChapterEditor } from "./ChapterEditor";
 import type { Manuscript } from "../../domain/types";
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
   // jsdom has no execCommand; every rich test stubs it
   const exec = vi.fn(() => true);
   Object.defineProperty(document, "execCommand", { configurable: true, writable: true, value: exec });

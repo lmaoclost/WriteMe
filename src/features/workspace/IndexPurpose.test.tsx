@@ -2,7 +2,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it } from "vitest";
 import { AppRouter } from "../../app/router";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 
 async function at(path: string): Promise<ReturnType<typeof render>> {
   const view = render(
@@ -19,11 +19,11 @@ async function at(path: string): Promise<ReturnType<typeof render>> {
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 
 async function projectRender(path: string): Promise<void> {
-  const p = useScriptorium.getState().addProject("P");
+  const p = useWriteme.getState().addProject("P");
   await at(path.replace(":pid", p.id));
 }
 

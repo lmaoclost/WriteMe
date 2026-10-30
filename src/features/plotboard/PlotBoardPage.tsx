@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import type { PlotCard, PlotWire } from "../../domain/types";
 import { PlotBoardPanel } from "./PlotBoardPanel";
 import { BoardNotepad } from "./BoardNotepad";
@@ -26,7 +26,7 @@ const PBWiresLayer = memo(function PBWiresLayer({ wires, cardById }: {
               x1={a.x} y1={a.y} x2={b.x} y2={b.y}
               className="plot-wire-hit [stroke:transparent] [stroke-width:12] cursor-pointer hover:[stroke:rgb(244_67_54/0.35)]"
               onPointerDown={(e) => e.stopPropagation()}
-              onClick={() => useScriptorium.getState().removeWire(w.id)}
+              onClick={() => useWriteme.getState().removeWire(w.id)}
             />
           </g>
         );
@@ -75,10 +75,10 @@ const PBCardsLayer = memo(function PBCardsLayer({ cards, selectedCardId, handleC
 
 export function PlotBoardPage({ boardId }: { boardId: string }) {
   const { t } = useTranslation();
-  const board = useScriptorium((s) => (s.plotBoards ?? []).find((b) => b.id === boardId));
-  const pushToast = useScriptorium((s) => s.pushToast);
-  const pushPBHistory = useScriptorium((s) => s.pushPBHistory);
-  const flags = useScriptorium(useShallow((s) => {
+  const board = useWriteme((s) => (s.plotBoards ?? []).find((b) => b.id === boardId));
+  const pushToast = useWriteme((s) => s.pushToast);
+  const pushPBHistory = useWriteme((s) => s.pushPBHistory);
+  const flags = useWriteme(useShallow((s) => {
     const h = s.histories[`pb_${boardId}`];
     return { canUndo: !!h?.undo.length, canRedo: !!h?.redo.length };
   }));
@@ -97,7 +97,7 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
 
   // Coalesced drag: at most one moveCard per frame, final position flushed.
   const moveCardRaf = useRafCallback((id: string, x: number, y: number) => {
-    useScriptorium.getState().moveCard(id, x, y);
+    useWriteme.getState().moveCard(id, x, y);
   });
 
   useEffect(() => {
@@ -138,7 +138,7 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
       const t = e.target as Element;
       if (t.closest(".conn-btn")) return;
       if (connecting && connecting !== c.id) {
-        useScriptorium.getState().addWire(boardId, connecting, c.id);
+        useWriteme.getState().addWire(boardId, connecting, c.id);
         setConnecting(null);
         setGhost(null);
         return;
@@ -158,11 +158,11 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
           className={BOARD_NAME_INPUT}
           aria-label={t("plotboard.page.name")}
           value={board.name}
-          onChange={(e) => useScriptorium.getState().renamePlotBoard(boardId, e.target.value)}
+          onChange={(e) => useWriteme.getState().renamePlotBoard(boardId, e.target.value)}
         />
         <div className={BOARD_ACTIONS}>
-          <button type="button" aria-label={t("plotboard.page.undo")} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoPB(boardId)}>↶</button>
-          <button type="button" aria-label={t("plotboard.page.redo")} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoPB(boardId)}>↷</button>
+          <button type="button" aria-label={t("plotboard.page.undo")} disabled={!flags.canUndo} onClick={() => useWriteme.getState().undoPB(boardId)}>↶</button>
+          <button type="button" aria-label={t("plotboard.page.redo")} disabled={!flags.canRedo} onClick={() => useWriteme.getState().redoPB(boardId)}>↷</button>
           <button
             type="button"
             onClick={() => {
@@ -172,7 +172,7 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
               const v = viewRef.current;
               const x = (el.clientWidth / 2 - v.panX) / v.s;
               const y = (el.clientHeight / 2 - v.panY) / v.s;
-              const created = useScriptorium.getState().addCard(boardId, { x, y, actId: board.acts[0]?.id });
+              const created = useWriteme.getState().addCard(boardId, { x, y, actId: board.acts[0]?.id });
               if (created) setSelectedCardId(created.id);
             }}
           >
@@ -247,7 +247,7 @@ export function PlotBoardPage({ boardId }: { boardId: string }) {
           ) : connecting ? (
             <div className="absolute bottom-3.5 left-1/2 -translate-x-1/2 bg-night-2 border border-line text-parchment-dim px-3 py-1.5 rounded-lg text-[13px]">{t("plotboard.page.chooseScene")}</div>
           ) : null}
-          {notesOpen ? <BoardNotepad notes={board.notes} onNotes={(v) => useScriptorium.getState().setBoardNotes(boardId, v)} onClose={() => setNotesOpen(false)} /> : null}
+          {notesOpen ? <BoardNotepad notes={board.notes} onNotes={(v) => useWriteme.getState().setBoardNotes(boardId, v)} onClose={() => setNotesOpen(false)} /> : null}
         </div>
         <PlotBoardPanel board={board} selectedId={selectedCardId} onSelect={setSelectedCardId} />
       </div>

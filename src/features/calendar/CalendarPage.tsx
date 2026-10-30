@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import type { CustomCalendar } from "../../domain/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -83,9 +83,9 @@ const MonthSection = memo(function MonthSection({ month, monthIndex, yearIndex, 
 
 export function CalendarPage({ calendarId }: { calendarId: string }) {
   const { t } = useTranslation();
-  const cal = useScriptorium((s) => (s.calendars ?? []).find((c) => c.id === calendarId));
-  const pushToast = useScriptorium((s) => s.pushToast);
-  const flags = useScriptorium(useShallow((s) => {
+  const cal = useWriteme((s) => (s.calendars ?? []).find((c) => c.id === calendarId));
+  const pushToast = useWriteme((s) => s.pushToast);
+  const flags = useWriteme(useShallow((s) => {
     const h = s.histories[`cl_${calendarId}`];
     return { canUndo: !!h?.undo.length, canRedo: !!h?.redo.length };
   }));
@@ -111,7 +111,7 @@ export function CalendarPage({ calendarId }: { calendarId: string }) {
 
   const nameDraft = useDebouncedDraft(
     cal?.name ?? "",
-    (v) => { if (cal && v.trim() && v !== cal.name) useScriptorium.getState().renameCalendar(calendarId, v); },
+    (v) => { if (cal && v.trim() && v !== cal.name) useWriteme.getState().renameCalendar(calendarId, v); },
     300,
   );
   useEffect(() => () => nameDraft.flush(), [nameDraft.flush]);
@@ -145,7 +145,7 @@ export function CalendarPage({ calendarId }: { calendarId: string }) {
 
   if (!cal) return null;
 
-  const store = useScriptorium.getState;
+  const store = useWriteme.getState;
 
   return (
     <div className="grid grid-rows-[auto_1fr] h-full" data-testid="calendar-page">
@@ -204,7 +204,7 @@ function DayPanel({ cal, dayKey, onClose }: {
   onClose(): void;
 }) {
   const { t } = useTranslation();
-  const store = useScriptorium.getState;
+  const store = useWriteme.getState;
   const events = dayKey ? (cal.events[dayKey] ?? []) : [];
   const [text, setText] = useState("");
   const [category, setCategory] = useState<string>(EVENT_CATEGORIES[0]);
@@ -287,7 +287,7 @@ function FirstDayPicker({ cal }: { cal: CustomCalendar }) {
   const { t } = useTranslation();
   const [first, setFirst] = useState(String(cal.startingWeekday));
   return (
-    <Select value={first} onValueChange={(v) => { setFirst(v); useScriptorium.getState().setStartingWeekday(cal.id, Number(v)); }}>
+    <Select value={first} onValueChange={(v) => { setFirst(v); useWriteme.getState().setStartingWeekday(cal.id, Number(v)); }}>
       <SelectTrigger aria-label={t("calendar.config.firstDayAria")} className="w-full justify-between rounded-sm border-line bg-ink px-2 py-1.5 text-xs text-parchment hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
       <SelectContent className="border-line bg-night text-parchment">
         {cal.weekdays.map((w, i) => <SelectItem key={i} value={String(i)} className="text-xs focus:bg-accent focus:text-parchment">{w}</SelectItem>)}
@@ -298,7 +298,7 @@ function FirstDayPicker({ cal }: { cal: CustomCalendar }) {
 
 function ConfigPopover({ cal, onClose }: { cal: CustomCalendar; onClose(): void }) {
   const { t } = useTranslation();
-  const store = useScriptorium.getState;
+  const store = useWriteme.getState;
   const [newMonth, setNewMonth] = useState("");
   const [newMonthDays, setNewMonthDays] = useState(30);
   useEffect(() => {

@@ -2,17 +2,17 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it } from "vitest";
 import { AppRouter } from "../app/router";
-import { useScriptorium } from "../data/store";
+import { useWriteme } from "../data/store";
 import type { Manuscript } from "../domain/types";
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 
 function workspaceAt() {
-  const p = useScriptorium.getState().addProject("Shimradis");
-  useScriptorium.setState((s) => ({
+  const p = useWriteme.getState().addProject("Shimradis");
+  useWriteme.setState((s) => ({
     entries: [
       ...(s.entries ?? []),
       { id: "ent-1", projectId: p.id, title: "King Aldric", category: "person", body: "", links: [] },
@@ -23,7 +23,7 @@ function workspaceAt() {
     id: "man-test", projectId: p.id, title: "Cantar de Vellmora", author: "R",
     chapters: [{ id: "ch-1", heading: "The Long Winter", scenes: [{ id: "sc-1", content: "", order: 0 }], order: 0 }],
   };
-  useScriptorium.setState((s) => ({ manuscripts: [...(s.manuscripts ?? []), manuscript] as never[] }));
+  useWriteme.setState((s) => ({ manuscripts: [...(s.manuscripts ?? []), manuscript] as never[] }));
   render(
     <MemoryRouter initialEntries={[`/p/${p.id}`]}>
       <AppRouter />

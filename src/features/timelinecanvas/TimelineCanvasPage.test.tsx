@@ -2,15 +2,15 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { firePointer } from "../../test/pointer";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { TimelineCanvasPage } from "./TimelineCanvasPage";
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 const timeline = () => store().timelines![0];
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 
 Object.defineProperty(HTMLElement.prototype, "clientWidth", { configurable: true, value: 1200 });

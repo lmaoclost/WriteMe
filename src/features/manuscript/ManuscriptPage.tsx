@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useContext } from "r
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import type { Manuscript } from "../../domain/types";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { undoToastAction } from "../../ui/undoAction";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { ChapterList } from "./ChapterList";
@@ -19,10 +19,10 @@ const CONFIRM_RESET_MS = 3000;
 function BookInputs({ manuscript }: { manuscript: Manuscript }) {
   const { t } = useTranslation();
   const commitTitle = useCallback((v: string) => {
-    useScriptorium.getState().renameManuscript(manuscript.id, v);
+    useWriteme.getState().renameManuscript(manuscript.id, v);
   }, [manuscript.id]);
   const commitAuthor = useCallback((v: string) => {
-    useScriptorium.getState().setManuscriptAuthor(manuscript.id, v);
+    useWriteme.getState().setManuscriptAuthor(manuscript.id, v);
   }, [manuscript.id]);
   const titleDraft = useDebouncedDraft(manuscript.title, commitTitle);
   const authorDraft = useDebouncedDraft(manuscript.author, commitAuthor);
@@ -50,7 +50,7 @@ function BookInputs({ manuscript }: { manuscript: Manuscript }) {
 
 export function ManuscriptPage({ projectId }: { projectId: string }) {
   const { t } = useTranslation();
-  const books = useScriptorium(
+  const books = useWriteme(
     useShallow((s) => s.manuscripts.filter((m) => m.projectId === projectId)),
   );
   const focusCtx = useContext(FocusContext);
@@ -103,7 +103,7 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
   useEffect(() => () => window.clearTimeout(confirmTimerRef.current), []);
 
   const createBook = () => {
-    const created = useScriptorium.getState().addManuscript(projectId);
+    const created = useWriteme.getState().addManuscript(projectId);
     setBookId(created.id);
     setChapterId(null);
   };
@@ -113,10 +113,10 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
       setArmed(false);
       window.clearTimeout(confirmTimerRef.current);
       if (!bookId) return;
-      const remaining = useScriptorium.getState().manuscripts
+      const remaining = useWriteme.getState().manuscripts
         .filter((m) => m.projectId === projectId && m.id !== bookId);
-      useScriptorium.getState().deleteManuscript(bookId);
-      useScriptorium.getState().pushToast("success", t("manuscript.bookDeleted"), undoToastAction());
+      useWriteme.getState().deleteManuscript(bookId);
+      useWriteme.getState().pushToast("success", t("manuscript.bookDeleted"), undoToastAction());
       setBookId(remaining[0]?.id ?? null);
       setChapterId(null);
       return;
@@ -133,7 +133,7 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
 
   const createChapter = () => {
     if (!book) return;
-    const created = useScriptorium.getState().addChapter(book.id);
+    const created = useWriteme.getState().addChapter(book.id);
     if (!created) return;
     setChapterId(created.id);
     setSceneId(null);
@@ -142,7 +142,7 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
 
   const onChapterDeleted = (id: string) => {
     const remaining = chapters.filter((c) => c.id !== id);
-    useScriptorium.getState().deleteChapter(id);
+    useWriteme.getState().deleteChapter(id);
     setChapterId(remaining[0]?.id ?? null);
     setSceneId(null);
   };
@@ -225,7 +225,7 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
           onSelect={setChapterId}
           onSceneSelect={onSceneSelectCallback}
           onCreate={createChapter}
-          onCreatePart={() => { useScriptorium.getState().addPart(book.id); }}
+          onCreatePart={() => { useWriteme.getState().addPart(book.id); }}
         />
         <section className="min-h-0 overflow-y-auto py-1 px-6 pb-[18px] flex flex-col gap-3.5">
           {chapter ? (

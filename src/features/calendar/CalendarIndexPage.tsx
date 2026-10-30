@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { undoToastAction } from "../../ui/undoAction";
 import { Button } from "../../ui/Button";
 import { CARD_GRID, WORLD_CARD, CARD_LINK, CARD_NAME, CARD_DESC, DELETE_CHIP, EMPTY_STATE } from "../../ui/pageBits";
@@ -10,8 +10,8 @@ import { Field } from "../../ui/Field";
 
 export function CalendarIndexPage({ projectId }: { projectId: string }) {
   const { t } = useTranslation();
-  const cals = useScriptorium((s) => s.calendars ?? []);
-  const pushToast = useScriptorium((s) => s.pushToast);
+  const cals = useWriteme((s) => s.calendars ?? []);
+  const pushToast = useWriteme((s) => s.pushToast);
   const mine = cals.filter((c) => c.projectId === projectId);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
@@ -58,7 +58,7 @@ export function CalendarIndexPage({ projectId }: { projectId: string }) {
               <Button onClick={() => {
                 const n = name.trim();
                 if (!n) { pushToast("error", t("calendar.index.nameRequired")); return; }
-                useScriptorium.getState().addCalendar(projectId, n);
+                useWriteme.getState().addCalendar(projectId, n);
                 setCreating(false);
                 setName("");
               }}>{t("calendar.index.create")}</Button>
@@ -73,7 +73,7 @@ export function CalendarIndexPage({ projectId }: { projectId: string }) {
           <p className="text-parchment-dim">{t("calendar.index.deleteBody")}</p>
           <div className="mt-2 flex justify-end gap-2.5">
             <Button kind="danger" onClick={() => {
-              useScriptorium.getState().deleteCalendar(target.id);
+              useWriteme.getState().deleteCalendar(target.id);
               pushToast("success", t("calendar.index.deleted"), undoToastAction());
               setToDelete(null);
             }}>{t("common.delete")}</Button>

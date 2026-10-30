@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { dateIsEmpty, dateKey, formatDateWithCalendar, sanitizeDate } from "../../domain/dates";
 import type { CustomCalendar } from "../../domain/types";
 import { CATEGORY_COLORS, categoryDot } from "../entries/categories";
@@ -28,10 +28,10 @@ const snippet = (body: string): string => {
 
 export function TimelinePage({ projectId }: { projectId: string }) {
   const { t } = useTranslation();
-  const entries = useScriptorium(
+  const entries = useWriteme(
     useShallow((s) => s.entries.filter((e) => e.projectId === projectId)),
   );
-  const calendar = useScriptorium(
+  const calendar = useWriteme(
     (s) => (s.calendars ?? []).find((c) => c.projectId === projectId),
   );
   const navigate = useNavigate();

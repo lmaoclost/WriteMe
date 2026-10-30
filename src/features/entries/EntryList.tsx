@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { WorldEntry, EntryCategory } from "../../domain/types";
 import { useShallow } from "zustand/react/shallow";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { codexCategoryChips, CATEGORY_CANONICAL, categoryDot } from "./categories";
 import { Button } from "../../ui/Button";
 import type { EntryKind } from "../../domain/types";
@@ -21,7 +21,7 @@ export function EntryList({ entries, selectedId, onSelect, onCreate, onCreateKin
   const { t, i18n } = useTranslation();
   const [chip, setChip] = useState<EntryCategory | string | null>(null);
   const [query, setQuery] = useState("");
-  const customKinds = useScriptorium(useShallow((s) =>
+  const customKinds = useWriteme(useShallow((s) =>
     s.projects.find((p) => p.id === entries[0]?.projectId)?.customCategories ?? NO_KINDS));
 
   const needle = query.trim().toLocaleLowerCase(i18n.language);

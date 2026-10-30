@@ -1,17 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { BloodlineCanvasPage } from "./BloodlineCanvas";
 import type { Bloodline } from "../../domain/types";
 import { firePointer } from "../../test/pointer";
 import { selectOption } from "../../test/selectHelper";
 import "@testing-library/jest-dom/vitest";
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 afterEach(() => vi.restoreAllMocks());
 

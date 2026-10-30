@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor, act, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { selectOption } from "../../test/selectHelper";
 import { LibraryPage } from "./LibraryPage";
 
@@ -18,7 +18,7 @@ const SURFACE_NAMES = [
 ];
 
 beforeEach(() => {
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
   localStorage.clear();
 });
 
@@ -64,7 +64,7 @@ describe("LibraryPage hub", () => {
   });
 
   it("single world shows its card and no active-world selector", () => {
-    const p = useScriptorium.getState().addProject("Solo");
+    const p = useWriteme.getState().addProject("Solo");
     render(wrap());
     expect(screen.queryByLabelText(/active world/i)).toBeNull();
     expect(screen.getByRole("link", { name: /Solo/i })).toHaveAttribute("href", `/p/${p.id}`);
@@ -74,9 +74,9 @@ describe("LibraryPage hub", () => {
     render(wrap());
     const btn = screen.getByRole("button", { name: /load the sample project/i });
     fireEvent.click(btn);
-    await waitFor(() => expect(useScriptorium.getState().seedFlag).toBe(true));
-    expect(useScriptorium.getState().projects).toHaveLength(1);
-    expect(useScriptorium.getState().entries.length).toBeGreaterThanOrEqual(6);
+    await waitFor(() => expect(useWriteme.getState().seedFlag).toBe(true));
+    expect(useWriteme.getState().projects).toHaveLength(1);
+    expect(useWriteme.getState().entries.length).toBeGreaterThanOrEqual(6);
     expect(screen.queryByRole("button", { name: /load the sample project/i })).toBeNull();
   });
 
@@ -90,29 +90,29 @@ describe("LibraryPage hub", () => {
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Shimradis" } });
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
     await waitFor(() =>
-      expect(useScriptorium.getState().projects.map((p) => p.name)).toEqual(["Shimradis"]));
-    expect(useScriptorium.getState().toasts.some((t) => t.message === "World created.")).toBe(true);
+      expect(useWriteme.getState().projects.map((p) => p.name)).toEqual(["Shimradis"]));
+    expect(useWriteme.getState().toasts.some((t) => t.message === "World created.")).toBe(true);
   });
 
   it("deletes with EN confirmation modal", async () => {
-    act(() => { useScriptorium.getState().addProject("Old"); });
+    act(() => { useWriteme.getState().addProject("Old"); });
     render(wrap());
     fireEvent.click(screen.getByRole("button", { name: "Delete world" }));
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
-    await waitFor(() => expect(useScriptorium.getState().projects).toHaveLength(0));
-    expect(useScriptorium.getState().toasts.some((t) => t.message === "World deleted.")).toBe(true);
+    await waitFor(() => expect(useWriteme.getState().projects).toHaveLength(0));
+    expect(useWriteme.getState().toasts.some((t) => t.message === "World deleted.")).toBe(true);
   });
 
   it("world cards show relative updated stamps", () => {
-    useScriptorium.getState().addProject("Stamper");
+    useWriteme.getState().addProject("Stamper");
     render(wrap());
     expect(screen.getByText(/Updated (just now|a minute ago|1 minute ago|\d+ (minutes?|hours?) ago|today)/i)).toBeInTheDocument();
   });
 
   it("search and sort appear at three worlds and filter the list", () => {
-    useScriptorium.getState().addProject("Amber Library");
-    useScriptorium.getState().addProject("Bastion");
-    useScriptorium.getState().addProject("Cinder March");
+    useWriteme.getState().addProject("Amber Library");
+    useWriteme.getState().addProject("Bastion");
+    useWriteme.getState().addProject("Cinder March");
     render(wrap());
     const section = screen.getByRole("region", { name: "My worlds" });
     expect(within(section).getByRole("searchbox", { name: /search worlds/i })).toBeInTheDocument();
@@ -122,7 +122,7 @@ describe("LibraryPage hub", () => {
   });
 
   it("sort by name orders cards A–Z", async () => {
-    ["Zulu", "Alder", "Mirren"].forEach((n) => useScriptorium.getState().addProject(n));
+    ["Zulu", "Alder", "Mirren"].forEach((n) => useWriteme.getState().addProject(n));
     render(wrap());
     await selectOption(() => screen.getByLabelText(/sort/i), "Name A–Z");
     const h2 = screen.getByRole("heading", { name: "My worlds" });
@@ -150,7 +150,7 @@ describe("LibraryPage hub", () => {
 
 describe("library backup", () => {
   it("offers an export button that downloads a JSON backup", async () => {
-    act(() => { useScriptorium.getState().addProject("Shimradis"); });
+    act(() => { useWriteme.getState().addProject("Shimradis"); });
     let captured: Blob | null = null;
     const stub = (name: "createObjectURL" | "revokeObjectURL", impl: unknown) => {
       Object.defineProperty(URL, name, { value: impl, writable: true, configurable: true });
@@ -176,9 +176,9 @@ describe("library backup", () => {
   });
 
   it("restore replaces the whole library from a backup file", async () => {
-    act(() => { useScriptorium.getState().addProject("Temporary"); });
-    const exportBefore = useScriptorium.getState().exportData();
-    act(() => { useScriptorium.getState().resetAll(); });
+    act(() => { useWriteme.getState().addProject("Temporary"); });
+    const exportBefore = useWriteme.getState().exportData();
+    act(() => { useWriteme.getState().resetAll(); });
     render(wrap());
     fireEvent.click(screen.getByRole("button", { name: "Restore backup" }));
     const input = screen.getByLabelText(/Restore from backup file/i) as HTMLInputElement;
@@ -186,8 +186,8 @@ describe("library backup", () => {
     await act(async () => { fireEvent.change(input, { target: { files: [file] } }); });
     await waitFor(() => expect(screen.getByRole("button", { name: "Restore" })).toBeEnabled());
     fireEvent.click(screen.getByRole("button", { name: "Restore" }));
-    expect(useScriptorium.getState().projects.map((p) => p.name)).toContain("Temporary");
-    expect(useScriptorium.getState().toasts.some((t) => /restored/i.test(t.message))).toBe(true);
+    expect(useWriteme.getState().projects.map((p) => p.name)).toContain("Temporary");
+    expect(useWriteme.getState().toasts.some((t) => /restored/i.test(t.message))).toBe(true);
   });
 
   it("restore rejects invalid files with an error toast", async () => {
@@ -196,7 +196,7 @@ describe("library backup", () => {
     const input = screen.getByLabelText(/Restore from backup file/i) as HTMLInputElement;
     const file = new File(["{not json"], "broken.json", { type: "application/json" });
     await act(async () => { fireEvent.change(input, { target: { files: [file] } }); });
-    await waitFor(() => expect(useScriptorium.getState().toasts.some((t) => t.kind === "error")).toBe(true));
+    await waitFor(() => expect(useWriteme.getState().toasts.some((t) => t.kind === "error")).toBe(true));
     expect(screen.getByRole("button", { name: "Download backup" })).toBeInTheDocument();
   });
 
@@ -210,21 +210,21 @@ describe("library backup", () => {
     const file = new File([""], "unreadable.json", { type: "application/json" });
     await act(async () => { fireEvent.change(input, { target: { files: [file] } }); });
     readSpy.mockRestore();
-    await waitFor(() => expect(useScriptorium.getState().toasts.some((t) => t.message.includes("read"))).toBe(true));
+    await waitFor(() => expect(useWriteme.getState().toasts.some((t) => t.message.includes("read"))).toBe(true));
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("restore needs a confirmation before replacing the library", async () => {
-    const exportBefore = useScriptorium.getState().exportData();
+    const exportBefore = useWriteme.getState().exportData();
     render(wrap());
     fireEvent.click(screen.getByRole("button", { name: "Restore backup" }));
     expect(screen.getByText(/replaces the whole library/i)).toBeInTheDocument();
-    expect(useScriptorium.getState().projects).toHaveLength(0);
+    expect(useWriteme.getState().projects).toHaveLength(0);
     const input = screen.getByLabelText(/Restore from backup file/i) as HTMLInputElement;
     const file = new File([exportBefore], "backup.json", { type: "application/json" });
     await act(async () => { fireEvent.change(input, { target: { files: [file] } }); });
     await waitFor(() => expect(screen.getByRole("button", { name: "Restore" })).toBeEnabled());
     fireEvent.click(screen.getByRole("button", { name: "Restore" }));
-    expect(useScriptorium.getState().toasts.some((t) => /restored/i.test(t.message))).toBe(true);
+    expect(useWriteme.getState().toasts.some((t) => /restored/i.test(t.message))).toBe(true);
   });
 });

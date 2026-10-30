@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { ConlangPage } from "./ConlangPage";
 import { ConlangIndexPage } from "./ConlangIndexPage";
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 
 const seed = () => store().addConlang("prj_1", "Fala do Selo");

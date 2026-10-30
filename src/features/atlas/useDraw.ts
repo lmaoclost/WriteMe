@@ -8,7 +8,7 @@ import {
   snapToCarveBorder,
 } from "../../domain/geometry";
 import { buildCarveChild, detectCarveParent, regionNearestToPoint } from "../../domain/carve";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { i18n } from "../../i18n";
 import { useRafState } from "../../ui/useRaf";
 import type { TransformApi } from "./stage/useStageTransform";
@@ -97,7 +97,7 @@ export function useDraw({ atlasId, transformApi, tool, mode, onFinish }: UseDraw
 
   const regionsNow = useCallback((): Array<{ id: Id; points: Pt[] }> => {
     return (
-      useScriptorium.getState().atlases.find((a) => a.id === atlasIdRef.current)?.regions ?? []
+      useWriteme.getState().atlases.find((a) => a.id === atlasIdRef.current)?.regions ?? []
     );
   }, []);
 
@@ -172,7 +172,7 @@ export function useDraw({ atlasId, transformApi, tool, mode, onFinish }: UseDraw
     const parentId = parentRef.current;
     const isNeighbor = modeRef.current === "neighbor";
     if (!preview || !parentId) return null;
-    const store = useScriptorium.getState();
+    const store = useWriteme.getState();
     if (preview.points.length < 3) {
       clear();
       store.pushToast("error", i18n.t("atlas.draw.edge"));
@@ -201,7 +201,7 @@ export function useDraw({ atlasId, transformApi, tool, mode, onFinish }: UseDraw
   const finishRegion = useCallback((): Region | null => {
     const points = verticesRef.current;
     if (points.length < 3) return null;
-    const store = useScriptorium.getState();
+    const store = useWriteme.getState();
     const region = store.addRegion(atlasIdRef.current, { points });
     if (region) {
       onFinishRef.current?.(region);
@@ -217,7 +217,7 @@ export function useDraw({ atlasId, transformApi, tool, mode, onFinish }: UseDraw
   const commitFit = useCallback((): boolean => {
     const points = verticesRef.current;
     if (points.length < 3) return false;
-    const store = useScriptorium.getState();
+    const store = useWriteme.getState();
     const region = store.fitRegionIntoGap(atlasIdRef.current, points);
     clear();
     if (region) {
@@ -239,7 +239,7 @@ export function useDraw({ atlasId, transformApi, tool, mode, onFinish }: UseDraw
       if (!entryRef.current) return finishRegion() !== null;
       // Armed entry without a snapped exit must not be a silent dead end (S2):
       // The toast fires and the carve stays armed for a better exit click.
-      useScriptorium.getState().pushToast("error", i18n.t("atlas.draw.edge"));
+      useWriteme.getState().pushToast("error", i18n.t("atlas.draw.edge"));
       return false;
     }
     if (current === "fit") return commitFit();

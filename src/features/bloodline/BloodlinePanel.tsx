@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { fileToDataUrl } from "../../data/image";
 import type { Bloodline, BloodlineHouse, BloodlinePerson, BloodlineTenure } from "../../domain/types";
@@ -69,15 +69,15 @@ function PersonPanel({ bloodline, person, onSelect }: {
   person: BloodlinePerson;
   onSelect(id: string | null): void;
 }) {
-  const store = useScriptorium.getState;
+  const store = useWriteme.getState;
   const { t } = useTranslation();
-  const pushToast = useScriptorium((s) => s.pushToast);
+  const pushToast = useWriteme((s) => s.pushToast);
   const [armDelete, setArmDelete] = useState(false);
   const [portraitUploading, setPortraitUploading] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [entryPickerOpen, setEntryPickerOpen] = useState(false);
   const update = (patch: Partial<BloodlinePerson>) => store().updatePerson(person.id, patch);
-  const projectEntries = useScriptorium(
+  const projectEntries = useWriteme(
     useShallow((s) => s.entries.filter((e) => e.projectId === bloodline.projectId)),
   );
   const linkedEntry = person.entryId ? projectEntries.find((e) => e.id === person.entryId) : undefined;
@@ -301,8 +301,8 @@ function PersonPanel({ bloodline, person, onSelect }: {
 }
 
 function PortraitThumb({ personId, fallbackKey }: { personId: string; fallbackKey?: string }) {
-  const images = useScriptorium((s) => s.images);
-  const person = useScriptorium((s) => s.bloodlines.flatMap((b) => b.persons).find((p) => p.id === personId));
+  const images = useWriteme((s) => s.images);
+  const person = useWriteme((s) => s.bloodlines.flatMap((b) => b.persons).find((p) => p.id === personId));
   const key = person?.portraitKey ?? fallbackKey;
   const src = key ? images[key] : undefined;
   if (!src) return null;
@@ -370,9 +370,9 @@ function HousePanel({ bloodline, house, onSelect }: {
   house: BloodlineHouse;
   onSelect(id: string | null): void;
 }) {
-  const store = useScriptorium.getState;
+  const store = useWriteme.getState;
   const { t } = useTranslation();
-  const pushToast = useScriptorium((s) => s.pushToast);
+  const pushToast = useWriteme((s) => s.pushToast);
   const [armDelete, setArmDelete] = useState(false);
   const update = (patch: Partial<BloodlineHouse>) => store().updateHouse(house.id, patch);
   const removeHouse = () => {

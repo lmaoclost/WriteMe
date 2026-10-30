@@ -3,7 +3,7 @@ import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AppRouter } from "../../app/router";
 import { fileToDataUrl } from "../../data/image";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 
 vi.mock("../../data/image", () => ({
   fileToDataUrl: vi.fn(async () => ({ dataUrl: "data:image/png;base64,COVER", keptPng: true })),
@@ -24,7 +24,7 @@ async function at(path: string): Promise<ReturnType<typeof render>> {
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 
 describe("shell routes", () => {
@@ -36,13 +36,13 @@ describe("shell routes", () => {
   it("unknown project redirects to library with a toast", async () => {
     await at("/p/does-not-exist");
     await waitFor(() => {
-      expect(useScriptorium.getState().toasts.some((t) => /removed/i.test(t.message))).toBe(true);
+      expect(useWriteme.getState().toasts.some((t) => /removed/i.test(t.message))).toBe(true);
     });
     expect(screen.getByText("WriteMe")).toBeInTheDocument();
   });
 
   it("workspace overview shows counts and rail sections", async () => {
-    const p = useScriptorium.getState().addProject("Shimradis");
+    const p = useWriteme.getState().addProject("Shimradis");
     await at(`/p/${p.id}`);
     expect(screen.getAllByText(/Shimradis/).length).toBeGreaterThan(0);
     const rail = within(screen.getByRole("navigation", { name: /World sections/i }));
@@ -54,7 +54,7 @@ describe("shell routes", () => {
   });
 
   it("atlas route shows the atlas index (not a placeholder)", async () => {
-    const p = useScriptorium.getState().addProject("X");
+    const p = useWriteme.getState().addProject("X");
     await at(`/p/${p.id}/atlas`);
     expect(screen.getByText("No saved atlases found. Create a new one first!")).toBeInTheDocument();
     expect(screen.queryByText(/sub-projeto 2/i)).not.toBeInTheDocument();
@@ -64,14 +64,14 @@ describe("shell routes", () => {
 
 describe("overview cover", () => {
   it("uploads a cover from file and records image key", async () => {
-    const p = useScriptorium.getState().addProject("Coberto");
+    const p = useWriteme.getState().addProject("Coberto");
     await at(`/p/${p.id}`);
     fireEvent.change(screen.getByLabelText("Change cover"), {
       target: { files: [new File(["c"], "capa.png", { type: "image/png" })] },
     });
     await waitFor(() =>
-      expect(useScriptorium.getState().projects.find((q) => q.id === p.id)?.coverImageKey).toBeTruthy());
-    const s = useScriptorium.getState();
+      expect(useWriteme.getState().projects.find((q) => q.id === p.id)?.coverImageKey).toBeTruthy());
+    const s = useWriteme.getState();
     const key = s.projects.find((q) => q.id === p.id)?.coverImageKey;
     expect(key).toContain("cover");
     expect(Object.keys(s.images)).toHaveLength(1);
@@ -80,42 +80,42 @@ describe("overview cover", () => {
   });
 
   it("replaces an existing cover, removing the old image", async () => {
-    const p = useScriptorium.getState().addProject("Coberto");
+    const p = useWriteme.getState().addProject("Coberto");
     let oldKey!: string;
-    act(() => { oldKey = useScriptorium.getState().putImage("data:image/png;base64,OLD", "cover"); });
-    act(() => { useScriptorium.getState().updateProject(p.id, { coverImageKey: oldKey }); });
+    act(() => { oldKey = useWriteme.getState().putImage("data:image/png;base64,OLD", "cover"); });
+    act(() => { useWriteme.getState().updateProject(p.id, { coverImageKey: oldKey }); });
     await at(`/p/${p.id}`);
     fireEvent.change(screen.getByLabelText("Change cover"), {
       target: { files: [new File(["c"], "capa.png", { type: "image/png" })] },
     });
     await waitFor(() => {
-      const s = useScriptorium.getState();
+      const s = useWriteme.getState();
       const key = s.projects.find((q) => q.id === p.id)?.coverImageKey;
       expect(key).toBeTruthy();
       expect(key).not.toBe(oldKey);
     });
-    const s = useScriptorium.getState();
+    const s = useWriteme.getState();
     expect(s.images[oldKey]).toBeUndefined();
     expect(Object.keys(s.images)).toHaveLength(1);
   });
 
   it("shows an error toast when cover upload fails", async () => {
     vi.mocked(fileToDataUrl).mockRejectedValueOnce(new Error("boom"));
-    const p = useScriptorium.getState().addProject("Falha");
+    const p = useWriteme.getState().addProject("Falha");
     await at(`/p/${p.id}`);
     fireEvent.change(screen.getByLabelText("Change cover"), {
       target: { files: [new File(["c"], "capa.png", { type: "image/png" })] },
     });
     await waitFor(() =>
-      expect(useScriptorium.getState().toasts.some((t) => t.kind === "error")).toBe(true));
-    expect(useScriptorium.getState().projects.find((q) => q.id === p.id)?.coverImageKey).toBeFalsy();
+      expect(useWriteme.getState().toasts.some((t) => t.kind === "error")).toBe(true));
+    expect(useWriteme.getState().projects.find((q) => q.id === p.id)?.coverImageKey).toBeFalsy();
   });
 });
 
 describe("overview dashboard", () => {
   function seeded() {
-    act(() => { useScriptorium.getState().seedDemo(); });
-    const id = useScriptorium.getState().projects[0].id;
+    act(() => { useWriteme.getState().seedDemo(); });
+    const id = useWriteme.getState().projects[0].id;
     return id;
   }
 
@@ -168,7 +168,7 @@ describe("overview dashboard", () => {
   });
 
   it("empty rows show a purpose line and an action call instead of a dash", async () => {
-    const pid = useScriptorium.getState().addProject("Blank world").id;
+    const pid = useWriteme.getState().addProject("Blank world").id;
     await at(`/p/${pid}`);
     const ledger = within(screen.getByRole("region", { name: "Forge ledger" }));
     expect(ledger.getByText("Characters, places, creatures and things")).toBeInTheDocument();
@@ -190,7 +190,7 @@ describe("overview dashboard", () => {
 });
 describe("Bindery index", () => {
   it("rail gains a Publishing item and the ledger row points at the index", async () => {
-    const p = useScriptorium.getState().addProject("Shimradis");
+    const p = useWriteme.getState().addProject("Shimradis");
     await at(`/p/${p.id}`);
     const rail = within(screen.getByRole("navigation", { name: /world sections/i }));
     expect(rail.getByRole("link", { name: "Publishing" })).toHaveAttribute("href", `/p/${p.id}/bindery`);
@@ -199,29 +199,29 @@ describe("Bindery index", () => {
   });
 
   it("index lists manuscripts with chapter counts and links into the deep route", async () => {
-    const p = useScriptorium.getState().addProject("Shimradis");
-    act(() => { useScriptorium.getState().addManuscript(p.id, "Cantar de Vellmora"); });
-    act(() => { useScriptorium.getState().addChapter(useScriptorium.getState().manuscripts[0].id, "Arco da Coroa"); });
-    act(() => { useScriptorium.getState().setBindery(useScriptorium.getState().manuscripts[0].id, { trim: "5x8" }); });
+    const p = useWriteme.getState().addProject("Shimradis");
+    act(() => { useWriteme.getState().addManuscript(p.id, "Cantar de Vellmora"); });
+    act(() => { useWriteme.getState().addChapter(useWriteme.getState().manuscripts[0].id, "Arco da Coroa"); });
+    act(() => { useWriteme.getState().setBindery(useWriteme.getState().manuscripts[0].id, { trim: "5x8" }); });
     await at(`/p/${p.id}/bindery`);
     expect(screen.getByRole("heading", { name: "Publishing" })).toBeInTheDocument();
     const row = screen.getByRole("link", { name: /Cantar de Vellmora/i });
-    expect(row.getAttribute("href")).toBe(`/p/${p.id}/bindery/${useScriptorium.getState().manuscripts[0].id}`);
+    expect(row.getAttribute("href")).toBe(`/p/${p.id}/bindery/${useWriteme.getState().manuscripts[0].id}`);
     expect(screen.getByText(/1 chapter/i)).toBeInTheDocument();
     expect(screen.getByText(/5 × 8/i)).toBeInTheDocument();
   });
 
   it("empty index invites creating a manuscript in the Manuscript forge", async () => {
-    const p = useScriptorium.getState().addProject("Shimradis");
+    const p = useWriteme.getState().addProject("Shimradis");
     await at(`/p/${p.id}/bindery`);
     expect(screen.getByText(/no manuscripts yet/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /open the manuscript/i })).toHaveAttribute("href", `/p/${p.id}/manuscript`);
   });
 
   it("deep route still configures the specific manuscript", async () => {
-    const p = useScriptorium.getState().addProject("Shimradis");
-    act(() => { useScriptorium.getState().addManuscript(p.id, "Cantar"); });
-    await at(`/p/${p.id}/bindery/${useScriptorium.getState().manuscripts[0].id}`);
+    const p = useWriteme.getState().addProject("Shimradis");
+    act(() => { useWriteme.getState().addManuscript(p.id, "Cantar"); });
+    await at(`/p/${p.id}/bindery/${useWriteme.getState().manuscripts[0].id}`);
     expect(screen.getByLabelText("Typography")).toBeInTheDocument();
   });
 });

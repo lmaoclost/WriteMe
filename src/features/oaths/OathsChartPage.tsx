@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { tidyOathsChart } from "../../domain/oaths";
 import type { OathsChart, OathLink } from "../../domain/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -112,9 +112,9 @@ const OathsCardsLayer = memo(function OathsCardsLayer({ members, pos, selectedId
 
 export function OathsChartPage({ chartId }: { chartId: string }) {
   const { t } = useTranslation();
-  const chart = useScriptorium((s) => (s.oathsCharts ?? []).find((c) => c.id === chartId));
-  const pushToast = useScriptorium((s) => s.pushToast);
-  const flags = useScriptorium(useShallow((s) => {
+  const chart = useWriteme((s) => (s.oathsCharts ?? []).find((c) => c.id === chartId));
+  const pushToast = useWriteme((s) => s.pushToast);
+  const flags = useWriteme(useShallow((s) => {
     const h = s.histories[`oc_${chartId}`];
     return { canUndo: !!h?.undo.length, canRedo: !!h?.redo.length };
   }));
@@ -132,7 +132,7 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
   // Coalesced drag: at most one moveOathMember per frame, latest position
   // wins; flush() commits the final position when the pointer lifts.
   const moveMemberRaf = useRafCallback((id: string, x: number, y: number) => {
-    useScriptorium.getState().moveOathMember(id, x, y);
+    useWriteme.getState().moveOathMember(id, x, y);
   });
 
   useEffect(() => {
@@ -258,7 +258,7 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
   const handleConnectDown = useCallback((id: string) => cardHandlersRef.current.connectDown(id), []);
   const connectTo = (targetId: string) => {
     if (!pendingFrom || pendingFrom === targetId) { setPendingFrom(null); setCursor(null); return; }
-    useScriptorium.getState().addOathLink(chart.id, targetId, pendingFrom); // subordinate = target, superior = origin
+    useWriteme.getState().addOathLink(chart.id, targetId, pendingFrom); // subordinate = target, superior = origin
     setPendingFrom(null);
     setCursor(null);
   };
@@ -278,7 +278,7 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
       const dx = ev.clientX - start.x;
       const dy = ev.clientY - start.y;
       if (Math.hypot(dx, dy) <= 5) return;
-      if (!pushed) { useScriptorium.getState().pushOCHistory(chartId); pushed = true; }
+      if (!pushed) { useWriteme.getState().pushOCHistory(chartId); pushed = true; }
       moveMemberRaf(m.id, p.x + dx / scaleRef.current.s, p.y + dy / scaleRef.current.s);
     };
     const onUp = () => {
@@ -312,25 +312,25 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
           className={BOARD_NAME_INPUT}
           aria-label={t("oaths.chart.name")}
           value={chart.name}
-          onChange={(e) => useScriptorium.getState().renameOathsChart(chartId, e.target.value)}
+          onChange={(e) => useWriteme.getState().renameOathsChart(chartId, e.target.value)}
         />
         <div className={BOARD_ACTIONS}>
-          <button type="button" aria-label={t("oaths.chart.undo")} className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useScriptorium.getState().undoOC(chartId)}>↶</button>
-          <button type="button" aria-label={t("oaths.chart.redo")} className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useScriptorium.getState().redoOC(chartId)}>↷</button>
+          <button type="button" aria-label={t("oaths.chart.undo")} className={BOARD_ACTION_BTN} disabled={!flags.canUndo} onClick={() => useWriteme.getState().undoOC(chartId)}>↶</button>
+          <button type="button" aria-label={t("oaths.chart.redo")} className={BOARD_ACTION_BTN} disabled={!flags.canRedo} onClick={() => useWriteme.getState().redoOC(chartId)}>↷</button>
           <button type="button" aria-label={t("oaths.chart.zoomOut")} className={BOARD_ACTION_BTN} onClick={() => { scheduleScale((v) => zoomAt({ ...v }, 1 / 1.25, elWidth(), elHeight())); scheduleScale.flush(); }}>−</button>
           <span className="text-slate text-xs font-mono self-center" data-testid="oc-zoom">{Math.round(scale.s * 100)}%</span>
           <button type="button" aria-label={t("oaths.chart.zoomIn")} className={BOARD_ACTION_BTN} onClick={() => { scheduleScale((v) => zoomAt({ ...v }, 1.25, elWidth(), elHeight())); scheduleScale.flush(); }}>+</button>
           <button type="button" className={BOARD_ACTION_BTN} onClick={() => fitToContentNow()}>{t("oaths.chart.fit")}</button>
           <button type="button" className={BOARD_ACTION_BTN} onClick={() => {
             const rect = stageRef.current?.getBoundingClientRect();
-            useScriptorium.getState().pushOCHistory(chartId);
+            useWriteme.getState().pushOCHistory(chartId);
             const elW = elWidth();
             const elH = elHeight();
-            const m = useScriptorium.getState().addOathMember(chartId, undefined, { name: t("oaths.chart.defaultFounder") });
+            const m = useWriteme.getState().addOathMember(chartId, undefined, { name: t("oaths.chart.defaultFounder") });
             if (m && rect) {
               const x = (elW / 2 - scaleRef.current.panX) / scaleRef.current.s;
               const y = (elH / 2 - scaleRef.current.panY) / scaleRef.current.s;
-              useScriptorium.getState().moveOathMember(m.id, x, y);
+              useWriteme.getState().moveOathMember(m.id, x, y);
             }
             void m;
           }}>{t("oaths.chart.addFounder")}</button>
@@ -382,7 +382,7 @@ export function OathsChartPage({ chartId }: { chartId: string }) {
           {pendingFrom ? (
             <div className="absolute bottom-3.5 left-1/2 -translate-x-1/2 bg-night-2 border border-line text-parchment-dim px-3 py-1.5 rounded-lg text-[13px]">{t("oaths.chart.pickMember")}</div>
           ) : null}
-          {notesOpen ? <OathsNotepadBridge notes={chart.notes} onNotes={(v) => useScriptorium.getState().setOathsNotes(chartId, v)} onClose={() => setNotesOpen(false)} /> : null}
+          {notesOpen ? <OathsNotepadBridge notes={chart.notes} onNotes={(v) => useWriteme.getState().setOathsNotes(chartId, v)} onClose={() => setNotesOpen(false)} /> : null}
         </div>
         <OathsPanel chart={chart} selectedId={selectedId} onSelect={setSelectedId} />
       </div>
@@ -412,9 +412,9 @@ function MemberForm({ chart, member, onSelect }: {
   member: OathsChart["members"][number];
   onSelect(id: string | null): void;
 }) {
-  const store = useScriptorium.getState;
+  const store = useWriteme.getState;
   const { t } = useTranslation();
-  const pushToast = useScriptorium((s) => s.pushToast);
+  const pushToast = useWriteme((s) => s.pushToast);
   const [armDelete, setArmDelete] = useState(false);
   const update = (patch: Partial<OathsChart["members"][number]>) => store().updateOathMember(member.id, patch);
 

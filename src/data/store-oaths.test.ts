@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { act } from "@testing-library/react";
 import { parseExport, validateProjectData } from "./schema";
-import { useScriptorium } from "./store";
+import { useWriteme } from "./store";
 import { tidyOathsChart } from "../domain/oaths";
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 
 const seed = () => {

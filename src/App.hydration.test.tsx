@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi, type MockInstance } from "vitest";
 import App from "./App";
-import { useScriptorium } from "./data/store";
+import { useWriteme } from "./data/store";
 
 describe("hydration gate", () => {
   const spies: MockInstance[] = [];
@@ -12,16 +12,16 @@ describe("hydration gate", () => {
 
   it("deep link stays on its route when the store hydrates late (no hub redirect)", async () => {
     // simulate a first render BEFORE persistence finished rehydrating
-    spies.push(vi.spyOn(useScriptorium.persist, "hasHydrated").mockReturnValue(false));
+    spies.push(vi.spyOn(useWriteme.persist, "hasHydrated").mockReturnValue(false));
     const finishers: Array<() => void> = [];
     spies.push(
-      vi.spyOn(useScriptorium.persist, "onFinishHydration").mockImplementation((cb: unknown) => {
+      vi.spyOn(useWriteme.persist, "onFinishHydration").mockImplementation((cb: unknown) => {
         finishers.push(cb as () => void);
         return () => {};
       })
     );
 
-    const pid = useScriptorium.getState().addProject("Vellmora").id;
+    const pid = useWriteme.getState().addProject("Vellmora").id;
     window.history.pushState({}, "", `/p/${pid}/entries`);
 
     render(<App />);
@@ -35,6 +35,6 @@ describe("hydration gate", () => {
     await waitFor(() => expect(screen.getByRole("link", { name: "Lore" })).toBeTruthy());
     expect(window.location.pathname).toBe(`/p/${pid}/entries`);
     // no false "world doesn't exist" toast
-    expect(useScriptorium.getState().toasts.some((t) => t.kind === "error")).toBe(false);
+    expect(useWriteme.getState().toasts.some((t) => t.kind === "error")).toBe(false);
   });
 });

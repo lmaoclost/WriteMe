@@ -1,5 +1,5 @@
 import { i18n } from "../i18n";
-import { useScriptorium } from "../data/store";
+import { useWriteme } from "../data/store";
 import type { ToastAction } from "../data/store";
 
 /**
@@ -9,11 +9,11 @@ import type { ToastAction } from "../data/store";
  * instead of undoing the wrong entity.
  */
 export function undoToastAction(): ToastAction {
-  const nonce = useScriptorium.getState().undoNonce;
+  const nonce = useWriteme.getState().undoNonce;
   return {
     label: i18n.t("common.undo"),
     run: () => {
-      const s = useScriptorium.getState();
+      const s = useWriteme.getState();
       if (!s.undoDelete(nonce)) s.pushToast("info", i18n.t("common.nothingToUndo"));
     },
   };

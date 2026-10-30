@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { storageHealth, APPROX_QUOTA_CHARS } from "../../data/storage";
 import { downloadJson } from "../../data/backup";
 import { Button } from "../../ui/Button";
@@ -44,14 +44,14 @@ function updatedStamp(ms: number, t: TFunction, locale: string): string {
 export function LibraryPage() {
   const { t, i18n } = useTranslation();
   const locale = localeFor(i18n.language);
-  const projects = useScriptorium((s) => s.projects);
-  const addProject = useScriptorium((s) => s.addProject);
-  const deleteProject = useScriptorium((s) => s.deleteProject);
-  const pushToast = useScriptorium((s) => s.pushToast);
-  const seedDemo = useScriptorium((s) => s.seedDemo);
+  const projects = useWriteme((s) => s.projects);
+  const addProject = useWriteme((s) => s.addProject);
+  const deleteProject = useWriteme((s) => s.deleteProject);
+  const pushToast = useWriteme((s) => s.pushToast);
+  const seedDemo = useWriteme((s) => s.seedDemo);
   // only cover values for the listed projects — an unrelated image upload
   // no longer re-renders the whole library
-  const covers = useScriptorium(useShallow((s) => {
+  const covers = useWriteme(useShallow((s) => {
     const out: Record<string, string> = {};
     for (const p of s.projects) {
       if (p.coverImageKey && s.images[p.coverImageKey]) out[p.coverImageKey] = s.images[p.coverImageKey];
@@ -69,7 +69,7 @@ export function LibraryPage() {
   const [pendingRestore, setPendingRestore] = useState<string | null>(null);
 
   const downloadBackup = () => {
-    downloadJson(useScriptorium.getState().exportData());
+    downloadJson(useWriteme.getState().exportData());
   };
 
   const readFileText = (file: File) => new Promise<string>((resolve, reject) => {
@@ -102,7 +102,7 @@ export function LibraryPage() {
 
   const confirmRestore = () => {
     if (!pendingRestore) return;
-    const result = useScriptorium.getState().importData(pendingRestore);
+    const result = useWriteme.getState().importData(pendingRestore);
     if (result.ok) {
       pushToast("success", t("library.toasts.restored"));
     } else {

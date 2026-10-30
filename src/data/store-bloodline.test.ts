@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { act } from "@testing-library/react";
-import { useScriptorium, selectBLHistoryFlags } from "./store";
+import { useWriteme, selectBLHistoryFlags } from "./store";
 import { STORE_KEY, flushPendingPersist } from "./storage";
 import { parseExport, validateProjectData } from "./schema";
 import type { Bloodline, BloodlineHouse, BloodlinePerson, Project } from "../domain/types";
@@ -18,7 +18,7 @@ import type { Bloodline, BloodlineHouse, BloodlinePerson, Project } from "../dom
  * 9. validateProjectData(export) after ops.
  */
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 
 function freshProject(): Project {
   return store().projects[0];
@@ -44,8 +44,8 @@ function personOf(blId: string, personId: string): BloodlinePerson | undefined {
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
-  act(() => { useScriptorium.getState().addProject("Shimradis"); });
+  useWriteme.setState(useWriteme.getInitialState());
+  act(() => { useWriteme.getState().addProject("Shimradis"); });
 });
 
 describe("bloodline CRUD (case 1)", () => {
@@ -189,7 +189,7 @@ describe("person CRUD (cases 1-4)", () => {
     const keeper = addPerson(a, { portraitKey: "img_entry_shared" });
     const doomed = addPerson(a, { portraitKey: "img_entry_solo" });
     act(() => {
-      useScriptorium.setState((s) => ({ images: { ...s.images, img_entry_shared: "A", img_entry_solo: "B" } }));
+      useWriteme.setState((s) => ({ images: { ...s.images, img_entry_shared: "A", img_entry_solo: "B" } }));
     });
     act(() => { store().deletePerson(doomed.id); });
     expect(personOf(a, keeper.id)!.portraitKey).toBe("img_entry_shared");
@@ -301,7 +301,7 @@ describe("history (cases 7-8)", () => {
 
 describe("persistence + export (case 9)", () => {
   it("state init has bloodlines: []", () => {
-    expect(useScriptorium.getInitialState().bloodlines).toEqual([]);
+    expect(useWriteme.getInitialState().bloodlines).toEqual([]);
   });
   it("persisted doc is version 1 and carries bloodlines", () => {
     const a = addBloodline();
@@ -323,7 +323,7 @@ describe("persistence + export (case 9)", () => {
       version: 1,
     };
     localStorage.setItem(STORE_KEY, JSON.stringify(doc));
-    act(() => void useScriptorium.persist.rehydrate());
+    act(() => void useWriteme.persist.rehydrate());
     const s = store();
     expect(s.projects[0].id).toBe("prj_v0");
     expect(s.bloodlines).toEqual([]);
@@ -338,7 +338,7 @@ describe("persistence + export (case 9)", () => {
       version: 2,
     };
     localStorage.setItem(STORE_KEY, JSON.stringify(doc));
-    act(() => void useScriptorium.persist.rehydrate());
+    act(() => void useWriteme.persist.rehydrate());
     expect(store().bloodlines[0].id).toBe("bl_v2");
   });
   it("case 9: exportData parses + validates after a full bloodline op chain", () => {

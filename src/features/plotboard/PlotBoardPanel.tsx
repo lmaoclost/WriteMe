@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import type { PlotBoard, PlotCard } from "../../domain/types";
 import { Field } from "../../ui/Field";
 import { Button } from "../../ui/Button";
@@ -37,8 +37,8 @@ function CardForm({ board, card, onSelect }: {
   onSelect(id: string | null): void;
 }) {
   const { t } = useTranslation();
-  const store = useScriptorium.getState;
-  const pushToast = useScriptorium((s) => s.pushToast);
+  const store = useWriteme.getState;
+  const pushToast = useWriteme((s) => s.pushToast);
   const [armDelete, setArmDelete] = useState(false);
   const update = (patch: Partial<PlotCard>) => store().updateCard(card.id, patch);
   const act = board.acts.find((a) => a.id === card.actId);

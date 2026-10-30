@@ -3,7 +3,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppRouter } from "../../app/router";
 import { fileToDataUrl } from "../../data/image";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import type { Atlas, WorldEntry } from "../../domain/types";
 import { resetRecentColors } from "./panels/recentColors";
 
@@ -12,7 +12,7 @@ vi.mock("../../data/image", async (importOriginal) => ({
   fileToDataUrl: vi.fn(),
 }));
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 const MOCK_DATA_URL = "data:image/png;base64,MOCKMAP";
 
 async function at(path: string): Promise<ReturnType<typeof render>> {
@@ -30,7 +30,7 @@ async function at(path: string): Promise<ReturnType<typeof render>> {
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
   resetRecentColors();
   vi.mocked(fileToDataUrl).mockReset();
   vi.mocked(fileToDataUrl).mockResolvedValue({ dataUrl: MOCK_DATA_URL, keptPng: true });
@@ -65,7 +65,7 @@ function addEntry(pid: string, title: string, withImage: boolean): WorldEntry {
     links: [],
   };
   act(() => {
-    useScriptorium.setState((s) => ({ entries: [...s.entries, entry] }));
+    useWriteme.setState((s) => ({ entries: [...s.entries, entry] }));
   });
   return entry;
 }

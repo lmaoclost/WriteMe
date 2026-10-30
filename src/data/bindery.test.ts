@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { act } from "@testing-library/react";
-import { useScriptorium } from "./store";
+import { useWriteme } from "./store";
 import { defaultBindery, BIND_TRIMS } from "./schema";
 import { buildBookHtml } from "../features/manuscript/buildBook";
 import type { Manuscript } from "../domain/types";
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 
 describe("bindery config", () => {

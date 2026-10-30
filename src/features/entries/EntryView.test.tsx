@@ -3,7 +3,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { selectOption } from "../../test/selectHelper";
 import { fileToDataUrl } from "../../data/image";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import type { EntryCategory, WorldEntry } from "../../domain/types";
 import { EntryView } from "./EntryView";
 
@@ -11,7 +11,7 @@ vi.mock("../../data/image", () => ({
   fileToDataUrl: vi.fn(async () => ({ dataUrl: "data:image/png;base64,NOVA", keptPng: true })),
 }));
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 
 type Spec = { title: string; category?: EntryCategory; body?: string; image?: string; date?: string };
 
@@ -33,7 +33,7 @@ function seed(specs: Spec[]): { projectId: string; entries: WorldEntry[] } {
 }
 
 function LiveEntryView({ id, onDeleted, onSelectEntry }: { id: string; onDeleted(id: string): void; onSelectEntry?(id: string): void }) {
-  const entry = useScriptorium((s) => s.entries.find((e) => e.id === id));
+  const entry = useWriteme((s) => s.entries.find((e) => e.id === id));
   if (!entry) return null;
   return <EntryView entry={entry} onDeleted={onDeleted} onSelectEntry={onSelectEntry} />;
 }
@@ -50,18 +50,18 @@ function renderView(entry: WorldEntry, handlers: { onDeleted?: (id: string) => v
 }
 
 function entryById(id: string): WorldEntry {
-  const entry = useScriptorium.getState().entries.find((e) => e.id === id);
+  const entry = useWriteme.getState().entries.find((e) => e.id === id);
   expect(entry, `entry ${id} should exist`).toBeTruthy();
   return entry as WorldEntry;
 }
 
 function toasts() {
-  return useScriptorium.getState().toasts;
+  return useWriteme.getState().toasts;
 }
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 
 afterEach(() => {
@@ -214,8 +214,8 @@ describe("EntryView — category + cover", () => {
       expect(entryById(entry.id).imageKey).not.toBe(oldKey);
     });
     const newKey = entryById(entry.id).imageKey as string;
-    expect(useScriptorium.getState().images[newKey]).toBe("data:image/png;base64,NOVA");
-    expect(useScriptorium.getState().images[oldKey]).toBeUndefined();
+    expect(useWriteme.getState().images[newKey]).toBe("data:image/png;base64,NOVA");
+    expect(useWriteme.getState().images[oldKey]).toBeUndefined();
     expect(toasts().some((t) => t.kind === "success" && t.message === "Cover updated.")).toBe(true);
     expect(vi.mocked(fileToDataUrl)).toHaveBeenCalledTimes(1);
   });
@@ -242,7 +242,7 @@ describe("EntryView — category + cover", () => {
     renderView(entry);
     fireEvent.click(screen.getByRole("button", { name: "Remove cover" }));
     expect(entryById(entry.id).imageKey).toBeUndefined();
-    expect(useScriptorium.getState().images[key]).toBeUndefined();
+    expect(useWriteme.getState().images[key]).toBeUndefined();
   });
 
   it("copies another entry's image as this cover via 'Entry image'", () => {
@@ -266,9 +266,9 @@ describe("EntryView — category + cover", () => {
     expect(newKey).toBeTruthy();
     expect(newKey).not.toBe(rioKey);
     expect(newKey).not.toBe(oldKey);
-    expect(useScriptorium.getState().images[newKey]).toBe("data:image/jpeg;base64,OUTRO");
+    expect(useWriteme.getState().images[newKey]).toBe("data:image/jpeg;base64,OUTRO");
     expect(entryById(rio.id).imageKey).toBe(rioKey);
-    expect(useScriptorium.getState().images[oldKey]).toBeUndefined();
+    expect(useWriteme.getState().images[oldKey]).toBeUndefined();
     expect(entryById(lei.id).imageKey).toBeUndefined();
   });
 });

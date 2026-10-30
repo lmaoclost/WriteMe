@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, type PointerEvent as ReactPointerEvent, type CSSProperties } from "react";
 import type { Id, Pin } from "../../../domain/types";
-import { useScriptorium } from "../../../data/store";
+import { useWriteme } from "../../../data/store";
 import { i18n } from "../../../i18n";
 import type { TransformApi } from "./useStageTransform";
 import { PIN_TYPE_META } from "../panels/pinTypes";
@@ -74,7 +74,7 @@ export function PinLayer({
   // movePin writes no history; the layer pushes history itself on the first
   // real drag move — frame-coalescing keeps those semantics intact.
   const movePinRaf = useRafCallback((pinId: Id, x: number, y: number) => {
-    useScriptorium.getState().movePin(pinId, x, y);
+    useWriteme.getState().movePin(pinId, x, y);
   });
 
   const detach = useCallback(() => {
@@ -95,7 +95,7 @@ export function PinLayer({
       drag.moved = true;
       // History snapshots the pre-drag pin on the first real move, so a
       // click-select (no drag) never pushes a no-op undo step.
-      useScriptorium.getState().pushHistory(atlasIdRef.current);
+      useWriteme.getState().pushHistory(atlasIdRef.current);
     }
     const nextX = clamp01(drag.origin.x + dx / (api.imgW * api.scale));
     const nextY = clamp01(drag.origin.y + dy / (api.imgH * api.scale));

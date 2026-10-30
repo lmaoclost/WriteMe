@@ -1,16 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { CalendarPage } from "./CalendarPage";
 import { CalendarIndexPage } from "./CalendarIndexPage";
 import type { CustomCalendar } from "../../domain/types";
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 afterEach(() => vi.restoreAllMocks());
 

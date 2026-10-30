@@ -3,12 +3,12 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import type { Atlas, PinType, Pt, Region, WorldEntry } from "../../domain/types";
 import { polygonArea } from "../../domain/geometry";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { getRecentColors, resetRecentColors } from "./panels/recentColors";
 import { LinkPicker } from "./panels/LinkPicker";
 import { AtlasEditor } from "./AtlasEditor";
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 
 const ENTRIES: WorldEntry[] = [
   { id: "ent_sol", projectId: "prj_fix", title: "Reinos do Sol", category: "place", body: "", links: [] },
@@ -18,8 +18,8 @@ const ENTRIES: WorldEntry[] = [
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
-  useScriptorium.setState({ entries: ENTRIES.map((e) => ({ ...e })) });
+  useWriteme.setState(useWriteme.getInitialState());
+  useWriteme.setState({ entries: ENTRIES.map((e) => ({ ...e })) });
   resetRecentColors();
 });
 
@@ -265,7 +265,7 @@ describe("hover tooltip (div hoverCard)", () => {
   });
 
   it("hovering a linked region opens the entry preview, and leaving closes it", () => {
-    useScriptorium.setState({
+    useWriteme.setState({
       entries: [{ ...ENTRIES[0], summary: "Terras do sol nascente." } as WorldEntry],
     });
     const atlas = makeAtlas({
@@ -284,7 +284,7 @@ describe("hover tooltip (div hoverCard)", () => {
   });
 
   it("clicking a linked pin opens the preview popup with blurb and Open-in-codex", () => {
-    useScriptorium.setState({
+    useWriteme.setState({
       entries: [{ ...ENTRIES[0], summary: "Capital venceu o cerco." } as WorldEntry],
     });
     const atlas = makeAtlas({ pins: [{ x: 0.25, y: 0.25, label: "Capital", entryId: "ent_sol" }] });

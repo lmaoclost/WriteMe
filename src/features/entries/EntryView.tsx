@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, useCallback, type ChangeEvent, ty
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import type { WorldEntry, EntrySection, EntrySectionField } from "../../domain/types";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { fileToDataUrl } from "../../data/image";
 import { newId } from "../../domain/id";
 import { dateIsEmpty, formatDateWithCalendar, isValidDate, sanitizeDate } from "../../domain/dates";
@@ -24,9 +24,9 @@ const CONFIRM_RESET_MS = 3000;
 
 export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryViewProps) {
   const { t } = useTranslation();
-  const project = useScriptorium((s) => s.projects.find((p) => p.id === entry.projectId));
-  const calendar = useScriptorium((s) => (s.calendars ?? []).find((c) => c.projectId === entry.projectId));
-  const siblings = useScriptorium(
+  const project = useWriteme((s) => s.projects.find((p) => p.id === entry.projectId));
+  const calendar = useWriteme((s) => (s.calendars ?? []).find((c) => c.projectId === entry.projectId));
+  const siblings = useWriteme(
     useShallow((s) => s.entries.filter((e) => e.projectId === entry.projectId)),
   );
   const siblingById = useMemo(() => new Map(siblings.map((e) => [e.id, e] as const)), [siblings]);
@@ -37,22 +37,22 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
   const confirmTimerRef = useRef<number | undefined>(undefined);
 
   const commitTitle = useCallback((v: string) => {
-    useScriptorium.getState().updateEntry(entry.id, { title: v });
+    useWriteme.getState().updateEntry(entry.id, { title: v });
   }, [entry.id]);
   const commitBody = useCallback((v: string) => {
-    useScriptorium.getState().updateEntry(entry.id, { body: v });
+    useWriteme.getState().updateEntry(entry.id, { body: v });
   }, [entry.id]);
   const commitDate = useCallback((v: string) => {
     if (dateIsEmpty(v)) {
-      useScriptorium.getState().updateEntry(entry.id, { date: undefined });
+      useWriteme.getState().updateEntry(entry.id, { date: undefined });
       return;
     }
     const clean = sanitizeDate(v);
     if (clean === null) return;
-    useScriptorium.getState().updateEntry(entry.id, { date: clean });
+    useWriteme.getState().updateEntry(entry.id, { date: clean });
   }, [entry.id]);
   const commitSummary = useCallback((v: string) => {
-    useScriptorium.getState().updateEntry(entry.id, { summary: v });
+    useWriteme.getState().updateEntry(entry.id, { summary: v });
   }, [entry.id]);
   const titleDraft = useDebouncedDraft(entry.title, commitTitle);
   const summaryDraft = useDebouncedDraft(entry.summary ?? "", commitSummary);
@@ -100,7 +100,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
   };
 
   const pushToast = (kind: "success" | "error", message: string) => {
-    useScriptorium.getState().pushToast(kind, message);
+    useWriteme.getState().pushToast(kind, message);
   };
 
   const flush = () => {
@@ -132,7 +132,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
     if (!file) return;
     try {
       const { dataUrl } = await fileToDataUrl(file);
-      const ok = useScriptorium.getState().putEntryImage(entry.id, dataUrl);
+      const ok = useWriteme.getState().putEntryImage(entry.id, dataUrl);
       pushToast(ok ? "success" : "error", ok ? t("entries.view.coverUpdated") : t("entries.view.coverUpdateError"));
     } catch {
       pushToast("error", t("entries.view.coverLoadError"));
@@ -142,9 +142,9 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
   const clearCover = () => {
     const oldKey = entry.imageKey;
     if (!oldKey) return;
-    useScriptorium.getState().updateEntry(entry.id, { imageKey: undefined });
+    useWriteme.getState().updateEntry(entry.id, { imageKey: undefined });
     if (!siblings.some((e) => e.id !== entry.id && e.imageKey === oldKey)) {
-      useScriptorium.getState().removeImage(oldKey);
+      useWriteme.getState().removeImage(oldKey);
     }
   };
 
@@ -152,7 +152,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
   // the images map itself); the cover value is read narrowly per imageKey
   const coveredSiblings = siblings.filter((e) => e.id !== entry.id && e.imageKey !== undefined);
   const coverEl = useRef<HTMLImageElement | null>(null);
-  const cover = useScriptorium((s) => (entry.imageKey ? s.images[entry.imageKey] : undefined));
+  const cover = useWriteme((s) => (entry.imageKey ? s.images[entry.imageKey] : undefined));
   const entryDate = dateIsEmpty(entry.date ?? "") ? null : sanitizeDate(entry.date ?? "");
   const draftedDate = sanitizeDate(dateDraft.draft);
   const dateInvalid = !dateIsEmpty(dateDraft.draft) && (!isValidDate(dateDraft.draft) || draftedDate === null);
@@ -184,7 +184,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
                 raf = 0;
                 if (!pending) return;
                 pending = false;
-                useScriptorium.getState().updateEntry(entry.id, { focal: [fx, fy] });
+                useWriteme.getState().updateEntry(entry.id, { focal: [fx, fy] });
               });
             };
             const up = () => {
@@ -210,7 +210,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           onBlur={flush}
         />
         <Select value={selectedCategory} onValueChange={(v) => {
-            useScriptorium.getState().updateEntry(entry.id, { category: v });
+            useWriteme.getState().updateEntry(entry.id, { category: v });
           }}>
           <SelectTrigger aria-label={t("entries.view.category")} className="rounded-lg border-line bg-night-2 text-parchment px-2 py-1.5 text-xs hover:border-gold-dim data-[size=default]:h-auto"><SelectValue /></SelectTrigger>
           <SelectContent className="border-line bg-night text-parchment">
@@ -316,7 +316,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
         <ImagePicker
           entries={coveredSiblings}
           onPick={(dataUrl) => {
-            const ok = useScriptorium.getState().putEntryImage(entry.id, dataUrl);
+            const ok = useWriteme.getState().putEntryImage(entry.id, dataUrl);
             pushToast(ok ? "success" : "error", ok ? t("entries.view.coverUpdated") : t("entries.view.coverUpdateError"));
             setImagePickerOpen(false);
           }}
@@ -334,29 +334,29 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
                 const sections = (entry.sections ?? []).map((s) => s === sec
                   ? { ...s, fields: s.fields.map((f) => (f === field ? { ...f, content } : f)) }
                   : s);
-                useScriptorium.getState().updateEntry(entry.id, { sections });
+                useWriteme.getState().updateEntry(entry.id, { sections });
               }}
               onAddField={() => {
                 const sections = (entry.sections ?? []).map((s) => s === sec
                   ? { ...s, fields: [...s.fields, { label: t("entries.view.newField"), content: "", id: newId("fld") }] }
                   : s);
-                useScriptorium.getState().updateEntry(entry.id, { sections });
+                useWriteme.getState().updateEntry(entry.id, { sections });
               }}
               onRenameField={(field, label) => {
                 const sections = (entry.sections ?? []).map((s) => s === sec
                   ? { ...s, fields: s.fields.map((f) => (f === field ? { ...f, label } : f)) }
                   : s);
-                useScriptorium.getState().updateEntry(entry.id, { sections });
+                useWriteme.getState().updateEntry(entry.id, { sections });
               }}
               onRemoveField={(field) => {
                 const sections = (entry.sections ?? []).map((s) => s === sec
                   ? { ...s, fields: s.fields.filter((f) => f !== field) }
                   : s);
-                useScriptorium.getState().updateEntry(entry.id, { sections });
+                useWriteme.getState().updateEntry(entry.id, { sections });
               }}
               onRename={(name) => {
                 const sections = (entry.sections ?? []).map((s) => (s === sec ? { ...s, name } : s));
-                useScriptorium.getState().updateEntry(entry.id, { sections });
+                useWriteme.getState().updateEntry(entry.id, { sections });
               }}
             />
           ))}
@@ -366,7 +366,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
             aria-label={t("entries.view.newSection")}
             onClick={() => {
               const sections = [...(entry.sections ?? []), { name: t("entries.view.newSection"), fields: [], id: newId("sec") } satisfies EntrySection];
-              useScriptorium.getState().updateEntry(entry.id, { sections });
+              useWriteme.getState().updateEntry(entry.id, { sections });
             }}
           >
             {t("entries.view.addSection")}
@@ -410,7 +410,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
                 type="button"
                 className="codex-link-unlink bg-none border-0 text-slate px-[7px] py-[3px] text-[11px] cursor-pointer hover:text-[var(--ember)]"
                 aria-label={t("entries.view.unlink", { title: other.title })}
-                onClick={() => useScriptorium.getState().unlinkEntries(entry.id, id)}
+                onClick={() => useWriteme.getState().unlinkEntries(entry.id, id)}
               >
                 ✕
               </button>
@@ -429,7 +429,7 @@ export function EntryView({ entry, titleRef, onDeleted, onSelectEntry }: EntryVi
           <LinkPicker
             entries={siblings.filter((e) => e.id !== entry.id)}
             onPick={(chosen) => {
-              useScriptorium.getState().linkEntries(entry.id, chosen);
+              useWriteme.getState().linkEntries(entry.id, chosen);
               setLinkPickerOpen(false);
             }}
             onClear={() => undefined}

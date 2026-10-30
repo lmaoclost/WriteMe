@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { BINDERY_FONTS, BINDERY_TRIMS, estimatePageCount, trimToPage } from "./bindery";
 import { buildBookCss } from "./bookCss";
 import { ExportButtons } from "./Export";
@@ -77,9 +77,9 @@ function TextAreaRow({ label, rows, value, onCommit }: { label: string; rows: nu
 
 export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
   const { t } = useTranslation();
-  const manuscript = useScriptorium(useShallow((s) =>
+  const manuscript = useWriteme(useShallow((s) =>
     s.manuscripts.find((m) => m.id === manuscriptId)));
-  const pushToast = useScriptorium((s) => s.pushToast);
+  const pushToast = useWriteme((s) => s.pushToast);
   const navigate = useNavigate();
   const [printing, setPrinting] = useState(false);
 
@@ -116,7 +116,7 @@ export function BinderyPage({ manuscriptId }: { manuscriptId: string }) {
     () => manuscript?.bindery ?? { ...defaultBindery()!, runningHeadMode: "book" as const },
     [manuscript],
   );
-  const set = (patch: Partial<NonNullable<typeof b>>) => useScriptorium.getState().setBindery(manuscriptId, patch);
+  const set = (patch: Partial<NonNullable<typeof b>>) => useWriteme.getState().setBindery(manuscriptId, patch);
   const def = defaultBindery()!;
   const ty = { ...def.typography!, ...b.typography };
   const g = { ...def.geometry!, ...b.geometry };
@@ -361,7 +361,7 @@ const PRINT_SETTLE_MS = 60_000;
 /** Bindery index: every manuscript of the project + where it stands. */
 export function BinderyIndex({ projectId }: { projectId: string }) {
   const { t } = useTranslation();
-  const manuscripts = useScriptorium(useShallow((s) => s.manuscripts.filter((m) => m.projectId === projectId)));
+  const manuscripts = useWriteme(useShallow((s) => s.manuscripts.filter((m) => m.projectId === projectId)));
 
   return (
     <div className="grid grid-rows-[auto_1fr] h-full" data-testid="bindery-index">

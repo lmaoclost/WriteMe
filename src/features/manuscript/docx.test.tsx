@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildDocxChildren, docxPageSetup, docxStyles, htmlToBlocks, importDocxToHtml, MAX_DOCX_BYTES } from "./docx";
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { DocxReplaceButton } from "./ChapterList";
 import { defaultBindery } from "../../data/schema";
 import { renderMarkdown } from "../entries/markdown";
@@ -29,11 +29,11 @@ vi.mock("docx", () => ({
   convertInchesToTwip: (n: number) => Math.round(n * 1440),
 }));
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
   mammothMock.html = "<p>Importado do Word.</p>";
 });
 
@@ -343,7 +343,7 @@ describe("scene markers", () => {
 
 describe("DocxReplaceButton", () => {
   it("imports html via mammoth and replaces the body as one scene", async () => {
-    useScriptorium.setState(useScriptorium.getInitialState());
+    useWriteme.setState(useWriteme.getInitialState());
     localStorage.clear();
     act(() => { store().addProject("V"); });
     act(() => { store().addManuscript(store().projects[0].id, "Livro"); });

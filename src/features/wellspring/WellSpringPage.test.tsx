@@ -3,16 +3,16 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { firePointer } from "../../test/pointer";
 import { selectOption } from "../../test/selectHelper";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { WellSpringPage } from "./WellSpringPage";
 import { WellSpringIndexPage } from "./WellSpringIndexPage";
 import type { WellSpring } from "../../domain/types";
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 
 beforeEach(() => {
   localStorage.clear();
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
 });
 
 Object.defineProperty(HTMLElement.prototype, "clientWidth", { configurable: true, value: 1200 });

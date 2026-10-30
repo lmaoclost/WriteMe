@@ -1,14 +1,14 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { useScriptorium } from "../../data/store";
+import { useWriteme } from "../../data/store";
 import { MarkdownView } from "./MarkdownView";
 import { act } from "@testing-library/react";
 import type { WorldEntry } from "../../domain/types";
 
-const store = () => useScriptorium.getState();
+const store = () => useWriteme.getState();
 
 function seedEntries() {
-  useScriptorium.setState(useScriptorium.getInitialState());
+  useWriteme.setState(useWriteme.getInitialState());
   localStorage.clear();
   act(() => { store().addProject("V"); });
   const prj = store().projects[0].id;

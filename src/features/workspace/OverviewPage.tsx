@@ -2,7 +2,7 @@ import { Link, useOutletContext } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
-import { selectCounts, selectProject, useScriptorium } from "../../data/store";
+import { selectCounts, selectProject, useWriteme } from "../../data/store";
 import type { ProjectCounts } from "../../data/store";
 import { fileToDataUrl } from "../../data/image";
 import { Seal } from "../../ui/Seal";
@@ -40,13 +40,13 @@ const LEDGER = [
 export function OverviewPage() {
   const { t } = useTranslation();
   const { projectId } = useOutletContext<WorkspaceContext>();
-  const project = useScriptorium(selectProject(projectId));
-  const counts = useScriptorium(useShallow(selectCounts(projectId)));
-  const putImage = useScriptorium((s) => s.putImage);
-  const updateProject = useScriptorium((s) => s.updateProject);
-  const removeImage = useScriptorium((s) => s.removeImage);
-  const coverUrl = useScriptorium((s) => (project?.coverImageKey ? s.images[project.coverImageKey] : undefined));
-  const pushToast = useScriptorium((s) => s.pushToast);
+  const project = useWriteme(selectProject(projectId));
+  const counts = useWriteme(useShallow(selectCounts(projectId)));
+  const putImage = useWriteme((s) => s.putImage);
+  const updateProject = useWriteme((s) => s.updateProject);
+  const removeImage = useWriteme((s) => s.removeImage);
+  const coverUrl = useWriteme((s) => (project?.coverImageKey ? s.images[project.coverImageKey] : undefined));
+  const pushToast = useWriteme((s) => s.pushToast);
 
   const onCover = async (file: File) => {
     if (!project) return;
