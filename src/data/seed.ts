@@ -273,7 +273,6 @@ export function seedDemoProject() {
   // Plot board
   const pbActs = [newId("act"), newId("act"), newId("act")];
   const pc: PlotBoard["cards"] = [];
-  let wireRefs: { from: number; to: number }[] = [];
   const mkCard = (actIdx: number, x: number, y: number, title: string, pov: string, location: string, locationEntryId: string | undefined, parts: string[], color: string) => {
     const c: PlotBoard["cards"][number] = {
       id: newId("pc"), actId: pbActs[actIdx], x, y, title, pov, location,
@@ -291,7 +290,7 @@ export function seedDemoProject() {
   const i5 = mkCard(1, 380, 620, "O cerco de dentro", "Talan Vellmor", "Muralha sul", eWar, ["Celeiros cantando vazio", "Cera racionada", "Véspera na torre"], "#c9a227");
   const i6 = mkCard(2, 720, 520, "Rompimento de nome", "Roval Orvean", "Portão do Arco", eWar, ["Selo rasgado em público", "A cidade fecha", "Juíza responde com nome"], "#4d8f5f");
   const i7 = mkCard(2, 420, 720, "Coroa entregue", "Aldric (memória)", "Torre do sino", eFounder, ["Paralelo do nono inverno", "Escolha de Vesper", "Fecho no Arco"], "#c9a227");
-  wireRefs = [{ from: i1, to: i4 }, { from: i2, to: i6 }, { from: i3, to: i6 }, { from: i4, to: i7 }, { from: i5, to: i7 }, { from: i6, to: i7 }];
+  const wireRefs = [{ from: i1, to: i4 }, { from: i2, to: i6 }, { from: i3, to: i6 }, { from: i4, to: i7 }, { from: i5, to: i7 }, { from: i6, to: i7 }];
   const plotBoards: PlotBoard[] = [{
     id: newId("pb"),
     projectId: project.id,
