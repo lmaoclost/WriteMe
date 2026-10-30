@@ -28,7 +28,7 @@ export function buildEpubCss(config: BinderyConfig): string {
   rules.push(
     `.chapter h2 { margin: 0 0 1.2em; text-align: center; }`,
     `.chapter h2 .ch-num { display: block; font-size: 0.8em; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.4em; }`,
-    `.scene-marker { text-align: center; letter-spacing: 0.3em; margin: 1.5em auto; }`,
+    `.scene-marker { text-align: center; letter-spacing: 0.3em; margin: 0.75em auto; }`,
   );
   // scene break: punctuation marker prints as the configured ornament (glyph
   // on ::before, blank keeps the air, rule draws a short rule); an authored

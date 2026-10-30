@@ -147,7 +147,7 @@ export function buildBookCss(config: BinderyConfig, ctx: BookCtx): string {
   // glyph rides on ::before; blank keeps the air, rule draws a short rule);
   // an authored line (.scene-marker.text) keeps its own words, same shape
   const ornament = config.sceneOrnament ?? "asterism";
-  rules.push(`.print-book .scene-marker { text-align: center; letter-spacing: 0.3em; margin: 1.5em auto; }`);
+  rules.push(`.print-book .scene-marker { text-align: center; letter-spacing: 0.3em; margin: 0.75em auto; }`);
   if (ornament === "blank") {
     rules.push(`.print-book .scene-marker.ornament { height: 1.5em; }`);
   } else if (ornament === "rule") {

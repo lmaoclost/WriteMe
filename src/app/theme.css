@@ -344,7 +344,7 @@ input[type="file"].sr-only {
     font-family: Georgia, "Times New Roman", serif;
   }
   /* on-screen scene previews carry the ornament between scenes */
-  .md-view .scene-marker { text-align: center; letter-spacing: 0.3em; margin: 1.5em auto; color: #8a8069; font-size: 14px; }
+  .md-view .scene-marker { text-align: center; letter-spacing: 0.3em; margin: 0.75em auto; color: #8a8069; font-size: 14px; }
 }
 
 /* Bindery book pages — the SAME selectors must style the on-screen live
