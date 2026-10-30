@@ -54,7 +54,7 @@ export function ManuscriptPage({ projectId }: { projectId: string }) {
     useShallow((s) => s.manuscripts.filter((m) => m.projectId === projectId)),
   );
   const focusCtx = useContext(FocusContext);
-  const [bookId, setBookId] = useState<string | null>(null);
+  const [bookId, setBookId] = useState<string | null>(() => books[0]?.id ?? null);
   const [chapterId, setChapterId] = useState<string | null>(null);
   const [sceneId, setSceneId] = useState<string | null>(null);
   const [pendingFocus, setPendingFocus] = useState<string | null>(null);

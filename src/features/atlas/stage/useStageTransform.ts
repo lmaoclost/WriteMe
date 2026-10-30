@@ -63,8 +63,8 @@ export type StageTransform = TransformApi & {
 };
 
 export function useStageTransform(
-  stageRef: RefObject<HTMLDivElement>,
-  imgRef: RefObject<HTMLImageElement>,
+  stageRef: RefObject<HTMLDivElement | null>,
+  imgRef: RefObject<HTMLImageElement | null>,
 ): StageTransform {
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [view, setView] = useState<ViewState>({ scale: 1, panX: 0, panY: 0 });

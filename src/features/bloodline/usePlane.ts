@@ -47,7 +47,7 @@ export interface PlaneApi {
   onTouchEnd(e: React.TouchEvent): void;
 }
 
-export function usePlane(stageRef: RefObject<HTMLDivElement>): PlaneApi {
+export function usePlane(stageRef: RefObject<HTMLDivElement | null>): PlaneApi {
   const [size, setSize] = useState({ w: 20000, h: 20000 });
   const [view, setView] = useState<ViewState>({ scale: 0.1, panX: 0, panY: 0 });
   const sizeRef = useRef(size);
