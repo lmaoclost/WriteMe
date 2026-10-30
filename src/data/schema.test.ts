@@ -156,6 +156,9 @@ describe("manuscript parts and bindery layout blocks", () => {
     expect(validateProjectData(doc(ms({ chapters: [{ id: "c1", heading: "Um", scenes: [], order: 1 }] })))).toBe(false);
     expect(validateProjectData(doc(ms({ chapters: [{ id: "c1", heading: "Um", scenes: [{ id: "sc1", content: 7, order: 0 }], order: 1 }] })))).toBe(false);
     expect(validateProjectData(doc(ms({ chapters: [{ id: "c1", heading: "Um", scenes: [{ id: "sc1", content: "", order: "0" }], order: 1 }] })))).toBe(false);
+    // the optional title belongs to a scene, not anywhere else
+    expect(validateProjectData(doc(ms({ chapters: [{ id: "c1", heading: "Um", scenes: [{ id: "sc1", content: "", order: 0, title: "Na ponte" }], order: 1 }] })))).toBe(true);
+    expect(validateProjectData(doc(ms({ chapters: [{ id: "c1", heading: "Um", scenes: [{ id: "sc1", content: "", order: 0, title: 7 }], order: 1 }] })))).toBe(false);
   });
 
   it("validates v2 bindery blocks tolerantly: absent or partial ok, wrong-typed rejected", () => {

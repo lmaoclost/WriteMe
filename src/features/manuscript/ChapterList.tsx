@@ -15,6 +15,7 @@ import type { bookSections } from "./buildBook";
 import { useScriptorium } from "../../data/store";
 import { useDebouncedDraft } from "../../ui/useDebouncedDraft";
 import { countWords, formatWords } from "./words";
+import { sceneDisplay } from "./sceneName";
 import { Button } from "../../ui/Button";
 
 const CONFIRM_RESET_MS = 3000;
@@ -234,6 +235,7 @@ const SceneRow = memo(function SceneRow({ scene, index, chapterId, onSceneSelect
   const { t } = useTranslation();
   const { setNodeRef, setActivatorNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({ id: scene.id });
   const words = useMemo(() => countWords(scene.content), [scene.content]);
+  const label = sceneDisplay(t, scene, index);
   return (
     <li
       ref={setNodeRef}
@@ -255,10 +257,10 @@ const SceneRow = memo(function SceneRow({ scene, index, chapterId, onSceneSelect
       <button
         type="button"
         className="flex-1 min-w-0 flex items-center justify-between gap-1.5 text-left bg-none border-0 rounded-lg text-parchment px-2 py-1 text-xs"
-        aria-label={t("manuscript.sceneAria", { n: index + 1 })}
+        aria-label={label}
         onClick={() => onSceneSelect(scene.id)}
       >
-        <span className="book-scene-name overflow-hidden text-ellipsis whitespace-nowrap text-slate">{t("manuscript.sceneAria", { n: index + 1 })}</span>
+        <span className={"book-scene-name overflow-hidden text-ellipsis whitespace-nowrap " + (scene.title?.trim() ? "text-parchment" : "text-slate")}>{label}</span>
         <span className="shrink-0 text-[11px] text-slate [font-variant-numeric:tabular-nums]">{formatWords(words)}</span>
       </button>
     </li>
@@ -275,6 +277,8 @@ const ChapterRow = memo(function ChapterRow({ chapter, selected, onSelect, onSce
   const { setNodeRef, setActivatorNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({ id: chapter.id });
   const words = useMemo(() => chapter.scenes.reduce((n, s) => n + countWords(s.content), 0), [chapter.scenes]);
   const sceneIds = chapter.scenes.map((s) => s.id);
+  // chapters start minimized like parts; the chevron reveals the scene rows
+  const [open, setOpen] = useState(false);
 
   const addScene = () => {
     useScriptorium.getState().addScene(chapter.id);
@@ -299,6 +303,15 @@ const ChapterRow = memo(function ChapterRow({ chapter, selected, onSelect, onSce
         </button>
         <button
           type="button"
+          className="w-[18px] self-center bg-none border-0 cursor-pointer text-slate text-[9px] hover:text-gold"
+          aria-label={t("manuscript.chapterScenesToggle", { chapter: chapter.heading })}
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+        >
+          <span aria-hidden="true">{open ? "▾" : "▸"}</span>
+        </button>
+        <button
+          type="button"
           className={"book-ch-row flex-1 min-w-0 flex flex-col gap-0.5 text-left bg-none border-0 border-l-2 border-transparent rounded-lg text-parchment px-2 py-1.5 text-sm" + (selected ? " active border-l-gold bg-night-2" : "") + " hover:bg-night-2"}
           onClick={() => onSelect(chapter.id)}
         >
@@ -315,13 +328,15 @@ const ChapterRow = memo(function ChapterRow({ chapter, selected, onSelect, onSce
           +
         </button>
       </div>
-      <ul className="book-scene-rows list-none m-0 pl-4 flex flex-col gap-0.5 mb-1">
-        <SortableContext items={sceneIds} strategy={verticalListSortingStrategy}>
-          {chapter.scenes.map((scene, i) => (
-            <SceneRow key={scene.id} scene={scene} index={i} chapterId={chapter.id} onSceneSelect={onSceneSelect} />
-          ))}
-        </SortableContext>
-      </ul>
+      {open ? (
+        <ul className="book-scene-rows list-none m-0 pl-4 flex flex-col gap-0.5 mb-1">
+          <SortableContext items={sceneIds} strategy={verticalListSortingStrategy}>
+            {chapter.scenes.map((scene, i) => (
+              <SceneRow key={scene.id} scene={scene} index={i} chapterId={chapter.id} onSceneSelect={onSceneSelect} />
+            ))}
+          </SortableContext>
+        </ul>
+      ) : null}
     </li>
   );
 });

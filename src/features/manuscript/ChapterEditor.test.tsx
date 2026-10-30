@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { useScriptorium } from "../../data/store";
 import { pickSelectOptionSync } from "../../test/selectHelper";
 import { ChapterEditor } from "./ChapterEditor";
@@ -32,6 +32,91 @@ function openNotes() {
 function sceneBody(n: number): HTMLElement {
   return document.querySelector(`[data-testid="rich-scene-${n}"]`) as HTMLElement;
 }
+
+describe("SceneBody caret + focus stability", () => {
+  it("committing a scene does not rewrite its DOM when the store already holds the same HTML", () => {
+    vi.useFakeTimers();
+    seedMS();
+    render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
+    const body = sceneBody(1);
+    body.innerHTML = "<p>um</p>";
+    fireEvent.input(body);
+    const writes: string[] = [];
+    // the property lives on the prototype; spying on the instance catches
+    // programmatic innerHTML assignments (the DOM-sync effect) unambiguously
+    const desc = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML")
+      ?? Object.getOwnPropertyDescriptor(HTMLElement.prototype, "innerHTML")!;
+    Object.defineProperty(body, "innerHTML", {
+      configurable: true,
+      get: () => desc.get!.call(body),
+      set: (v: string) => { writes.push(v); desc.set!.call(body, v); },
+    });
+    act(() => {
+      vi.advanceTimersByTime(300); // autosave commit
+    });
+    expect(store().manuscripts[0].chapters[0].scenes[0].content).toBe("<p>um</p>");
+    expect(writes).toEqual([]); // caret survives: no DOM rewrite after commit
+  });
+
+  it("committing plain-text typing does not convert/rewrite the DOM while editing", () => {
+    vi.useFakeTimers();
+    seedMS();
+    render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
+    const body = sceneBody(1);
+    body.textContent = "um";
+    fireEvent.input(body);
+    const writes: string[] = [];
+    const desc = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML")
+      ?? Object.getOwnPropertyDescriptor(HTMLElement.prototype, "innerHTML")!;
+    Object.defineProperty(body, "innerHTML", {
+      configurable: true,
+      get: () => desc.get!.call(body),
+      set: (v: string) => { writes.push(v); desc.set!.call(body, v); },
+    });
+    act(() => { vi.advanceTimersByTime(300); });
+    expect(store().manuscripts[0].chapters[0].scenes[0].content).toBe("um");
+    // the markdown one-way conversion waits for a remount, like the chapter
+    // body used to; rewriting now would drop the caret to the start
+    expect(writes).toEqual([]);
+  });
+
+  it("typing in another scene does not steal focus back to the previously selected scene", () => {
+    const m = store().addManuscript("prj_1", "Livro A");
+    store().addChapter(m.id, "Um");
+    const chId = store().manuscripts[0].chapters[0].id;
+    store().addScene(chId);
+    const scene1 = store().manuscripts[0].chapters[0].scenes[0];
+    render(<ChapterEditor chapterId={chId} focusSceneId={scene1.id} onDeleted={() => {}} />);
+    const second = sceneBody(2);
+    second.focus();
+    fireEvent.input(second);
+    expect(document.activeElement).toBe(second);
+  });
+});
+
+describe("Scene header (name + delete)", () => {
+  it("names the scene from its header input, debounced, and shows words there", () => {
+    vi.useFakeTimers();
+    seedMS();
+    render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
+    const input = screen.getByLabelText("Scene name");
+    fireEvent.change(input, { target: { value: "Na ponte" } });
+    expect(store().manuscripts[0].chapters[0].scenes[0].title).toBeUndefined(); // debounce holds
+    act(() => { vi.advanceTimersByTime(300); });
+    fireEvent.blur(input);
+    expect(store().manuscripts[0].chapters[0].scenes[0].title).toBe("Na ponte");
+  });
+
+  it("the delete control lives in the scene header; the bottom rows are gone", () => {
+    seedMS();
+    render(<ChapterEditor chapterId={store().manuscripts[0].chapters[0].id} onDeleted={() => {}} />);
+    const header = document.querySelector(".book-scene-header") as HTMLElement;
+    expect(header).toBeTruthy();
+    expect(within(header).queryByRole("button", { name: "Delete scene" })).toBeTruthy();
+    expect(document.querySelector("[data-testid='scene-controls']")).toBeNull();
+    expect(screen.getAllByRole("button", { name: "Delete scene" })).toHaveLength(1); // one per scene header only
+  });
+});
 
 describe("ChapterEditor rich", () => {
   it("renders toolbar and one contenteditable per scene", () => {

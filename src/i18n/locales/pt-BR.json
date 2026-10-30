@@ -1230,6 +1230,8 @@
     "noPartZone": "Sem parte",
     "chaptersInPart": "Capítulos de {{part}}",
     "sceneAria": "Cena {{n}}",
+    "sceneName": "Nome da cena",
+    "chapterScenesToggle": "Cenas de {{chapter}}",
     "scenePlaceholder": "Cena vazia — escreva aqui…",
     "addScene": "Nova cena",
     "addSceneChapter": "Nova cena em {{chapter}}",

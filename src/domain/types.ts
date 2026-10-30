@@ -114,6 +114,8 @@ export interface Part {
 /** A scene break divides scenes of a chapter; the chapter holds 1+ scenes. */
 export interface Scene {
   id: Id;
+  /** Optional display name; unnamed scenes fall back to their print position. */
+  title?: string;
   /** Markdown by default; HTML when edited in the rich editor (starts with "<"). */
   content: string;
   order: number;

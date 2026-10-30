@@ -600,40 +600,58 @@ describe("ManuscriptPage parts", () => {
 });
 
 describe("ManuscriptPage scenes sidebar", () => {
+  it("chapters start collapsed; the chevron reveals the scene rows", async () => {
+    const projectId = seedProject();
+    const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "cena um." }] });
+    act(() => { useScriptorium.getState().addScene(book.chapters[0].id); });
+    await manuscriptRoute(projectId);
+    expect(within(chapterList()).queryAllByRole("button", { name: /Scene 2/ })).toHaveLength(0);
+    const chevron = within(chapterList()).getAllByRole("button", { name: /Scenes of Um/ })[0];
+    expect(chevron).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(chevron);
+    expect(chevron).toHaveAttribute("aria-expanded", "true");
+    expect(within(chapterList()).getAllByRole("button", { name: "Scene 2" })).toHaveLength(1);
+  });
+
+  it("a named scene keeps its name in the sidebar across reorders", async () => {
+    const projectId = seedProject();
+    const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "cena um." }, { heading: "Dois" }] });
+    act(() => {
+      const st = useScriptorium.getState();
+      st.updateScene(book.chapters[0].scenes[0].id, { title: "Na ponte" });
+      st.addScene(book.chapters[0].id);
+    });
+    const restoreRects = mockRowRects();
+    try {
+      await manuscriptRoute(projectId);
+      // chapter 1 starts collapsed: expand both, then drag the named scene down
+      for (const chevron of within(chapterList()).getAllByRole("button", { name: /Scenes of/ })) {
+        fireEvent.click(chevron);
+      }
+      const handle = within(chapterList()).getAllByRole("button", { name: "Drag scene 1" })[0];
+      // two steps cross into the next chapter (append at its end)
+      await dragWithKeyboard(handle, ["ArrowDown", "ArrowDown"]);
+      const chapters = bookOf("A").chapters;
+      expect(chapters[1].scenes.map((s) => s.title)).toContain("Na ponte");
+      expect(chapters[1].scenes.map((s) => s.content)).toContain("cena um.");
+    } finally {
+      restoreRects();
+    }
+  });
+
   it("nests the chapter's scenes under the chapter row and selects the scene in the editor", async () => {
     const projectId = seedProject();
     const book = seedBook(projectId, { title: "A", chapters: [{ heading: "Um", content: "cena um." }] });
     act(() => { useScriptorium.getState().addScene(book.chapters[0].id); });
     await manuscriptRoute(projectId);
-    const scenes = within(chapterList()).getAllByRole("button", { name: /Scene 2/ });
-    expect(scenes).toHaveLength(1);
-    fireEvent.click(scenes[0]);
+    // chapters start collapsed: expand, then the rows appear
+    fireEvent.click(within(chapterList()).getAllByRole("button", { name: /Scenes of Um/ })[0]);
+    const scene2 = within(chapterList()).getAllByRole("button", { name: "Scene 2" })[0];
+    fireEvent.click(scene2);
     // the editor reveals the scene: scene 2's contenteditable exists and gains focus
     await waitFor(() => {
       expect(document.activeElement).toBe(document.querySelector('[data-testid="rich-scene-2"]'));
     });
-  });
-
-  it("moves a scene to another chapter through a keyboard drag", async () => {
-    const projectId = seedProject();
-    const book = seedBook(projectId, {
-      title: "A",
-      chapters: [{ heading: "Um", content: "cena um." }, { heading: "Dois", content: "outra cena." }],
-    });
-    act(() => { useScriptorium.getState().addScene(book.chapters[0].id); });
-    const restoreRects = mockRowRects();
-    try {
-      await manuscriptRoute(projectId);
-      const handle = within(chapterList()).getAllByRole("button", { name: "Drag scene 1" })[0];
-      // two steps: first lands on the sibling scene, second crosses into the
-      // next chapter (append at its end)
-      await dragWithKeyboard(handle, ["ArrowDown", "ArrowDown"]);
-      const chapters = bookOf("A").chapters;
-      expect(chapters[0].scenes).toHaveLength(1);
-      expect(chapters[1].scenes.map((s) => s.content)).toContain("cena um.");
-    } finally {
-      restoreRects();
-    }
   });
 });
 

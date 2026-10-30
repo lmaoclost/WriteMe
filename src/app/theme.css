@@ -337,6 +337,12 @@ input[type="file"].sr-only {
     outline: none;
   }
   .book-end-marker-input:focus { border-color: var(--gold); }
+  /* the scene name field sits on the same parchment sheet, in editor chrome */
+  .book-scene-name-input {
+    background: #f7f2e6;
+    color: #241f17;
+    font-family: Georgia, "Times New Roman", serif;
+  }
   /* on-screen scene previews carry the ornament between scenes */
   .md-view .scene-marker { text-align: center; letter-spacing: 0.3em; margin: 1.5em auto; color: #8a8069; font-size: 14px; }
 }
@@ -502,4 +508,3 @@ input[type="file"].sr-only {
   white-space: normal;
   pointer-events: none;
 }
-

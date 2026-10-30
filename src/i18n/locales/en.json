@@ -1230,6 +1230,8 @@
     "noPartZone": "No part",
     "chaptersInPart": "Chapters of {{part}}",
     "sceneAria": "Scene {{n}}",
+    "sceneName": "Scene name",
+    "chapterScenesToggle": "Scenes of {{chapter}}",
     "scenePlaceholder": "Empty scene — write here…",
     "addScene": "New scene",
     "addSceneChapter": "New scene in {{chapter}}",

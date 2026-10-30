@@ -72,6 +72,7 @@ const AtlasSchema = z.object({
 
 const SceneSchema = z.object({
   id: s,
+  title: z.optional(s),
   content: s,
   order: n,
 });

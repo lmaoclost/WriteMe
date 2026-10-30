@@ -366,6 +366,19 @@ describe("moveScene", () => {
     act(() => { store().moveScene("sc_missing", c.id, 0); });
     expect(chapterById(c.id)!.scenes).toEqual(before);
   });
+  it("carries the scene's title across chapters", () => {
+    const m = makeManuscript();
+    const c1 = makeChapter(m.id);
+    const c2 = makeChapter(m.id);
+    const s0 = chapterById(c1.id)!.scenes[0];
+    const s1 = makeScene(c1.id);
+    act(() => { store().updateScene(s0.id, { title: "Na ponte" }); });
+    act(() => { store().moveScene(s0.id, c2.id, 0); });
+    expect(chapterById(c1.id)!.scenes.map((x) => x.id)).toEqual([s1.id]);
+    expect(chapterById(c2.id)!.scenes[0].title).toBe("Na ponte");
+    expect(chapterById(c2.id)!.scenes[0].content).toBe(s0.content);
+    expect(chapterById(c2.id)!.scenes[0].id).toBe(s0.id);
+  });
   it("bumps project updatedAt", () => {
     const m = makeManuscript();
     const a = makeChapter(m.id);
